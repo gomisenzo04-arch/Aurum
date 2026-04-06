@@ -654,13 +654,30 @@ rCL();rCS();rAL();rD();
 try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');
   var tabs=[
-    {p:'dash',l:'Dashboard'},{p:'coach',l:'Coaching'},{p:'health',l:'Santé'},
-    {p:'acc',l:'Comptes'},{p:'pf',l:'Prop Firms'},{p:'po',l:'Payouts'},
-    {p:'ent',l:'Entités'},{p:'fis',l:'Fiscal'},{p:'inv',l:'Portfolio'},
-    {p:'bud',l:'Budget'},{p:'pas',l:'Passifs'},{p:'bak',l:'Backup'}
+    {p:'dash',l:'📊 Dashboard',g:''},
+    {p:'coach',l:'🎯 Coaching',g:''},
+    {p:'health',l:'💊 Santé',g:''},
+    {p:'_sep1',l:'',g:'sep'},
+    {p:'acc',l:'📈 Comptes',g:''},
+    {p:'pf',l:'🏆 Prop Firms',g:''},
+    {p:'po',l:'💰 Payouts',g:''},
+    {p:'_sep2',l:'',g:'sep'},
+    {p:'inv',l:'🎯 Portfolio',g:''},
+    {p:'bud',l:'💳 Budget',g:''},
+    {p:'pas',l:'📉 Dettes',g:''},
+    {p:'_sep3',l:'',g:'sep'},
+    {p:'ent',l:'🏛 Entités',g:''},
+    {p:'fis',l:'📋 Fiscal',g:''},
+    {p:'bak',l:'💾 Backup',g:''}
   ];
   var bar=document.createElement('div');bar.className='itabs';
   tabs.forEach(function(t){
+    if(t.g==='sep'){
+      var sep=document.createElement('div');
+      sep.style.cssText='width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0';
+      bar.appendChild(sep);
+      return;
+    }
     var b=document.createElement('button');b.className='itab'+(t.p==='dash'?' on':'');
     b.textContent=t.l;b.setAttribute('data-p',t.p);
     b.onclick=function(){
