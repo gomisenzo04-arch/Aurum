@@ -1320,207 +1320,35 @@ body::before {
   .panel { max-width: 100% !important }
 }
 
-/* ─── POLISH CSS PREMIUM ─── */
-
-/* Cards dashboard — hover lift */
-.card {
-  transition: all .25s cubic-bezier(.4,0,.2,1);
-}
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,.3);
-  border-color: var(--gold);
-}
-
-/* Panels — animation d'entrée */
-.panel.active {
-  animation: panelSlide .3s cubic-bezier(.4,0,.2,1);
-}
-@keyframes panelSlide {
-  from { opacity:0; transform:translateY(8px) }
-  to { opacity:1; transform:translateY(0) }
-}
-
-/* Boutons formulaire trade — hover & active */
-.tf-btn {
-  transition: all .2s cubic-bezier(.4,0,.2,1);
-}
-.tf-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,.25);
-}
-.tf-btn:active {
-  transform: scale(.97);
-}
-
-/* Calendrier — hover scale */
-.cal-day:hover {
-  transform: scale(1.1);
-  z-index: 2;
-}
-
-/* Sidebar nav-items — hover & active */
-.nav-item {
-  transition: all .2s cubic-bezier(.4,0,.2,1);
-}
-.nav-item:hover {
-  transform: scale(1.08);
-}
-.nav-item.active {
-  transform: scale(1);
-}
-
-/* Smooth scroll */
-.scroll { scroll-behavior: smooth }
-
-/* Lignes de tableau — hover highlight */
-tbody tr {
-  transition: background .15s;
-}
-tbody tr:hover {
-  background: rgba(212,160,23,.04) !important;
-}
-
-/* ─── PREMIUM POLISH ─── */
-
-/* Equity curve canvas glow */
-.panel canvas {
-  border-radius: 8px;
-}
-
-/* Stats cards shimmer on first load */
-@keyframes cardShimmer {
-  0% { background-position: -200px 0 }
-  100% { background-position: 200px 0 }
-}
-
-/* Login screen improvements */
-.login-box input:focus {
-  animation: none;
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(212,160,23,.1), 0 0 30px rgba(212,160,23,.06);
-}
-
-/* Checklist items polish */
-.ck-item {
-  transition: all .2s cubic-bezier(.4,0,.2,1);
-}
-.ck-item:hover {
-  background: rgba(212,160,23,.03);
-  transform: translateX(2px);
-}
-
-/* Form steps - visual flow */
-.form-step {
-  transition: all .3s cubic-bezier(.4,0,.2,1);
-}
-
-/* Toast notifications premium */
-.toast-container .toast {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-/* Scrollbar premium */
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(212,160,23,.35), rgba(212,160,23,.15));
-}
-
-/* Selection color */
-::selection {
-  background: rgba(212,160,23,.25);
-}
-
-/* Focus visible for accessibility */
-*:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
-}
-
-/* Print styles - hide non-essential */
-@media print {
-  .side, .top-bar, .nav-item { display: none !important }
-  .content { margin: 0 !important }
-  .scroll { overflow: visible !important; padding: 0 !important }
-}
-
-/* ─── TRADING TERMINAL POLISH ─── */
-
-/* Dashboard cards gradient borders */
-.card {
-  position: relative;
-  overflow: hidden;
-}
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  opacity: 0;
-  transition: opacity .3s;
-}
-.card:hover::before {
-  opacity: .6;
-}
-
-/* Login button shimmer */
-.enter-btn {
-  position: relative;
-  overflow: hidden;
-}
-.enter-btn::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
-  animation: btnShimmer 3s ease-in-out infinite;
-}
-@keyframes btnShimmer {
-  0% { left: -100%; }
-  50% { left: 100%; }
-  100% { left: 100%; }
-}
-
-/* Sidebar active glow */
-.nav-item.active {
-  box-shadow: inset 0 0 12px rgba(212,160,23,.08);
-}
-
-/* HUD strip numbers pulse */
-.strip .val {
-  transition: color .3s, text-shadow .3s;
-}
-.strip .val:hover {
-  text-shadow: 0 0 12px currentColor;
-}
-
-/* Form complete state */
-.form-step.done {
-  opacity: .6;
-  transform: scale(.98);
-  transition: all .3s;
-}
-
-/* Table row selection indicator */
-tbody tr {
-  position: relative;
-}
-tbody tr:hover::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--gold);
-  border-radius: 0 3px 3px 0;
-}
+/* ─── POLISH UNIFIÉ ─── */
+.card { position:relative; overflow:hidden; transition:all .25s cubic-bezier(.4,0,.2,1) }
+.card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0; transition:opacity .3s }
+.card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.3); border-color:var(--gold) }
+.card:hover::before { opacity:.6 }
+.panel.active { animation:panelSlide .3s cubic-bezier(.4,0,.2,1) }
+@keyframes panelSlide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.tf-btn { transition:all .2s cubic-bezier(.4,0,.2,1) }
+.tf-btn:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,.25) }
+.tf-btn:active { transform:scale(.97) }
+.cal-day:hover { transform:scale(1.1); z-index:2 }
+.scroll { scroll-behavior:smooth }
+tbody tr { position:relative; transition:background .15s }
+tbody tr:hover { background:rgba(212,160,23,.04) !important }
+tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--gold); border-radius:0 3px 3px 0 }
+.panel canvas { border-radius:8px }
+.login-box input:focus { animation:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,160,23,.1),0 0 30px rgba(212,160,23,.06) }
+.ck-item { transition:all .2s cubic-bezier(.4,0,.2,1) }
+.ck-item:hover { background:rgba(212,160,23,.03); transform:translateX(2px) }
+.form-step { transition:all .3s cubic-bezier(.4,0,.2,1) }
+.form-step.done { opacity:.6; transform:scale(.98) }
+.enter-btn { position:relative; overflow:hidden }
+.enter-btn::after { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent); animation:btnShimmer 3s ease-in-out infinite }
+@keyframes btnShimmer { 0%{left:-100%} 50%{left:100%} 100%{left:100%} }
+.nav-item.active { box-shadow:inset 0 0 12px rgba(212,160,23,.08) }
+.strip .val { transition:color .3s,text-shadow .3s }
+.strip .val:hover { text-shadow:0 0 12px currentColor }
+*:focus-visible { outline:2px solid var(--gold); outline-offset:2px }
+@media print { .side,.top-bar,.nav-item{display:none!important} .content{margin:0!important} .scroll{overflow:visible!important;padding:0!important} }
 
 /* ─── IFRAME MODE ─── */
 .in-iframe .side { display: none !important }
