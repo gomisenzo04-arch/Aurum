@@ -1,25 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="gld" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f5d060"/>
+    <linearGradient id="gld" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f7e08a"/>
       <stop offset="50%" stop-color="#d4a017"/>
       <stop offset="100%" stop-color="#b8860b"/>
     </linearGradient>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <radialGradient id="bg" cx="50%" cy="40%" r="50%">
       <stop offset="0%" stop-color="#0c1018"/>
       <stop offset="100%" stop-color="#06090e"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="45%" r="35%">
+      <stop offset="0%" stop-color="#d4a017" stop-opacity=".1"/>
+      <stop offset="100%" stop-color="#d4a017" stop-opacity="0"/>
+    </radialGradient>
   </defs>
   <rect width="512" height="512" rx="102" fill="url(#bg)"/>
-  <rect x="8" y="8" width="496" height="496" rx="98" fill="none" stroke="url(#gld)" stroke-width="4" opacity=".35"/>
-  <!-- A stylisé -->
-  <g filter="url(#glow)">
-    <path d="M256 90 L376 400 H344 L318 326 H194 L168 400 H136 Z M210 294 H302 L256 166 Z" fill="url(#gld)"/>
-  </g>
-  <!-- Barre décorative -->
-  <rect x="146" y="414" width="220" height="6" rx="3" fill="url(#gld)" opacity=".5"/>
+  <circle cx="256" cy="240" r="160" fill="url(#glow)"/>
+  <rect x="8" y="8" width="496" height="496" rx="98" fill="none" stroke="url(#gld)" stroke-width="3" opacity=".15"/>
+  <text x="256" y="280" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="800" font-size="160" fill="url(#gld)">Au</text>
+  <line x1="206" y1="310" x2="306" y2="310" stroke="#d4a017" stroke-width="2" opacity=".3" stroke-linecap="round"/>
 </svg>

@@ -1,19 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
   <defs>
-    <linearGradient id="gld" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f5d060"/>
+    <linearGradient id="gld" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f7e08a"/>
       <stop offset="50%" stop-color="#d4a017"/>
       <stop offset="100%" stop-color="#b8860b"/>
     </linearGradient>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <radialGradient id="bg" cx="50%" cy="40%" r="50%">
       <stop offset="0%" stop-color="#0c1018"/>
       <stop offset="100%" stop-color="#06090e"/>
-    </linearGradient>
+    </radialGradient>
   </defs>
   <rect width="192" height="192" rx="38" fill="url(#bg)"/>
-  <rect x="4" y="4" width="184" height="184" rx="36" fill="none" stroke="url(#gld)" stroke-width="2.5" opacity=".4"/>
-  <!-- A stylisé en or -->
-  <path d="M96 36 L140 148 H126 L116 120 H76 L66 148 H52 Z M82 106 H110 L96 62 Z" fill="url(#gld)"/>
-  <!-- Barre horizontale dorée sous le A -->
-  <rect x="56" y="152" width="80" height="3" rx="1.5" fill="url(#gld)" opacity=".6"/>
+  <rect x="4" y="4" width="184" height="184" rx="36" fill="none" stroke="url(#gld)" stroke-width="2" opacity=".15"/>
+  <text x="96" y="108" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="800" font-size="64" fill="url(#gld)">Au</text>
+  <line x1="76" y1="118" x2="116" y2="118" stroke="#d4a017" stroke-width="1.5" opacity=".3" stroke-linecap="round"/>
 </svg>

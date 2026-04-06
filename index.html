@@ -242,6 +242,32 @@
     /* ============================================
        NAVIGATION BOTTOM BAR (mobile)
        ============================================ */
+    /* ─── Logo Home button ─── */
+    .nav-home {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: all .25s cubic-bezier(.4,0,.2,1);
+      padding: 4px;
+      border-radius: 12px;
+      position: relative;
+    }
+    .nav-home:hover {
+      transform: scale(1.08);
+    }
+    .nav-home:active {
+      transform: scale(.92);
+    }
+    .nav-home svg {
+      filter: drop-shadow(0 0 8px rgba(212,160,23,.2));
+      transition: filter .3s;
+    }
+    .nav-home:hover svg {
+      filter: drop-shadow(0 0 16px rgba(212,160,23,.4));
+    }
+
     .bottom-nav {
       display: flex;
       align-items: center;
@@ -690,18 +716,25 @@
        SPLASH SCREEN
        ============================================ -->
   <div class="splash" id="splash">
-    <svg class="splash-logo" viewBox="0 0 512 512">
+    <svg class="splash-logo" viewBox="0 0 512 512" style="width:120px;height:120px">
       <defs>
-        <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#f5d060"/>
+        <linearGradient id="sg" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#f7e08a"/>
           <stop offset="50%" stop-color="#d4a017"/>
           <stop offset="100%" stop-color="#b8860b"/>
         </linearGradient>
+        <radialGradient id="sglow" cx="50%" cy="45%" r="35%">
+          <stop offset="0%" stop-color="#d4a017" stop-opacity=".12"/>
+          <stop offset="100%" stop-color="#d4a017" stop-opacity="0"/>
+        </radialGradient>
       </defs>
-      <rect width="512" height="512" rx="102" fill="#0c1018"/>
-      <rect x="8" y="8" width="496" height="496" rx="98" fill="none" stroke="url(#sg)" stroke-width="4" opacity=".35"/>
-      <path d="M256 90 L376 400 H344 L318 326 H194 L168 400 H136 Z M210 294 H302 L256 166 Z" fill="url(#sg)"/>
-      <rect x="146" y="414" width="220" height="6" rx="3" fill="url(#sg)" opacity=".5"/>
+      <rect width="512" height="512" fill="#06090e" rx="0"/>
+      <circle cx="256" cy="220" r="180" fill="url(#sglow)"/>
+      <circle cx="256" cy="256" r="200" fill="none" stroke="#d4a017" stroke-width="1" opacity=".08"/>
+      <circle cx="256" cy="256" r="220" fill="none" stroke="#d4a017" stroke-width="1" opacity=".04"/>
+      <text x="256" y="245" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="800" font-size="96" fill="url(#sg)">Au</text>
+      <line x1="236" y1="270" x2="276" y2="270" stroke="#d4a017" stroke-width="1.5" opacity=".5" stroke-linecap="round"/>
+      <text x="256" y="300" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="600" font-size="13" fill="#d4a017" opacity=".4" letter-spacing="8">AURUM</text>
     </svg>
     <div class="splash-title">Aurum</div>
     <div class="splash-sub">Trading & Patrimoine</div>
@@ -773,12 +806,14 @@
         <span>Aurum</span>
       </div>
 
-      <!-- Hub -->
-      <div class="nav-item active" data-page="hub" onclick="navigate('hub')">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </div>
-        <span class="nav-label">Hub</span>
+      <!-- Logo = Home (Hub) -->
+      <div class="nav-home" onclick="navigate('hub')">
+        <svg viewBox="0 0 192 192" width="32" height="32">
+          <defs><linearGradient id="nh" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f7e08a"/><stop offset="50%" stop-color="#d4a017"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+          <rect width="192" height="192" rx="38" fill="#0c1018"/>
+          <rect x="4" y="4" width="184" height="184" rx="36" fill="none" stroke="url(#nh)" stroke-width="2" opacity=".15"/>
+          <text x="96" y="108" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="800" font-size="64" fill="url(#nh)">Au</text>
+        </svg>
       </div>
 
       <!-- Academy -->
