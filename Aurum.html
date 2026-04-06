@@ -5230,9 +5230,9 @@ function dlPDF() {
 
 // ─── LOGIN ───
 function tryLogin() {
-  const code = document.getElementById('codeInput').value;
-  if (code === '2928') { sessionStorage.setItem('enz_role','user'); unlock(true) }
-  else if (code === '4321') { sessionStorage.setItem('enz_role','user'); unlock(true) }
+  var code = document.getElementById('codeInput').value;
+  var stored = localStorage.getItem('aurum_code') || '2928';
+  if (code === stored) { sessionStorage.setItem('enz_role','user'); unlock(true) }
   else { document.getElementById('loginErr').textContent = 'Code incorrect'; document.getElementById('codeInput').value = '' }
 }
 function unlock(isAdmin) {

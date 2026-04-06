@@ -475,7 +475,13 @@ function renderCitation(){
 
     var action='',color='var(--blue)',href='Aurum_Academy.html',btn='';
 
-    if(formDone<12){
+    if(formDone<32&&j.trades.length>0){
+      /* AVERTISSEMENT : trades en live mais formation incomplète */
+      action='⚠️ Formation incomplète ('+formDone+'/32) — termine avant de trader en live';
+      btn='Reprendre Academy →';
+      href='Aurum_Academy.html';
+      color='var(--red)';
+    }else if(formDone<12){
       /* Pas fini la stratégie */
       action='🎓 Continue ta formation — module '+(formDone+1)+'/32';
       btn='Ouvrir Academy →';
