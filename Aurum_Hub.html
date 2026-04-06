@@ -131,6 +131,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
     <div class="ob-card"><div class="ob-ic">🎓</div><div class="ob-ct"><b>Academy</b> — 32 modules. Stratégie mécanique + maîtrise de l'app + gestion du capital. Tu ne trades pas avant d'avoir fini.</div></div>
     <div class="ob-card"><div class="ob-ic">📊</div><div class="ob-ct"><b>Journal</b> — Chaque trade enregistré. Dashboard, analytics, reviews, coaching automatique. Tes données = tes décisions.</div></div>
     <div class="ob-card"><div class="ob-ic">💎</div><div class="ob-ct"><b>Capital</b> — Patrimoine, prop firms, entités, fiscal, investissements. Pilote ta fortune de 6K€ à multimillionnaire.</div></div>
+    <div style="background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.15);border-radius:10px;padding:14px;margin-top:16px;font-size:12px;color:var(--t2);line-height:1.8;text-align:left">
+    <b style="color:var(--t1)">📋 Ordre recommandé :</b><br>
+    1️⃣ <b style="color:var(--blue)">Academy</b> → Apprends la stratégie (commence par M0)<br>
+    2️⃣ <b style="color:var(--gold)">Journal</b> → Enregistre tes premiers trades<br>
+    3️⃣ <b style="color:var(--purple)">Capital</b> → Gère ton patrimoine (quand tu as des revenus)
+    </div>
     <button class="ob-btn" onclick="obNext(3)">Compris →</button>
     <button class="ob-btn sec" onclick="obNext(1)">← Retour</button>
     <div class="ob-dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
@@ -139,7 +145,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
   <!-- Step 3: Data security -->
   <div class="step" id="ob-3">
     <div class="ob-title" style="font-size:20px">🔒 Tes données, ta responsabilité</div>
-    <div class="ob-sub">Aurum stocke tout dans ton navigateur (localStorage). C'est rapide et privé — mais fragile.</div>
+    <div class="ob-sub">Aurum stocke tout dans ton navigateur. C'est rapide et privé — mais si tu vides le cache, tout disparaît. Fais un backup chaque semaine.</div>
     <div class="ob-card"><div class="ob-ic">⚠️</div><div class="ob-ct"><b>Si tu vides le cache</b> ou changes de navigateur → données perdues. Fais un <b>backup JSON chaque vendredi</b>.</div></div>
     <div class="ob-card"><div class="ob-ic">☁️</div><div class="ob-ct"><b>Où stocker tes backups</b> : Google Drive, clé USB, ou envoie-toi le fichier par email. 2 fichiers : Journal + Capital.</div></div>
     <div class="ob-card"><div class="ob-ic">✅</div><div class="ob-ct"><b>Le Hub te rappelle</b> quand ton dernier backup est trop vieux. Un bouton "Tout exporter" fait les 2 en 1 clic.</div></div>
