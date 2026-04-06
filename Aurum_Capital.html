@@ -177,7 +177,7 @@ tbody tr:hover{background:rgba(167,139,250,.04)!important}
 <div class="pnl" id="p-coach"><div class="st">Coaching patrimonial</div><div id="coC"></div></div>
 <div class="pnl" id="p-health"><div class="st">Santé financière</div><div id="heC"></div></div>
 <div class="pnl" id="p-acc"><div class="st">Comptes trading <span style="font-size:10px;color:var(--t3);font-weight:400">Sync auto depuis Journal</span></div><div id="acC"></div></div>
-<div class="pnl" id="p-pf"><div class="st">Prop Firms <button class="btn bp bs" onclick="tg('pfF')">+ Challenge</button></div>
+<div class="pnl" id="p-pf"><div class="st">Prop Firms <button class="btn bp bs" onclick="tg('pfF')">+ Challenge</button> <button class="btn bo bs" onclick="importPFFromJournal()">Importer depuis Journal</button></div>
 <div id="pfF" class="crd" style="display:none;margin-bottom:14px">
 <div style="background:rgba(167,139,250,.05);padding:10px 12px;border-radius:8px;margin-bottom:12px;border-left:3px solid var(--purple);font-size:11px;color:var(--t2);line-height:1.6">
 <b style="color:var(--t1)">C'est quoi une Prop Firm ?</b><br>
@@ -391,7 +391,16 @@ var aM=D.abonnements.reduce(function(s,a){return s+(a.cost||0)},0);
 var mp=mPnL(),tM=mp[cm]?mp[cm].pnl:0;
 var hs=cH(),hc=hs>=75?'var(--green)':hs>=50?'var(--gold)':'var(--red)';
 document.getElementById('dH').innerHTML='<div class="hr" style="background:conic-gradient('+hc+' '+hs+'%,var(--bg3) '+hs+'%)"><div style="width:100px;height:100px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column"><div style="font-size:28px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+hc+'">'+hs+'</div><div style="font-size:8px;color:var(--t3);font-weight:700">SANTÉ</div></div></div>';
-document.getElementById('dK').innerHTML=kp('Patrimoine net',fm(nw),nw>=0?'var(--purple)':'var(--red)')+kp('Cash payouts',fm(pN),'var(--gold)')+kp('Capital trading perso',fm(tc),'var(--blue)')+kp('Portfolio',fm(pV),'var(--green)')+kp('Dettes',fm(db),'var(--red)')+kp('Dépenses mois',fm(eM+aM),'var(--red)')+kp('Trading P&L mois',fm(tM),tM>=0?'var(--green)':'var(--red)')+kp('Trades mois',mp[cm]?mp[cm].n:0,'var(--t2)');
+var wr=j.t.length>0?Math.round(j.t.filter(function(t){return(parseFloat(t.pl)||0)>0}).length/j.t.length*100):0;
+var avgTrade=j.t.length>0?j.t.reduce(function(s,t){return s+(parseFloat(t.pl)||0)},0)/j.t.length:0;
+var streak=0,streakType='';
+var sorted=j.t.slice().sort(function(a,b){return(b.date||'').localeCompare(a.date||'')});
+for(var si=0;si<sorted.length;si++){var isWin=(parseFloat(sorted[si].pl)||0)>0;if(si===0){streakType=isWin?'W':'L';streak=1}else if((isWin&&streakType==='W')||(!isWin&&streakType==='L'))streak++;else break}
+var streakTxt=streak>0?streak+(streakType==='W'?' ✅':' ❌'):'—';
+var gains=j.t.reduce(function(s,t){var p=parseFloat(t.pl)||0;return s+(p>0?p:0)},0);
+var losses=Math.abs(j.t.reduce(function(s,t){var p=parseFloat(t.pl)||0;return s+(p<0?p:0)},0));
+var pf=losses>0?(gains/losses).toFixed(2):'—';
+document.getElementById('dK').innerHTML=kp('Patrimoine net',fm(nw),nw>=0?'var(--purple)':'var(--red)')+kp('Cash payouts',fm(pN),'var(--gold)')+kp('Capital trading perso',fm(tc),'var(--blue)')+kp('Portfolio',fm(pV),'var(--green)')+kp('Dettes',fm(db),'var(--red)')+kp('Dépenses mois',fm(eM+aM),'var(--red)')+kp('Trading P&L mois',fm(tM),tM>=0?'var(--green)':'var(--red)')+kp('Trades mois',mp[cm]?mp[cm].n:0,'var(--t2)')+kp('Win Rate',wr+'%',wr>=50?'var(--green)':'var(--red)')+kp('Moy/trade',fm(avgTrade),avgTrade>=0?'var(--green)':'var(--red)')+kp('Série',streakTxt,streakType==='W'?'var(--green)':streakType==='L'?'var(--red)':'var(--t3)')+kp('Profit Factor',pf,parseFloat(pf)>=1.5?'var(--green)':parseFloat(pf)>=1?'var(--gold)':'var(--red)');
 var tips=gWT();document.getElementById('dW').innerHTML=tips.length?'<div class="tip"><div class="tt2">📋 Cette semaine</div>'+tips.map(function(t){return'<div style="margin-bottom:4px">→ '+t+'</div>'}).join('')+'</div>':'';
 /* Charts */
 requestAnimationFrame(function(){rAC();rEC();rRC()});rDF();
