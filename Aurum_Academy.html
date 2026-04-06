@@ -159,7 +159,17 @@ p.tx{font-size:13px;line-height:1.7;color:var(--t2);margin-bottom:9px}p.tx stron
 
 .pgb{display:flex;gap:3px;margin-bottom:10px}.pgb .dot{flex:1;height:4px;border-radius:2px;background:var(--bg3);transition:background .3s}.pgb .dot.on{background:var(--gold)}
 
-@media(max-width:768px){.side{display:none}.main{padding:14px}.mt{font-size:18px}.strip{flex-wrap:wrap;gap:3px}.strip .sep{display:none}.hdr{padding:0 12px;gap:6px}.hdr-links{display:none}}
+@media(max-width:768px){.side{display:none}.main{padding:14px 14px 80px}.mt{font-size:18px}.strip{flex-wrap:wrap;gap:3px}.strip .sep{display:none}.hdr{padding:0 12px;gap:6px}.hdr-links{display:none}
+.mob-nav{display:flex!important}
+}
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(6,9,14,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--brd);padding:8px 16px;gap:8px;align-items:center;justify-content:space-between}
+.mob-nav button{padding:10px 16px;border-radius:8px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;min-height:44px}
+.mob-nav .mn-prev{background:var(--bg3);border:1px solid var(--brd2);color:var(--t2);flex:1}
+.mob-nav .mn-prev:hover{border-color:var(--gold)}
+.mob-nav .mn-info{flex:2;text-align:center;font-size:11px;color:var(--t3);line-height:1.3}
+.mob-nav .mn-info b{color:var(--t1);display:block;font-size:12px}
+.mob-nav .mn-next{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0800;flex:1}
+.mob-nav .mn-next:hover{transform:translateY(-1px)}
 /* ─── MICRO-INTERACTIONS & POLISH ─── */
 html{scroll-behavior:smooth}
 .main{scroll-behavior:smooth}
@@ -236,6 +246,12 @@ html{scroll-behavior:smooth}
 <div class="lay">
  <nav class="side" id="nav"></nav>
  <div class="main" id="ct"></div>
+</div>
+<!-- Mobile bottom nav (visible < 768px) -->
+<div class="mob-nav" id="mobNav">
+<button class="mn-prev" onclick="if(S.c>0){goMod(S.c-1)}">← Précédent</button>
+<div class="mn-info"><b id="mobModTitle"></b><span id="mobModNum"></span></div>
+<button class="mn-next" onclick="resumeNext()">Suivant →</button>
 </div>
 <canvas class="confetti-cv" id="confetti"></canvas>
 <script>
@@ -604,6 +620,13 @@ function render(){
   if(mod.engine==='edge') renderEdge(mod.edgeIdx);
   else if(mod.engine==='academy') renderAcademy(mod.acadIdx);
   else if(mod.engine==='capital') renderCapital(mod.capIdx);
+  /* Mobile nav update */
+  try{
+    var t=document.getElementById('mobModTitle');
+    var n=document.getElementById('mobModNum');
+    if(t) t.textContent=mod.t||'';
+    if(n) n.textContent='Module '+(S.c+1)+'/'+TOTAL_MODS;
+  }catch(e){}
 }
 
 

@@ -2382,6 +2382,17 @@ function rCards() {
   try {
   const trAll = getTr(), isLive = aT === 'live';
   const tr = applyFilters(trAll), n = tr.length;
+  if (n === 0) {
+    document.getElementById('cards').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:30px 20px;background:linear-gradient(135deg,rgba(212,160,23,.04),rgba(167,139,250,.02));border:1px solid var(--border);border-radius:var(--radius);max-width:500px;margin:0 auto">' +
+      '<div style="font-size:28px;margin-bottom:8px">📊</div>' +
+      '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Aucun trade en ' + aT + '</div>' +
+      '<div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Ton flux : <b>Checklist</b> → <b>Calculateur</b> → <b>Nouveau trade</b></div>' +
+      '<button class="btn btn-g" onclick="go(\'check\')" style="margin-right:6px">✅ Checklist</button>' +
+      '<button class="btn btn-o" onclick="go(\'add\')">➕ Trade</button>' +
+      '</div>';
+    return;
+  }
   const w = tr.filter(t => isLive ? t.pl>0 : t.rr>0).length;
   const l = tr.filter(t => isLive ? t.pl<0 : t.rr<0).length;
   const wr = n ? ((w/n)*100).toFixed(1) : '-';
