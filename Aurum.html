@@ -1444,6 +1444,84 @@ tbody tr:hover {
   .scroll { overflow: visible !important; padding: 0 !important }
 }
 
+/* ─── TRADING TERMINAL POLISH ─── */
+
+/* Dashboard cards gradient borders */
+.card {
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.card:hover::before {
+  opacity: .6;
+}
+
+/* Login button shimmer */
+.enter-btn {
+  position: relative;
+  overflow: hidden;
+}
+.enter-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+  animation: btnShimmer 3s ease-in-out infinite;
+}
+@keyframes btnShimmer {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
+/* Sidebar active glow */
+.nav-item.active {
+  box-shadow: inset 0 0 12px rgba(212,160,23,.08);
+}
+
+/* HUD strip numbers pulse */
+.strip .val {
+  transition: color .3s, text-shadow .3s;
+}
+.strip .val:hover {
+  text-shadow: 0 0 12px currentColor;
+}
+
+/* Form complete state */
+.form-step.done {
+  opacity: .6;
+  transform: scale(.98);
+  transition: all .3s;
+}
+
+/* Table row selection indicator */
+tbody tr {
+  position: relative;
+}
+tbody tr:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--gold);
+  border-radius: 0 3px 3px 0;
+}
+
 /* ─── IFRAME MODE ─── */
 .in-iframe .side { display: none !important }
 .in-iframe .top-bar { display: none !important }

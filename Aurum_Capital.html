@@ -97,6 +97,31 @@ tbody tr:hover{background:rgba(167,139,250,.04)!important}
 .mw{scroll-behavior:smooth}
 .itab{transition:all .15s cubic-bezier(.4,0,.2,1)}
 .itab:active{transform:scale(.95)}
+/* ─── KPI CARD PREMIUM ─── */
+.crd {
+  position: relative;
+  overflow: hidden;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+}
+.crd::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--purple), transparent);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.crd:hover::after {
+  opacity: .5;
+}
+.crd .lb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 /* ─── IFRAME MODE ─── */
 .in-iframe .side{display:none!important}
 .in-iframe .th .hb{display:none!important}
@@ -309,7 +334,38 @@ function go(p){try{cP=p;PG.forEach(function(x){var e=document.getElementById('p-
 document.querySelectorAll('.ni').forEach(function(n){n.addEventListener('click',function(){go(n.dataset.p)})});
 function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA()}catch(e){}}
 /* ─── KPI helper ─── */
-function kp(l,v,c){return'<div class="crd"><div class="lb">'+l+'</div><div class="vl" style="color:'+c+'">'+v+'</div></div>'}
+function kp(l,v,c,icon){
+  try {
+    var ic = icon || '';
+    var icons = {
+      'Patrimoine net': '💎',
+      'Cash payouts': '💰',
+      'Capital trading perso': '📈',
+      'Portfolio': '🎯',
+      'Dettes': '📉',
+      'Dépenses mois': '💸',
+      'Trading P&L mois': '📊',
+      'Trades mois': '🔄',
+      'Dépensé': '🔥',
+      'Payouts PF': '💰',
+      'ROI': '📈',
+      'Funded/Fail': '🏆',
+      'En cours': '⏳',
+      'Total dettes': '📉',
+      'Charge/mois': '💳',
+      'Durée moy.': '⏱',
+      'Ratio dette': '⚖️',
+      'Runway': '🛡',
+      'Dettes/actifs': '⚖️',
+      'Sources revenus': '🌐',
+      'Dépenses fixes': '📋'
+    };
+    ic = icons[l] || ic || '•';
+    return '<div class="crd" style="position:relative;overflow:hidden"><div style="position:absolute;top:-8px;right:-8px;font-size:28px;opacity:.08;pointer-events:none">'+ic+'</div><div class="lb">'+ic+' '+l+'</div><div class="vl" style="color:'+c+'">'+v+'</div></div>';
+  } catch(e) {
+    return '<div class="crd"><div class="lb">'+l+'</div><div class="vl" style="color:'+c+'">'+v+'</div></div>';
+  }
+}
 /* ─── DASHBOARD ─── */
 var cA,cE,cR;
 function rD(){try{

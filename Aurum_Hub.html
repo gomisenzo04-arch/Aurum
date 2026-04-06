@@ -109,6 +109,58 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 .today-progress{display:inline-block;width:100%;max-width:180px;height:6px;border-radius:3px;background:var(--bg4);margin-top:4px;vertical-align:middle}
 .today-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .4s ease}
 @media(max-width:500px){.hub{padding:16px 12px 40px}.ob-title{font-size:22px}.hub-hdr .greeting .g2{font-size:16px}}
+
+/* ═══ ANIMATED GRADIENT BORDER — APP CARDS ═══ */
+.app-card {
+  position: relative;
+  background: linear-gradient(135deg, var(--bg2) 0%, rgba(20,26,38,.8) 100%);
+}
+.app-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, rgba(212,160,23,.2) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s;
+}
+.app-card:hover::before {
+  opacity: 1;
+}
+
+/* ═══ STREAK COUNTER PULSE ═══ */
+.streak .s-num {
+  text-shadow: 0 0 20px rgba(212,160,23,.3);
+}
+
+/* ═══ TODAY WIDGET PREMIUM BORDER ═══ */
+.today {
+  position: relative;
+  overflow: hidden;
+}
+.today::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--gold), var(--purple));
+  border-radius: 3px 0 0 3px;
+}
+
+/* ═══ SECTION SEPARATORS GRADIENT ═══ */
+.sec-box {
+  border: 1px solid transparent;
+  background-image: linear-gradient(var(--bg2), var(--bg2)), linear-gradient(135deg, var(--border) 0%, rgba(212,160,23,.15) 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
 </style>
 </head>
 <body>
@@ -387,6 +439,18 @@ function loadHub(){
     renderBackup();
     renderDataSize();
     setInterval(updateClock, 30000);
+
+    // Stagger animation des éléments
+    var items = document.querySelectorAll('.app-card, .sec-box, .today');
+    items.forEach(function(el, i) {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(12px)';
+      setTimeout(function() {
+        el.style.transition = 'all .4s cubic-bezier(.4,0,.2,1)';
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      }, 80 * i);
+    });
   }catch(e){console.error(e)}
 }
 
