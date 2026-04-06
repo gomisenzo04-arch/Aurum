@@ -3,7 +3,7 @@
    Mode hors-ligne complet pour les 4 pages
    ============================================ */
 
-var CACHE_NAME = 'aurum-v1';
+var CACHE_NAME = 'aurum-v2';
 
 var URLS_TO_CACHE = [
   './',
