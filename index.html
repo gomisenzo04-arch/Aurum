@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Aurum — Trading & Patrimoine</title>
 
   <!-- PWA -->
@@ -44,7 +44,7 @@
       --purple: #a78bfa;
       --t1: #edf2f7;
       --t2: #9bafd4;
-      --t3: #6b7ea0;
+      --t3: #8a9fc0;
       --radius: 12px;
       --transition: .25s cubic-bezier(.4, 0, .2, 1);
       --nav-h: 64px;
@@ -849,7 +849,7 @@
     <div class="login-title" id="loginTitle">Aurum</div>
     <div class="login-sub" id="loginSub">Ton avantage, documenté.</div>
     <div class="setup-text" id="setupText" style="display:none"></div>
-    <input type="password" class="login-input" id="loginCode" maxlength="4" placeholder="••••" autofocus>
+    <input type="password" class="login-input" id="loginCode" maxlength="4" placeholder="••••" autofocus aria-label="Code d'accès 4 chiffres">
     <div class="login-err" id="loginErr"></div>
     <button class="login-btn" id="loginBtn" onclick="handleLogin()">Accéder</button>
   </div>

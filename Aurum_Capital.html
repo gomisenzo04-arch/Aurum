@@ -14,7 +14,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════════ AURUM CAPITAL v2 ═══════════════════════════════════════════════ */
-:root{--bg:#06090e;--bg2:#0c1018;--bg3:#141a26;--bg4:#1b2232;--border:#1d2840;--border2:#293756;--gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--green:#00d68f;--green2:#00b377;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--purple2:#8b5cf6;--t1:#edf2f7;--t2:#9bafd4;--t3:#6b7ea0;--radius:10px;--radius-sm:6px;--transition:.2s cubic-bezier(.4,0,.2,1)}
+:root{--bg:#06090e;--bg2:#0c1018;--bg3:#141a26;--bg4:#1b2232;--border:#1d2840;--border2:#293756;--gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--green:#00d68f;--green2:#00b377;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--purple2:#8b5cf6;--t1:#edf2f7;--t2:#9bafd4;--t3:#8a9fc0;--radius:10px;--radius-sm:6px;--transition:.2s cubic-bezier(.4,0,.2,1)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex;-webkit-font-smoothing:antialiased}
 ::selection{background:rgba(167,139,250,.3)}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
@@ -77,7 +77,7 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .cb canvas{display:block;max-width:100%;max-height:100%}
 .chg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:768px){.side{width:50px;padding:8px 0}.ni{width:36px;height:36px}.pnl{padding:14px 12px 30px}.sg{grid-template-columns:repeat(2,1fr);gap:6px}.fr{flex-direction:column}.fd{min-width:100%}.th{padding:10px 12px 8px}.crd .vl{font-size:16px}.chg{grid-template-columns:1fr}}
-@media(max-width:480px){.cb{padding:10px}.chg{gap:8px}}
+@media(max-width:480px){.cb{padding:10px}.chg{gap:8px}.sg{grid-template-columns:1fr!important}.crd .vl{font-size:14px}.btn{font-size:11px;padding:8px 12px}}
 /* ─── POLISH CSS PREMIUM ─── */
 .crd{transition:all .2s cubic-bezier(.4,0,.2,1)}
 .crd:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.25);border-color:var(--purple)}

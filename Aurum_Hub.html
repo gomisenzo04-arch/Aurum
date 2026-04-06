@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#06090e;--bg2:#0c1018;--bg3:#141a26;--bg4:#1b2232;--border:#1d2840;--border2:#293756;--gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--green:#00d68f;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--t1:#edf2f7;--t2:#9bafd4;--t3:#6b7ea0;--radius:12px;--transition:.25s cubic-bezier(.4,0,.2,1)}
+:root{--bg:#06090e;--bg2:#0c1018;--bg3:#141a26;--bg4:#1b2232;--border:#1d2840;--border2:#293756;--gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--green:#00d68f;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--t1:#edf2f7;--t2:#9bafd4;--t3:#8a9fc0;--radius:12px;--transition:.25s cubic-bezier(.4,0,.2,1)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
 ::selection{background:rgba(212,160,23,.3)}
@@ -41,7 +41,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 .ob-err{font-size:12px;color:var(--red);margin-top:6px;min-height:18px}
 
 /* ═══ MAIN HUB ═══ */
-.hub{display:none;max-width:600px;margin:0 auto;padding:20px 16px 60px;min-height:100vh}
+.hub{display:none;max-width:800px;margin:0 auto;padding:20px 16px 60px;min-height:100vh}
 .hub.on{display:block;animation:slideUp .5s ease}
 
 /* Header */
@@ -211,7 +211,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
   <div class="step" id="ob-4">
     <div class="ob-title" style="font-size:20px">Crée ton code d'accès</div>
     <div class="ob-sub">4 chiffres pour protéger l'accès à ton écosystème. Retiens-le bien.</div>
-    <input class="ob-input" type="password" id="obCode" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*">
+    <input class="ob-input" type="password" id="obCode" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" aria-label="Créer un code à 4 chiffres">
     <div class="ob-err" id="obErr"></div>
     <button class="ob-btn" onclick="obFinish()">Commencer →</button>
     <button class="ob-btn sec" onclick="obNext(3)">← Retour</button>
@@ -223,7 +223,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
     <svg class="ob-logo" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="olg2" x1="0" y1="0" x2="80" y2="80"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="80" height="80" rx="20" fill="url(#olg2)"/><text x="40" y="52" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="34" fill="#1a1000">Au</text></svg>
     <div class="ob-title">Aurum</div>
     <div class="ob-sub">Entre ton code pour accéder à ton écosystème.</div>
-    <input class="ob-input" type="password" id="loginCode" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" autofocus>
+    <input class="ob-input" type="password" id="loginCode" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" autofocus aria-label="Entrer le code d'accès">
     <div class="ob-err" id="loginErr"></div>
     <button class="ob-btn" onclick="doLogin()">Entrer</button>
   </div>
