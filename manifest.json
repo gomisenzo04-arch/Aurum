@@ -1,6 +1,7 @@
 {
   "name": "Aurum — Trading & Patrimoine",
   "short_name": "Aurum",
+  "id": "aurum-pwa",
   "description": "Écosystème complet pour apprendre, trader et piloter votre patrimoine XAUUSD",
   "start_url": "./index.html",
   "scope": "./",
@@ -28,6 +29,24 @@
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Journal",
+      "url": "./Aurum.html",
+      "description": "Ouvrir le Journal"
+    },
+    {
+      "name": "Academy",
+      "url": "./Aurum_Academy.html",
+      "description": "Continuer la formation"
+    },
+    {
+      "name": "Capital",
+      "url": "./Aurum_Capital.html",
+      "description": "Gérer le patrimoine"
     }
   ]
 }

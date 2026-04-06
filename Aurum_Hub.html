@@ -102,6 +102,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 /* Footer */
 .hub-footer{text-align:center;font-size:10px;color:var(--t3);margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
 
+.app-sub { font-size:10px;color:var(--t3);margin-top:2px }
+.hub { animation: hubIn .5s cubic-bezier(.4,0,.2,1) }
+@keyframes hubIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.hub-clock{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--t3);margin-left:4px}
+.today-progress{display:inline-block;width:100%;max-width:180px;height:6px;border-radius:3px;background:var(--bg4);margin-top:4px;vertical-align:middle}
+.today-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .4s ease}
 @media(max-width:500px){.hub{padding:16px 12px 40px}.ob-title{font-size:22px}.hub-hdr .greeting .g2{font-size:16px}}
 </style>
 </head>
@@ -177,6 +183,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
       <div class="s-num" id="streakNum">0</div>
       <div class="s-lbl">🔥 jours</div>
     </div>
+    <span class="hub-clock" id="liveClock"></span>
   </div>
 
   <!-- Today widget -->
@@ -197,6 +204,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
       <div class="app-stat">
         <div class="app-val" style="color:var(--blue)" id="statFormation">—</div>
         <div class="app-lbl">modules</div>
+        <div class="app-sub" id="subFormation"></div>
       </div>
       <div class="app-arrow">→</div>
     </a>
@@ -211,6 +219,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
       <div class="app-stat">
         <div class="app-val" style="color:var(--gold)" id="statJournal">0</div>
         <div class="app-lbl">trades</div>
+        <div class="app-sub" id="subJournal"></div>
       </div>
       <div class="app-arrow">→</div>
     </a>
@@ -225,6 +234,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
       <div class="app-stat">
         <div class="app-val" style="color:var(--purple)" id="statCapital">$0</div>
         <div class="app-lbl">patrimoine</div>
+        <div class="app-sub" id="subCapital"></div>
       </div>
       <div class="app-arrow">→</div>
     </a>
@@ -370,6 +380,7 @@ function loadHub(){
     renderStats();
     renderBackup();
     renderDataSize();
+    setInterval(updateClock, 30000);
   }catch(e){console.error(e)}
 }
 
@@ -391,6 +402,14 @@ function renderCitation(){
   }catch(e){}
 }
 
+function updateClock(){
+  try{
+    var n=new Date();
+    var el=document.getElementById('liveClock');
+    if(el) el.textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
+  }catch(e){}
+}
+
 function renderGreeting(){
   try{
     var now=new Date();
@@ -400,6 +419,7 @@ function renderGreeting(){
     var h=now.getHours();
     var msg=h<12?'Bonne matinée':h<18?'Bon après-midi':'Bonne soirée';
     document.getElementById('greetMsg').textContent=msg+' 👋';
+    updateClock();
   }catch(e){}
 }
 

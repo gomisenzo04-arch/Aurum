@@ -13,6 +13,10 @@
   <meta name="apple-mobile-web-app-title" content="Aurum">
   <link rel="apple-touch-icon" href="icons/icon-192.svg">
   <meta name="description" content="Aurum — Écosystème Trading XAUUSD & Patrimoine">
+  <meta property="og:title" content="Aurum — Trading & Patrimoine">
+  <meta property="og:description" content="Écosystème complet pour trader le XAUUSD et construire ton patrimoine">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="icons/icon-512.svg">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -184,6 +188,16 @@
       z-index: 5;
     }
 
+    .page-frame.slide-left {
+      transform: translateX(-30px);
+      opacity: 0;
+    }
+
+    .page-frame.slide-right {
+      transform: translateX(30px);
+      opacity: 0;
+    }
+
     /* Loading skeleton */
     .page-loader {
       position: absolute;
@@ -207,18 +221,19 @@
     }
 
     .loader-spinner {
-      width: 36px;
-      height: 36px;
-      border: 3px solid var(--border);
+      width: 32px;
+      height: 32px;
+      border: 2.5px solid rgba(29,40,64,.5);
       border-top-color: var(--gold);
       border-radius: 50%;
       animation: spin .8s linear infinite;
     }
 
     .loader-text {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--t3);
       font-weight: 500;
+      letter-spacing: .5px;
     }
 
     @keyframes spin {
@@ -233,8 +248,10 @@
       align-items: center;
       justify-content: space-around;
       height: var(--nav-h);
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
+      background: rgba(12,16,24,.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(29,40,64,.6);
       flex-shrink: 0;
       z-index: 100;
       padding-bottom: env(safe-area-inset-bottom, 0);
@@ -532,6 +549,35 @@
     }
 
     /* ============================================
+       SAFE AREA — iPhone notch / home indicator
+       ============================================ */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .bottom-nav {
+        padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
+        height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+      }
+      .top-bar {
+        padding-top: env(safe-area-inset-top);
+      }
+    }
+
+    /* ============================================
+       TRES PETITS ECRANS (< 380px)
+       ============================================ */
+    @media (max-width: 380px) {
+      .nav-item {
+        min-width: 50px;
+        padding: 6px 8px;
+      }
+      .nav-item .nav-label {
+        font-size: 9px;
+      }
+      .top-bar .logo span {
+        font-size: 15px;
+      }
+    }
+
+    /* ============================================
        DESKTOP : sidebar au lieu de bottom nav
        ============================================ */
     @media (min-width: 769px) {
@@ -823,6 +869,10 @@
         if (page === currentPage && !isFirst) return;
 
         var prev = currentPage;
+        var pageOrder = ['hub', 'academy', 'journal', 'capital'];
+        var prevIdx = pageOrder.indexOf(prev);
+        var nextIdx = pageOrder.indexOf(page);
+        var direction = nextIdx > prevIdx ? 'left' : 'right';
         currentPage = page;
         var config = PAGES[page];
 
@@ -849,9 +899,14 @@
         if (prev && frames[prev]) {
           frames[prev].classList.remove('active');
           frames[prev].classList.add('exit');
+          frames[prev].classList.add('slide-' + direction);
           (function(p) {
             setTimeout(function() {
-              if (frames[p]) frames[p].classList.remove('exit');
+              if (frames[p]) {
+                frames[p].classList.remove('exit');
+                frames[p].classList.remove('slide-left');
+                frames[p].classList.remove('slide-right');
+              }
             }, 400);
           })(prev);
         }
