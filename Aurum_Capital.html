@@ -77,6 +77,26 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .chg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:768px){.side{width:50px;padding:8px 0}.ni{width:36px;height:36px}.pnl{padding:14px 12px 30px}.sg{grid-template-columns:repeat(2,1fr);gap:6px}.fr{flex-direction:column}.fd{min-width:100%}.th{padding:10px 12px 8px}.crd .vl{font-size:16px}.chg{grid-template-columns:1fr}}
 @media(max-width:480px){.cb{padding:10px}.chg{gap:8px}}
+/* ─── POLISH CSS PREMIUM ─── */
+.crd{transition:all .2s cubic-bezier(.4,0,.2,1)}
+.crd:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.25);border-color:var(--purple)}
+.btn{transition:all .2s cubic-bezier(.4,0,.2,1)}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:scale(.97)}
+.btn.bp:hover{box-shadow:0 4px 16px rgba(167,139,250,.3)}
+.pnl.on{animation:pnlIn .3s cubic-bezier(.4,0,.2,1)}
+@keyframes pnlIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ni{transition:all .2s cubic-bezier(.4,0,.2,1)}
+.ni:hover{transform:scale(1.08)}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:rgba(167,139,250,.04)!important}
+.tip{transition:border-color .3s}
+.tip:hover{border-color:var(--purple)}
+.crd[onclick]{cursor:pointer}
+.crd[onclick]:hover{transform:translateY(-2px) translateX(4px);border-left-width:5px!important}
+.mw{scroll-behavior:smooth}
+.itab{transition:all .15s cubic-bezier(.4,0,.2,1)}
+.itab:active{transform:scale(.95)}
 /* ─── IFRAME MODE ─── */
 .in-iframe .side{display:none!important}
 .in-iframe .th .hb{display:none!important}
@@ -333,7 +353,50 @@ function cH(){try{var sc=0,nw=cNW();var now=new Date(),cm=now.getFullYear()+'-'+
 function rHe(){try{var hs=cH(),nw=cNW(),hc=hs>=75?'var(--green)':hs>=50?'var(--gold)':'var(--red)';var now=new Date(),cm=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');var eM=D.expenses.filter(function(e){return e.month===cm}).reduce(function(s,e){return s+(e.amount||0)},0)+D.abonnements.reduce(function(s,a){return s+(a.cost||0)},0);var pN=D.payouts.reduce(function(s,p){return s+(p.net||0)},0);var db=D.passifs.reduce(function(s,p){return s+(p.remaining||0)},0);var rw=eM>0?Math.floor(pN/eM):999;var rs=new Set();D.payouts.forEach(function(p){rs.add(p.source)});if(Object.keys(mPnL()).length)rs.add('Trading');var h='<div style="text-align:center;margin-bottom:20px"><div class="hr" style="width:140px;height:140px;background:conic-gradient('+hc+' '+hs+'%,var(--bg3) '+hs+'%)"><div style="width:120px;height:120px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column"><div style="font-size:36px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+hc+'">'+hs+'</div><div style="font-size:9px;color:var(--t3);font-weight:700">/ 100</div></div></div></div>';h+='<div class="sg">'+kp('Runway',rw+' mois',rw>=6?'var(--green)':rw>=3?'var(--gold)':'var(--red)')+kp('Dettes/actifs',nw>0?Math.round(db/nw*100)+'%':'0%',db/Math.max(1,nw)<=.3?'var(--green)':'var(--red)')+kp('Sources revenus',rs.size,rs.size>=3?'var(--green)':'var(--red)')+kp('Dépenses fixes',fm(eM),'var(--t2)')+'</div>';var al=[];if(rw<3)al.push('⚠ Runway < 3 mois. Fonds d\'urgence prioritaire.');if(db/Math.max(1,nw)>.5)al.push('⚠ Ratio dettes élevé. Priorise remboursement.');if(rs.size<2)al.push('💡 Diversifie tes sources de revenus.');h+=al.length?al.map(function(a){return'<div class="tip">'+a+'</div>'}).join(''):'<div class="tip"><div class="tt2">✓ Bonne santé</div>Aucune alerte majeure.</div>';document.getElementById('heC').innerHTML=h}catch(e){}}
 /* ─── COACHING ─── */
 var ML=[{t:5000,l:'$5K',e:'🌱',tip:'Fonds d\'urgence (3 mois). Pas d\'investissement. Continue les challenges.'},{t:10000,l:'$10K',e:'🥉',tip:'Ouvre un PEA. DCA ETF World. Augmente taille comptes prop.'},{t:25000,l:'$25K',e:'🥈',tip:'Assurance-vie (prend date 8 ans). Micro-entreprise si revenus récurrents.'},{t:50000,l:'$50K',e:'🥇',tip:'Compare micro vs SASU. Expert-comptable. LMNP ?'},{t:100000,l:'$100K',e:'💎',tip:'SASU/SARL. Optimisation rémunération. SCI immo ?'},{t:250000,l:'$250K',e:'👑',tip:'Holding. Diversification géo. Gestion patrimoine pro.'},{t:500000,l:'$500K',e:'🏰',tip:'Holding opérationnelle. 2ème business. Fiscal international.'},{t:1000000,l:'$1M',e:'🏆',tip:'Family office. Convention trésorerie. Assurance homme-clé.'},{t:5000000,l:'$5M',e:'🚀',tip:'Multi-holdings. Management package. Philanthropie.'},{t:10000000,l:'$10M',e:'🌍',tip:'Multi-juridictionnel. Trust/fondation. Wealth planning.'}];
-function rCo(){try{var nw=cNW(),h='';var cur=ML.find(function(m){return m.t>nw})||ML[ML.length-1];var prev=ML.filter(function(m){return nw>=m.t});var pl=prev.length?prev[prev.length-1].l:'$0';h+='<div class="tip"><div class="tt2">📍 Position actuelle</div><b>Patrimoine : '+fm(nw)+'</b> — '+pl+' → '+cur.l+'<br><br>'+cur.tip+'</div>';h+=ML.map(function(m){var pc=Math.min(100,(nw/m.t)*100),ok=nw>=m.t;return'<div class="ob"><div class="obh"><div class="obn">'+m.e+' '+m.l+'</div><div class="obp">'+pc.toFixed(1)+'%</div></div><div class="obb"><div class="obf" style="width:'+pc+'%;'+(ok?'background:linear-gradient(90deg,var(--green),var(--green2))':'')+'"></div></div>'+(ok?'<div style="font-size:10px;color:var(--green);margin-top:3px;font-weight:600">✓ Atteint</div>':'<div style="font-size:10px;color:var(--t3);margin-top:3px">Reste : '+fm(m.t-nw)+'</div>')+'<div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.6">'+m.tip+'</div></div>'}).join('');document.getElementById('coC').innerHTML=h}catch(e){}}
+function rCo(){try{var nw=cNW(),h='';
+/* ── En-tête premium ── */
+var cur=ML.find(function(m){return m.t>nw})||ML[ML.length-1];
+var prev=ML.filter(function(m){return nw>=m.t});
+var pl=prev.length?prev[prev.length-1].l:'$0';
+h+='<div style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(212,160,23,.04));border:1px solid rgba(167,139,250,.18);border-radius:12px;padding:18px 20px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">';
+h+='<div><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">📍 OÙ TU EN ES</div>';
+h+='<div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--purple)">'+fm(nw)+'</div></div>';
+h+='<div style="text-align:right"><div style="font-size:12px;color:var(--t2);font-weight:600">Progression vers</div>';
+h+='<div style="font-size:14px;font-weight:700;color:var(--gold)">'+pl+' → '+cur.l+'</div></div></div>';
+/* ── Actions concrètes par palier ── */
+var ACT={};
+ACT[5000]='<button onclick="go(\'bud\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:DM Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Calculer mes dépenses</button> <button onclick="go(\'pf\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:DM Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Voir challenges</button>';
+ACT[10000]='<span style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-size:11px;font-weight:600">→ Ouvrir un PEA</span> <span style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-size:11px;font-weight:600">→ Commencer DCA ETF</span>';
+ACT[25000]='<button onclick="go(\'fis\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:DM Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Simuler la fiscalité</button> <button onclick="go(\'ent\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:DM Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Créer une entité</button>';
+ACT[50000]=ACT[25000];
+ACT[100000]=ACT[25000];
+ACT[250000]=ACT[25000];
+ACT[500000]=ACT[25000];
+ACT[1000000]=ACT[25000];
+ACT[5000000]=ACT[25000];
+ACT[10000000]=ACT[25000];
+/* ── Paliers ── */
+h+=ML.map(function(m){
+var pc=Math.min(100,(nw/m.t)*100),ok=nw>=m.t;
+var isNext=!ok&&(cur.t===m.t);
+var bg=isNext?'background:rgba(167,139,250,.06);border-color:var(--purple)':'';
+var barGrad=ok?'background:linear-gradient(90deg,var(--green),var(--green2))':'background:linear-gradient(90deg,var(--purple),var(--gold))';
+var card='<div class="ob" style="'+bg+'">';
+card+='<div class="obh"><div class="obn">'+m.e+' '+m.l+'</div><div class="obp">'+pc.toFixed(1)+'%</div></div>';
+card+='<div class="obb"><div class="obf" style="width:'+pc+'%;'+barGrad+';transition:width .6s ease-out"></div></div>';
+if(ok){
+card+='<div style="font-size:11px;color:var(--green);margin-top:5px;font-weight:700">✓ Palier atteint !</div>';
+}else{
+card+='<div style="font-size:11px;margin-top:5px"><span style="color:var(--gold);font-weight:700">Reste : '+fm(m.t-nw)+'</span></div>';
+}
+card+='<div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.6">'+m.tip+'</div>';
+if(!ok&&ACT[m.t]){
+card+='<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">'+ACT[m.t]+'</div>';
+}
+card+='</div>';
+return card;
+}).join('');
+document.getElementById('coC').innerHTML=h}catch(e){}}
 /* ─── ACCOUNTS ─── */
 function rAc(){try{var j=rJ(),mp2=mPnL(),h='';if(!j.a.length){document.getElementById('acC').innerHTML='<div class="tip">Aucun compte. Crée-en dans <a href="Aurum.html" style="color:var(--gold)">Aurum Journal</a>.</div>';return}var tp=0,tf=0;j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel')tp+=a.balance||0;else tf+=a.balance||0});h+='<div class="sg">'+kp('Capital perso',fm(tp),'var(--green)')+kp('Capital prop',fm(tf),'var(--blue)')+kp('Comptes',j.a.length,'var(--t2)')+'</div>';var sk=Object.keys(mp2).sort();if(sk.length){h+='<div class="cb"><div class="ct">P&L mensuel (trades live)</div><div class="tw"><table><thead><tr><th>Mois</th><th>Trades</th><th>WR</th><th>P&L</th></tr></thead><tbody>';sk.reverse().forEach(function(m){var d=mp2[m],wr=d.n>0?Math.round(d.w/d.n*100):0;h+='<tr><td>'+m+'</td><td class="mn">'+d.n+'</td><td class="mn '+(wr>=50?'ps':'ng')+'">'+wr+'%</td><td class="mn '+(d.pnl>=0?'ps':'ng')+'">'+fm(d.pnl)+'</td></tr>'});h+='</tbody></table></div></div>'}h+='<div class="st" style="margin-top:14px">Par compte</div>';j.a.forEach(function(a){var ip=a.type!=='perso'&&a.type!=='Personnel'&&a.type!=='personnel';h+='<div class="crd" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><div><b style="color:var(--t1)">'+a.name+'</b> <span style="font-size:10px;color:var(--t3)">'+a.type+'</span></div><div class="mn" style="font-size:16px;color:'+(ip?'var(--blue)':'var(--green)')+'">'+fm(a.balance)+'</div></div><div style="font-size:10px;color:var(--t3);margin-top:4px">Risque '+a.risk+'%'+(a.target?' · Target '+fm(a.target):'')+'</div></div>'});document.getElementById('acC').innerHTML=h}catch(e){}}
 /* ─── PROP FIRMS ─── */
