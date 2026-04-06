@@ -689,7 +689,20 @@ function exportAll(){
         localStorage.setItem('aurum_backup_capital',new Date().toISOString());
       },500);
     }
-    setTimeout(function(){renderBackup()},1000);
+    /* Export Formation + Streak (backup complet) */
+    var fData=localStorage.getItem('aurum_formation_v1');
+    var sData=localStorage.getItem('aurum_streak');
+    if(fData||sData){
+      setTimeout(function(){
+        var extra={};
+        if(fData)extra.formation=JSON.parse(fData);
+        if(sData)extra.streak=JSON.parse(sData);
+        var b3=new Blob([JSON.stringify(extra)],{type:'application/json'});
+        var a3=document.createElement('a');a3.href=URL.createObjectURL(b3);
+        a3.download='aurum_formation_'+today+'.json';a3.click();URL.revokeObjectURL(a3.href);
+      },1000);
+    }
+    setTimeout(function(){renderBackup()},1500);
   }catch(e){console.error(e)}
 }
 
