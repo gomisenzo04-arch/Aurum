@@ -81,7 +81,9 @@
       justify-content: space-between;
       height: 52px;
       padding: 0 16px;
-      background: var(--bg2);
+      background: linear-gradient(180deg, rgba(12,16,24,.95) 0%, rgba(12,16,24,.85) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
       z-index: 100;
@@ -168,34 +170,31 @@
       border: none;
       background: var(--bg);
       opacity: 0;
-      transform: scale(.98) translateY(8px);
-      transition: opacity .4s cubic-bezier(.4,0,.2,1), transform .4s cubic-bezier(.4,0,.2,1);
+      transform: translateX(40px) scale(.98);
+      transition: opacity .35s cubic-bezier(.4,0,.2,1), transform .35s cubic-bezier(.4,0,.2,1);
       pointer-events: none;
       z-index: 1;
     }
 
     .page-frame.active {
       opacity: 1;
-      transform: scale(1) translateY(0);
+      transform: translateX(0) scale(1);
       pointer-events: auto;
       z-index: 10;
     }
 
-    .page-frame.exit {
+    .page-frame.exit-left {
       opacity: 0;
-      transform: scale(.96) translateY(-8px);
+      transform: translateX(-40px) scale(.98);
       pointer-events: none;
       z-index: 5;
     }
 
-    .page-frame.slide-left {
-      transform: translateX(-30px);
+    .page-frame.exit-right {
       opacity: 0;
-    }
-
-    .page-frame.slide-right {
-      transform: translateX(30px);
-      opacity: 0;
+      transform: translateX(40px) scale(.98);
+      pointer-events: none;
+      z-index: 5;
     }
 
     /* Loading skeleton */
@@ -248,10 +247,10 @@
       align-items: center;
       justify-content: space-around;
       height: var(--nav-h);
-      background: rgba(12,16,24,.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(29,40,64,.6);
+      background: rgba(12,16,24,.82);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(212,160,23,.08);
       flex-shrink: 0;
       z-index: 100;
       padding-bottom: env(safe-area-inset-bottom, 0);
@@ -321,6 +320,7 @@
       height: 3px;
       border-radius: 0 0 3px 3px;
       background: var(--gold);
+      box-shadow: 0 0 8px currentColor;
       animation: nav-indicator .3s ease;
     }
 
@@ -387,8 +387,8 @@
       align-items: center;
       gap: 12px;
       padding: 12px 16px;
-      background: linear-gradient(135deg, rgba(212,160,23,.12), rgba(167,139,250,.08));
-      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(212,160,23,.08) 0%, rgba(167,139,250,.06) 100%);
+      border-bottom: 1px solid rgba(212,160,23,.12);
       flex-shrink: 0;
     }
 
@@ -457,7 +457,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: var(--bg);
+      background: radial-gradient(ellipse at 50% 30%, rgba(212,160,23,.08) 0%, var(--bg) 60%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -898,17 +898,16 @@
         /* Transition sortie de l'ancien frame */
         if (prev && frames[prev]) {
           frames[prev].classList.remove('active');
-          frames[prev].classList.add('exit');
-          frames[prev].classList.add('slide-' + direction);
-          (function(p) {
+          var exitClass = direction === 'left' ? 'exit-left' : 'exit-right';
+          frames[prev].classList.add(exitClass);
+          (function(p, cls) {
             setTimeout(function() {
               if (frames[p]) {
-                frames[p].classList.remove('exit');
-                frames[p].classList.remove('slide-left');
-                frames[p].classList.remove('slide-right');
+                frames[p].classList.remove('exit-left');
+                frames[p].classList.remove('exit-right');
               }
             }, 400);
-          })(prev);
+          })(prev, exitClass);
         }
 
         /* Créer ou réafficher le frame */
@@ -928,6 +927,8 @@
       try {
         var loader = document.getElementById('pageLoader');
         loader.classList.remove('hidden');
+        var loaderText = loader.querySelector('.loader-text');
+        if (loaderText) loaderText.textContent = 'Chargement...';
 
         var iframe = document.createElement('iframe');
         iframe.className = 'page-frame';
@@ -935,9 +936,32 @@
         iframe.setAttribute('title', config.title);
         iframe.setAttribute('loading', 'lazy');
 
+        var loaded = false;
+
+        /* Timeout 5s si l'iframe ne charge pas */
+        var timeout = setTimeout(function() {
+          try {
+            if (!loaded) {
+              loaded = true;
+              if (loaderText) loaderText.textContent = 'Chargement trop long — vérifiez votre connexion';
+              loader.querySelector('.loader-spinner').style.borderTopColor = 'var(--red)';
+              setTimeout(function() {
+                loader.classList.add('hidden');
+                iframe.classList.add('active');
+              }, 2000);
+            }
+          } catch (e) {
+            console.error('Frame timeout error:', e);
+          }
+        }, 5000);
+
         iframe.addEventListener('load', function() {
           try {
+            loaded = true;
+            clearTimeout(timeout);
             loader.classList.add('hidden');
+            if (loaderText) loaderText.textContent = 'Chargement...';
+            loader.querySelector('.loader-spinner').style.borderTopColor = '';
             iframe.classList.add('active');
 
             /* Intercepter les liens internes dans l'iframe */

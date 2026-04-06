@@ -173,6 +173,43 @@ html{scroll-behavior:smooth}
 .kp:hover{border-left-color:var(--gold3);background:rgba(212,160,23,.06)}
 .dnd-item:hover{border-color:var(--gold);transform:translateX(4px)}
 
+/* ─── GAMIFICATION — progression visuelle ─── */
+
+/* 1. Module cards sidebar — badge achievement */
+.mi.dn{position:relative}
+.mi.dn::after{content:'✓';position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:var(--green);color:#fff;font-size:8px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 2px 6px rgba(0,214,143,.4)}
+
+/* 2. Progress bar glow quand presque fini */
+.pbar-f{position:relative}
+@keyframes progressGlow{
+  0%,100%{box-shadow:0 0 8px rgba(212,160,23,.3)}
+  50%{box-shadow:0 0 16px rgba(212,160,23,.5)}
+}
+
+/* 3. Quiz correct answer celebration */
+.opt.right{animation:correctPop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes correctPop{
+  0%{transform:scale(1)}
+  50%{transform:scale(1.04)}
+  100%{transform:scale(1)}
+}
+
+/* 4. Star rating glow */
+.stars-hd{text-shadow:0 0 12px rgba(212,160,23,.4)}
+
+/* 5. Lesson content entrance */
+.kp,.tx,.dg{opacity:0;animation:lessonIn .4s ease forwards}
+.kp{animation-delay:.05s}
+.tx{animation-delay:.1s}
+.dg{animation-delay:.15s}
+@keyframes lessonIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* 6. Confetti canvas fond semi-transparent */
+#confetti{background:rgba(6,9,14,.3)}
+
 /* ─── IFRAME MODE ─── */
 .in-iframe .hdr .logo{display:none!important}
 .in-iframe .hdr .hdr-links{display:none!important}
