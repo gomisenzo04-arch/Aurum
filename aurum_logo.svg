@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Gold gradient principal -->
+    <linearGradient id="goldMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d060"/>
+      <stop offset="35%" stop-color="#d4a017"/>
+      <stop offset="70%" stop-color="#b8860b"/>
+      <stop offset="100%" stop-color="#8B6914"/>
+    </linearGradient>
+    
+    <!-- Gold light pour reflets -->
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff4c8"/>
+      <stop offset="50%" stop-color="#f5d060"/>
+      <stop offset="100%" stop-color="#d4a017"/>
+    </linearGradient>
+    
+    <!-- Fond sombre -->
+    <linearGradient id="darkBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c1018"/>
+      <stop offset="100%" stop-color="#06090e"/>
+    </linearGradient>
+    
+    <!-- Ombre portée -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feFlood flood-color="#d4a017" flood-opacity="0.4"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Ombre douce -->
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#d4a017" flood-opacity="0.3"/>
+    </filter>
+    
+    <!-- Reflet intérieur -->
+    <linearGradient id="innerShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.15)"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    
+    <!-- Masque pour le reflet -->
+    <clipPath id="iconClip">
+      <rect x="96" y="96" width="320" height="320" rx="72"/>
+    </clipPath>
+  </defs>
+  
+  <!-- Fond -->
+  <rect width="512" height="512" fill="#06090e"/>
+  
+  <!-- Cercle ambiance derrière -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="url(#goldMain)" stroke-width="0.5" opacity="0.15"/>
+  <circle cx="256" cy="256" r="230" fill="none" stroke="url(#goldMain)" stroke-width="0.3" opacity="0.08"/>
+  
+  <!-- Icône principale — carré arrondi -->
+  <g filter="url(#shadow)">
+    <rect x="96" y="96" width="320" height="320" rx="72" fill="url(#goldMain)"/>
+  </g>
+  
+  <!-- Reflet subtil en haut -->
+  <g clip-path="url(#iconClip)">
+    <ellipse cx="256" cy="96" rx="200" ry="120" fill="url(#innerShine)"/>
+  </g>
+  
+  <!-- Bordure intérieure subtile -->
+  <rect x="100" y="100" width="312" height="312" rx="70" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  
+  <!-- Texte "Au" -->
+  <text x="256" y="296" text-anchor="middle" font-family="'DM Sans', 'SF Pro Display', -apple-system, sans-serif" font-weight="800" font-size="175" fill="#0a0800" letter-spacing="-8">Au</text>
+  
+  <!-- Reflet sur le texte -->
+  <text x="256" y="296" text-anchor="middle" font-family="'DM Sans', 'SF Pro Display', -apple-system, sans-serif" font-weight="800" font-size="175" fill="url(#innerShine)" letter-spacing="-8" opacity="0.3">Au</text>
+  
+  <!-- Petit point doré lumineux (detail premium) -->
+  <circle cx="350" cy="160" r="4" fill="#fff4c8" opacity="0.6"/>
+  <circle cx="350" cy="160" r="8" fill="#fff4c8" opacity="0.15"/>
+  
+  <!-- Ligne signature en bas -->
+  <line x1="176" y1="372" x2="336" y2="372" stroke="#0a0800" stroke-width="2.5" opacity="0.15" stroke-linecap="round"/>
+</svg>
