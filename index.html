@@ -708,6 +708,94 @@
     }
 
     .offline-bar.show { display: flex; }
+
+    /* ─── LOGIN SCREEN ─── */
+    .login-screen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 30%, rgba(212,160,23,.06) 0%, var(--bg) 60%);
+      z-index: 9998;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      animation: loginFade .5s ease;
+    }
+    .login-screen.hide {
+      opacity: 0;
+      transform: scale(1.03);
+      transition: all .4s ease;
+      pointer-events: none;
+    }
+    @keyframes loginFade { from{opacity:0} to{opacity:1} }
+    .login-logo { margin-bottom: 8px; }
+    .login-title {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--gold3), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .login-sub {
+      font-size: 12px;
+      color: var(--t3);
+      margin-bottom: 12px;
+    }
+    .login-input {
+      width: 180px;
+      padding: 14px;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--t1);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      letter-spacing: 10px;
+      text-align: center;
+      outline: none;
+      transition: border .3s;
+      animation: loginBreathe 3s ease-in-out infinite;
+    }
+    .login-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212,160,23,.1);
+      animation: none;
+    }
+    @keyframes loginBreathe {
+      0%,100% { border-color: var(--border); }
+      50% { border-color: rgba(212,160,23,.2); }
+    }
+    .login-err {
+      font-size: 12px;
+      color: var(--red);
+      min-height: 18px;
+      font-weight: 600;
+    }
+    .login-btn {
+      padding: 12px 32px;
+      background: linear-gradient(135deg, var(--gold3), var(--gold), var(--gold2));
+      color: #000;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all var(--transition);
+      box-shadow: 0 4px 16px rgba(212,160,23,.25);
+    }
+    .login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(212,160,23,.35); }
+    .login-btn:active { transform: scale(.97); }
+    /* First-time setup */
+    .setup-text {
+      font-size: 13px;
+      color: var(--t2);
+      text-align: center;
+      max-width: 280px;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -740,6 +828,29 @@
     <div class="splash-sub">Trading & Patrimoine</div>
     <div class="splash-bar"><div class="splash-bar-fill" id="splashFill"></div></div>
     <div class="splash-particles" id="splashParticles"></div>
+  </div>
+
+  <!-- ============================================
+       LOGIN / SETUP SCREEN
+       ============================================ -->
+  <div class="login-screen" id="loginScreen" style="display:none">
+    <div class="login-logo">
+      <svg viewBox="0 0 512 512" width="80" height="80">
+        <defs><linearGradient id="lg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f7e08a"/><stop offset="50%" stop-color="#d4a017"/><stop offset="100%" stop-color="#b8860b"/></linearGradient><radialGradient id="lgw" cx="50%" cy="45%" r="35%"><stop offset="0%" stop-color="#d4a017" stop-opacity=".12"/><stop offset="100%" stop-color="#d4a017" stop-opacity="0"/></radialGradient></defs>
+        <rect width="512" height="512" fill="#06090e"/>
+        <circle cx="256" cy="220" r="180" fill="url(#lgw)"/>
+        <circle cx="256" cy="256" r="200" fill="none" stroke="#d4a017" stroke-width="1" opacity=".08"/>
+        <text x="256" y="245" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="800" font-size="96" fill="url(#lg)">Au</text>
+        <line x1="236" y1="270" x2="276" y2="270" stroke="#d4a017" stroke-width="1.5" opacity=".5" stroke-linecap="round"/>
+        <text x="256" y="300" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="600" font-size="13" fill="#d4a017" opacity=".4" letter-spacing="8">AURUM</text>
+      </svg>
+    </div>
+    <div class="login-title" id="loginTitle">Aurum</div>
+    <div class="login-sub" id="loginSub">Ton avantage, documenté.</div>
+    <div class="setup-text" id="setupText" style="display:none"></div>
+    <input type="password" class="login-input" id="loginCode" maxlength="4" placeholder="••••" autofocus>
+    <div class="login-err" id="loginErr"></div>
+    <button class="login-btn" id="loginBtn" onclick="handleLogin()">Accéder</button>
   </div>
 
   <!-- ============================================
@@ -859,6 +970,87 @@
     var frames = {};
     var deferredPrompt = null;
 
+    /* ---- Authentification centralisée ---- */
+    function isAuthenticated() {
+      try { return sessionStorage.getItem('aurum_auth') === '1'; } catch(e) { return false; }
+    }
+
+    function hasCode() {
+      try { return !!localStorage.getItem('aurum_code'); } catch(e) { return false; }
+    }
+
+    function showLogin() {
+      try {
+        var screen = document.getElementById('loginScreen');
+        screen.style.display = 'flex';
+        var codeInput = document.getElementById('loginCode');
+
+        if (!hasCode()) {
+          /* Premier lancement — créer un code */
+          document.getElementById('loginTitle').textContent = 'Bienvenue';
+          document.getElementById('loginSub').textContent = 'Crée ton code d\'accès';
+          document.getElementById('setupText').style.display = 'block';
+          document.getElementById('setupText').textContent = 'Choisis un code à 4 chiffres. Tu le taperas à chaque ouverture pour protéger tes données.';
+          document.getElementById('loginBtn').textContent = 'Créer mon code';
+          codeInput.placeholder = '0000';
+        } else {
+          document.getElementById('loginTitle').textContent = 'Aurum';
+          document.getElementById('loginSub').textContent = 'Ton avantage, documenté.';
+          document.getElementById('setupText').style.display = 'none';
+          document.getElementById('loginBtn').textContent = 'Accéder';
+        }
+        codeInput.value = '';
+        codeInput.focus();
+        codeInput.addEventListener('keyup', function(e) {
+          if (e.key === 'Enter') handleLogin();
+        });
+      } catch(e) { startApp(); }
+    }
+
+    function handleLogin() {
+      try {
+        var code = document.getElementById('loginCode').value;
+        var err = document.getElementById('loginErr');
+
+        if (code.length !== 4 || !/^\d{4}$/.test(code)) {
+          err.textContent = '4 chiffres requis';
+          return;
+        }
+
+        if (!hasCode()) {
+          /* Création du code */
+          localStorage.setItem('aurum_code', code);
+          sessionStorage.setItem('aurum_auth', '1');
+          document.getElementById('loginScreen').classList.add('hide');
+          setTimeout(startApp, 400);
+        } else {
+          /* Vérification */
+          var stored = localStorage.getItem('aurum_code');
+          if (code === stored) {
+            sessionStorage.setItem('aurum_auth', '1');
+            /* Aussi mettre enz_role pour que le Journal ne redemande pas */
+            sessionStorage.setItem('enz_role', 'a');
+            document.getElementById('loginScreen').classList.add('hide');
+            setTimeout(startApp, 400);
+          } else {
+            err.textContent = 'Code incorrect';
+            document.getElementById('loginCode').value = '';
+            document.getElementById('loginCode').focus();
+          }
+        }
+      } catch(e) { startApp(); }
+    }
+
+    function startApp() {
+      try {
+        document.getElementById('app').style.opacity = '1';
+        document.getElementById('app').style.transition = 'opacity .4s ease';
+        var hash = window.location.hash.replace('#', '');
+        var startPage = PAGES[hash] ? hash : 'hub';
+        navigate(startPage, true);
+      } catch(e) {}
+    }
+
     /* ---- Splash Screen ---- */
     function initSplash() {
       try {
@@ -882,19 +1074,17 @@
         setTimeout(function() { fill.style.width = '100%'; }, 800);
         setTimeout(function() {
           document.getElementById('splash').classList.add('hide');
-          document.getElementById('app').style.opacity = '1';
-          document.getElementById('app').style.transition = 'opacity .4s ease';
 
-          /* Charger la page initiale */
-          var hash = window.location.hash.replace('#', '');
-          var startPage = PAGES[hash] ? hash : 'hub';
-          navigate(startPage, true);
+          /* Vérifier l'authentification */
+          if (isAuthenticated()) {
+            startApp();
+          } else {
+            showLogin();
+          }
         }, 1200);
       } catch (e) {
-        /* Fallback si erreur splash */
         document.getElementById('splash').style.display = 'none';
-        document.getElementById('app').style.opacity = '1';
-        navigate('hub', true);
+        startApp();
       }
     }
 
