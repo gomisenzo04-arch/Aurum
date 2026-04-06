@@ -78,16 +78,19 @@ tr:hover td{background:rgba(167,139,250,.02)}
 @media(max-width:768px){.side{width:50px;padding:8px 0}.ni{width:36px;height:36px}.pnl{padding:14px 12px 30px}.sg{grid-template-columns:repeat(2,1fr);gap:6px}.fr{flex-direction:column}.fd{min-width:100%}.th{padding:10px 12px 8px}.crd .vl{font-size:16px}.chg{grid-template-columns:1fr}}
 @media(max-width:480px){.cb{padding:10px}.chg{gap:8px}}
 /* ─── IFRAME MODE : sidebar → barre horizontale ─── */
+.in-iframe{
+  display:flex!important;flex-direction:column!important;
+  height:100vh!important;overflow:hidden!important
+}
 .in-iframe .side{
-  width:100%!important;height:46px!important;
-  flex-direction:row!important;padding:0 8px!important;gap:2px!important;
-  position:sticky!important;top:0!important;
+  width:100%!important;height:44px!important;min-height:44px!important;
+  flex-direction:row!important;padding:0 6px!important;gap:2px!important;
   overflow-x:auto!important;overflow-y:hidden!important;
-  background:rgba(6,9,14,.95)!important;
+  background:rgba(6,9,14,.96)!important;
   backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;
   border-right:none!important;border-bottom:1px solid var(--border)!important;
   z-index:200!important;align-items:center!important;
-  scrollbar-width:none!important
+  scrollbar-width:none!important;flex-shrink:0!important
 }
 .in-iframe .side::-webkit-scrollbar{display:none}
 .in-iframe .side .logo{display:none!important}
@@ -96,9 +99,9 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .in-iframe .side .ssp{display:none!important}
 .in-iframe .side .sl{display:none!important}
 .in-iframe .ni{
-  flex-shrink:0!important;width:auto!important;height:34px!important;
+  flex-shrink:0!important;width:auto!important;height:32px!important;
   padding:0 10px!important;border-radius:8px!important;
-  gap:6px!important;flex-direction:row!important
+  gap:5px!important;flex-direction:row!important;display:flex!important
 }
 .in-iframe .ni .tt{
   position:static!important;opacity:1!important;background:none!important;
@@ -107,12 +110,10 @@ tr:hover td{background:rgba(167,139,250,.02)}
   color:inherit!important;box-shadow:none!important;border:none!important;
   left:auto!important
 }
-.in-iframe .ni .tt::after{display:none!important}
-.in-iframe .ni svg{width:16px!important;height:16px!important}
-.in-iframe .ni.on{background:rgba(167,139,250,.12)!important;color:var(--purple)!important}
+.in-iframe .ni svg{width:15px!important;height:15px!important}
+.in-iframe .ni.on{background:rgba(167,139,250,.15)!important;color:var(--purple)!important}
 .in-iframe .th .hb{display:none!important}
-.in-iframe .mw{width:100%!important}
-.in-iframe body{display:block!important}
+.in-iframe .mw{flex:1!important;width:100%!important;overflow-y:auto!important}
 </style>
 </head>
 <body>
