@@ -1353,7 +1353,10 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 
 /* ─── IFRAME MODE ─── */
 .in-iframe .side { display: none !important }
-.in-iframe .top-bar { display: none !important }
+.in-iframe .top-bar h1 { display: none !important }
+.in-iframe .top-bar { height: auto !important; padding: 6px 12px !important; min-height: 0 !important; gap: 6px !important }
+.in-iframe .top-bar #accSelector { font-size: 11px }
+.in-iframe .top-bar .strip { display: none !important }
 .in-iframe .login-overlay { border-radius: 0 }
 .itabs {
   display: flex; align-items: center; gap: 2px; padding: 4px 8px;
