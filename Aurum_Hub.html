@@ -298,14 +298,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
     </a>
   </div>
 
-  <!-- Backup & Security -->
-  <div class="sec-box">
-    <div class="sec-title">🔒 Sécurité & Données</div>
-    <div id="backupStatus"></div>
-    <div class="backup-btns">
-      <button class="bb bb-gold" onclick="exportAll()">📦 Tout exporter</button>
-      <button class="bb bb-outline" onclick="toggleGuide()">📖 Guide sécurité</button>
-    </div>
+  <!-- Backup compact -->
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px">
+    <div style="font-size:14px">💾</div>
+    <div style="flex:1;font-size:12px" id="backupStatus"></div>
+    <button class="bb bb-gold" onclick="exportAll()" style="flex:none;padding:8px 14px;font-size:11px">Exporter</button>
+    <button class="bb bb-outline" onclick="toggleGuide()" style="flex:none;padding:8px 14px;font-size:11px">?</button>
   </div>
 
   <!-- Security guide (hidden by default) -->
@@ -466,18 +464,57 @@ function loadHub(){
 /* ─── CITATION MOTIVANTE ─── */
 function renderCitation(){
   try{
-    var citations=[
-      "La discipline est le pont entre les objectifs et l'accomplissement.",
-      "Ce n'est pas le marché qu'il faut battre, c'est toi-même.",
-      "Un bon système bat un bon trader, à chaque fois.",
-      "Le patrimoine se construit trade par trade, jour après jour.",
-      "La patience est la mère de toutes les vertus en trading.",
-      "Protège ton capital comme ta vie — il est ta liberté.",
-      "Le processus compte plus que le résultat d'un seul trade.",
-      "Chaque jour sans erreur est un jour de victoire."
-    ];
-    var idx=Math.floor(Math.random()*citations.length);
-    document.getElementById('hubCitation').textContent='« '+citations[idx]+' »';
+    var el=document.getElementById('hubCitation');
+    /* Bannière d'action contextuelle au lieu de citation */
+    var formRaw=localStorage.getItem('aurum_formation_v1');
+    var formDone=0;
+    if(formRaw){try{formDone=(JSON.parse(formRaw).d||[]).length}catch(e){}}
+    var j=readJournal();
+    var now=new Date(),dow=now.getDay();
+
+    var action='',color='var(--blue)',href='Aurum_Academy.html',btn='';
+
+    if(formDone<12){
+      /* Pas fini la stratégie */
+      action='🎓 Continue ta formation — module '+(formDone+1)+'/32';
+      btn='Ouvrir Academy →';
+      href='Aurum_Academy.html';
+      color='var(--blue)';
+    }else if(formDone<32){
+      /* Stratégie ok, continue l'app */
+      action='🎓 Formation en cours — '+(formDone)+'/32 modules faits';
+      btn='Continuer →';
+      href='Aurum_Academy.html';
+      color='var(--blue)';
+    }else if(j.trades.length===0){
+      /* Formation finie, pas de trade */
+      action='📊 Formation terminée ! Enregistre ton premier trade';
+      btn='Ouvrir Journal →';
+      href='Aurum.html';
+      color='var(--gold)';
+    }else if(dow>=1&&dow<=5){
+      /* Jour de trading */
+      var todayTrades=j.trades.filter(function(t){return t.date===now.toISOString().slice(0,10)}).length;
+      if(todayTrades===0){
+        action='✅ Ouvre ta checklist et commence ta session';
+        btn='Ouvrir Journal →';
+        href='Aurum.html';
+        color='var(--gold)';
+      }else{
+        action='📊 '+todayTrades+' trade(s) aujourd\'hui — continue ta session';
+        btn='Voir Dashboard →';
+        href='Aurum.html';
+        color='var(--green)';
+      }
+    }else{
+      /* Weekend */
+      action='📝 Weekend — fais ta review hebdo et ton backup';
+      btn='Ouvrir Journal →';
+      href='Aurum.html';
+      color='var(--gold)';
+    }
+
+    el.innerHTML='<div style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(212,160,23,.05),rgba(167,139,250,.03));border:1px solid var(--border);border-left:3px solid '+color+';border-radius:var(--radius);padding:12px 16px"><div style="flex:1;font-size:13px;font-weight:600;color:var(--t1)">'+action+'</div><a href="'+href+'" style="padding:8px 16px;border-radius:8px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .2s">'+btn+'</a></div>';
   }catch(e){}
 }
 
@@ -760,14 +797,16 @@ function renderBackup(){
   try{
     var el=document.getElementById('backupStatus');
     var bk=getLastBackupDays();
-    var jClass=bk.journal<=7?'backup-ok':bk.journal<=14?'backup-warn':'backup-bad';
-    var cClass=bk.capital<=7?'backup-ok':bk.capital<=14?'backup-warn':'backup-bad';
-    var jText=bk.journal===999?'Jamais':'il y a '+bk.journal+'j';
-    var cText=bk.capital===999?'Jamais':'il y a '+bk.capital+'j';
-
-    el.innerHTML=
-      '<div class="backup-row"><div class="backup-dot '+jClass+'"></div><span style="flex:1;color:var(--t2)">Journal</span><div style="text-align:right"><span style="font-size:11px;font-weight:600;color:var(--t1)">'+jText+'</span>'+backupBar(bk.journal)+'</div></div>'+
-      '<div class="backup-row"><div class="backup-dot '+cClass+'"></div><span style="flex:1;color:var(--t2)">Capital</span><div style="text-align:right"><span style="font-size:11px;font-weight:600;color:var(--t1)">'+cText+'</span>'+backupBar(bk.capital)+'</div></div>';
+    var worst=Math.max(bk.journal,bk.capital);
+    var col=worst<=7?'var(--green)':worst<=14?'var(--gold)':'var(--red)';
+    var dot='<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+col+';margin-right:4px"></span>';
+    if(worst===999){
+      el.innerHTML=dot+'<span style="color:var(--red);font-weight:600">Jamais sauvegardé</span>';
+    }else if(worst<=7){
+      el.innerHTML=dot+'<span style="color:var(--t2)">Backup OK ('+worst+'j)</span>';
+    }else{
+      el.innerHTML=dot+'<span style="color:'+col+';font-weight:600">Backup il y a '+worst+'j</span>';
+    }
   }catch(e){}
 }
 
