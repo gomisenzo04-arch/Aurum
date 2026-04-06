@@ -1566,6 +1566,9 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 <span>Comm <b id="cCo" style="color:var(--t3)">$0.80</b></span>
 <span>Usage <b id="cUsage" style="color:var(--green)">98%</b></span>
 </div>
+<div style="text-align:center;margin-top:12px">
+<button class="btn btn-g" onclick="calcToTrade()" style="padding:10px 24px;font-size:12px">Enregistrer ce trade →</button>
+</div>
 </div>
 
 <!-- QUICK REFERENCE GRID (current account) -->
@@ -3890,6 +3893,26 @@ function rSlQuickBtns() {
   } catch(e) { console.error('[Aurum] rSlQuickBtns:', e) }
 }
 
+function calcToTrade() {
+  try {
+    var sl = parseFloat(document.getElementById('cSL').value) || 0;
+    var lot = document.getElementById('cRes').textContent;
+    /* Pré-remplir le formulaire trade */
+    var fSL = document.getElementById('fSL');
+    var fLot = document.getElementById('fLot');
+    if (fSL) fSL.value = sl;
+    if (fLot) fLot.value = lot;
+    /* Auto-remplir la date et l'heure */
+    var fD = document.getElementById('fD');
+    var fT = document.getElementById('fT');
+    if (fD) fD.valueAsDate = new Date();
+    if (fT) { var n = new Date(); fT.value = n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0') }
+    /* Naviguer vers le formulaire */
+    go('add');
+    toast('SL ' + sl + ' pts · Lot ' + lot + ' pré-rempli');
+  } catch(e) { go('add'); }
+}
+
 function copyLot() {
   const lot = document.getElementById('cRes').textContent;
   navigator.clipboard.writeText(lot).then(() => {
@@ -5585,6 +5608,14 @@ function validateTrade() {
     renderValidatedTrades();
     updCkProgress();
     toast('Trade #' + ckTradeNum + ' validé à ' + time);
+    /* Proposer d'enregistrer le trade */
+    if (confirm('Trade #' + ckTradeNum + ' validé !\n\nAller au formulaire pour l\'enregistrer ?')) {
+      var fD = document.getElementById('fD');
+      var fT = document.getElementById('fT');
+      if (fD) fD.valueAsDate = new Date();
+      if (fT) fT.value = time;
+      go('add');
+    }
   } catch(e) { console.error('[Aurum] validateTrade:', e) }
 }
 
