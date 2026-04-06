@@ -1020,7 +1020,9 @@
         if (!hasCode()) {
           /* Création du code */
           localStorage.setItem('aurum_code', code);
+          localStorage.setItem('aurum_setup', '1');
           sessionStorage.setItem('aurum_auth', '1');
+          sessionStorage.setItem('enz_role', 'a');
           document.getElementById('loginScreen').classList.add('hide');
           setTimeout(startApp, 400);
         } else {
