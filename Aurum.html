@@ -5460,13 +5460,29 @@ adaptForm();
 try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');
   var itabs=[
-    {p:'dash',l:'Dashboard'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},
-    {p:'add',l:'Nouveau trade'},{p:'hist',l:'Historique'},{p:'time',l:'Horaires'},
-    {p:'review',l:'Review'},{p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'},
-    {p:'backup',l:'Backup'},{p:'settings',l:'Réglages'}
+    {p:'dash',l:'📊 Dashboard',g:''},
+    {p:'_s1',l:'',g:'sep'},
+    {p:'check',l:'✅ Checklist',g:''},
+    {p:'calc',l:'🔢 Calculateur',g:''},
+    {p:'add',l:'➕ Trade',g:''},
+    {p:'_s2',l:'',g:'sep'},
+    {p:'hist',l:'📋 Historique',g:''},
+    {p:'time',l:'🕐 Horaires',g:''},
+    {p:'review',l:'📝 Review',g:''},
+    {p:'_s3',l:'',g:'sep'},
+    {p:'rules',l:'📖 Règles',g:''},
+    {p:'viab',l:'📈 Viabilité',g:''},
+    {p:'backup',l:'💾 Backup',g:''},
+    {p:'settings',l:'⚙️ Réglages',g:''}
   ];
   var bar=document.createElement('div');bar.className='itabs';bar.id='iframeTabs';
   itabs.forEach(function(t){
+    if(t.g==='sep'){
+      var sep=document.createElement('div');
+      sep.style.cssText='width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0';
+      bar.appendChild(sep);
+      return;
+    }
     var b=document.createElement('button');b.className='itab'+(t.p==='dash'?' on':'');
     b.textContent=t.l;b.setAttribute('data-p',t.p);
     b.onclick=function(){
