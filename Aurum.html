@@ -1381,6 +1381,69 @@ tbody tr:hover {
   background: rgba(212,160,23,.04) !important;
 }
 
+/* ─── PREMIUM POLISH ─── */
+
+/* Equity curve canvas glow */
+.panel canvas {
+  border-radius: 8px;
+}
+
+/* Stats cards shimmer on first load */
+@keyframes cardShimmer {
+  0% { background-position: -200px 0 }
+  100% { background-position: 200px 0 }
+}
+
+/* Login screen improvements */
+.login-box input:focus {
+  animation: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212,160,23,.1), 0 0 30px rgba(212,160,23,.06);
+}
+
+/* Checklist items polish */
+.ck-item {
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+}
+.ck-item:hover {
+  background: rgba(212,160,23,.03);
+  transform: translateX(2px);
+}
+
+/* Form steps - visual flow */
+.form-step {
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+}
+
+/* Toast notifications premium */
+.toast-container .toast {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Scrollbar premium */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(212,160,23,.35), rgba(212,160,23,.15));
+}
+
+/* Selection color */
+::selection {
+  background: rgba(212,160,23,.25);
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Print styles - hide non-essential */
+@media print {
+  .side, .top-bar, .nav-item { display: none !important }
+  .content { margin: 0 !important }
+  .scroll { overflow: visible !important; padding: 0 !important }
+}
+
 /* ─── IFRAME MODE ─── */
 .in-iframe .side { display: none !important }
 .in-iframe .top-bar { display: none !important }
