@@ -1465,13 +1465,13 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 
 <!-- CHECKLIST -->
 <div class="panel" id="check">
-<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
 <button class="btn btn-g" onclick="dlPDF()">Télécharger PDF</button>
-<button class="btn btn-o" onclick="resetChecklist()">Reset</button>
-<button class="btn btn-o" style="background:rgba(167,139,250,.1);border-color:var(--purple);color:var(--purple)" onclick="addTradeBlock()">+ Trade</button>
-<span id="ckTradeCount" style="font-size:11px;color:var(--t3);display:flex;align-items:center"></span>
+<button class="btn btn-o" onclick="resetChecklist()">Reset journée</button>
 <div id="ckProgress" style="flex:1;display:flex;align-items:center;gap:8px;min-width:120px"><div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden"><div id="ckBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold),#f5d060);border-radius:3px;transition:width .3s"></div></div><span id="ckCount" style="font-size:11px;color:var(--t3);min-width:40px"></span></div>
 </div>
+<!-- Récap trades validés -->
+<div id="ckValidatedTrades"></div>
 <div id="checkContent">
 <div id="ckStatus" style="text-align:center;padding:10px;margin-bottom:10px;border-radius:var(--radius-sm);background:var(--bg3);border:1.5px solid var(--border);transition:all .3s;display:flex;align-items:center;justify-content:center;gap:10px">
 <span id="ckStatusIcon" style="font-size:20px">🔴</span>
@@ -1512,6 +1512,11 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 <div class="ck ck-crit" data-n="20"><input type="checkbox"><span><strong>Avant 21h</strong> <em>— pas sur chantier</em></span></div>
 <div class="ck ck-crit" data-n="21"><input type="checkbox"><span><strong>1 seul trade</strong> <em>— pas de simultané</em></span></div>
 </div></div>
+<!-- Bouton valider trade -->
+<div style="text-align:center;margin:14px 0">
+<button class="btn btn-g" onclick="validateTrade()" style="padding:12px 28px;font-size:13px">✓ Valider ce trade et passer au suivant</button>
+<div style="font-size:10px;color:var(--t3);margin-top:6px">Entrée + Gestion seront réinitialisés. Filtres et Préparation restent.</div>
+</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
 <div class="rule-box"><strong>INTERDITS :</strong> Intervention manuelle · Partiel · BE · Analyse tel</div>
 <div class="green-box"><strong>APRÈS :</strong> Journal immédiat — 3 screenshots (5min+1min+rés)</div>
@@ -5527,7 +5532,90 @@ function updCkProgress() {
 }
 
 // ─── MULTI-TRADE CHECKLIST ───
-var ckTradeNum = 1;
+var ckTradeNum = 0;
+var ckValidatedTrades = [];
+
+function validateTrade() {
+  try {
+    // Capturer l'état des phases Entrée + Gestion + Filtres
+    var entree = [];
+    document.querySelectorAll('#checkContent .ck-section')[1].querySelectorAll('.ck').forEach(function(ck) {
+      var cb = ck.querySelector('input[type=checkbox]');
+      var label = ck.querySelector('strong');
+      entree.push({ name: label ? label.textContent : '?', checked: cb ? cb.checked : false });
+    });
+    var gestion = [];
+    document.querySelectorAll('#checkContent .ck-section')[2].querySelectorAll('.ck').forEach(function(ck) {
+      var cb = ck.querySelector('input[type=checkbox]');
+      var label = ck.querySelector('strong');
+      gestion.push({ name: label ? label.textContent : '?', checked: cb ? cb.checked : false });
+    });
+    var filtres = [];
+    document.querySelectorAll('#checkContent .ck-section')[3].querySelectorAll('.ck').forEach(function(ck) {
+      var cb = ck.querySelector('input[type=checkbox]');
+      var label = ck.querySelector('strong');
+      filtres.push({ name: label ? label.textContent : '?', checked: cb ? cb.checked : false });
+    });
+
+    var allEntree = entree.every(function(e) { return e.checked });
+    var allGestion = gestion.every(function(g) { return g.checked });
+    var allFiltres = filtres.every(function(f) { return f.checked });
+
+    if (!allFiltres) {
+      if (!confirm('Filtres bloquants non validés ! Valider quand même ?')) return;
+    }
+
+    ckTradeNum++;
+    var now = new Date();
+    var time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    ckValidatedTrades.push({
+      num: ckTradeNum,
+      time: time,
+      entree: entree,
+      gestion: gestion,
+      filtres: filtres,
+      allOk: allEntree && allGestion && allFiltres
+    });
+
+    // Reset Entrée + Gestion (pas Préparation ni Filtres)
+    var sections = document.querySelectorAll('#checkContent .ck-section');
+    if (sections[1]) sections[1].querySelectorAll('input[type=checkbox]').forEach(function(c) { c.checked = false });
+    if (sections[2]) sections[2].querySelectorAll('input[type=checkbox]').forEach(function(c) { c.checked = false });
+
+    renderValidatedTrades();
+    updCkProgress();
+    toast('Trade #' + ckTradeNum + ' validé à ' + time);
+  } catch(e) { console.error('[Aurum] validateTrade:', e) }
+}
+
+function renderValidatedTrades() {
+  try {
+    var el = document.getElementById('ckValidatedTrades');
+    if (!el || ckValidatedTrades.length === 0) { if (el) el.innerHTML = ''; return; }
+
+    var html = '<div style="margin-bottom:14px">';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Trades validés aujourd\'hui (' + ckValidatedTrades.length + ')</div>';
+
+    ckValidatedTrades.forEach(function(t) {
+      var icon = t.allOk ? '✅' : '⚠️';
+      var col = t.allOk ? 'var(--green)' : 'var(--gold)';
+      var eOk = t.entree.filter(function(e) { return e.checked }).length;
+      var gOk = t.gestion.filter(function(g) { return g.checked }).length;
+      var fOk = t.filtres.filter(function(f) { return f.checked }).length;
+
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-left:3px solid ' + col + ';border-radius:8px;margin-bottom:6px;font-size:12px">';
+      html += '<span style="font-size:16px">' + icon + '</span>';
+      html += '<span style="font-weight:700;color:var(--t1)">Trade #' + t.num + '</span>';
+      html += '<span style="color:var(--t3);font-family:JetBrains Mono,monospace;font-size:11px">' + t.time + '</span>';
+      html += '<span style="color:var(--t2)">Entrée ' + eOk + '/' + t.entree.length + '</span>';
+      html += '<span style="color:var(--t2)">Gestion ' + gOk + '/' + t.gestion.length + '</span>';
+      html += '<span style="color:var(--t2)">Filtres ' + fOk + '/' + t.filtres.length + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+  } catch(e) {}
+}
 
 function addTradeBlock() {
   try {
@@ -5567,9 +5655,9 @@ function resetChecklist() {
     document.querySelectorAll('#check input[type=checkbox]').forEach(function(c) { c.checked = false });
     var extra = document.getElementById('extraTrades');
     if (extra) extra.innerHTML = '';
-    ckTradeNum = 1;
-    var countEl = document.getElementById('ckTradeCount');
-    if (countEl) countEl.textContent = '';
+    ckTradeNum = 0;
+    ckValidatedTrades = [];
+    renderValidatedTrades();
     updCkProgress();
   } catch(e) {}
 }
