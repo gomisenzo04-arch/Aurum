@@ -77,10 +77,42 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .chg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:768px){.side{width:50px;padding:8px 0}.ni{width:36px;height:36px}.pnl{padding:14px 12px 30px}.sg{grid-template-columns:repeat(2,1fr);gap:6px}.fr{flex-direction:column}.fd{min-width:100%}.th{padding:10px 12px 8px}.crd .vl{font-size:16px}.chg{grid-template-columns:1fr}}
 @media(max-width:480px){.cb{padding:10px}.chg{gap:8px}}
-/* ─── IFRAME MODE ─── */
-.in-iframe .side{display:none!important}
+/* ─── IFRAME MODE : sidebar → barre horizontale ─── */
+.in-iframe .side{
+  width:100%!important;height:46px!important;
+  flex-direction:row!important;padding:0 8px!important;gap:2px!important;
+  position:sticky!important;top:0!important;
+  overflow-x:auto!important;overflow-y:hidden!important;
+  background:rgba(6,9,14,.95)!important;
+  backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;
+  border-right:none!important;border-bottom:1px solid var(--border)!important;
+  z-index:200!important;align-items:center!important;
+  scrollbar-width:none!important
+}
+.in-iframe .side::-webkit-scrollbar{display:none}
+.in-iframe .side .logo{display:none!important}
+.in-iframe .side .slbl{display:none!important}
+.in-iframe .side .ssep{display:none!important}
+.in-iframe .side .ssp{display:none!important}
+.in-iframe .side .sl{display:none!important}
+.in-iframe .ni{
+  flex-shrink:0!important;width:auto!important;height:34px!important;
+  padding:0 10px!important;border-radius:8px!important;
+  gap:6px!important;flex-direction:row!important
+}
+.in-iframe .ni .tt{
+  position:static!important;opacity:1!important;background:none!important;
+  padding:0!important;font-size:11px!important;font-weight:600!important;
+  white-space:nowrap!important;pointer-events:auto!important;
+  color:inherit!important;box-shadow:none!important;border:none!important;
+  left:auto!important
+}
+.in-iframe .ni .tt::after{display:none!important}
+.in-iframe .ni svg{width:16px!important;height:16px!important}
+.in-iframe .ni.on{background:rgba(167,139,250,.12)!important;color:var(--purple)!important}
 .in-iframe .th .hb{display:none!important}
-.in-iframe .mw{width:100%}
+.in-iframe .mw{width:100%!important}
+.in-iframe body{display:block!important}
 </style>
 </head>
 <body>

@@ -1319,10 +1319,68 @@ body::before {
   .green-box { border-color: #060 !important; color: #060 !important; background: #f0fff0 !important }
   .panel { max-width: 100% !important }
 }
-/* ─── IFRAME MODE : cacher sidebar quand embarqué dans le SPA ─── */
-.in-iframe .side { display: none !important }
+/* ─── IFRAME MODE : sidebar → barre horizontale quand embarqué dans le SPA ─── */
+.in-iframe .side {
+  width: 100% !important;
+  height: 46px !important;
+  flex-direction: row !important;
+  padding: 0 8px !important;
+  gap: 2px !important;
+  position: sticky !important;
+  top: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  background: rgba(6,9,14,.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  z-index: 200 !important;
+  align-items: center !important;
+  scrollbar-width: none !important
+}
+.in-iframe .side::-webkit-scrollbar { display: none }
+.in-iframe .side .logo { display: none !important }
+.in-iframe .side .nav-link { display: none !important }
+.in-iframe .side .nav-sep { display: none !important }
+.in-iframe .side > div[style*="margin-top:auto"] { display: none !important }
+.in-iframe .side .nav-item {
+  flex-shrink: 0 !important;
+  width: auto !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  border-radius: 8px !important;
+  gap: 6px !important;
+  flex-direction: row !important
+}
+.in-iframe .side .nav-item .tooltip {
+  position: static !important;
+  opacity: 1 !important;
+  background: none !important;
+  padding: 0 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  pointer-events: auto !important;
+  color: inherit !important;
+  box-shadow: none !important
+}
+.in-iframe .side .nav-item .tooltip::after { display: none !important }
+.in-iframe .side .nav-item svg {
+  width: 16px !important;
+  height: 16px !important
+}
+.in-iframe .side .nav-item.active {
+  background: rgba(212,160,23,.12) !important;
+  color: var(--gold) !important
+}
+.in-iframe .side .nav-item.active::before {
+  display: none !important
+}
 .in-iframe .content { margin-left: 0 !important }
 .in-iframe .login-overlay { border-radius: 0 }
+.in-iframe .top-bar { display: none !important }
+.in-iframe body { display: block !important }
 </style>
 </head>
 <body>

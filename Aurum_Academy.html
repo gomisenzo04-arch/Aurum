@@ -160,10 +160,12 @@ p.tx{font-size:13px;line-height:1.7;color:var(--t2);margin-bottom:9px}p.tx stron
 
 @media(max-width:768px){.side{display:none}.main{padding:14px}.mt{font-size:18px}.strip{flex-wrap:wrap;gap:3px}.strip .sep{display:none}.hdr{padding:0 12px;gap:6px}.hdr-links{display:none}}
 /* ─── IFRAME MODE ─── */
-.in-iframe .hdr{display:none!important}
+.in-iframe .hdr .logo{display:none!important}
+.in-iframe .hdr .hdr-links{display:none!important}
+.in-iframe .hdr button[onclick*="Reset"]{display:none!important}
 .in-iframe .side{display:none!important}
 .in-iframe .lay{min-height:100vh}
-.in-iframe .main{margin:0 auto;padding-top:16px}
+.in-iframe .main{margin:0 auto;padding-top:8px}
 </style>
 </head>
 <body>
