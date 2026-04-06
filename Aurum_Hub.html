@@ -435,12 +435,25 @@ function renderToday(){
     var dow=now.getDay();
     var today=now.toISOString().slice(0,10);
 
+    /* Day icon */
+    var dayIcons=['😴','🟢','🟢','🟢','🟢','🟢','📊'];
+    var dayIcon=dayIcons[dow]||'🟢';
+
+    /* Weekend tip */
+    if(dow===0){
+      tips.push({text:dayIcon+' <b>Dimanche</b> — Repos. C\'est le moment de faire ta review hebdo et ton backup.',btn:null});
+    } else if(dow===6){
+      tips.push({text:dayIcon+' <b>Samedi</b> — C\'est le moment de faire ta review hebdo et ton backup.',btn:'Ouvrir Journal',href:'Aurum.html'});
+    }
+
     /* Formation progress */
     var formRaw=localStorage.getItem('aurum_formation_v1');
     var formDone=0;
     if(formRaw){try{var fd=JSON.parse(formRaw);formDone=(fd.d||[]).length}catch(e){}}
     if(formDone<32){
-      tips.push({text:'<b>Formation</b> : module '+(formDone+1)+'/32 en attente. Continue pour débloquer le trading.',btn:'Continuer',href:'Aurum_Academy.html'});
+      var pct=Math.round((formDone/32)*100);
+      var progressBar='<div class="today-progress"><div class="today-progress-fill" style="width:'+pct+'%"></div></div>';
+      tips.push({text:(dow>=1&&dow<=5?dayIcon+' ':'')+'<b>Formation</b> : module '+(formDone+1)+'/32 en attente ('+pct+'%). '+progressBar,btn:'Continuer',href:'Aurum_Academy.html'});
     }
 
     /* Backup check */
