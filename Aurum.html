@@ -1467,7 +1467,9 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 <div class="panel" id="check">
 <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
 <button class="btn btn-g" onclick="dlPDF()">Télécharger PDF</button>
-<button class="btn btn-o" onclick="document.querySelectorAll('#check input[type=checkbox]').forEach(c=>c.checked=false);updCkProgress()">Reset</button>
+<button class="btn btn-o" onclick="resetChecklist()">Reset</button>
+<button class="btn btn-o" style="background:rgba(167,139,250,.1);border-color:var(--purple);color:var(--purple)" onclick="addTradeBlock()">+ Trade</button>
+<span id="ckTradeCount" style="font-size:11px;color:var(--t3);display:flex;align-items:center"></span>
 <div id="ckProgress" style="flex:1;display:flex;align-items:center;gap:8px;min-width:120px"><div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden"><div id="ckBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold),#f5d060);border-radius:3px;transition:width .3s"></div></div><span id="ckCount" style="font-size:11px;color:var(--t3);min-width:40px"></span></div>
 </div>
 <div id="checkContent">
@@ -1500,6 +1502,8 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 <div class="ck" data-n="15"><input type="checkbox"><span><strong>TP posé</strong> <em>— exactement 2× le SL</em></span></div>
 <div class="ck" data-n="16"><input type="checkbox"><span><strong>Trailing prêt</strong> <em>— mèche + 40 pts</em></span></div>
 </div></div>
+<!-- Blocs trades supplémentaires -->
+<div id="extraTrades"></div>
 <div class="ck-section"><div class="ck-title"><span class="ck-phase">④</span> Filtres <span style="font-size:8px;color:var(--red);font-weight:700">BLOQUANTS</span> <span class="ck-sec-score" id="ckS4"></span></div>
 <div class="ck-grid">
 <div class="ck ck-crit" data-n="17"><input type="checkbox"><span><strong>Pas news rouge</strong> <em>— dans les 5 min</em></span></div>
@@ -5521,6 +5525,55 @@ function updCkProgress() {
     if (count) count.style.color = 'var(--t3)';
   }
 }
+
+// ─── MULTI-TRADE CHECKLIST ───
+var ckTradeNum = 1;
+
+function addTradeBlock() {
+  try {
+    ckTradeNum++;
+    var container = document.getElementById('extraTrades');
+    if (!container) return;
+    var base = 21 + (ckTradeNum - 1) * 7;
+    var block = document.createElement('div');
+    block.className = 'ck-trade-block';
+    block.id = 'tradeBlock' + ckTradeNum;
+    block.style.cssText = 'border:1px solid var(--purple);border-left:3px solid var(--purple);border-radius:var(--radius);padding:14px;margin-bottom:12px;background:rgba(167,139,250,.03)';
+    block.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+      '<div style="font-size:13px;font-weight:700;color:var(--purple)">Trade #' + ckTradeNum + '</div>' +
+      '<button class="btn btn-o" style="font-size:10px;padding:4px 10px;color:var(--red);border-color:var(--red)" onclick="this.closest(\'.ck-trade-block\').remove();updCkProgress()">Supprimer</button></div>' +
+      '<div class="ck-section"><div class="ck-title"><span class="ck-phase">\u2461</span> Entr\u00e9e</div><div class="ck-grid">' +
+      '<div class="ck" data-n="' + (base+1) + '"><input type="checkbox" onchange="updCkProgress()"><span><strong>5min confirme</strong> <em>\u2014 direction ok</em></span></div>' +
+      '<div class="ck" data-n="' + (base+2) + '"><input type="checkbox" onchange="updCkProgress()"><span><strong>Liq = direction</strong> <em>\u2014 alignement</em></span></div>' +
+      '<div class="ck" data-n="' + (base+3) + '"><input type="checkbox" onchange="updCkProgress()"><span><strong>QM confirm\u00e9</strong> <em>\u2014 ou gaps</em></span></div>' +
+      '<div class="ck" data-n="' + (base+4) + '"><input type="checkbox" onchange="updCkProgress()"><span><strong>Lot + cl\u00f4ture</strong> <em>\u2014 entr\u00e9e exacte</em></span></div>' +
+      '</div></div>' +
+      '<div class="ck-section"><div class="ck-title"><span class="ck-phase">\u2462</span> Gestion</div><div class="ck-grid">' +
+      '<div class="ck" data-n="' + (base+5) + '"><input type="checkbox" onchange="updCkProgress()"><span><strong>SL pos\u00e9</strong> <em>\u2014 m\u00e8che + 50 pts</em></span></div>' +
+      '<div class="ck" data-n="' + (base+6) + '"><input type="checkbox" onchange="updCkProgress()"><span><strong>TP pos\u00e9</strong> <em>\u2014 2\u00d7 SL</em></span></div>' +
+      '<div class="ck" data-n="' + (base+7) + '"><input type="checkbox" onchange="updCkProgress()"><span><strong>Trailing pr\u00eat</strong> <em>\u2014 m\u00e8che + 40 pts</em></span></div>' +
+      '</div></div>';
+    container.appendChild(block);
+    updCkProgress();
+    var countEl = document.getElementById('ckTradeCount');
+    if (countEl) countEl.textContent = ckTradeNum + ' trade(s)';
+    block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch(e) { console.error('[Aurum] addTradeBlock:', e) }
+}
+
+function resetChecklist() {
+  try {
+    document.querySelectorAll('#check input[type=checkbox]').forEach(function(c) { c.checked = false });
+    var extra = document.getElementById('extraTrades');
+    if (extra) extra.innerHTML = '';
+    ckTradeNum = 1;
+    var countEl = document.getElementById('ckTradeCount');
+    if (countEl) countEl.textContent = '';
+    updCkProgress();
+  } catch(e) {}
+}
+
 // Wire checkboxes with pop animation
 document.addEventListener('change', e => {
   if (e.target.matches('#checkContent input[type=checkbox]')) {
