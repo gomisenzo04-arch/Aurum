@@ -526,13 +526,19 @@ function renderToday(){
     }
 
     /* Formation progress */
+    var MOD_NAMES=['Le système mécanique','Bougies japonaises','Supports & Résistances','Pullbacks & Direction','Liquidité','Quasimodo','Variante Gaps','Gestion du trade','Checklist','Gestion du risque','Discipline & Routine','Journée type','Bienvenue','Premier lancement','Enregistrer trade','Dashboard','Calculateur','Horaires','Coaching','Reviews','Multi-comptes','Backup','Pièges courants','Examen final','Fondamentaux','Revenus trading','Fiscalité','Entités','Portfolio','Budget','Dettes','Synthèse'];
     var formRaw=localStorage.getItem('aurum_formation_v1');
     var formDone=0;
-    if(formRaw){try{var fd=JSON.parse(formRaw);formDone=(fd.d||[]).length}catch(e){}}
+    var formDoneArr=[];
+    if(formRaw){try{var fd=JSON.parse(formRaw);formDoneArr=fd.d||[];formDone=formDoneArr.length}catch(e){}}
     if(formDone<32){
       var pct=Math.round((formDone/32)*100);
       var progressBar='<div class="today-progress"><div class="today-progress-fill" style="width:'+pct+'%"></div></div>';
-      tips.push({text:(dow>=1&&dow<=5?dayIcon+' ':'')+'<b>Formation</b> : module '+(formDone+1)+'/32 en attente ('+pct+'%). '+progressBar,btn:'Continuer',href:'Aurum_Academy.html'});
+      /* Trouver le premier module non complété */
+      var nextIdx=0;
+      for(var mi=0;mi<32;mi++){if(formDoneArr.indexOf(mi)===-1){nextIdx=mi;break}}
+      var nextName=MOD_NAMES[nextIdx]||('Module '+(nextIdx+1));
+      tips.push({text:(dow>=1&&dow<=5?dayIcon+' ':'')+'📖 Prochain module : <b>'+nextName+'</b> (module '+(nextIdx+1)+'/32 — '+pct+'%) '+progressBar,btn:'Continuer',href:'Aurum_Academy.html'});
     }
 
     /* Backup check */
@@ -553,6 +559,62 @@ function renderToday(){
     if(tradesToday>0){
       tips.push({text:'✅ <b>'+tradesToday+' trade(s)</b> enregistré(s) aujourd\'hui.',btn:null});
     }
+
+    /* Win Rate ce mois */
+    try{
+      var monthStr=now.toISOString().slice(0,7);
+      var monthTrades=j.trades.filter(function(t){return t.date&&t.date.slice(0,7)===monthStr});
+      if(monthTrades.length>=3){
+        var monthWins=0;
+        monthTrades.forEach(function(t){
+          var pnl=t.pnl||t.pl||t.profit||0;
+          if(typeof pnl==='string') pnl=parseFloat(pnl)||0;
+          if(pnl>0) monthWins++;
+        });
+        var monthWR=Math.round((monthWins/monthTrades.length)*100);
+        if(monthWR>=60){
+          tips.push({text:'🎯 WR à <b>'+monthWR+'%</b> ce mois — excellent, continue !',btn:null});
+        } else if(monthWR<45){
+          tips.push({text:'⚠️ Win Rate à <b>'+monthWR+'%</b> ce mois — revois ta sélection de setups.',btn:'Ouvrir Journal',href:'Aurum.html'});
+        }
+      }
+    }catch(e){}
+
+    /* Capital santé */
+    try{
+      var rawCap=localStorage.getItem('aurum_capital_v1');
+      if(rawCap){
+        var capD=JSON.parse(rawCap);
+        /* Calcul simplifié du score santé (cohérent avec Aurum_Capital) */
+        var score=50;
+        var hasPortfolio=capD.portfolio&&capD.portfolio.length>0;
+        var hasPayouts=capD.payouts&&capD.payouts.length>0;
+        var hasEntities=capD.entities&&capD.entities.length>0;
+        var totalDebt=0;
+        var totalAssets=0;
+        if(capD.portfolio)capD.portfolio.forEach(function(p){totalAssets+=(p.current||0)});
+        if(capD.payouts)capD.payouts.forEach(function(p){totalAssets+=(p.net||0)});
+        if(capD.entities)capD.entities.forEach(function(e){if(e.status==='Active'||e.status==='En création')totalAssets+=(e.tresorerie||0)});
+        if(capD.passifs)capD.passifs.forEach(function(p){totalDebt+=(p.remaining||0)});
+        /* Score basique : part de dettes vs actifs + diversification */
+        if(totalAssets>0){
+          var debtRatio=totalDebt/totalAssets;
+          if(debtRatio>0.5) score-=20;
+          else if(debtRatio>0.3) score-=10;
+          if(hasPortfolio) score+=10;
+          if(hasPayouts) score+=10;
+          if(hasEntities) score+=10;
+          if(capD.portfolio&&capD.portfolio.length>=3) score+=10;
+        } else if(totalDebt>0){
+          score=20;
+        } else {
+          score=50; /* pas assez de données */
+        }
+        if(score<50&&(totalAssets>0||totalDebt>0)){
+          tips.push({text:'💊 Score santé patrimoine faible (<b>'+score+'/100</b>) — vérifie tes dettes et dépenses.',btn:'Ouvrir Capital',href:'Aurum_Capital.html'});
+        }
+      }
+    }catch(e){}
 
     if(tips.length===0){
       tips.push({text:'Tout est à jour. <b>Continue comme ça.</b> 💪',btn:null});
