@@ -80,8 +80,9 @@ tr:hover td{background:rgba(167,139,250,.02)}
 /* ─── IFRAME MODE : sidebar → barre horizontale ─── */
 .in-iframe{
   display:flex!important;flex-direction:column!important;
-  height:100vh!important;overflow:hidden!important
+  height:100%!important;min-height:100%!important;overflow:hidden!important
 }
+html.in-iframe-root{height:100%!important}
 .in-iframe .side{
   width:100%!important;height:44px!important;min-height:44px!important;
   flex-direction:row!important;padding:0 6px!important;gap:2px!important;
@@ -113,7 +114,7 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .in-iframe .ni svg{width:15px!important;height:15px!important}
 .in-iframe .ni.on{background:rgba(167,139,250,.15)!important;color:var(--purple)!important}
 .in-iframe .th .hb{display:none!important}
-.in-iframe .mw{flex:1!important;width:100%!important;overflow-y:auto!important}
+.in-iframe .mw{flex:1!important;width:100%!important;overflow-y:auto!important;min-height:0!important}
 </style>
 </head>
 <body>
@@ -359,7 +360,7 @@ function xreset(){try{if(!confirm('⚠ TOUT SUPPRIMER ?'))return;if(!confirm('De
 load();
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){}})();
 rCL();rCS();rAL();rD();
-try{if(window.self!==window.top){document.body.classList.add('in-iframe')}}catch(e){document.body.classList.add('in-iframe')}
+try{if(window.self!==window.top){document.documentElement.classList.add('in-iframe-root');document.body.classList.add('in-iframe')}}catch(e){document.documentElement.classList.add('in-iframe-root');document.body.classList.add('in-iframe')}
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
 </body>

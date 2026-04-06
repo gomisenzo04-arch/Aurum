@@ -1323,9 +1323,11 @@ body::before {
 .in-iframe {
   display: flex !important;
   flex-direction: column !important;
-  height: 100vh !important;
+  height: 100% !important;
+  min-height: 100% !important;
   overflow: hidden !important
 }
+html.in-iframe-root { height: 100% !important }
 .in-iframe .side {
   width: 100% !important;
   height: 44px !important;
@@ -1387,7 +1389,8 @@ body::before {
   flex: 1 !important;
   width: 100% !important;
   overflow-y: auto !important;
-  overflow-x: hidden !important
+  overflow-x: hidden !important;
+  min-height: 0 !important
 }
 .in-iframe .top-bar { display: none !important }
 .in-iframe .login-overlay { border-radius: 0 }
@@ -5477,8 +5480,8 @@ document.getElementById('fD').valueAsDate = new Date();
 cLot();
 checkSession();
 adaptForm();
-/* Détecte si chargé dans une iframe (SPA shell) et cache la sidebar */
-try{if(window.self!==window.top){document.body.classList.add('in-iframe')}}catch(e){document.body.classList.add('in-iframe')}
+/* Détecte si chargé dans une iframe (SPA shell) */
+try{if(window.self!==window.top){document.documentElement.classList.add('in-iframe-root');document.body.classList.add('in-iframe')}}catch(e){document.documentElement.classList.add('in-iframe-root');document.body.classList.add('in-iframe')}
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
 </body>
