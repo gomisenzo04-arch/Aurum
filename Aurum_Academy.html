@@ -159,6 +159,11 @@ p.tx{font-size:13px;line-height:1.7;color:var(--t2);margin-bottom:9px}p.tx stron
 .pgb{display:flex;gap:3px;margin-bottom:10px}.pgb .dot{flex:1;height:4px;border-radius:2px;background:var(--bg3);transition:background .3s}.pgb .dot.on{background:var(--gold)}
 
 @media(max-width:768px){.side{display:none}.main{padding:14px}.mt{font-size:18px}.strip{flex-wrap:wrap;gap:3px}.strip .sep{display:none}.hdr{padding:0 12px;gap:6px}.hdr-links{display:none}}
+/* ─── IFRAME MODE ─── */
+.in-iframe .hdr{display:none!important}
+.in-iframe .side{display:none!important}
+.in-iframe .lay{min-height:100vh}
+.in-iframe .main{margin:0 auto;padding-top:16px}
 </style>
 </head>
 <body>
@@ -933,6 +938,7 @@ ld();
 drawNav();
 drawProg();
 render();
+try{if(window.self!==window.top){document.body.classList.add('in-iframe')}}catch(e){document.body.classList.add('in-iframe')}
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
 </body>

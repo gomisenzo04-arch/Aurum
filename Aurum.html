@@ -1318,7 +1318,12 @@ body::before {
   .rule-box { border-color: #c00 !important; color: #c00 !important; background: #fff0f0 !important }
   .green-box { border-color: #060 !important; color: #060 !important; background: #f0fff0 !important }
   .panel { max-width: 100% !important }
-}</style>
+}
+/* ─── IFRAME MODE : cacher sidebar quand embarqué dans le SPA ─── */
+.in-iframe .side { display: none !important }
+.in-iframe .content { margin-left: 0 !important }
+.in-iframe .login-overlay { border-radius: 0 }
+</style>
 </head>
 <body>
 
@@ -5404,6 +5409,8 @@ document.getElementById('fD').valueAsDate = new Date();
 cLot();
 checkSession();
 adaptForm();
+/* Détecte si chargé dans une iframe (SPA shell) et cache la sidebar */
+try{if(window.self!==window.top){document.body.classList.add('in-iframe')}}catch(e){document.body.classList.add('in-iframe')}
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
 </body>
