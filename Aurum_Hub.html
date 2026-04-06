@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Aurum — Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06090e;--bg2:#0c1018;--bg3:#141a26;--bg4:#1b2232;--border:#1d2840;--border2:#293756;--gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--green:#00d68f;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--t1:#edf2f7;--t2:#9bafd4;--t3:#6b7ea0;--radius:12px;--transition:.25s cubic-bezier(.4,0,.2,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(212,160,23,.3)}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ═══ ONBOARDING ═══ */
+.onboard{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.onboard .step{display:none;text-align:center;max-width:420px;padding:24px;animation:slideUp .5s ease}
+.onboard .step.on{display:block}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.ob-logo{width:80px;height:80px;margin:0 auto 20px;filter:drop-shadow(0 8px 24px rgba(212,160,23,.4))}
+.ob-title{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--gold3),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.ob-sub{font-size:14px;color:var(--t2);line-height:1.7;margin-bottom:24px}
+.ob-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;text-align:left;display:flex;gap:12px;align-items:center}
+.ob-card .ob-ic{font-size:24px;flex-shrink:0}
+.ob-card .ob-ct{font-size:12px;color:var(--t2);line-height:1.6}.ob-card .ob-ct b{color:var(--t1)}
+.ob-btn{width:100%;padding:14px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--gold3),var(--gold),var(--gold2));color:#000;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:all var(--transition);box-shadow:0 4px 20px rgba(212,160,23,.3);margin-top:16px}
+.ob-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(212,160,23,.4)}
+.ob-btn.sec{background:var(--bg3);border:1.5px solid var(--border2);color:var(--t2);box-shadow:none;margin-top:8px}
+.ob-dots{display:flex;gap:6px;justify-content:center;margin-top:20px}
+.ob-dots .dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all .3s}
+.ob-dots .dot.on{background:var(--gold);width:24px;border-radius:4px}
+.ob-input{width:100%;background:var(--bg3);border:2px solid var(--border);border-radius:10px;padding:16px;color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:28px;text-align:center;letter-spacing:10px;outline:none;transition:border var(--transition)}
+.ob-input:focus{border-color:var(--gold)}
+.ob-input::placeholder{letter-spacing:6px;font-size:18px}
+.ob-err{font-size:12px;color:var(--red);margin-top:6px;min-height:18px}
+
+/* ═══ MAIN HUB ═══ */
+.hub{display:none;max-width:600px;margin:0 auto;padding:20px 16px 60px;min-height:100vh}
+.hub.on{display:block;animation:slideUp .5s ease}
+
+/* Header */
+.hub-hdr{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.hub-hdr .logo-sm{width:36px;height:36px;flex-shrink:0}
+.hub-hdr .greeting{flex:1}
+.hub-hdr .greeting .g1{font-size:11px;color:var(--t3);font-weight:600}
+.hub-hdr .greeting .g2{font-size:18px;font-weight:800}
+.hub-hdr .streak{text-align:right}
+.hub-hdr .streak .s-num{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--gold)}
+.hub-hdr .streak .s-lbl{font-size:9px;color:var(--t3);font-weight:600}
+
+/* Today widget */
+.today{background:linear-gradient(135deg,rgba(212,160,23,.06),rgba(167,139,250,.04));border:1px solid rgba(212,160,23,.15);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.today .today-title{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.today .today-tip{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:4px}
+.today .today-tip b{color:var(--t1)}
+.today .today-btn{display:inline-block;margin-top:8px;padding:8px 20px;border-radius:8px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-size:12px;font-weight:700;text-decoration:none;transition:all var(--transition)}
+.today .today-btn:hover{transform:translateY(-1px)}
+
+/* App cards */
+.apps{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.app-card{display:flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:inherit;transition:all var(--transition);position:relative;overflow:hidden}
+.app-card:hover{border-color:var(--border2);transform:translateX(4px);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.app-card .app-glow{position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.04;pointer-events:none}
+.app-card .app-ic{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.app-card .app-info{flex:1;min-width:0}
+.app-card .app-name{font-size:14px;font-weight:700}
+.app-card .app-desc{font-size:10px;color:var(--t3);margin-top:1px}
+.app-card .app-stat{text-align:right;flex-shrink:0}
+.app-card .app-val{font-size:16px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.app-card .app-lbl{font-size:8px;color:var(--t3);font-weight:600;text-transform:uppercase}
+.app-card .app-arrow{color:var(--t3);font-size:16px;flex-shrink:0;transition:transform var(--transition)}
+.app-card:hover .app-arrow{transform:translateX(3px);color:var(--t2)}
+
+/* Backup & Security */
+.sec-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.sec-title{font-size:11px;font-weight:700;color:var(--t1);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.backup-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px}
+.backup-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.backup-ok{background:var(--green)}.backup-warn{background:var(--gold)}.backup-bad{background:var(--red)}
+.backup-btns{display:flex;gap:8px;margin-top:12px}
+.bb{padding:10px 18px;border-radius:8px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all var(--transition);flex:1;text-align:center}
+.bb:hover{transform:translateY(-1px)}
+.bb-gold{background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000}
+.bb-outline{background:var(--bg3);border:1.5px solid var(--border2);color:var(--t2)}
+.bb-outline:hover{border-color:var(--t3)}
+
+/* Security guide */
+.guide-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t2);line-height:1.6}
+.guide-item:last-child{border-bottom:none}
+.guide-num{width:22px;height:22px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--gold);flex-shrink:0}
+.guide-item b{color:var(--t1)}
+
+/* Footer */
+.hub-footer{text-align:center;font-size:10px;color:var(--t3);margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
+
+@media(max-width:500px){.hub{padding:16px 12px 40px}.ob-title{font-size:22px}.hub-hdr .greeting .g2{font-size:16px}}
+</style>
+</head>
+<body>
+
+<!-- ═══ ONBOARDING ═══ -->
+<div class="onboard" id="onboard">
+  <!-- Step 1: Welcome -->
+  <div class="step on" id="ob-1">
+    <svg class="ob-logo" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="olg" x1="0" y1="0" x2="80" y2="80"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="80" height="80" rx="20" fill="url(#olg)"/><text x="40" y="52" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="34" fill="#1a1000">Au</text></svg>
+    <div class="ob-title">Bienvenue dans Aurum</div>
+    <div class="ob-sub">L'écosystème complet pour maîtriser le trading XAUUSD et construire ton patrimoine. De la formation au premier million.</div>
+    <button class="ob-btn" onclick="obNext(2)">Découvrir →</button>
+    <div class="ob-dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  </div>
+
+  <!-- Step 2: The 3 apps -->
+  <div class="step" id="ob-2">
+    <div class="ob-title" style="font-size:20px">3 apps, 1 système</div>
+    <div class="ob-sub" style="margin-bottom:16px">Chacune a un rôle précis. Ensemble, elles couvrent tout.</div>
+    <div class="ob-card"><div class="ob-ic">🎓</div><div class="ob-ct"><b>Academy</b> — 32 modules. Stratégie mécanique + maîtrise de l'app + gestion du capital. Tu ne trades pas avant d'avoir fini.</div></div>
+    <div class="ob-card"><div class="ob-ic">📊</div><div class="ob-ct"><b>Journal</b> — Chaque trade enregistré. Dashboard, analytics, reviews, coaching automatique. Tes données = tes décisions.</div></div>
+    <div class="ob-card"><div class="ob-ic">💎</div><div class="ob-ct"><b>Capital</b> — Patrimoine, prop firms, entités, fiscal, investissements. Pilote ta fortune de 6K€ à multimillionnaire.</div></div>
+    <button class="ob-btn" onclick="obNext(3)">Compris →</button>
+    <button class="ob-btn sec" onclick="obNext(1)">← Retour</button>
+    <div class="ob-dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
+  </div>
+
+  <!-- Step 3: Data security -->
+  <div class="step" id="ob-3">
+    <div class="ob-title" style="font-size:20px">🔒 Tes données, ta responsabilité</div>
+    <div class="ob-sub">Aurum stocke tout dans ton navigateur (localStorage). C'est rapide et privé — mais fragile.</div>
+    <div class="ob-card"><div class="ob-ic">⚠️</div><div class="ob-ct"><b>Si tu vides le cache</b> ou changes de navigateur → données perdues. Fais un <b>backup JSON chaque vendredi</b>.</div></div>
+    <div class="ob-card"><div class="ob-ic">☁️</div><div class="ob-ct"><b>Où stocker tes backups</b> : Google Drive, clé USB, ou envoie-toi le fichier par email. 2 fichiers : Journal + Capital.</div></div>
+    <div class="ob-card"><div class="ob-ic">✅</div><div class="ob-ct"><b>Le Hub te rappelle</b> quand ton dernier backup est trop vieux. Un bouton "Tout exporter" fait les 2 en 1 clic.</div></div>
+    <button class="ob-btn" onclick="obNext(4)">J'ai compris →</button>
+    <button class="ob-btn sec" onclick="obNext(2)">← Retour</button>
+    <div class="ob-dots"><div class="dot"></div><div class="dot"></div><div class="dot on"></div><div class="dot"></div></div>
+  </div>
+
+  <!-- Step 4: Create code -->
+  <div class="step" id="ob-4">
+    <div class="ob-title" style="font-size:20px">Crée ton code d'accès</div>
+    <div class="ob-sub">4 chiffres pour protéger l'accès à ton écosystème. Retiens-le bien.</div>
+    <input class="ob-input" type="password" id="obCode" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*">
+    <div class="ob-err" id="obErr"></div>
+    <button class="ob-btn" onclick="obFinish()">Commencer →</button>
+    <button class="ob-btn sec" onclick="obNext(3)">← Retour</button>
+    <div class="ob-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot on"></div></div>
+  </div>
+
+  <!-- Login (returning users) -->
+  <div class="step" id="ob-login">
+    <svg class="ob-logo" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="olg2" x1="0" y1="0" x2="80" y2="80"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="80" height="80" rx="20" fill="url(#olg2)"/><text x="40" y="52" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="34" fill="#1a1000">Au</text></svg>
+    <div class="ob-title">Aurum</div>
+    <div class="ob-sub">Entre ton code pour accéder à ton écosystème.</div>
+    <input class="ob-input" type="password" id="loginCode" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" autofocus>
+    <div class="ob-err" id="loginErr"></div>
+    <button class="ob-btn" onclick="doLogin()">Entrer</button>
+  </div>
+</div>
+
+<!-- ═══ MAIN HUB ═══ -->
+<div class="hub" id="hub">
+  <!-- Header -->
+  <div class="hub-hdr">
+    <svg class="logo-sm" viewBox="0 0 36 36" fill="none"><defs><linearGradient id="hlg" x1="0" y1="0" x2="36" y2="36"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="36" height="36" rx="10" fill="url(#hlg)"/><text x="18" y="24" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="15" fill="#1a1000">Au</text></svg>
+    <div class="greeting">
+      <div class="g1" id="greetDate"></div>
+      <div class="g2" id="greetMsg"></div>
+    </div>
+    <div class="streak">
+      <div class="s-num" id="streakNum">0</div>
+      <div class="s-lbl">🔥 jours</div>
+    </div>
+  </div>
+
+  <!-- Today widget -->
+  <div class="today" id="todayWidget"></div>
+
+  <!-- App cards -->
+  <div class="apps">
+    <a href="Aurum_Academy.html" class="app-card" id="cardAcademy">
+      <div class="app-ic" style="background:rgba(91,141,239,.1);border:1px solid rgba(91,141,239,.15)">🎓</div>
+      <div class="app-glow" style="background:var(--blue)"></div>
+      <div class="app-info">
+        <div class="app-name">Academy</div>
+        <div class="app-desc">Stratégie · App · Capital</div>
+      </div>
+      <div class="app-stat">
+        <div class="app-val" style="color:var(--blue)" id="statFormation">—</div>
+        <div class="app-lbl">modules</div>
+      </div>
+      <div class="app-arrow">→</div>
+    </a>
+
+    <a href="Aurum.html" class="app-card" id="cardJournal">
+      <div class="app-ic" style="background:rgba(212,160,23,.08);border:1px solid rgba(212,160,23,.15)">📊</div>
+      <div class="app-glow" style="background:var(--gold)"></div>
+      <div class="app-info">
+        <div class="app-name">Journal</div>
+        <div class="app-desc">Trades · Analytics · Reviews</div>
+      </div>
+      <div class="app-stat">
+        <div class="app-val" style="color:var(--gold)" id="statJournal">0</div>
+        <div class="app-lbl">trades</div>
+      </div>
+      <div class="app-arrow">→</div>
+    </a>
+
+    <a href="Aurum_Capital.html" class="app-card" id="cardCapital">
+      <div class="app-ic" style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.15)">💎</div>
+      <div class="app-glow" style="background:var(--purple)"></div>
+      <div class="app-info">
+        <div class="app-name">Capital</div>
+        <div class="app-desc">Patrimoine · Entités · Fiscal</div>
+      </div>
+      <div class="app-stat">
+        <div class="app-val" style="color:var(--purple)" id="statCapital">$0</div>
+        <div class="app-lbl">patrimoine</div>
+      </div>
+      <div class="app-arrow">→</div>
+    </a>
+  </div>
+
+  <!-- Backup & Security -->
+  <div class="sec-box">
+    <div class="sec-title">🔒 Sécurité & Données</div>
+    <div id="backupStatus"></div>
+    <div class="backup-btns">
+      <button class="bb bb-gold" onclick="exportAll()">📦 Tout exporter</button>
+      <button class="bb bb-outline" onclick="toggleGuide()">📖 Guide sécurité</button>
+    </div>
+  </div>
+
+  <!-- Security guide (hidden by default) -->
+  <div class="sec-box" id="secGuide" style="display:none">
+    <div class="sec-title">📖 Protéger tes données</div>
+    <div class="guide-item"><div class="guide-num">1</div><div>Tes données sont dans le <b>navigateur</b> (localStorage). Privé, rapide — mais si tu vides le cache, elles disparaissent.</div></div>
+    <div class="guide-item"><div class="guide-num">2</div><div><b>Chaque vendredi</b> : clique "Tout exporter". Ça télécharge 2 fichiers JSON (Journal + Capital).</div></div>
+    <div class="guide-item"><div class="guide-num">3</div><div>Stocke-les sur <b>Google Drive</b>, une <b>clé USB</b>, ou envoie-les par <b>email</b>. 3 copies = tranquillité.</div></div>
+    <div class="guide-item"><div class="guide-num">4</div><div>Pour restaurer : ouvre l'app → <b>Backup → Importer</b>. Sélectionne le fichier. Tout revient.</div></div>
+    <div class="guide-item"><div class="guide-num">5</div><div>Si tu changes de navigateur ou de PC : exporte avant, importe après. <b>Rien ne se synchronise automatiquement.</b></div></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="hub-footer">
+    Aurum Écosystème · <span id="dataSize"></span>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   AURUM HUB v3 — Daily Cockpit
+   ═══════════════════════════════════════════════ */
+
+/* ─── ONBOARDING ─── */
+function obNext(step){
+  try{
+    document.querySelectorAll('.onboard .step').forEach(function(s){s.classList.remove('on')});
+    var el=document.getElementById('ob-'+step);
+    if(el)el.classList.add('on');
+  }catch(e){}
+}
+
+function obFinish(){
+  try{
+    var code=document.getElementById('obCode').value;
+    if(code.length!==4||!/^\d{4}$/.test(code)){document.getElementById('obErr').textContent='4 chiffres requis';return}
+    localStorage.setItem('aurum_code',code);
+    localStorage.setItem('aurum_setup','1');
+    localStorage.setItem('aurum_streak',JSON.stringify({last:new Date().toISOString().slice(0,10),count:1}));
+    sessionStorage.setItem('aurum_auth','1');
+    document.getElementById('onboard').style.display='none';
+    document.getElementById('hub').classList.add('on');
+    loadHub();
+  }catch(e){console.error(e)}
+}
+
+function doLogin(){
+  try{
+    var code=document.getElementById('loginCode').value;
+    var stored=localStorage.getItem('aurum_code')||'2928';
+    if(code===stored){
+      sessionStorage.setItem('aurum_auth','1');
+      updateStreak();
+      document.getElementById('onboard').style.display='none';
+      document.getElementById('hub').classList.add('on');
+      loadHub();
+    }else{
+      document.getElementById('loginErr').textContent='Code incorrect';
+      document.getElementById('loginCode').value='';
+    }
+  }catch(e){console.error(e)}
+}
+
+/* Enter key */
+document.addEventListener('keydown',function(e){
+  try{
+    if(e.key==='Enter'){
+      if(document.getElementById('ob-4').classList.contains('on'))obFinish();
+      else if(document.getElementById('ob-login').classList.contains('on'))doLogin();
+    }
+    document.getElementById('obErr').textContent='';
+    document.getElementById('loginErr').textContent='';
+  }catch(err){}
+});
+
+/* ─── INIT ─── */
+function init(){
+  try{
+    var isSetup=localStorage.getItem('aurum_setup')==='1';
+    var isAuth=sessionStorage.getItem('aurum_auth')==='1';
+    if(!isSetup){
+      /* First time: show onboarding */
+      document.getElementById('onboard').style.display='flex';
+      return;
+    }
+    if(isAuth){
+      /* Already logged in */
+      document.getElementById('onboard').style.display='none';
+      document.getElementById('hub').classList.add('on');
+      loadHub();
+      return;
+    }
+    /* Returning user: show login */
+    document.querySelectorAll('.onboard .step').forEach(function(s){s.classList.remove('on')});
+    document.getElementById('ob-login').classList.add('on');
+    document.getElementById('onboard').style.display='flex';
+    setTimeout(function(){document.getElementById('loginCode').focus()},100);
+  }catch(e){console.error(e)}
+}
+
+/* ─── STREAK ─── */
+function updateStreak(){
+  try{
+    var raw=localStorage.getItem('aurum_streak');
+    var today=new Date().toISOString().slice(0,10);
+    if(!raw){localStorage.setItem('aurum_streak',JSON.stringify({last:today,count:1}));return}
+    var s=JSON.parse(raw);
+    if(s.last===today)return;
+    var lastDate=new Date(s.last);
+    var todayDate=new Date(today);
+    var diff=Math.floor((todayDate-lastDate)/(1000*60*60*24));
+    if(diff===1){s.count++;s.last=today}
+    else if(diff>1){s.count=1;s.last=today}
+    localStorage.setItem('aurum_streak',JSON.stringify(s));
+  }catch(e){}
+}
+
+function getStreak(){
+  try{var s=JSON.parse(localStorage.getItem('aurum_streak')||'{}');return s.count||0}catch(e){return 0}
+}
+
+/* ─── LOAD HUB ─── */
+function loadHub(){
+  try{
+    updateStreak();
+    renderGreeting();
+    renderStreak();
+    renderToday();
+    renderStats();
+    renderBackup();
+    renderDataSize();
+  }catch(e){console.error(e)}
+}
+
+function renderGreeting(){
+  try{
+    var now=new Date();
+    var days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    var months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+    document.getElementById('greetDate').textContent=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()];
+    var h=now.getHours();
+    var msg=h<12?'Bonne matinée':h<18?'Bon après-midi':'Bonne soirée';
+    document.getElementById('greetMsg').textContent=msg+' 👋';
+  }catch(e){}
+}
+
+function renderStreak(){
+  try{document.getElementById('streakNum').textContent=getStreak()}catch(e){}
+}
+
+function renderToday(){
+  try{
+    var el=document.getElementById('todayWidget');
+    var tips=[];
+    var now=new Date();
+    var dow=now.getDay();
+    var today=now.toISOString().slice(0,10);
+
+    /* Formation progress */
+    var formRaw=localStorage.getItem('aurum_formation_v1');
+    var formDone=0;
+    if(formRaw){try{var fd=JSON.parse(formRaw);formDone=(fd.d||[]).length}catch(e){}}
+    if(formDone<32){
+      tips.push({text:'<b>Formation</b> : module '+(formDone+1)+'/31 en attente. Continue pour débloquer le trading.',btn:'Continuer',href:'Aurum_Academy.html'});
+    }
+
+    /* Backup check */
+    var lastBk=getLastBackupDays();
+    if(lastBk.journal>7){
+      tips.push({text:'⚠️ <b>Backup Journal</b> : dernier il y a '+lastBk.journal+' jours. Exporte maintenant.',btn:null});
+    }
+    if(dow===5||dow===6){
+      tips.push({text:'C\'est le weekend → <b>Backup + Review hebdo</b> si pas encore fait.',btn:'Ouvrir Journal',href:'Aurum.html'});
+    }
+
+    /* Trades today */
+    var j=readJournal();
+    var tradesToday=j.trades.filter(function(t){return t.date===today}).length;
+    if(formDone>=23&&tradesToday===0&&dow!==0&&dow!==6){
+      tips.push({text:'Pas de trade aujourd\'hui. <b>Setup valide ?</b> Ouvre le Journal.',btn:'Journal',href:'Aurum.html'});
+    }
+    if(tradesToday>0){
+      tips.push({text:'✅ <b>'+tradesToday+' trade(s)</b> enregistré(s) aujourd\'hui.',btn:null});
+    }
+
+    if(tips.length===0){
+      tips.push({text:'Tout est à jour. <b>Continue comme ça.</b> 💪',btn:null});
+    }
+
+    el.innerHTML='<div class="today-title">📋 Aujourd\'hui</div>'+tips.map(function(t){
+      return '<div class="today-tip">→ '+t.text+(t.btn?'<br><a href="'+t.href+'" class="today-btn">'+t.btn+' →</a>':'')+'</div>';
+    }).join('');
+  }catch(e){console.error(e)}
+}
+
+function renderStats(){
+  try{
+    /* Formation */
+    var formRaw=localStorage.getItem('aurum_formation_v1');
+    var formDone=0;
+    if(formRaw){try{formDone=(JSON.parse(formRaw).d||[]).length}catch(e){}}
+    document.getElementById('statFormation').textContent=formDone+' / 32';
+
+    /* Journal trades */
+    var j=readJournal();
+    document.getElementById('statJournal').textContent=j.trades.length;
+
+    /* Capital net worth */
+    var net=0;
+    var rawCap=localStorage.getItem('aurum_capital_v1');
+    if(rawCap){
+      try{
+        var cap=JSON.parse(rawCap);
+        if(cap.portfolio)cap.portfolio.forEach(function(p){net+=(p.current||0)});
+        if(cap.payouts)cap.payouts.forEach(function(p){net+=(p.net||0)});
+        if(cap.passifs)cap.passifs.forEach(function(p){net-=(p.remaining||0)});
+        if(cap.entities)cap.entities.forEach(function(e){if(e.status==='Active'||e.status==='En création')net+=(e.tresorerie||0)});
+      }catch(e){}
+    }
+    j.accounts.forEach(function(a){var t=(a.type||'').toLowerCase();if(t==='perso'||t==='personnel')net+=(a.balance||0)});
+    document.getElementById('statCapital').textContent='$'+Math.round(net).toLocaleString('en-US');
+  }catch(e){console.error(e)}
+}
+
+function renderBackup(){
+  try{
+    var el=document.getElementById('backupStatus');
+    var bk=getLastBackupDays();
+    var jClass=bk.journal<=7?'backup-ok':bk.journal<=14?'backup-warn':'backup-bad';
+    var cClass=bk.capital<=7?'backup-ok':bk.capital<=14?'backup-warn':'backup-bad';
+    var jText=bk.journal===999?'Jamais':'il y a '+bk.journal+'j';
+    var cText=bk.capital===999?'Jamais':'il y a '+bk.capital+'j';
+
+    el.innerHTML=
+      '<div class="backup-row"><div class="backup-dot '+jClass+'"></div><span style="flex:1;color:var(--t2)">Journal</span><span style="font-size:11px;font-weight:600;color:var(--t1)">'+jText+'</span></div>'+
+      '<div class="backup-row"><div class="backup-dot '+cClass+'"></div><span style="flex:1;color:var(--t2)">Capital</span><span style="font-size:11px;font-weight:600;color:var(--t1)">'+cText+'</span></div>';
+  }catch(e){}
+}
+
+function renderDataSize(){
+  try{
+    var total=0;
+    ['enz_v4','aurum_capital_v1','aurum_formation_v1'].forEach(function(k){
+      var v=localStorage.getItem(k);if(v)total+=v.length;
+    });
+    var kb=Math.round(total/1024);
+    document.getElementById('dataSize').textContent=kb>0?kb+' Ko de données':'Aucune donnée';
+  }catch(e){}
+}
+
+/* ─── JOURNAL READ ─── */
+function readJournal(){
+  try{
+    var raw=localStorage.getItem('enz_v4');
+    if(!raw)return{accounts:[],trades:[]};
+    var j=JSON.parse(raw),a=[],t=[];
+    if(j.accounts)j.accounts.forEach(function(ac){
+      a.push({name:ac.name||'',type:ac.type||'',balance:ac.balance||0});
+      if(ac.trades)ac.trades.forEach(function(tr){t.push(tr)});
+    });
+    return{accounts:a,trades:t};
+  }catch(e){return{accounts:[],trades:[]}}
+}
+
+/* ─── BACKUP HELPERS ─── */
+function getLastBackupDays(){
+  try{
+    var now=new Date();
+    var jRaw=localStorage.getItem('aurum_backup_journal');
+    var cRaw=localStorage.getItem('aurum_backup_capital');
+    var jDays=999,cDays=999;
+    if(jRaw){jDays=Math.floor((now-new Date(jRaw))/(1000*60*60*24))}
+    if(cRaw){cDays=Math.floor((now-new Date(cRaw))/(1000*60*60*24))}
+    return{journal:jDays,capital:cDays};
+  }catch(e){return{journal:999,capital:999}}
+}
+
+function exportAll(){
+  try{
+    var today=new Date().toISOString().slice(0,10);
+    /* Export Journal */
+    var jData=localStorage.getItem('enz_v4');
+    if(jData){
+      var b1=new Blob([jData],{type:'application/json'});
+      var a1=document.createElement('a');a1.href=URL.createObjectURL(b1);
+      a1.download='aurum_journal_'+today+'.json';a1.click();URL.revokeObjectURL(a1.href);
+      localStorage.setItem('aurum_backup_journal',new Date().toISOString());
+    }
+    /* Export Capital */
+    var cData=localStorage.getItem('aurum_capital_v1');
+    if(cData){
+      setTimeout(function(){
+        var b2=new Blob([cData],{type:'application/json'});
+        var a2=document.createElement('a');a2.href=URL.createObjectURL(b2);
+        a2.download='aurum_capital_'+today+'.json';a2.click();URL.revokeObjectURL(a2.href);
+        localStorage.setItem('aurum_backup_capital',new Date().toISOString());
+      },500);
+    }
+    setTimeout(function(){renderBackup()},1000);
+  }catch(e){console.error(e)}
+}
+
+function toggleGuide(){
+  try{
+    var el=document.getElementById('secGuide');
+    el.style.display=el.style.display==='none'?'block':'none';
+  }catch(e){}
+}
+
+/* ─── INIT ─── */
+init();
+</script>
+</body>
+</html>
