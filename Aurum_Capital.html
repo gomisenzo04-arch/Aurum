@@ -77,6 +77,10 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .chg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:768px){.side{width:50px;padding:8px 0}.ni{width:36px;height:36px}.pnl{padding:14px 12px 30px}.sg{grid-template-columns:repeat(2,1fr);gap:6px}.fr{flex-direction:column}.fd{min-width:100%}.th{padding:10px 12px 8px}.crd .vl{font-size:16px}.chg{grid-template-columns:1fr}}
 @media(max-width:480px){.cb{padding:10px}.chg{gap:8px}}
+/* ─── IFRAME MODE ─── */
+.in-iframe .side{display:none!important}
+.in-iframe .th .hb{display:none!important}
+.in-iframe .mw{width:100%}
 </style>
 </head>
 <body>
@@ -322,6 +326,7 @@ function xreset(){try{if(!confirm('⚠ TOUT SUPPRIMER ?'))return;if(!confirm('De
 load();
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){}})();
 rCL();rCS();rAL();rD();
+try{if(window.self!==window.top){document.body.classList.add('in-iframe')}}catch(e){document.body.classList.add('in-iframe')}
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
 </body>
