@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <title>Aurum — Trading & Patrimoine</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#d4a017">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Aurum">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+  <meta name="description" content="Aurum — Écosystème Trading XAUUSD & Patrimoine">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================
+       AURUM PWA SHELL — Variables & Reset
+       ============================================ */
+    :root {
+      --bg: #06090e;
+      --bg2: #0c1018;
+      --bg3: #141a26;
+      --bg4: #1b2232;
+      --border: #1d2840;
+      --border2: #293756;
+      --gold: #d4a017;
+      --gold2: #b8860b;
+      --gold3: #f5d060;
+      --green: #00d68f;
+      --red: #ff4757;
+      --blue: #5b8def;
+      --purple: #a78bfa;
+      --t1: #edf2f7;
+      --t2: #9bafd4;
+      --t3: #6b7ea0;
+      --radius: 12px;
+      --transition: .25s cubic-bezier(.4, 0, .2, 1);
+      --nav-h: 64px;
+      --side-w: 72px;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ============================================
+       LAYOUT PRINCIPAL
+       ============================================ */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* ============================================
+       HEADER TOP BAR (mobile & desktop)
+       ============================================ */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      padding: 0 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .top-bar .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--t1);
+    }
+
+    .top-bar .logo svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .top-bar .logo span {
+      font-weight: 800;
+      font-size: 18px;
+      background: linear-gradient(135deg, var(--gold3), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: .5px;
+    }
+
+    .top-bar .page-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--t2);
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: all .3s ease;
+    }
+
+    .top-bar .page-title.vis {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .top-bar .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--t3);
+    }
+
+    .top-bar .status .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse-dot 2s infinite;
+    }
+
+    .top-bar .status.offline .dot {
+      background: var(--red);
+      animation: none;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
+
+    /* ============================================
+       ZONE CONTENU (iframes)
+       ============================================ */
+    .content-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: var(--bg);
+      opacity: 0;
+      transform: scale(.98) translateY(8px);
+      transition: opacity .4s cubic-bezier(.4,0,.2,1), transform .4s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .page-frame.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    .page-frame.exit {
+      opacity: 0;
+      transform: scale(.96) translateY(-8px);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Loading skeleton */
+    .page-loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: var(--bg);
+      z-index: 20;
+      transition: opacity .3s ease;
+    }
+
+    .page-loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    .loader-text {
+      font-size: 13px;
+      color: var(--t3);
+      font-weight: 500;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ============================================
+       NAVIGATION BOTTOM BAR (mobile)
+       ============================================ */
+    .bottom-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: var(--nav-h);
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--transition);
+      position: relative;
+      -webkit-tap-highlight-color: transparent;
+      min-width: 60px;
+    }
+
+    .nav-item .nav-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+    }
+
+    .nav-item .nav-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: var(--t3);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: all var(--transition);
+    }
+
+    .nav-item .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--t3);
+      transition: all var(--transition);
+      letter-spacing: .3px;
+    }
+
+    /* Active state */
+    .nav-item.active .nav-icon svg {
+      stroke: var(--gold);
+      filter: drop-shadow(0 0 6px rgba(212, 160, 23, .4));
+    }
+
+    .nav-item.active .nav-label {
+      color: var(--gold);
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 3px;
+      border-radius: 0 0 3px 3px;
+      background: var(--gold);
+      animation: nav-indicator .3s ease;
+    }
+
+    @keyframes nav-indicator {
+      from { width: 0; opacity: 0; }
+      to { width: 24px; opacity: 1; }
+    }
+
+    /* Hover (desktop) */
+    .nav-item:hover .nav-icon svg {
+      stroke: var(--t1);
+    }
+
+    .nav-item:hover .nav-label {
+      color: var(--t1);
+    }
+
+    /* Ripple effect on tap */
+    .nav-item:active {
+      transform: scale(.92);
+    }
+
+    /* Color coding per section */
+    .nav-item[data-page="hub"].active .nav-icon svg { stroke: var(--gold); }
+    .nav-item[data-page="hub"].active .nav-label { color: var(--gold); }
+    .nav-item[data-page="hub"].active::before { background: var(--gold); }
+
+    .nav-item[data-page="academy"].active .nav-icon svg { stroke: var(--blue); }
+    .nav-item[data-page="academy"].active .nav-label { color: var(--blue); }
+    .nav-item[data-page="academy"].active::before { background: var(--blue); }
+
+    .nav-item[data-page="journal"].active .nav-icon svg { stroke: var(--gold3); }
+    .nav-item[data-page="journal"].active .nav-label { color: var(--gold3); }
+    .nav-item[data-page="journal"].active::before { background: var(--gold3); }
+
+    .nav-item[data-page="capital"].active .nav-icon svg { stroke: var(--purple); }
+    .nav-item[data-page="capital"].active .nav-label { color: var(--purple); }
+    .nav-item[data-page="capital"].active::before { background: var(--purple); }
+
+    /* ============================================
+       INSTALL BANNER
+       ============================================ */
+    .install-banner {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, rgba(212,160,23,.12), rgba(167,139,250,.08));
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .install-banner.show { display: flex; }
+
+    .install-banner .ib-text {
+      flex: 1;
+      font-size: 13px;
+      color: var(--t2);
+      font-weight: 500;
+    }
+
+    .install-banner .ib-text strong {
+      color: var(--gold);
+    }
+
+    .install-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+
+    .install-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(212, 160, 23, .3);
+    }
+
+    .install-btn:active {
+      transform: scale(.96);
+    }
+
+    .ib-close {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--t3);
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 18px;
+      transition: all var(--transition);
+    }
+
+    .ib-close:hover {
+      background: var(--bg3);
+      color: var(--t1);
+    }
+
+    /* ============================================
+       SPLASH SCREEN
+       ============================================ */
+    .splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 9999;
+      transition: opacity .5s ease, transform .5s ease;
+    }
+
+    .splash.hide {
+      opacity: 0;
+      transform: scale(1.05);
+      pointer-events: none;
+    }
+
+    .splash-logo {
+      width: 80px;
+      height: 80px;
+      animation: splash-in .6s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    @keyframes splash-in {
+      from { opacity: 0; transform: scale(.5) rotate(-10deg); }
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    .splash-title {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--gold3), var(--gold), var(--gold2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: splash-text .6s ease .2s both;
+    }
+
+    @keyframes splash-text {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .splash-sub {
+      font-size: 13px;
+      color: var(--t3);
+      font-weight: 500;
+      animation: splash-text .6s ease .4s both;
+    }
+
+    .splash-bar {
+      width: 120px;
+      height: 3px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+      animation: splash-text .6s ease .5s both;
+    }
+
+    .splash-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--gold), var(--gold3));
+      border-radius: 3px;
+      transition: width .8s ease;
+    }
+
+    /* ============================================
+       DESKTOP : sidebar au lieu de bottom nav
+       ============================================ */
+    @media (min-width: 769px) {
+      .app {
+        flex-direction: row;
+      }
+
+      .top-bar {
+        display: none;
+      }
+
+      .bottom-nav {
+        flex-direction: column;
+        width: var(--side-w);
+        height: 100%;
+        border-top: none;
+        border-right: 1px solid var(--border);
+        padding: 16px 0 16px;
+        justify-content: flex-start;
+        gap: 4px;
+      }
+
+      .nav-item {
+        width: 56px;
+        height: 52px;
+        border-radius: 12px;
+        padding: 6px;
+      }
+
+      .nav-item .nav-label {
+        font-size: 9px;
+      }
+
+      .nav-item.active::before {
+        top: 50%;
+        left: -1px;
+        right: auto;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 24px;
+        border-radius: 0 3px 3px 0;
+      }
+
+      @keyframes nav-indicator {
+        from { height: 0; opacity: 0; }
+        to { height: 24px; opacity: 1; }
+      }
+
+      .nav-logo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav-logo svg {
+        width: 36px;
+        height: 36px;
+      }
+
+      .nav-logo span {
+        font-size: 10px;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--gold3), var(--gold));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: .5px;
+      }
+
+      .content-area {
+        order: 2;
+      }
+
+      .bottom-nav {
+        order: 1;
+      }
+
+      .install-banner {
+        order: 0;
+      }
+    }
+
+    /* ============================================
+       OFFLINE INDICATOR
+       ============================================ */
+    .offline-bar {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(255, 71, 87, .15);
+      border-bottom: 1px solid rgba(255, 71, 87, .3);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--red);
+      flex-shrink: 0;
+    }
+
+    .offline-bar.show { display: flex; }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================
+       SPLASH SCREEN
+       ============================================ -->
+  <div class="splash" id="splash">
+    <svg class="splash-logo" viewBox="0 0 512 512">
+      <defs>
+        <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f5d060"/>
+          <stop offset="50%" stop-color="#d4a017"/>
+          <stop offset="100%" stop-color="#b8860b"/>
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="102" fill="#0c1018"/>
+      <rect x="8" y="8" width="496" height="496" rx="98" fill="none" stroke="url(#sg)" stroke-width="4" opacity=".35"/>
+      <path d="M256 90 L376 400 H344 L318 326 H194 L168 400 H136 Z M210 294 H302 L256 166 Z" fill="url(#sg)"/>
+      <rect x="146" y="414" width="220" height="6" rx="3" fill="url(#sg)" opacity=".5"/>
+    </svg>
+    <div class="splash-title">Aurum</div>
+    <div class="splash-sub">Trading & Patrimoine</div>
+    <div class="splash-bar"><div class="splash-bar-fill" id="splashFill"></div></div>
+  </div>
+
+  <!-- ============================================
+       APP SHELL
+       ============================================ -->
+  <div class="app" id="app" style="opacity:0">
+
+    <!-- Top bar mobile -->
+    <div class="top-bar">
+      <div class="logo">
+        <svg viewBox="0 0 192 192">
+          <defs>
+            <linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f5d060"/>
+              <stop offset="50%" stop-color="#d4a017"/>
+              <stop offset="100%" stop-color="#b8860b"/>
+            </linearGradient>
+          </defs>
+          <rect width="192" height="192" rx="38" fill="#0c1018"/>
+          <path d="M96 36 L140 148 H126 L116 120 H76 L66 148 H52 Z M82 106 H110 L96 62 Z" fill="url(#tg)"/>
+        </svg>
+        <span>Aurum</span>
+      </div>
+      <div class="page-title" id="pageTitle"></div>
+      <div class="status" id="netStatus">
+        <div class="dot"></div>
+        <span>En ligne</span>
+      </div>
+    </div>
+
+    <!-- Install banner -->
+    <div class="install-banner" id="installBanner">
+      <div class="ib-text">Installer <strong>Aurum</strong> sur votre appareil</div>
+      <button class="install-btn" id="installBtn" onclick="installApp()">Installer</button>
+      <button class="ib-close" onclick="dismissInstall()">&times;</button>
+    </div>
+
+    <!-- Offline bar -->
+    <div class="offline-bar" id="offlineBar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      Mode hors-ligne — vos données sont sauvegardées
+    </div>
+
+    <!-- Content area -->
+    <div class="content-area" id="contentArea">
+      <!-- Loading -->
+      <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Chargement...</div>
+      </div>
+
+      <!-- Iframes chargées dynamiquement -->
+    </div>
+
+    <!-- Bottom navigation -->
+    <nav class="bottom-nav" id="bottomNav">
+      <!-- Desktop logo -->
+      <div class="nav-logo" style="display:none">
+        <svg viewBox="0 0 192 192">
+          <defs><linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f5d060"/><stop offset="50%" stop-color="#d4a017"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs>
+          <rect width="192" height="192" rx="38" fill="#0c1018"/>
+          <path d="M96 36 L140 148 H126 L116 120 H76 L66 148 H52 Z M82 106 H110 L96 62 Z" fill="url(#ng)"/>
+        </svg>
+        <span>Aurum</span>
+      </div>
+
+      <!-- Hub -->
+      <div class="nav-item active" data-page="hub" onclick="navigate('hub')">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <span class="nav-label">Hub</span>
+      </div>
+
+      <!-- Academy -->
+      <div class="nav-item" data-page="academy" onclick="navigate('academy')">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <span class="nav-label">Academy</span>
+      </div>
+
+      <!-- Journal -->
+      <div class="nav-item" data-page="journal" onclick="navigate('journal')">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+        </div>
+        <span class="nav-label">Journal</span>
+      </div>
+
+      <!-- Capital -->
+      <div class="nav-item" data-page="capital" onclick="navigate('capital')">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </div>
+        <span class="nav-label">Capital</span>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    /* ============================================
+       AURUM PWA — Routeur & Navigation
+       ============================================ */
+
+    /* ---- Configuration des pages ---- */
+    var PAGES = {
+      hub:     { src: 'Aurum_Hub.html',     title: 'Hub',     color: '#d4a017' },
+      academy: { src: 'Aurum_Academy.html',  title: 'Academy', color: '#5b8def' },
+      journal: { src: 'Aurum.html',          title: 'Journal', color: '#f5d060' },
+      capital: { src: 'Aurum_Capital.html',  title: 'Capital', color: '#a78bfa' }
+    };
+
+    var currentPage = null;
+    var frames = {};
+    var deferredPrompt = null;
+
+    /* ---- Splash Screen ---- */
+    function initSplash() {
+      try {
+        var fill = document.getElementById('splashFill');
+        fill.style.width = '30%';
+
+        setTimeout(function() { fill.style.width = '70%'; }, 300);
+        setTimeout(function() { fill.style.width = '100%'; }, 800);
+        setTimeout(function() {
+          document.getElementById('splash').classList.add('hide');
+          document.getElementById('app').style.opacity = '1';
+          document.getElementById('app').style.transition = 'opacity .4s ease';
+
+          /* Charger la page initiale */
+          var hash = window.location.hash.replace('#', '');
+          var startPage = PAGES[hash] ? hash : 'hub';
+          navigate(startPage, true);
+        }, 1200);
+      } catch (e) {
+        /* Fallback si erreur splash */
+        document.getElementById('splash').style.display = 'none';
+        document.getElementById('app').style.opacity = '1';
+        navigate('hub', true);
+      }
+    }
+
+    /* ---- Navigation principale ---- */
+    function navigate(page, isFirst) {
+      try {
+        if (page === currentPage && !isFirst) return;
+
+        var prev = currentPage;
+        currentPage = page;
+        var config = PAGES[page];
+
+        /* Mettre à jour le hash */
+        window.location.hash = page;
+
+        /* Mettre à jour le titre de la page */
+        var titleEl = document.getElementById('pageTitle');
+        titleEl.textContent = config.title;
+        titleEl.classList.remove('vis');
+        setTimeout(function() { titleEl.classList.add('vis'); }, 50);
+
+        /* Mettre à jour theme-color */
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', config.color);
+
+        /* Mettre à jour la navigation */
+        var navItems = document.querySelectorAll('.nav-item');
+        for (var i = 0; i < navItems.length; i++) {
+          navItems[i].classList.toggle('active', navItems[i].getAttribute('data-page') === page);
+        }
+
+        /* Transition sortie de l'ancien frame */
+        if (prev && frames[prev]) {
+          frames[prev].classList.remove('active');
+          frames[prev].classList.add('exit');
+          (function(p) {
+            setTimeout(function() {
+              if (frames[p]) frames[p].classList.remove('exit');
+            }, 400);
+          })(prev);
+        }
+
+        /* Créer ou réafficher le frame */
+        if (!frames[page]) {
+          createFrame(page, config);
+        } else {
+          frames[page].classList.add('active');
+          document.getElementById('pageLoader').classList.add('hidden');
+        }
+      } catch (e) {
+        console.error('Navigation error:', e);
+      }
+    }
+
+    /* ---- Création d'iframe ---- */
+    function createFrame(page, config) {
+      try {
+        var loader = document.getElementById('pageLoader');
+        loader.classList.remove('hidden');
+
+        var iframe = document.createElement('iframe');
+        iframe.className = 'page-frame';
+        iframe.setAttribute('data-page', page);
+        iframe.setAttribute('title', config.title);
+        iframe.setAttribute('loading', 'lazy');
+
+        iframe.addEventListener('load', function() {
+          try {
+            loader.classList.add('hidden');
+            iframe.classList.add('active');
+
+            /* Intercepter les liens internes dans l'iframe */
+            interceptLinks(iframe);
+          } catch (e) {
+            console.error('Frame load error:', e);
+            loader.classList.add('hidden');
+            iframe.classList.add('active');
+          }
+        });
+
+        iframe.src = config.src;
+        document.getElementById('contentArea').appendChild(iframe);
+        frames[page] = iframe;
+      } catch (e) {
+        console.error('Create frame error:', e);
+      }
+    }
+
+    /* ---- Intercepter les liens entre pages ---- */
+    function interceptLinks(iframe) {
+      try {
+        var doc = iframe.contentDocument || iframe.contentWindow.document;
+
+        doc.addEventListener('click', function(e) {
+          try {
+            var link = e.target.closest('a[href]');
+            if (!link) return;
+
+            var href = link.getAttribute('href');
+
+            /* Mapper les fichiers aux pages */
+            var map = {
+              'Aurum_Hub.html': 'hub',
+              'Aurum_Academy.html': 'academy',
+              'Aurum.html': 'journal',
+              'Aurum_Capital.html': 'capital'
+            };
+
+            for (var file in map) {
+              if (href.indexOf(file) !== -1) {
+                e.preventDefault();
+                e.stopPropagation();
+                navigate(map[file]);
+                return;
+              }
+            }
+          } catch (err) {
+            /* Cross-origin, on laisse le lien normal */
+          }
+        }, true);
+      } catch (e) {
+        /* Cross-origin restriction - pas grave */
+      }
+    }
+
+    /* ---- Navigation par hash ---- */
+    window.addEventListener('hashchange', function() {
+      try {
+        var hash = window.location.hash.replace('#', '');
+        if (PAGES[hash] && hash !== currentPage) {
+          navigate(hash);
+        }
+      } catch (e) {
+        console.error('Hash change error:', e);
+      }
+    });
+
+    /* ---- PWA : Installation ---- */
+    window.addEventListener('beforeinstallprompt', function(e) {
+      try {
+        e.preventDefault();
+        deferredPrompt = e;
+
+        /* Montrer la bannière si pas déjà dismissée */
+        if (!localStorage.getItem('aurum_install_dismissed')) {
+          document.getElementById('installBanner').classList.add('show');
+        }
+      } catch (err) {
+        console.error('Install prompt error:', err);
+      }
+    });
+
+    function installApp() {
+      try {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(result) {
+          if (result.outcome === 'accepted') {
+            document.getElementById('installBanner').classList.remove('show');
+          }
+          deferredPrompt = null;
+        });
+      } catch (e) {
+        console.error('Install error:', e);
+      }
+    }
+
+    function dismissInstall() {
+      try {
+        document.getElementById('installBanner').classList.remove('show');
+        localStorage.setItem('aurum_install_dismissed', '1');
+      } catch (e) {
+        console.error('Dismiss error:', e);
+      }
+    }
+
+    /* ---- Détection online/offline ---- */
+    function updateOnlineStatus() {
+      try {
+        var status = document.getElementById('netStatus');
+        var offlineBar = document.getElementById('offlineBar');
+
+        if (navigator.onLine) {
+          status.classList.remove('offline');
+          status.innerHTML = '<div class="dot"></div><span>En ligne</span>';
+          offlineBar.classList.remove('show');
+        } else {
+          status.classList.add('offline');
+          status.innerHTML = '<div class="dot"></div><span>Hors-ligne</span>';
+          offlineBar.classList.add('show');
+        }
+      } catch (e) {
+        console.error('Status update error:', e);
+      }
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    /* ---- Desktop : afficher le logo sidebar ---- */
+    function handleResize() {
+      try {
+        var logo = document.querySelector('.nav-logo');
+        if (logo) {
+          logo.style.display = window.innerWidth >= 769 ? 'flex' : 'none';
+        }
+      } catch (e) {
+        console.error('Resize error:', e);
+      }
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    /* ---- Enregistrement Service Worker ---- */
+    function registerSW() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(function(reg) {
+          console.log('Aurum SW enregistr\u00e9 :', reg.scope);
+        }).catch(function(err) {
+          console.warn('Aurum SW erreur :', err);
+        });
+      }
+    }
+
+    /* ---- Démarrage ---- */
+    registerSW();
+    handleResize();
+    updateOnlineStatus();
+    initSplash();
+  </script>
+</body>
+</html>

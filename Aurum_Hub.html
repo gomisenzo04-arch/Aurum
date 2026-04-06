@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Aurum — Hub</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d4a017">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-192.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#06090e;--bg2:#0c1018;--bg3:#141a26;--bg4:#1b2232;--border:#1d2840;--border2:#293756;--gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--green:#00d68f;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--t1:#edf2f7;--t2:#9bafd4;--t3:#6b7ea0;--radius:12px;--transition:.25s cubic-bezier(.4,0,.2,1)}
@@ -389,7 +394,7 @@ function renderToday(){
     var formDone=0;
     if(formRaw){try{var fd=JSON.parse(formRaw);formDone=(fd.d||[]).length}catch(e){}}
     if(formDone<32){
-      tips.push({text:'<b>Formation</b> : module '+(formDone+1)+'/31 en attente. Continue pour débloquer le trading.',btn:'Continuer',href:'Aurum_Academy.html'});
+      tips.push({text:'<b>Formation</b> : module '+(formDone+1)+'/32 en attente. Continue pour débloquer le trading.',btn:'Continuer',href:'Aurum_Academy.html'});
     }
 
     /* Backup check */
@@ -538,5 +543,6 @@ function toggleGuide(){
 /* ─── INIT ─── */
 init();
 </script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
 </body>
 </html>
