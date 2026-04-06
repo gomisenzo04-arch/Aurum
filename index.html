@@ -797,6 +797,38 @@
       max-width: 280px;
       line-height: 1.6;
     }
+
+    /* ─── Toast system ─── */
+    .shell-toast {
+      position: fixed;
+      bottom: calc(var(--nav-h) + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--t1);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity .3s, transform .3s;
+      pointer-events: none;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0,0,0,.4);
+      max-width: 90%;
+      text-align: center;
+    }
+    .shell-toast.vis {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (min-width: 769px) {
+      .shell-toast { bottom: 24px; }
+    }
   </style>
 </head>
 <body>
@@ -857,6 +889,7 @@
   <!-- ============================================
        APP SHELL
        ============================================ -->
+  <div class="shell-toast" id="shellToast"></div>
   <div class="app" id="app" style="opacity:0">
 
     <!-- Top bar mobile -->
@@ -1025,7 +1058,7 @@
           sessionStorage.setItem('aurum_auth', '1');
           sessionStorage.setItem('enz_role', 'a');
           document.getElementById('loginScreen').classList.add('hide');
-          setTimeout(startApp, 400);
+          setTimeout(function(){ startApp(); shellToast('Bienvenue dans Aurum'); }, 400);
         } else {
           /* Vérification */
           var stored = localStorage.getItem('aurum_code');
@@ -1370,6 +1403,19 @@
     });
 
     /* ---- Enregistrement Service Worker ---- */
+    /* ---- Toast global ---- */
+    var toastTimer = null;
+    function shellToast(msg) {
+      try {
+        var el = document.getElementById('shellToast');
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.add('vis');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function() { el.classList.remove('vis'); }, 2500);
+      } catch(e) {}
+    }
+
     function registerSW() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then(function(reg) {
