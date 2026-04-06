@@ -1319,81 +1319,24 @@ body::before {
   .green-box { border-color: #060 !important; color: #060 !important; background: #f0fff0 !important }
   .panel { max-width: 100% !important }
 }
-/* ─── IFRAME MODE : sidebar → barre horizontale quand embarqué dans le SPA ─── */
-.in-iframe {
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100% !important;
-  min-height: 100% !important;
-  overflow: hidden !important
-}
-html.in-iframe-root { height: 100% !important }
-.in-iframe .side {
-  width: 100% !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  flex-direction: row !important;
-  padding: 0 6px !important;
-  gap: 2px !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  background: rgba(6,9,14,.96) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-right: none !important;
-  border-bottom: 1px solid var(--border) !important;
-  z-index: 200 !important;
-  align-items: center !important;
-  scrollbar-width: none !important;
-  flex-shrink: 0 !important
-}
-.in-iframe .side::-webkit-scrollbar { display: none }
-.in-iframe .side .logo { display: none !important }
-.in-iframe .side .nav-link { display: none !important }
-.in-iframe .side .nav-sep { display: none !important }
-.in-iframe .side > div[style*="margin-top:auto"] { display: none !important }
-.in-iframe .side .nav-item {
-  flex-shrink: 0 !important;
-  width: auto !important;
-  height: 32px !important;
-  padding: 0 10px !important;
-  border-radius: 8px !important;
-  gap: 5px !important;
-  flex-direction: row !important;
-  display: flex !important
-}
-.in-iframe .side .nav-item .tooltip {
-  position: static !important;
-  opacity: 1 !important;
-  background: none !important;
-  padding: 0 !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  white-space: nowrap !important;
-  pointer-events: auto !important;
-  color: inherit !important;
-  box-shadow: none !important
-}
-.in-iframe .side .nav-item svg {
-  width: 15px !important;
-  height: 15px !important
-}
-.in-iframe .side .nav-item.active {
-  background: rgba(212,160,23,.15) !important;
-  color: var(--gold) !important
-}
-.in-iframe .side .nav-item.active::before {
-  display: none !important
-}
-.in-iframe .content {
-  flex: 1 !important;
-  width: 100% !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  min-height: 0 !important
-}
+/* ─── IFRAME MODE ─── */
+.in-iframe .side { display: none !important }
 .in-iframe .top-bar { display: none !important }
 .in-iframe .login-overlay { border-radius: 0 }
+.itabs {
+  display: flex; align-items: center; gap: 2px; padding: 4px 8px;
+  background: rgba(6,9,14,.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0;
+  scrollbar-width: none; position: sticky; top: 0; z-index: 200
+}
+.itabs::-webkit-scrollbar { display: none }
+.itab {
+  display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px;
+  font-size: 11px; font-weight: 600; color: var(--t3); cursor: pointer; white-space: nowrap;
+  transition: all .15s; flex-shrink: 0; border: none; background: none; font-family: inherit
+}
+.itab:hover { color: var(--t2); background: var(--bg3) }
+.itab.on { color: var(--gold); background: rgba(212,160,23,.12) }
 </style>
 </head>
 <body>
@@ -5480,8 +5423,28 @@ document.getElementById('fD').valueAsDate = new Date();
 cLot();
 checkSession();
 adaptForm();
-/* Détecte si chargé dans une iframe (SPA shell) */
-try{if(window.self!==window.top){document.documentElement.classList.add('in-iframe-root');document.body.classList.add('in-iframe')}}catch(e){document.documentElement.classList.add('in-iframe-root');document.body.classList.add('in-iframe')}
+/* ─── Détection iframe + création barre de tabs ─── */
+try{if(window.self!==window.top){
+  document.body.classList.add('in-iframe');
+  var itabs=[
+    {p:'dash',l:'Dashboard'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},
+    {p:'add',l:'Nouveau trade'},{p:'hist',l:'Historique'},{p:'time',l:'Horaires'},
+    {p:'review',l:'Review'},{p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'},
+    {p:'backup',l:'Backup'},{p:'settings',l:'Réglages'}
+  ];
+  var bar=document.createElement('div');bar.className='itabs';bar.id='iframeTabs';
+  itabs.forEach(function(t){
+    var b=document.createElement('button');b.className='itab'+(t.p==='dash'?' on':'');
+    b.textContent=t.l;b.setAttribute('data-p',t.p);
+    b.onclick=function(){
+      go(t.p);
+      bar.querySelectorAll('.itab').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-p')===t.p)});
+    };
+    bar.appendChild(b);
+  });
+  var ct=document.getElementById('mainContent');
+  if(ct)ct.insertBefore(bar,ct.firstChild);
+}}catch(e){}
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
 </body>
