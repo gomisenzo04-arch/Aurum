@@ -436,7 +436,53 @@ document.getElementById('enC').innerHTML=h;
 /* Comparison */
 if(D.entities.length>=2){var cH2='<table><thead><tr><th>Entit\u00e9</th><th>Forme</th><th>CA</th><th>R\u00e9sultat</th><th>Marge</th><th>Tr\u00e9so</th></tr></thead><tbody>';D.entities.filter(function(e){return e.status==='Active'}).forEach(function(e){var mg=e.ca>0?Math.round((e.resultat/e.ca)*100):0;cH2+='<tr><td style="font-weight:600;color:var(--t1)">'+e.name+'</td><td>'+e.forme+'</td><td class="mn ps">'+fm(e.ca)+'</td><td class="mn '+(e.resultat>=0?'ps':'ng')+'">'+fm(e.resultat)+'</td><td class="mn">'+ mg+'%</td><td class="mn" style="color:var(--blue)">'+fm(e.tresorerie)+'</td></tr>'});cH2+='</tbody></table>';document.getElementById('enComp').innerHTML=cH2}else{document.getElementById('enComp').innerHTML='<div style="font-size:11px;color:var(--t3);padding:8px">2+ entit\u00e9s pour comparer.</div>'}
 /* Guide */
-document.getElementById('stCo').innerHTML='<div style="display:grid;gap:8px"><div class="crd" style="padding:10px;border-left:3px solid var(--gold)"><b style="color:var(--gold)">Micro</b> : CA &lt; 77 600\u20ac. Abattement 34%. Pas TVA &lt; 36 800\u20ac. ~22% cotis. Id\u00e9al pour d\u00e9marrer.</div><div class="crd" style="padding:10px;border-left:3px solid var(--purple)"><b style="color:var(--purple)">SASU/SAS</b> : IS 15%/25%. Flat tax 30% dividendes. Pas cotis. sur dividendes. Id\u00e9al optimisation.</div><div class="crd" style="padding:10px;border-left:3px solid var(--blue)"><b style="color:var(--blue)">SARL/EURL</b> : TNS ~45%. Cotis. sur dividendes &gt; 10% capital. Moins cher si petite r\u00e9mun.</div><div class="crd" style="padding:10px;border-left:3px solid #f5d060"><b style="color:#f5d060">Holding</b> : M\u00e8re-fille 95% exo. Convention tr\u00e9sorerie. \u00c0 partir de 2 entit\u00e9s.</div><div class="crd" style="padding:10px;border-left:3px solid var(--green)"><b style="color:var(--green)">SCI</b> : Immo. IR/IS. Amortissement si IS. Transmission parts.</div></div>';
+document.getElementById('stCo').innerHTML='<div style="display:grid;gap:10px">'
+    +'<div class="crd" style="padding:14px;border-left:4px solid var(--green)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:var(--green);font-size:13px">\ud83d\udfe2 Micro-entreprise</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(0,214,143,.1);color:var(--green);font-weight:700">SIMPLE</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">Abattement forfaitaire 34%. Pas de TVA sous 36\u202f800\u20ac. Cotisations ~22%.</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Z\u00e9ro compta \u2022 Cr\u00e9ation gratuite \u2022 CFE r\u00e9duite</div>'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>Plafond 77\u202f600\u20ac \u2022 Pas de d\u00e9duction charges \u2022 Cotis. sur CA</div>'
+      +'</div>'
+      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si CA &lt; 77\u202f600\u20ac et d\u00e9marrage</div>'
+    +'</div>'
+    +'<div class="crd" style="padding:14px;border-left:4px solid var(--purple)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:var(--purple);font-size:13px">\ud83d\udfe1 SASU / SAS</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:700">MOYEN</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">IS 15% (jusqu\u2019\u00e0 42\u202f500\u20ac) puis 25%. Flat tax 30% sur dividendes. Z\u00e9ro cotis. sur dividendes.</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Optimisation fiscale \u2022 D\u00e9duction charges \u2022 Cr\u00e9dibilit\u00e9</div>'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>Comptabilit\u00e9 obligatoire \u2022 Co\u00fbt cr\u00e9ation ~500\u20ac \u2022 Formalisme</div>'
+      +'</div>'
+      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si CA &gt; 77K\u20ac ou optimisation dividendes</div>'
+    +'</div>'
+    +'<div class="crd" style="padding:14px;border-left:4px solid var(--blue)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:var(--blue);font-size:13px">\ud83d\udfe1 SARL / EURL</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:700">MOYEN</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">TNS ~45% cotis. Cotisations sur dividendes &gt; 10% du capital. Protection patrimoine.</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Moins cher si petite r\u00e9mun. \u2022 Bonne retraite TNS \u2022 Souple</div>'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>Cotis. \u00e9lev\u00e9es \u2022 Dividendes co\u00fbteux \u2022 Moins flexible</div>'
+      +'</div>'
+      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si petite r\u00e9mun\u00e9ration + couverture sociale</div>'
+    +'</div>'
+    +'<div class="crd" style="padding:14px;border-left:4px solid #f5d060">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:#f5d060;font-size:13px">\ud83d\udfe0 Holding</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(255,71,87,.1);color:var(--red);font-weight:700">COMPLEXE</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">R\u00e9gime m\u00e8re-fille : 95% exon\u00e9ration. Convention de tr\u00e9sorerie. Cash pooling.</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Optimisation groupe \u2022 R\u00e9investissement \u2022 Transmission</div>'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>Co\u00fbt 2-3K\u20ac + 1.5K\u20ac/an \u2022 Complexe \u2022 Expert-comptable</div>'
+      +'</div>'
+      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si 2+ entit\u00e9s ou dividendes &gt; 20K\u20ac/an</div>'
+    +'</div>'
+    +'<div class="crd" style="padding:14px;border-left:4px solid var(--green)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:var(--green);font-size:13px">\ud83d\udfe0 SCI</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:700">MOYEN</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">Immobilier. IR ou IS au choix. Amortissement si IS. Transmission de parts.</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Gestion patrimoine immo \u2022 Transmission facile \u2022 Flexible</div>'
+        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>R\u00e9serv\u00e9e immobilier \u2022 Compta si IS \u2022 Formalisme</div>'
+      +'</div>'
+      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si investissement immobilier</div>'
+    +'</div>'
+  +'</div>';
 /* Holding advisor */
 var adv='';if(hH){var he=D.entities.find(function(e){return e.forme==='Holding'&&e.status==='Active'});var fi=D.entities.filter(function(e){return e.parent===(he&&he.id)});adv='<b style="color:var(--green)">\u2713 Holding active : '+(he?he.name:'')+'</b> ('+fi.length+' filiales)<br><br><b>Optimisations :</b><br>\u2192 Convention tr\u00e9sorerie (pr\u00eats intra-groupe)<br>\u2192 Management fees<br>\u2192 Int\u00e9gration fiscale si \u2265 95%<br>\u2192 Cash pooling'}else if(D.entities.length){adv='<b>Signaux :</b> 2+ entit\u00e9s, r\u00e9sultat &gt; 100K\u20ac, r\u00e9investissement, transmission.<br><b>Co\u00fbt :</b> ~2-3K\u20ac cr\u00e9ation + ~1.5K\u20ac/an compta.<br><b>Rentable :</b> \u00e0 partir ~20K\u20ac/an dividendes.'}else{adv='Cr\u00e9e une entit\u00e9 pour d\u00e9bloquer.'}document.getElementById('enHoldAdv').innerHTML=adv;
 }catch(e){console.error('rEN:',e)}}
@@ -444,10 +490,68 @@ function rEC2(e){var ih=e.forme==='Holding'||e.forme==='SA';var ico=ih?'\ud83c\u
 return'<div class="ec"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-size:16px">'+ico+'</span><b style="color:var(--t1);font-size:14px">'+e.name+'</b></div><div style="display:flex;flex-wrap:wrap;gap:4px;font-size:10px"><span style="padding:2px 7px;border-radius:4px;background:rgba(167,139,250,.1);color:var(--purple)">'+e.forme+'</span><span style="padding:2px 7px;border-radius:4px;background:rgba(91,141,239,.1);color:var(--blue)">'+e.regime+'</span><span style="padding:2px 7px;border-radius:4px;background:'+stC+'">'+e.status+'</span>'+(e.detention<100?'<span style="padding:2px 7px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold)">'+e.detention+'%</span>':'')+'</div>'+(e.siret?'<div style="font-size:9px;color:var(--t3);margin-top:2px">SIRET '+e.siret+'</div>':'')+(e.activite?'<div style="font-size:9px;color:var(--t3)">'+e.activite+'</div>':'')+(e.gerant?'<div style="font-size:9px;color:var(--t3)">G\u00e9rant: '+e.gerant+'</div>':'')+'</div><div style="display:flex;gap:4px"><button class="btn bo bs" onclick="eENotes(\''+e.id+'\')">\ud83d\udcdd</button><button class="btn br bs" onclick="dEN(\''+e.id+'\')">\u00d7</button></div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px"><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'ca\',\'CA\')"><div style="color:var(--t3)">CA</div><b class="mn" style="color:var(--green);font-size:11px">'+fm(e.ca)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'charges\',\'Charges\')"><div style="color:var(--t3)">Charges</div><b class="mn" style="color:var(--red);font-size:11px">'+fm(e.charges)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'chargesSociales\',\'Ch.sociales\')"><div style="color:var(--t3)">Ch.soc</div><b class="mn" style="color:var(--red);font-size:11px">'+fm(e.chargesSociales||0)+'</b></div><div style="padding:5px;background:var(--bg3);border-radius:5px;text-align:center"><div style="color:var(--t3)">R\u00e9sultat</div><b class="mn" style="color:'+(e.resultat>=0?'var(--green)':'var(--red)')+';font-size:11px">'+fm(e.resultat)+'</b><div style="font-size:8px;color:var(--t3)">'+mg+'%</div></div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px;margin-top:5px"><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'tresorerie\',\'Tr\u00e9so\')"><div style="color:var(--t3)">Tr\u00e9so</div><b class="mn" style="color:var(--blue);font-size:11px">'+fm(e.tresorerie)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'dividendes\',\'Dividendes\')"><div style="color:var(--t3)">Dividendes</div><b class="mn" style="color:var(--gold);font-size:11px">'+fm(e.dividendes)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'remuneration\',\'R\u00e9mun\')"><div style="color:var(--t3)">R\u00e9mun</div><b class="mn" style="color:var(--purple);font-size:11px">'+fm(e.remuneration)+'</b></div><div style="padding:5px;background:var(--bg3);border-radius:5px;text-align:center"><div style="color:var(--t3)">Capital</div><b class="mn" style="color:var(--t2);font-size:11px">'+fm(e.capitalSocial||0)+'</b></div></div>'+(e.notes?'<div style="margin-top:5px;font-size:9px;color:var(--t3);font-style:italic;padding:4px 6px;background:var(--bg3);border-radius:4px;cursor:pointer" onclick="eENotes(\''+e.id+'\')">\ud83d\udcdd '+e.notes+'</div>':'')+'</div>'}
 
 /* ─── FISCAL ─── */
-function sFi(){try{var rv=parseFloat(document.getElementById('fx-r').value)||0,rg=document.getElementById('fx-g').value,ch=parseFloat(document.getElementById('fx-c').value)||0,d='';if(rg==='micro'){var b=rv*.66,ir=cIR(b);d='Base (après 34%) : '+Math.round(b)+'€<br>IR : '+Math.round(ir)+'€<br>URSSAF (~22%) : '+Math.round(rv*.22)+'€<br><b style="color:var(--green)">Net : '+Math.round(rv-ir-rv*.22)+'€</b>'}else if(rg==='is'){var bn=rv-ch,is=bn<=42500?bn*.15:42500*.15+(bn-42500)*.25;d='Bénéf : '+Math.round(bn)+'€<br>IS : '+Math.round(is)+'€<br><b style="color:var(--green)">Net : '+Math.round(bn-is)+'€</b><br>Si dividendes (flat 30%) : <b style="color:var(--gold)">'+Math.round((bn-is)*.7)+'€</b>'}else if(rg==='flat'){d='Flat 30% : '+Math.round(rv*.3)+'€<br><b style="color:var(--green)">Net : '+Math.round(rv*.7)+'€</b>'}else{var tx=rv-ch,ir2=cIR(tx);d='Imposable : '+Math.round(tx)+'€<br>IR : '+Math.round(ir2)+'€<br><b style="color:var(--green)">Net : '+Math.round(tx-ir2)+'€</b>'}document.getElementById('fxR').innerHTML=d}catch(e){}}
+function sFi(){try{
+  var rv=parseFloat(document.getElementById('fx-r').value)||0,
+      rg=document.getElementById('fx-g').value,
+      ch=parseFloat(document.getElementById('fx-c').value)||0;
+  if(rv<=0){document.getElementById('fxR').innerHTML='<div style="color:var(--t3);font-size:12px">Entre un revenu pour simuler.</div>';return}
+  var impot=0,net=0,label='',detail='',alerte='';
+  function fE(v){return Math.round(v).toLocaleString('fr-FR')+'\u2009\u20ac'}
+  if(rg==='micro'){
+    var urs=Math.round(rv*.22),base=Math.round(rv*.66),ir=cIR(base);impot=Math.round(ir)+urs;net=Math.round(rv-ir-urs);
+    label='Micro-BNC';
+    detail='<tr><td>Revenu brut</td><td class="mn" style="text-align:right">'+fE(rv)+'</td></tr>'
+      +'<tr><td>Abattement 34%</td><td class="mn" style="text-align:right;color:var(--t3)">-'+fE(rv*.34)+'</td></tr>'
+      +'<tr><td>Base imposable</td><td class="mn" style="text-align:right">'+fE(base)+'</td></tr>'
+      +'<tr><td>IR</td><td class="mn" style="text-align:right;color:var(--red)">'+fE(ir)+'</td></tr>'
+      +'<tr><td>URSSAF (~22%)</td><td class="mn" style="text-align:right;color:var(--red)">'+fE(urs)+'</td></tr>'
+      +'<tr style="border-top:2px solid var(--border2)"><td style="font-weight:700;color:var(--t1)">Net</td><td class="mn" style="text-align:right;font-weight:700;color:var(--green);font-size:14px">'+fE(net)+'</td></tr>';
+    if(rv>60000)alerte='<div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.2);border-left:3px solid var(--red);font-size:11px;color:var(--t2);line-height:1.6">\u26a0\ufe0f <b style="color:var(--red)">Attention !</b> Tu approches du plafond micro-BNC (77\u202f600\u20ac). Pense \u00e0 passer en <b>SASU + IS</b> pour optimiser ta fiscalit\u00e9.</div>';
+  }else if(rg==='is'){
+    var bn=rv-ch,is2=bn<=42500?bn*.15:42500*.15+(bn-42500)*.25;impot=Math.round(is2);net=Math.round(bn-is2);var netDiv=Math.round((bn-is2)*.7);
+    label='IS (Soci\u00e9t\u00e9)';
+    detail='<tr><td>Revenu</td><td class="mn" style="text-align:right">'+fE(rv)+'</td></tr>'
+      +'<tr><td>Charges d\u00e9duites</td><td class="mn" style="text-align:right;color:var(--t3)">-'+fE(ch)+'</td></tr>'
+      +'<tr><td>B\u00e9n\u00e9fice imposable</td><td class="mn" style="text-align:right">'+fE(bn)+'</td></tr>'
+      +'<tr><td>IS '+(bn<=42500?'15%':'15%+25%')+'</td><td class="mn" style="text-align:right;color:var(--red)">'+fE(is2)+'</td></tr>'
+      +'<tr style="border-top:2px solid var(--border2)"><td style="font-weight:700;color:var(--t1)">Net en soci\u00e9t\u00e9</td><td class="mn" style="text-align:right;font-weight:700;color:var(--green);font-size:14px">'+fE(net)+'</td></tr>'
+      +'<tr><td style="color:var(--t3)">Si dividendes (flat 30%)</td><td class="mn" style="text-align:right;color:var(--gold);font-weight:700">'+fE(netDiv)+'</td></tr>';
+  }else if(rg==='flat'){
+    impot=Math.round(rv*.3);net=Math.round(rv*.7);
+    label='Flat Tax 30%';
+    detail='<tr><td>Revenu</td><td class="mn" style="text-align:right">'+fE(rv)+'</td></tr>'
+      +'<tr><td>Flat Tax 30%</td><td class="mn" style="text-align:right;color:var(--red)">'+fE(impot)+'</td></tr>'
+      +'<tr style="border-top:2px solid var(--border2)"><td style="font-weight:700;color:var(--t1)">Net</td><td class="mn" style="text-align:right;font-weight:700;color:var(--green);font-size:14px">'+fE(net)+'</td></tr>';
+  }else{
+    var tx2=rv-ch,ir3=cIR(tx2);impot=Math.round(ir3);net=Math.round(tx2-ir3);
+    label='IR bar\u00e8me';
+    detail='<tr><td>Revenu</td><td class="mn" style="text-align:right">'+fE(rv)+'</td></tr>'
+      +(ch>0?'<tr><td>Charges d\u00e9duites</td><td class="mn" style="text-align:right;color:var(--t3)">-'+fE(ch)+'</td></tr>':'')
+      +'<tr><td>Base imposable</td><td class="mn" style="text-align:right">'+fE(tx2)+'</td></tr>'
+      +'<tr><td>IR</td><td class="mn" style="text-align:right;color:var(--red)">'+fE(ir3)+'</td></tr>'
+      +'<tr style="border-top:2px solid var(--border2)"><td style="font-weight:700;color:var(--t1)">Net</td><td class="mn" style="text-align:right;font-weight:700;color:var(--green);font-size:14px">'+fE(net)+'</td></tr>';
+  }
+  var txEff=rv>0?((impot/rv)*100).toFixed(1):'0.0';
+  var pctGarde=rv>0?(100-parseFloat(txEff)).toFixed(1):'100.0';
+  var h='<div style="background:var(--bg3);border-radius:var(--radius);padding:16px;border:1px solid var(--border)">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px">'+label+'</span><span style="font-size:10px;color:var(--t3)">Taux effectif : <b style="color:var(--red);font-family:JetBrains Mono,monospace">'+txEff+'%</b></span></div>'
+    +'<div style="text-align:center;margin-bottom:14px;padding:12px;background:rgba(0,214,143,.05);border-radius:8px;border:1px solid rgba(0,214,143,.15)"><div style="font-size:28px;font-weight:800;color:var(--green);font-family:JetBrains Mono,monospace">'+pctGarde+'%</div><div style="font-size:12px;color:var(--t2);margin-top:2px">de ton revenu dans ta poche</div></div>'
+    +'<table style="width:100%;font-size:12px"><tbody>'+detail+'</tbody></table>'
+    +alerte+'</div>';
+  document.getElementById('fxR').innerHTML=h;
+}catch(e){console.error('sFi:',e)}}
 function cIR(r){try{if(r<=11294)return 0;var i=0;if(r>11294)i+=(Math.min(r,28797)-11294)*.11;if(r>28797)i+=(Math.min(r,82341)-28797)*.30;if(r>82341)i+=(Math.min(r,177106)-82341)*.41;if(r>177106)i+=(r-177106)*.45;return i}catch(e){return 0}}
 function gFC(){try{var n=new Date(),y=n.getFullYear(),it=[];var ev=[{m:1,d:15,n:'Acompte IS'},{m:3,d:31,n:'Décl. résultats'},{m:4,d:15,n:'Acompte IS T1'},{m:5,d:15,n:'Déclaration IR'},{m:6,d:15,n:'Acompte IS T2'},{m:9,d:15,n:'Acompte IR'},{m:10,d:15,n:'Acompte IS T3'},{m:12,d:15,n:'CFE'},{m:4,d:30,n:'TVA T1'},{m:7,d:31,n:'TVA T2'},{m:10,d:31,n:'TVA T3'}];ev.forEach(function(e){var dt=new Date(y,e.m-1,e.d);if(dt<n)dt=new Date(y+1,e.m-1,e.d);it.push({n:e.n,date:dt.toISOString().slice(0,10),d:Math.ceil((dt-n)/(864e5))})});it.sort(function(a,b){return a.d-b.d});return it}catch(e){return[]}}
-function rFi(){try{var c=gFC();document.getElementById('fiC').innerHTML=c.map(function(x){var cl=x.d<=14?'cu':x.d<=30?'cs':'co';return'<div class="ci"><div class="cd '+cl+'"></div><div style="flex:1"><b style="color:var(--t1)">'+x.n+'</b></div><div style="font-size:11px;color:var(--t3)">'+x.date+'</div><div style="font-size:11px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+(x.d<=14?'var(--red)':x.d<=30?'var(--gold)':'var(--green)')+'">'+x.d+'j</div></div>'}).join('')}catch(e){}}
+function rFi(){try{var c=gFC();document.getElementById('fiC').innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">'+c.map(function(x){
+  var urgCol=x.d<=30?'var(--red)':x.d<=60?'var(--gold)':'var(--t3)';
+  var urgBg=x.d<=30?'rgba(255,71,87,.06)':x.d<=60?'rgba(212,160,23,.06)':'var(--bg3)';
+  var urgBdr=x.d<=30?'var(--red)':x.d<=60?'var(--gold)':'var(--border)';
+  var urgLbl=x.d<=30?'URGENT':x.d<=60?'BIENT\u00d4T':'';
+  var ico=x.n.indexOf('TVA')>=0||x.n.indexOf('cl.')>=0||x.n.indexOf('IR')>=0?'\ud83d\udcc5':x.n.indexOf('Acompte')>=0||x.n.indexOf('CFE')>=0?'\ud83d\udcb0':'\ud83d\udcca';
+  return'<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:'+urgBg+';border:1px solid '+urgBdr+';border-left:3px solid '+urgBdr+';border-radius:8px">'
+    +'<div style="min-width:50px;text-align:center"><div style="font-size:20px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+urgCol+'">'+x.d+'</div><div style="font-size:8px;font-weight:700;text-transform:uppercase;color:'+urgCol+'">jours</div></div>'
+    +'<div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:14px">'+ico+'</span><b style="color:var(--t1);font-size:12px">'+x.n+'</b>'+(urgLbl?'<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:'+urgCol+';color:#fff;text-transform:uppercase;letter-spacing:.5px">'+urgLbl+'</span>':'')+'</div><div style="font-size:10px;color:var(--t3);margin-top:2px">'+x.date+'</div></div>'
+    +'</div>'}).join('')+'</div>'}catch(e){console.error('rFi:',e)}}
 /* ─── PORTFOLIO ─── */
 function aIV(){try{var n=document.getElementById('iv-n').value,c=document.getElementById('iv-c').value,i=parseFloat(document.getElementById('iv-i').value)||0,v=parseFloat(document.getElementById('iv-v').value)||0;if(!n||i<=0){toast('Requis');return}D.portfolio.push({id:uid(),name:n,cat:c,invested:i,current:v});D.history.unshift({type:'portfolio',text:n+' : '+fm(i),date:new Date().toISOString().slice(0,10)});save();rIV();tg('ivF');toast('OK');document.getElementById('iv-n').value='';document.getElementById('iv-i').value='';document.getElementById('iv-v').value=''}catch(e){}}
 function dIV(id){try{if(!confirm('?'))return;D.portfolio=D.portfolio.filter(function(p){return p.id!==id});save();rIV()}catch(e){}}
