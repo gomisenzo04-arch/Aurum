@@ -5243,6 +5243,8 @@ function unlock(isAdmin) {
   setTimeout(() => { if(ch.eq) ch.eq.resize(); if(ch.pi) ch.pi.resize(); if(ch.ba) ch.ba.resize(); updCkProgress(); checkMilestones() }, 100);
 }
 function checkSession() {
+  /* Si dans une iframe (SPA shell), skip le login — le shell a déjà authentifié */
+  try { if (window.self !== window.top) { unlock(true); return; } } catch(e) { unlock(true); return; }
   const role = sessionStorage.getItem('enz_role');
   if (role) unlock(true);
   else if (role === 'user') unlock(false);
