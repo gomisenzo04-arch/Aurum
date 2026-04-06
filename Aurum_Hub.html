@@ -508,10 +508,31 @@ function renderStats(){
     /* Formation */
     var formRaw=localStorage.getItem('aurum_formation_v1');
     var formDone=0;
-    if(formRaw){try{formDone=(JSON.parse(formRaw).d||[]).length}catch(e){}}
+    var formData=null;
+    if(formRaw){try{formData=JSON.parse(formRaw);formDone=(formData.d||[]).length}catch(e){}}
     var elForm=document.getElementById('statFormation');
     elForm.textContent='0 / 32';
     animateValue(elForm, 0, formDone, 800, '', ' / 32');
+
+    /* Sub-stat: average stars */
+    var subForm=document.getElementById('subFormation');
+    if(subForm&&formData&&formData.a&&formDone>0){
+      try{
+        var totalStars=0;var starCount=0;
+        var doneModules=formData.d||[];
+        var attempts=formData.a||{};
+        for(var i=0;i<doneModules.length;i++){
+          var mi=doneModules[i];
+          var att=attempts[mi]||1;
+          var stars=att===1?3:att===2?2:1;
+          totalStars+=stars;starCount++;
+        }
+        if(starCount>0){
+          var avg=(totalStars/starCount).toFixed(1);
+          subForm.textContent=avg+'★ moyenne';
+        }
+      }catch(e){}
+    }
 
     /* Journal trades */
     var j=readJournal();
@@ -519,16 +540,32 @@ function renderStats(){
     elJournal.textContent='0';
     animateValue(elJournal, 0, j.trades.length, 800, '', '');
 
+    /* Sub-stat: win rate */
+    var subJournal=document.getElementById('subJournal');
+    if(subJournal&&j.trades.length>0){
+      try{
+        var wins=0;
+        j.trades.forEach(function(t){
+          var pnl=t.pnl||t.pl||t.profit||0;
+          if(typeof pnl==='string') pnl=parseFloat(pnl)||0;
+          if(pnl>0) wins++;
+        });
+        var wr=Math.round((wins/j.trades.length)*100);
+        subJournal.textContent='WR '+wr+'%';
+      }catch(e){}
+    }
+
     /* Capital net worth */
     var net=0;
     var rawCap=localStorage.getItem('aurum_capital_v1');
+    var capData=null;
     if(rawCap){
       try{
-        var cap=JSON.parse(rawCap);
-        if(cap.portfolio)cap.portfolio.forEach(function(p){net+=(p.current||0)});
-        if(cap.payouts)cap.payouts.forEach(function(p){net+=(p.net||0)});
-        if(cap.passifs)cap.passifs.forEach(function(p){net-=(p.remaining||0)});
-        if(cap.entities)cap.entities.forEach(function(e){if(e.status==='Active'||e.status==='En création')net+=(e.tresorerie||0)});
+        capData=JSON.parse(rawCap);
+        if(capData.portfolio)capData.portfolio.forEach(function(p){net+=(p.current||0)});
+        if(capData.payouts)capData.payouts.forEach(function(p){net+=(p.net||0)});
+        if(capData.passifs)capData.passifs.forEach(function(p){net-=(p.remaining||0)});
+        if(capData.entities)capData.entities.forEach(function(e){if(e.status==='Active'||e.status==='En création')net+=(e.tresorerie||0)});
       }catch(e){}
     }
     j.accounts.forEach(function(a){var t=(a.type||'').toLowerCase();if(t==='perso'||t==='personnel')net+=(a.balance||0)});
@@ -536,6 +573,37 @@ function renderStats(){
     var elCap=document.getElementById('statCapital');
     elCap.textContent='$0';
     animateValue(elCap, 0, roundedNet, 1000, '$', '');
+
+    /* Sub-stat: health score */
+    var subCapital=document.getElementById('subCapital');
+    if(subCapital&&capData){
+      try{
+        var score=capData.healthScore||capData.score||null;
+        if(score!==null&&score!==undefined){
+          subCapital.textContent='Score santé: '+Math.round(score)+'/100';
+        } else {
+          /* Calculate a basic health score */
+          var hs=0;var factors=0;
+          /* Has payouts */
+          if(capData.payouts&&capData.payouts.length>0){hs+=20;factors++}
+          /* Has portfolio */
+          if(capData.portfolio&&capData.portfolio.length>0){hs+=20;factors++}
+          /* Has entities */
+          if(capData.entities&&capData.entities.length>0){hs+=20;factors++}
+          /* Low debt ratio */
+          var totalDebt=0;
+          if(capData.passifs)capData.passifs.forEach(function(p){totalDebt+=(p.remaining||0)});
+          if(roundedNet>0&&totalDebt<roundedNet*0.5){hs+=20;factors++}
+          else if(roundedNet>0){hs+=10;factors++}
+          /* Has backup */
+          var bkDays=getLastBackupDays();
+          if(bkDays.journal<=7&&bkDays.capital<=7){hs+=20;factors++}
+          else if(bkDays.journal<=14||bkDays.capital<=14){hs+=10;factors++}
+          else{factors++}
+          if(factors>0) subCapital.textContent='Score santé: '+Math.min(hs,100)+'/100';
+        }
+      }catch(e){}
+    }
   }catch(e){console.error(e)}
 }
 
