@@ -160,6 +160,19 @@ body {
   filter: drop-shadow(0 4px 12px rgba(212,160,23,.4));
   animation: logoGlow 4s ease-in-out infinite
 }
+.nav-link {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  color: var(--t2)
+}
+.nav-link:hover { background: rgba(212,160,23,.1); color: var(--t1); transform: scale(1.05) }
 .nav-item {
   width: 42px;
   height: 42px;
@@ -1329,7 +1342,7 @@ body::before {
 <!-- SIDEBAR -->
 <nav class="side" id="sideNav" style="display:none">
 <div class="logo"><a href="Aurum_Hub.html" title="Hub Aurum" style="display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 40 40" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="auGrad" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#f5d060"/><stop offset="50%" stop-color="#d4a017"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="40" height="40" rx="10" fill="url(#auGrad)"/><text x="20" y="26" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="800" font-size="18" fill="#1a1000">Au</text><path d="M8 30 L14 24 L20 27 L26 18 L32 14" stroke="rgba(26,16,0,.25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></a></div>
-<a href="Aurum_Hub.html" class="nav-item" style="text-decoration:none;color:var(--t3);margin-bottom:4px" title="Hub"><svg viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg><span class="tooltip">Hub Aurum</span></a>
+<a href="Aurum_Hub.html" class="nav-link" style="text-decoration:none;color:var(--t3);margin-bottom:4px" title="Hub"><svg viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg><span class="tooltip">Hub Aurum</span></a>
 <div class="nav-item active" onclick="go('dash')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="tooltip">Dashboard</span></div>
 <div class="nav-item" onclick="go('check')"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="tooltip">Checklist</span></div>
 <div class="nav-item" onclick="go('calc')"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg><span class="tooltip">Calculateur</span></div>
