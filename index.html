@@ -326,6 +326,25 @@
       transform: scale(.92);
     }
 
+    .nav-item::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(212,160,23,.1);
+      border-radius: 50%;
+      transform: translate(-50%,-50%);
+      transition: width .3s, height .3s, opacity .3s;
+      opacity: 0;
+    }
+    .nav-item:active::after {
+      width: 60px;
+      height: 60px;
+      opacity: 1;
+    }
+
     /* Color coding per section */
     .nav-item[data-page="hub"].active .nav-icon svg { stroke: var(--gold); }
     .nav-item[data-page="hub"].active .nav-label { color: var(--gold); }
@@ -488,6 +507,30 @@
       transition: width .8s ease;
     }
 
+    .splash-particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .splash-particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: var(--gold);
+      border-radius: 50%;
+      opacity: 0;
+      animation: particleFloat 3s ease-in-out infinite;
+    }
+    @keyframes particleFloat {
+      0% { opacity: 0; transform: translateY(0) scale(0); }
+      20% { opacity: .6; }
+      100% { opacity: 0; transform: translateY(-120px) scale(1); }
+    }
+
     /* ============================================
        DESKTOP : sidebar au lieu de bottom nav
        ============================================ */
@@ -617,6 +660,7 @@
     <div class="splash-title">Aurum</div>
     <div class="splash-sub">Trading & Patrimoine</div>
     <div class="splash-bar"><div class="splash-bar-fill" id="splashFill"></div></div>
+    <div class="splash-particles" id="splashParticles"></div>
   </div>
 
   <!-- ============================================
@@ -737,6 +781,19 @@
     /* ---- Splash Screen ---- */
     function initSplash() {
       try {
+        var particlesEl = document.getElementById('splashParticles');
+        if (particlesEl) {
+          for (var i = 0; i < 12; i++) {
+            var p = document.createElement('div');
+            p.className = 'splash-particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.top = (50 + Math.random() * 40) + '%';
+            p.style.animationDelay = (Math.random() * 2) + 's';
+            p.style.animationDuration = (2 + Math.random() * 2) + 's';
+            particlesEl.appendChild(p);
+          }
+        }
+
         var fill = document.getElementById('splashFill');
         fill.style.width = '30%';
 
@@ -969,6 +1026,41 @@
     }
 
     window.addEventListener('resize', handleResize);
+
+    /* ---- Swipe navigation mobile ---- */
+    var touchStartX = 0;
+    var touchEndX = 0;
+    var pageOrder = ['hub', 'academy', 'journal', 'capital'];
+
+    document.addEventListener('touchstart', function(e) {
+      try { touchStartX = e.changedTouches[0].screenX; } catch(err) {}
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+      try {
+        touchEndX = e.changedTouches[0].screenX;
+        var diff = touchStartX - touchEndX;
+        if (Math.abs(diff) < 80) return; // trop court
+        var idx = pageOrder.indexOf(currentPage);
+        if (idx === -1) return;
+        if (diff > 0 && idx < pageOrder.length - 1) {
+          navigate(pageOrder[idx + 1]); // swipe gauche = page suivante
+        } else if (diff < 0 && idx > 0) {
+          navigate(pageOrder[idx - 1]); // swipe droite = page précédente
+        }
+      } catch(err) {}
+    }, { passive: true });
+
+    /* ---- Raccourcis clavier ---- */
+    document.addEventListener('keydown', function(e) {
+      try {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+        if (e.key === '1') navigate('hub');
+        else if (e.key === '2') navigate('academy');
+        else if (e.key === '3') navigate('journal');
+        else if (e.key === '4') navigate('capital');
+      } catch(err) {}
+    });
 
     /* ---- Enregistrement Service Worker ---- */
     function registerSW() {

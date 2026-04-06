@@ -1319,6 +1319,68 @@ body::before {
   .green-box { border-color: #060 !important; color: #060 !important; background: #f0fff0 !important }
   .panel { max-width: 100% !important }
 }
+
+/* ─── POLISH CSS PREMIUM ─── */
+
+/* Cards dashboard — hover lift */
+.card {
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  border-color: var(--gold);
+}
+
+/* Panels — animation d'entrée */
+.panel.active {
+  animation: panelSlide .3s cubic-bezier(.4,0,.2,1);
+}
+@keyframes panelSlide {
+  from { opacity:0; transform:translateY(8px) }
+  to { opacity:1; transform:translateY(0) }
+}
+
+/* Boutons formulaire trade — hover & active */
+.tf-btn {
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+}
+.tf-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+}
+.tf-btn:active {
+  transform: scale(.97);
+}
+
+/* Calendrier — hover scale */
+.cal-day:hover {
+  transform: scale(1.1);
+  z-index: 2;
+}
+
+/* Sidebar nav-items — hover & active */
+.nav-item {
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+}
+.nav-item:hover {
+  transform: scale(1.08);
+}
+.nav-item.active {
+  transform: scale(1);
+}
+
+/* Smooth scroll */
+.scroll { scroll-behavior: smooth }
+
+/* Lignes de tableau — hover highlight */
+tbody tr {
+  transition: background .15s;
+}
+tbody tr:hover {
+  background: rgba(212,160,23,.04) !important;
+}
+
 /* ─── IFRAME MODE ─── */
 .in-iframe .side { display: none !important }
 .in-iframe .top-bar { display: none !important }
