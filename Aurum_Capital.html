@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Aurum Capital — Wealth Command Center</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#a78bfa">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-192.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -71,6 +76,7 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .cb canvas{display:block;max-width:100%;max-height:100%}
 .chg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:768px){.side{width:50px;padding:8px 0}.ni{width:36px;height:36px}.pnl{padding:14px 12px 30px}.sg{grid-template-columns:repeat(2,1fr);gap:6px}.fr{flex-direction:column}.fd{min-width:100%}.th{padding:10px 12px 8px}.crd .vl{font-size:16px}.chg{grid-template-columns:1fr}}
+@media(max-width:480px){.cb{padding:10px}.chg{gap:8px}}
 </style>
 </head>
 <body>
@@ -317,5 +323,6 @@ load();
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){}})();
 rCL();rCS();rAL();rD();
 </script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
 </body>
 </html>
