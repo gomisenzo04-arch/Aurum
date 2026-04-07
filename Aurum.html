@@ -2454,7 +2454,7 @@ function rCards() {
       {l:'Trades',v:n}, {l:'Winrate',v:wr==='-'?'-':wr+'%',c:parseFloat(wr)>=50?'g':parseFloat(wr)<40?'r':''},
       {l:'P&L Total',v:'$'+tot.toFixed(2),c:tot>=0?'g':'r'}, {l:'R:R Moyen',v:rr,c:'go'},
       {l:'Gagnants',v:w,c:'g'}, {l:'Perdants',v:l,c:'r'},
-      {l:'Max DD',v:'$'+mdd.toFixed(0),c:'r'}, {l:'Série',v:str,c:str[0]==='+'?'g':'r'}
+      {l:'Max DD',v:'$'+mdd.toFixed(0)+(S().bal>0?' ('+(mdd/S().bal*100).toFixed(1)+'%)':''),c:'r'}, {l:'Série',v:str,c:str[0]==='+'?'g':'r'}
     ].map(c => {
       var dest = {Trades:'hist',Winrate:'viab','P&L Total':'hist','R:R Moyen':'viab',Gagnants:'hist',Perdants:'hist','Max DD':'viab','Série':'hist','Total R':'hist','R Moyen':'viab'}[c.l] || '';
       return `<div class="card" ${dest?'onclick="go(\''+dest+'\')" style="cursor:pointer" title="Voir '+c.l+'"':''}>` +
@@ -3008,7 +3008,10 @@ function rHist() {
       (t.dir||'').toLowerCase().includes(search) ||
       (t.type||'').toLowerCase().includes(search) ||
       (t.res||'').toLowerCase().includes(search) ||
-      (t.news||'').toLowerCase().includes(search)
+      (t.news||'').toLowerCase().includes(search) ||
+      String(t.pl||'').includes(search) ||
+      String(t.lot||'').includes(search) ||
+      String(t.sl||'').includes(search)
     );
   }
 
@@ -3809,10 +3812,15 @@ function saveDraft() {
       date: document.getElementById('fD').value,
       time: document.getElementById('fT').value,
       sl: document.getElementById('fSL').value,
+      lot: document.getElementById('fLo') ? document.getElementById('fLo').value : '',
+      dir: formState.dir,
+      type: formState.type,
+      res: formState.res,
+      news: formState.news,
       notes: document.getElementById('fNotes') ? document.getElementById('fNotes').value : '',
       ts: Date.now()
     };
-    if (draft.date || draft.time || draft.sl) {
+    if (draft.date || draft.sl || draft.dir) {
       localStorage.setItem('aurum_draft_trade', JSON.stringify(draft));
     }
   } catch(e) {}
@@ -3830,6 +3838,11 @@ function loadDraft() {
     if (draft.date) document.getElementById('fD').value = draft.date;
     if (draft.time) document.getElementById('fT').value = draft.time;
     if (draft.sl) document.getElementById('fSL').value = draft.sl;
+    if (draft.lot && document.getElementById('fLo')) document.getElementById('fLo').value = draft.lot;
+    if (draft.dir) formState.dir = draft.dir;
+    if (draft.type) formState.type = draft.type;
+    if (draft.res) formState.res = draft.res;
+    if (draft.news) formState.news = draft.news;
     if (draft.notes && document.getElementById('fNotes')) document.getElementById('fNotes').value = draft.notes;
     toast('Brouillon restauré');
   } catch(e) {}
@@ -4077,7 +4090,7 @@ function cLot() {
   if (accInfo) {
     const s = S();
     const typeIcon = { prop:'🏆', funded:'✓', perso:'👤', demo:'◎' };
-    accInfo.innerHTML = `${typeIcon[s.type]||''} <b style="color:var(--t1)">${s.name||'Compte'}</b> · ${r}% · $${co}/lot`;
+    accInfo.innerHTML = `${typeIcon[s.type]||''} <b style="color:var(--t1)">${s.name||'Compte'}</b> · ${r > 2 ? '<span style="color:var(--red)">⚠ ' + r + '%</span>' : r + '%'} · $${co}/lot`;
   }
 
   rSlQuickBtns();
@@ -5182,8 +5195,8 @@ function renderAccountForm(acc) {
     <input type="hidden" id="afType" value="${a.type}">
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px">
-      <div class="f"><label>Solde initial ($)</label><input type="number" id="afBal" value="${a.bal}"></div>
-      <div class="f"><label>Risque (%)</label><input type="number" id="afRisk" step="0.25" value="${a.risk}"></div>
+      <div class="f"><label>Solde initial ($)</label><input type="number" id="afBal" value="${a.bal}" min="0"></div>
+      <div class="f"><label>Risque (%)</label><input type="number" id="afRisk" step="0.25" value="${a.risk}" min="0.1" max="5"></div>
       <div class="f"><label>Commission/lot ($)</label><input type="number" id="afComm" step="0.5" value="${a.comm}"></div>
       <div class="f"><label>Target ($)</label><input type="number" id="afTarget" value="${a.target}"></div>
       <div class="f"><label>Plancher ($)</label><input type="number" id="afFloor" value="${a.floor}"></div>
@@ -5224,7 +5237,8 @@ function saveAccount(editId) {
 }
 function deleteAccount(id) {
   if (D.accounts.length <= 1) return toast('Impossible de supprimer le dernier compte.', 'error');
-  if (!confirm('Supprimer ce compte ? Les trades associés resteront mais ne seront plus rattachés.')) return;
+  var tradeCount = D.live.filter(t => t.accId === id).length + D.replay.filter(t => t.accId === id).length;
+  if (!confirm('Supprimer ce compte ?\n\n' + (tradeCount > 0 ? '⚠ ' + tradeCount + ' trade(s) sont rattachés à ce compte.' : 'Aucun trade rattaché.') + '\nLes trades resteront mais ne seront plus rattachés.')) return;
   D.accounts = D.accounts.filter(a => a.id !== id);
   if (D.activeAcc === id) D.activeAcc = D.accounts[0].id;
   _s(); R(); toast('Compte supprimé');
