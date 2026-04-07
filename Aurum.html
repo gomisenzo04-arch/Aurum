@@ -1547,38 +1547,37 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 </div>
 <div class="ck-section"><div class="ck-title"><span class="ck-phase">①</span> Préparation <span class="ck-sec-score" id="ckS1"></span></div>
 <div class="ck-grid">
-<div class="ck" data-n="1"><input type="checkbox"><span><strong>PC bureau</strong> <em>— pas de tel, ecran large</em></span></div>
-<div class="ck" data-n="2"><input type="checkbox"><span><strong>News USD</strong> <em>— Forex Factory, rouges notées</em></span></div>
-<div class="ck" data-n="3"><input type="checkbox"><span><strong>Direction 5min</strong> <em>— tendance identifiée</em></span></div>
-<div class="ck" data-n="4"><input type="checkbox"><span><strong>S/R tracés</strong> <em>— supports, pullbacks</em></span></div>
-<div class="ck" data-n="5"><input type="checkbox"><span><strong>Liquidités</strong> <em>— non prises + alertes</em></span></div>
-<div class="ck" data-n="6"><input type="checkbox"><span><strong>Lots</strong> <em>— vérifiés via calculateur</em></span></div>
+<div class="ck" data-n="1" data-scope="SESSION_PREP"><input type="checkbox"><span><strong>PC bureau</strong> <em>— pas de tel, ecran large</em></span></div>
+<div class="ck" data-n="2" data-scope="SESSION_PREP"><input type="checkbox"><span><strong>News USD</strong> <em>— Forex Factory, rouges notées</em></span></div>
+<div class="ck" data-n="3" data-scope="SESSION_PREP"><input type="checkbox"><span><strong>Direction 5min</strong> <em>— tendance identifiée</em></span></div>
+<div class="ck" data-n="4" data-scope="SESSION_PREP"><input type="checkbox"><span><strong>S/R tracés</strong> <em>— supports, pullbacks</em></span></div>
+<div class="ck" data-n="5" data-scope="SESSION_PREP"><input type="checkbox"><span><strong>Liquidités</strong> <em>— non prises + alertes</em></span></div>
 </div></div>
 <div class="ck-section"><div class="ck-title"><span class="ck-phase">②</span> Entrée <span class="ck-sec-score" id="ckS2"></span></div>
 <div class="ck-grid">
-<div class="ck" data-n="7"><input type="checkbox"><span><strong>5min confirme</strong> <em>— direction toujours ok</em></span></div>
-<div class="ck" data-n="8"><input type="checkbox"><span><strong>Liq = direction</strong> <em>— alignement vérifié</em></span></div>
-<div class="ck" data-n="9"><input type="checkbox"><span><strong>Prix touche liq</strong> <em>— switch 1min immédiat</em></span></div>
-<div class="ck" data-n="10"><input type="checkbox"><span><strong>5min valide</strong> <em>— pas de retournement</em></span></div>
-<div class="ck" data-n="11"><input type="checkbox"><span><strong>QM confirmé</strong> <em>— ou gaps si &gt;1200 pts</em></span></div>
-<div class="ck" data-n="12"><input type="checkbox"><span><strong>Lot final</strong> <em>— arrondi au SL supérieur</em></span></div>
-<div class="ck" data-n="13"><input type="checkbox"><span><strong>Clôture cassure</strong> <em>— point d'entrée exact</em></span></div>
+<div class="ck" data-n="7" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>5min confirme</strong> <em>— direction toujours ok</em></span></div>
+<div class="ck" data-n="8" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>Liq = direction</strong> <em>— alignement vérifié</em></span></div>
+<div class="ck" data-n="9" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>Prix touche liq</strong> <em>— switch 1min immédiat</em></span></div>
+<div class="ck" data-n="10" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>5min valide</strong> <em>— pas de retournement</em></span></div>
+<div class="ck" data-n="11" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>QM confirmé</strong> <em>— ou gaps si &gt;1200 pts</em></span></div>
+<div class="ck" data-n="12" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>Lot final</strong> <em>— arrondi au SL supérieur</em></span></div>
+<div class="ck" data-n="13" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>Clôture cassure</strong> <em>— point d'entrée exact</em></span></div>
 </div></div>
 <div class="ck-section"><div class="ck-title"><span class="ck-phase">③</span> Gestion <span class="ck-sec-score" id="ckS3"></span></div>
 <div class="ck-grid">
-<div class="ck" data-n="14"><input type="checkbox"><span><strong>SL posé</strong> <em>— mèche QM + 50 pts min</em></span></div>
-<div class="ck" data-n="15"><input type="checkbox"><span><strong>TP posé</strong> <em>— exactement 2× le SL</em></span></div>
-<div class="ck" data-n="16"><input type="checkbox"><span><strong>Trailing prêt</strong> <em>— mèche + 40 pts</em></span></div>
+<div class="ck" data-n="14" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>SL posé</strong> <em>— mèche QM + 50 pts min</em></span></div>
+<div class="ck" data-n="15" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>TP posé</strong> <em>— exactement 2× le SL</em></span></div>
+<div class="ck" data-n="16" data-scope="TRADE_PREP"><input type="checkbox"><span><strong>Trailing prêt</strong> <em>— mèche + 40 pts</em></span></div>
 </div></div>
 <!-- Blocs trades supplémentaires -->
 <div id="extraTrades"></div>
 <div class="ck-section"><div class="ck-title"><span class="ck-phase">④</span> Filtres <span style="font-size:8px;color:var(--red);font-weight:700">BLOQUANTS</span> <span class="ck-sec-score" id="ckS4"></span></div>
 <div class="ck-grid">
-<div class="ck ck-crit" data-n="17"><input type="checkbox"><span><strong>Pas news rouge</strong> <em>— dans les 5 min</em></span></div>
-<div class="ck ck-crit" data-n="18"><input type="checkbox"><span><strong>P&L ≠ -4%</strong> <em>— daily drawdown</em></span></div>
-<div class="ck ck-crit" data-n="19"><input type="checkbox"><span><strong>P&L ≠ +8%</strong> <em>— cap journalier</em></span></div>
-<div class="ck ck-crit" data-n="20"><input type="checkbox"><span><strong>Avant 21h</strong> <em>— pas sur chantier</em></span></div>
-<div class="ck ck-crit" data-n="21"><input type="checkbox"><span><strong>1 seul trade</strong> <em>— pas de simultané</em></span></div>
+<div class="ck ck-crit" data-n="17" data-scope="GUARDRAIL" data-eval="DAY" data-acc="AGGREGATED"><input type="checkbox"><span><strong>Pas news rouge</strong> <em>— dans les 5 min</em></span></div>
+<div class="ck ck-crit" data-n="18" data-scope="GUARDRAIL" data-eval="DAY" data-acc="PER_ACCOUNT"><input type="checkbox"><span><strong>P&L ≠ -4%</strong> <em>— daily drawdown</em></span></div>
+<div class="ck ck-crit" data-n="19" data-scope="GUARDRAIL" data-eval="DAY" data-acc="PER_ACCOUNT"><input type="checkbox"><span><strong>P&L ≠ +8%</strong> <em>— cap journalier</em></span></div>
+<div class="ck ck-crit" data-n="20" data-scope="GUARDRAIL" data-eval="SESSION" data-acc="AGGREGATED"><input type="checkbox"><span><strong>Avant 21h</strong> <em>— pas sur chantier</em></span></div>
+<div class="ck ck-crit" data-n="21" data-scope="GUARDRAIL" data-eval="SESSION" data-acc="AGGREGATED"><input type="checkbox"><span><strong>1 seul trade</strong> <em>— pas de simultané</em></span></div>
 </div></div>
 <!-- Bouton valider trade -->
 <div style="text-align:center;margin:14px 0">
@@ -6402,6 +6401,80 @@ function testPhase0Services() {
   });
 
   console.log('\n=== PHASE 0 SERVICES TESTS ===');
+  results.forEach(function(r) { console.log(r) });
+  var pass = results.filter(function(r) { return r.startsWith('✓') }).length;
+  var fail = results.filter(function(r) { return r.startsWith('✗') }).length;
+  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  return { pass: pass, fail: fail };
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHECKLIST SCOPE READER — Phase 1
+   ═══════════════════════════════════════════════════════ */
+
+function checklistScopeReader(scope) {
+  /* Lit les items checklist par scope (SESSION_PREP, TRADE_PREP, GUARDRAIL) */
+  try {
+    var items = [];
+    document.querySelectorAll('#checkContent .ck[data-scope="' + scope + '"]').forEach(function(el) {
+      var cb = el.querySelector('input[type=checkbox]');
+      var label = el.querySelector('strong');
+      var desc = el.querySelector('em');
+      items.push({
+        n: parseInt(el.getAttribute('data-n')),
+        scope: scope,
+        label: label ? label.textContent : '',
+        description: desc ? desc.textContent : '',
+        checked: cb ? cb.checked : false,
+        evaluationScope: el.getAttribute('data-eval') || null,
+        accountScope: el.getAttribute('data-acc') || null
+      });
+    });
+    return items;
+  } catch(e) { console.error('checklistScopeReader:', e); return [] }
+}
+
+function testPhase1() {
+  var results = [];
+  function test(name, fn) {
+    try { fn(); results.push('✓ ' + name) } catch(e) { results.push('✗ ' + name + ': ' + e.message) }
+  }
+
+  test('SESSION_PREP items = 5', function() {
+    var r = checklistScopeReader('SESSION_PREP');
+    if (r.length !== 5) throw new Error('got ' + r.length + ' expected 5');
+  });
+
+  test('TRADE_PREP items = 10', function() {
+    var r = checklistScopeReader('TRADE_PREP');
+    if (r.length !== 10) throw new Error('got ' + r.length + ' expected 10');
+  });
+
+  test('GUARDRAIL items = 5', function() {
+    var r = checklistScopeReader('GUARDRAIL');
+    if (r.length !== 5) throw new Error('got ' + r.length + ' expected 5');
+  });
+
+  test('GUARDRAIL items ont evaluationScope', function() {
+    var r = checklistScopeReader('GUARDRAIL');
+    r.forEach(function(item) {
+      if (!item.evaluationScope) throw new Error('item ' + item.n + ' missing evaluationScope');
+    });
+  });
+
+  test('GUARDRAIL items ont accountScope', function() {
+    var r = checklistScopeReader('GUARDRAIL');
+    r.forEach(function(item) {
+      if (!item.accountScope) throw new Error('item ' + item.n + ' missing accountScope');
+    });
+  });
+
+  test('Item "Lots vérifiés" supprimé', function() {
+    var all = document.querySelectorAll('#checkContent .ck[data-n="6"]');
+    if (all.length > 0) throw new Error('item 6 still exists');
+  });
+
+  console.log('\n=== PHASE 1 TESTS ===');
   results.forEach(function(r) { console.log(r) });
   var pass = results.filter(function(r) { return r.startsWith('✓') }).length;
   var fail = results.filter(function(r) { return r.startsWith('✗') }).length;
