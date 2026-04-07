@@ -6839,11 +6839,25 @@ function resumeCurrentSession() {
 
 var _tfmStep = 1;
 var _tfmChecks = {};
+var _tfmSL = 350;
+
+function tfmSetSL(val) {
+  try {
+    _tfmSL = Math.max(100, Math.min(1500, val || 350));
+    /* Mettre à jour le calculateur principal aussi */
+    var cSL = document.getElementById('cSL');
+    if (cSL) cSL.value = _tfmSL;
+    setSL(_tfmSL);
+    /* Re-render l'étape 2 */
+    renderTFMStep();
+  } catch(e) { console.error('tfmSetSL:', e) }
+}
 
 function openTFM() {
   try {
     _tfmStep = 1;
     _tfmChecks = {};
+    _tfmSL = parseInt(document.getElementById('cSL').value) || 350;
     document.getElementById('tradeFlowModal').style.display = 'flex';
     renderTFMStep();
   } catch(e) { console.error('openTFM:', e) }
@@ -6899,80 +6913,165 @@ function renderTFMStep() {
       nav.innerHTML = '<div></div><button class="btn btn-g" onclick="_tfmStep=2;renderTFMStep()" style="padding:10px 20px">Calculateur →</button>';
 
     } else if (_tfmStep === 2) {
-      /* Étape 2 : Calculateur inline */
+      /* Étape 2 : Calculateur COMPLET inline */
       title.textContent = 'Étape 2 — Calculateur';
       var s = S();
-      var sl = parseInt(document.getElementById('cSL').value) || 350;
-      var lot = document.getElementById('cRes').textContent || '0.00';
+      var config = strategyConfigReader();
+      var slPresets = config.standardSLPoints;
+      var currentSL = parseInt(document.getElementById('cSL').value) || 350;
 
-      body.innerHTML = '<div style="text-align:center;padding:16px 0">' +
-        '<div style="font-size:12px;color:var(--t3);margin-bottom:8px">Compte : <b style="color:var(--t1)">' + s.name + '</b> · Risque ' + s.risk + '% · $' + s.bal + '</div>' +
-        '<div style="font-size:11px;color:var(--t3);margin-bottom:16px">SL actuel : <b style="color:var(--gold);font-family:JetBrains Mono,monospace">' + sl + ' pts</b></div>' +
-        '<div style="font-size:48px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace;margin-bottom:4px">' + lot + '</div>' +
-        '<div style="font-size:13px;color:var(--t2)">lots sur MT5</div>' +
-        '<div style="margin-top:16px;font-size:11px;color:var(--t3)">Ajuste le SL dans le Calculateur si besoin avant de continuer.</div>' +
-        '<button class="btn btn-o" onclick="closeTFM();go(\'calc\')" style="margin-top:8px;padding:8px 16px;font-size:11px">Ouvrir le Calculateur complet</button>' +
-        '</div>';
+      var h2 = '<div style="font-size:12px;color:var(--t3);margin-bottom:12px;text-align:center">Compte : <b style="color:var(--t1)">' + s.name + '</b> · Risque ' + s.risk + '% · $' + s.bal.toLocaleString('en-US') + '</div>';
+
+      /* Quick SL buttons */
+      h2 += '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;justify-content:center">';
+      slPresets.forEach(function(sl) {
+        var active = sl === currentSL;
+        h2 += '<button onclick="tfmSetSL(' + sl + ')" style="padding:6px 10px;border-radius:6px;border:1.5px solid ' + (active ? 'var(--gold)' : 'var(--border2)') + ';background:' + (active ? 'rgba(212,160,23,.15)' : 'var(--bg3)') + ';color:' + (active ? 'var(--gold)' : 'var(--t2)') + ';font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s">' + sl + '</button>';
+      });
+      h2 += '</div>';
+
+      /* Slider */
+      h2 += '<div style="margin-bottom:8px"><input type="range" id="tfmSlider" min="200" max="1200" step="10" value="' + currentSL + '" oninput="tfmSetSL(parseInt(this.value))" style="width:100%;accent-color:var(--gold);cursor:pointer;height:6px"></div>';
+
+      /* Fine input */
+      h2 += '<div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:14px">';
+      h2 += '<button class="btn btn-o" onclick="tfmSetSL(Math.max(200,_tfmSL-50))" style="padding:6px 12px;font-size:12px">−50</button>';
+      h2 += '<input type="number" id="tfmSLInput" value="' + currentSL + '" min="100" max="1500" step="10" oninput="tfmSetSL(parseInt(this.value))" style="width:80px;text-align:center;font-size:18px;font-weight:700;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace">';
+      h2 += '<span style="font-size:12px;color:var(--t3)">pts</span>';
+      h2 += '<button class="btn btn-o" onclick="tfmSetSL(Math.min(1500,_tfmSL+50))" style="padding:6px 12px;font-size:12px">+50</button>';
+      h2 += '</div>';
+
+      /* Big lot result */
+      var ra = s.bal * (s.risk || 1) / 100;
+      var co = s.comm || 0;
+      var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+      var loss = lot * currentSL;
+      var com = lot * co;
+
+      h2 += '<div style="text-align:center;padding:12px 0">';
+      h2 += '<div id="tfmLotResult" style="font-size:56px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace;line-height:1">' + lot.toFixed(2) + '</div>';
+      h2 += '<div style="font-size:13px;color:var(--t2);margin-top:4px">lots sur MT5</div>';
+      h2 += '</div>';
+
+      /* Details */
+      h2 += '<div style="display:flex;justify-content:center;gap:16px;font-size:11px;color:var(--t3);padding-top:8px;border-top:1px solid var(--border)">';
+      h2 += '<span>Risque <b style="color:var(--t1)">$' + ra.toFixed(0) + '</b></span>';
+      h2 += '<span>Perte <b style="color:var(--red)">$' + (loss + com).toFixed(2) + '</b></span>';
+      h2 += '<span>Comm <b>$' + com.toFixed(2) + '</b></span>';
+      h2 += '</div>';
+
+      body.innerHTML = h2;
 
       nav.innerHTML = '<button class="btn btn-o" onclick="_tfmStep=1;renderTFMStep()" style="padding:10px 20px">← Retour</button>' +
         '<button class="btn btn-g" onclick="_tfmStep=3;renderTFMStep()" style="padding:10px 20px">Enregistrer →</button>';
 
     } else if (_tfmStep === 3) {
-      /* Étape 3 : Confirmation + enregistrement */
-      title.textContent = 'Étape 3 — Confirmer le trade';
+      /* Étape 3 : Formulaire trade COMPLET inline */
+      title.textContent = 'Étape 3 — Enregistrer le trade';
       var config = strategyConfigReader();
       var setupLabel = (_tfmChecks.setup ? config.setups.find(function(s) { return s.id === _tfmChecks.setup }) : null);
       var dirLabel = (_tfmChecks.dir ? config.directions.find(function(d) { return d.id === _tfmChecks.dir }) : null);
-      var sl = parseInt(document.getElementById('cSL').value) || 350;
-      var lot = document.getElementById('cRes').textContent || '0.00';
+      var s = S();
+      var ra = s.bal * (s.risk || 1) / 100;
+      var co = s.comm || 0;
+      var lot = Math.floor(ra / (_tfmSL + co) * 100) / 100;
 
-      body.innerHTML = '<div style="padding:16px 0">' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin-bottom:16px">' +
-        '<div style="background:var(--bg2);padding:12px;border-radius:8px"><div style="color:var(--t3);font-size:10px;text-transform:uppercase">Setup</div><div style="font-weight:700;color:var(--t1);margin-top:2px">' + (setupLabel ? setupLabel.icon + ' ' + setupLabel.label : '—') + '</div></div>' +
-        '<div style="background:var(--bg2);padding:12px;border-radius:8px"><div style="color:var(--t3);font-size:10px;text-transform:uppercase">Direction</div><div style="font-weight:700;color:var(--t1);margin-top:2px">' + (dirLabel ? dirLabel.icon + ' ' + dirLabel.label : '—') + '</div></div>' +
-        '<div style="background:var(--bg2);padding:12px;border-radius:8px"><div style="color:var(--t3);font-size:10px;text-transform:uppercase">SL</div><div style="font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace;margin-top:2px">' + sl + ' pts</div></div>' +
-        '<div style="background:var(--bg2);padding:12px;border-radius:8px"><div style="color:var(--t3);font-size:10px;text-transform:uppercase">Lot</div><div style="font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace;margin-top:2px">' + lot + '</div></div>' +
-        '</div>' +
-        '<div style="text-align:center;font-size:12px;color:var(--t3)">Le trade sera enregistré dans le formulaire. Complète-le et valide.</div>' +
-        '</div>';
+      var h3 = '';
+      /* Résumé pré-rempli */
+      h3 += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;margin-bottom:14px">';
+      h3 += '<div style="background:var(--bg2);padding:8px;border-radius:6px;text-align:center"><div style="color:var(--t3);font-size:9px">Setup</div><div style="font-weight:700;color:var(--t1)">' + (setupLabel ? setupLabel.icon + ' ' + setupLabel.label : '—') + '</div></div>';
+      h3 += '<div style="background:var(--bg2);padding:8px;border-radius:6px;text-align:center"><div style="color:var(--t3);font-size:9px">Dir</div><div style="font-weight:700;color:var(--t1)">' + (dirLabel ? dirLabel.icon + ' ' + dirLabel.label : '—') + '</div></div>';
+      h3 += '<div style="background:var(--bg2);padding:8px;border-radius:6px;text-align:center"><div style="color:var(--t3);font-size:9px">SL</div><div style="font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace">' + _tfmSL + '</div></div>';
+      h3 += '<div style="background:var(--bg2);padding:8px;border-radius:6px;text-align:center"><div style="color:var(--t3);font-size:9px">Lot</div><div style="font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace">' + lot.toFixed(2) + '</div></div>';
+      h3 += '</div>';
+
+      /* Résultat */
+      h3 += '<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Résultat</div>';
+      h3 += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+      config.exitTypes.forEach(function(ex) {
+        h3 += '<button class="btn ' + (_tfmChecks.res === ex.id ? 'btn-g' : 'btn-o') + '" onclick="_tfmChecks.res=\'' + ex.id + '\';renderTFMStep()" style="padding:8px 14px;font-size:12px">' + ex.icon + ' ' + ex.label + '</button>';
+      });
+      h3 += '</div></div>';
+
+      /* P&L */
+      h3 += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">';
+      h3 += '<div><div style="font-size:10px;color:var(--t3);margin-bottom:4px">P&L ($)</div><input type="number" id="tfmPL" step="0.01" placeholder="ex: 92.50 ou -56" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:14px" value="' + (_tfmChecks.pl || '') + '" onchange="_tfmChecks.pl=this.value"></div>';
+      h3 += '<div><div style="font-size:10px;color:var(--t3);margin-bottom:4px">News USD ?</div><div style="display:flex;gap:6px">';
+      h3 += '<button class="btn ' + (_tfmChecks.news === 'Non' ? 'btn-g' : 'btn-o') + '" onclick="_tfmChecks.news=\'Non\';renderTFMStep()" style="padding:8px 14px;font-size:12px">Non</button>';
+      h3 += '<button class="btn ' + (_tfmChecks.news === 'Oui' ? 'btn-g' : 'btn-o') + '" onclick="_tfmChecks.news=\'Oui\';renderTFMStep()" style="padding:8px 14px;font-size:12px">Oui</button>';
+      h3 += '</div></div></div>';
+
+      /* Notes */
+      h3 += '<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--t3);margin-bottom:4px">Notes (optionnel)</div>';
+      h3 += '<input type="text" id="tfmNotes" placeholder="QM clean, bon timing..." value="' + (_tfmChecks.notes || '') + '" onchange="_tfmChecks.notes=this.value" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"></div>';
+
+      body.innerHTML = h3;
 
       nav.innerHTML = '<button class="btn btn-o" onclick="_tfmStep=2;renderTFMStep()" style="padding:10px 20px">← Retour</button>' +
-        '<button class="btn btn-g" onclick="submitTFM()" style="padding:10px 20px;font-weight:800">✓ Enregistrer</button>';
+        '<button class="btn btn-g" onclick="submitTFM()" style="padding:10px 20px;font-weight:800">✓ Enregistrer le trade</button>';
     }
   } catch(e) { console.error('renderTFMStep:', e) }
 }
 
 function submitTFM() {
   try {
-    /* Pré-remplir le formulaire trade existant */
-    var config = strategyConfigReader();
     var dirMap = { buy: 'Buy', sell: 'Sell' };
     var typeMap = { qm: 'QM', gaps: 'Gaps' };
+    var resMap = { tp: 'TP', sl: 'SL', trail: 'Trail', '21h': '21h' };
 
-    if (_tfmChecks.dir && formState) formState.dir = dirMap[_tfmChecks.dir] || '';
-    if (_tfmChecks.setup && formState) formState.type = typeMap[_tfmChecks.setup] || '';
+    var dir = dirMap[_tfmChecks.dir] || '';
+    var type = typeMap[_tfmChecks.setup] || '';
+    var res = resMap[_tfmChecks.res] || '';
 
-    var fD = document.getElementById('fD');
-    var fT = document.getElementById('fT');
-    if (fD) fD.valueAsDate = new Date();
-    if (fT) { var n = new Date(); fT.value = n.getHours().toString().padStart(2, '0') + ':' + n.getMinutes().toString().padStart(2, '0') }
+    if (!dir) { toast('Sélectionne une direction'); _tfmStep = 1; renderTFMStep(); return }
+    if (!res) { toast('Sélectionne un résultat'); return }
 
-    /* SL + lot depuis calculateur */
-    var sl = parseInt(document.getElementById('cSL').value) || 350;
-    var lot = document.getElementById('cRes').textContent || '';
-    var fSL = document.getElementById('fSL');
-    var fLo = document.getElementById('fLo');
-    if (fSL) fSL.value = sl;
-    if (fLo) fLo.value = lot;
+    var pl = parseFloat(document.getElementById('tfmPL') ? document.getElementById('tfmPL').value : 0) || 0;
+    var news = _tfmChecks.news || 'Non';
+    var notes = (document.getElementById('tfmNotes') ? document.getElementById('tfmNotes').value : '') || _tfmChecks.notes || '';
 
-    closeTFM();
-    go('add');
-    toast('Trade pré-rempli — complète et valide');
+    var s = S();
+    var now = new Date();
+    var ra = s.bal * (s.risk || 1) / 100;
+    var co = s.comm || 0;
+    var lot = Math.floor(ra / (_tfmSL + co) * 100) / 100;
+    var pct = s.bal > 0 ? (pl / s.bal * 100).toFixed(2) : '0';
+
+    /* Créer le trade directement */
+    var trade = {
+      date: now.toISOString().slice(0, 10),
+      time: now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0'),
+      dir: dir,
+      type: type,
+      sl: _tfmSL,
+      lot: lot,
+      res: res,
+      pl: pl,
+      pct: pct,
+      rr: 0,
+      news: news,
+      s5: '',
+      s1: '',
+      sr: '',
+      notes: notes,
+      ts: Date.now(),
+      accId: D.activeAcc
+    };
+
+    D.live.push(trade);
+    _s();
 
     /* Incrémenter session si active */
     if (_currentSession && _currentSession.status === 'OPERATING') {
-      recordSessionTrade(_currentSession.id, Date.now().toString(), 'lg_' + Date.now(), false, null);
+      recordSessionTrade(_currentSession.id, trade.ts.toString(), 'lg_' + trade.ts, false, null);
     }
+
+    closeTFM();
+    toast((pl >= 0 ? '✅ Trade gagnant' : '📉 Trade enregistré') + ' · ' + dir + ' ' + type + ' · ' + (pl >= 0 ? '+' : '') + '$' + pl.toFixed(2));
+
+    /* Rafraîchir la vue session */
+    if (_currentSession) rSession();
+    else R();
   } catch(e) { console.error('submitTFM:', e) }
 }
 
