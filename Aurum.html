@@ -6409,6 +6409,227 @@ function testPhase0Services() {
   return { pass: pass, fail: fail };
 }
 
+/* ═══════════════════════════════════════════════════════
+   ACCOUNT GROUPS — Phase 0.5
+   ═══════════════════════════════════════════════════════ */
+
+var AG_KEY = 'aurum_account_groups';
+
+/* ─── Store CRUD ─── */
+function loadAccountGroups() {
+  try {
+    var raw = localStorage.getItem(AG_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return [] }
+}
+
+function saveAccountGroups(groups) {
+  try { localStorage.setItem(AG_KEY, JSON.stringify(groups)) }
+  catch(e) { console.error('saveAccountGroups:', e) }
+}
+
+function createAccountGroup(name, type, accountIds, mirrorPolicy) {
+  try {
+    var groups = loadAccountGroups();
+    var group = {
+      id: 'ag_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+      name: name,
+      type: type, /* 'MIRROR' | 'PARALLEL' */
+      accountIds: accountIds,
+      mirrorPolicy: type === 'MIRROR' ? (mirrorPolicy || {
+        lotCalculation: 'SAME_PERCENT_RISK',
+        syncEntries: true,
+        syncExits: true
+      }) : null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    groups.push(group);
+    saveAccountGroups(groups);
+    return group;
+  } catch(e) { console.error('createAccountGroup:', e); return null }
+}
+
+function updateAccountGroup(id, updates) {
+  try {
+    var groups = loadAccountGroups();
+    var idx = groups.findIndex(function(g) { return g.id === id });
+    if (idx === -1) return null;
+    Object.keys(updates).forEach(function(k) { groups[idx][k] = updates[k] });
+    groups[idx].updatedAt = new Date().toISOString();
+    saveAccountGroups(groups);
+    return groups[idx];
+  } catch(e) { console.error('updateAccountGroup:', e); return null }
+}
+
+function deleteAccountGroup(id) {
+  try {
+    var groups = loadAccountGroups();
+    saveAccountGroups(groups.filter(function(g) { return g.id !== id }));
+    return true;
+  } catch(e) { return false }
+}
+
+/* ─── accountTargetReader ─── */
+function accountTargetReader(target) {
+  try {
+    if (!target) return null;
+
+    var result = {
+      kind: target.kind,
+      label: '',
+      accountIds: [],
+      groupType: null,
+      totalBalance: 0,
+      totalDailyCap: 0,
+      totalDailyDrawdown: 0,
+      perAccount: [],
+      bottleneckAccountId: null
+    };
+
+    var today = new Date().toISOString().slice(0, 10);
+
+    if (target.kind === 'SINGLE_ACCOUNT') {
+      var acc = D.accounts.find(function(a) { return a.id === target.accountId });
+      if (!acc) return null;
+
+      var todayTrades = D.live.filter(function(t) { return t.date === today && t.accId === acc.id });
+      var pnlToday = todayTrades.reduce(function(s, t) { return s + (parseFloat(t.pl) || 0) }, 0);
+      var capMax = acc.bal * (acc.cap || 8) / 100;
+      var ddMax = acc.bal * (acc.daily || 4) / 100;
+
+      result.label = acc.name;
+      result.accountIds = [acc.id];
+      result.totalBalance = acc.bal;
+      result.totalDailyCap = capMax;
+      result.totalDailyDrawdown = ddMax;
+      result.perAccount = [{
+        accountId: acc.id,
+        label: acc.name,
+        balance: acc.bal,
+        dailyCap: capMax,
+        dailyDrawdown: ddMax,
+        cumulativePnlToday: pnlToday,
+        remainingDailyCapDollar: Math.max(0, capMax - pnlToday),
+        remainingDailyDrawdownDollar: Math.max(0, ddMax + pnlToday)
+      }];
+      result.bottleneckAccountId = acc.id;
+
+    } else if (target.kind === 'ACCOUNT_GROUP') {
+      var groups = loadAccountGroups();
+      var group = groups.find(function(g) { return g.id === target.groupId });
+      if (!group) return null;
+
+      result.label = group.name;
+      result.groupType = group.type;
+      result.accountIds = group.accountIds;
+
+      var minCapPct = Infinity;
+      group.accountIds.forEach(function(accId) {
+        var acc = D.accounts.find(function(a) { return a.id === accId });
+        if (!acc) return;
+
+        var todayTrades = D.live.filter(function(t) { return t.date === today && t.accId === accId });
+        var pnlToday = todayTrades.reduce(function(s, t) { return s + (parseFloat(t.pl) || 0) }, 0);
+        var capMax = acc.bal * (acc.cap || 8) / 100;
+        var ddMax = acc.bal * (acc.daily || 4) / 100;
+        var remCap = Math.max(0, capMax - pnlToday);
+        var remDD = Math.max(0, ddMax + pnlToday);
+
+        /* Bottleneck = compte dont le remaining % est le plus faible */
+        var capPct = capMax > 0 ? remCap / capMax : 0;
+        if (capPct < minCapPct) { minCapPct = capPct; result.bottleneckAccountId = accId }
+
+        result.totalBalance += acc.bal;
+        result.totalDailyCap += capMax;
+        result.totalDailyDrawdown += ddMax;
+
+        result.perAccount.push({
+          accountId: accId,
+          label: acc.name,
+          balance: acc.bal,
+          dailyCap: capMax,
+          dailyDrawdown: ddMax,
+          cumulativePnlToday: pnlToday,
+          remainingDailyCapDollar: remCap,
+          remainingDailyDrawdownDollar: remDD
+        });
+      });
+    }
+
+    return result;
+  } catch(e) { console.error('accountTargetReader:', e); return null }
+}
+
+/* ─── Tests Phase 0.5 ─── */
+function testPhase05() {
+  var results = [];
+  function test(name, fn) {
+    try { fn(); results.push('✓ ' + name) } catch(e) { results.push('✗ ' + name + ': ' + e.message) }
+  }
+
+  test('loadAccountGroups retourne array', function() {
+    var r = loadAccountGroups();
+    if (!Array.isArray(r)) throw new Error('not array');
+  });
+
+  test('createAccountGroup crée un groupe', function() {
+    var ids = D.accounts.slice(0, 2).map(function(a) { return a.id });
+    if (ids.length < 2) throw new Error('need 2+ accounts');
+    var g = createAccountGroup('Test Group', 'MIRROR', ids);
+    if (!g || !g.id) throw new Error('no id');
+    if (g.type !== 'MIRROR') throw new Error('type mismatch');
+    if (g.accountIds.length !== ids.length) throw new Error('ids mismatch');
+    /* Cleanup */
+    deleteAccountGroup(g.id);
+  });
+
+  test('deleteAccountGroup supprime', function() {
+    var g = createAccountGroup('ToDelete', 'PARALLEL', [D.accounts[0].id]);
+    var before = loadAccountGroups().length;
+    deleteAccountGroup(g.id);
+    var after = loadAccountGroups().length;
+    if (after >= before) throw new Error('not deleted');
+  });
+
+  test('accountTargetReader SINGLE_ACCOUNT', function() {
+    var r = accountTargetReader({ kind: 'SINGLE_ACCOUNT', accountId: D.accounts[0].id });
+    if (!r) throw new Error('null result');
+    if (r.kind !== 'SINGLE_ACCOUNT') throw new Error('kind mismatch');
+    if (r.perAccount.length !== 1) throw new Error('perAccount count');
+    if (typeof r.totalBalance !== 'number') throw new Error('totalBalance not number');
+  });
+
+  test('accountTargetReader ACCOUNT_GROUP', function() {
+    if (D.accounts.length < 2) { results.push('⊘ accountTargetReader GROUP: need 2+ accounts'); return }
+    var ids = D.accounts.slice(0, 2).map(function(a) { return a.id });
+    var g = createAccountGroup('TestGrp', 'MIRROR', ids);
+    var r = accountTargetReader({ kind: 'ACCOUNT_GROUP', groupId: g.id, accountIds: ids });
+    if (!r) throw new Error('null result');
+    if (r.kind !== 'ACCOUNT_GROUP') throw new Error('kind mismatch');
+    if (r.perAccount.length !== 2) throw new Error('perAccount count');
+    if (!r.bottleneckAccountId) throw new Error('no bottleneck');
+    deleteAccountGroup(g.id);
+  });
+
+  test('accountTargetReader bottleneck = compte le plus contraint', function() {
+    if (D.accounts.length < 2) { results.push('⊘ bottleneck: need 2+ accounts'); return }
+    var ids = D.accounts.slice(0, 2).map(function(a) { return a.id });
+    var g = createAccountGroup('BotTest', 'PARALLEL', ids);
+    var r = accountTargetReader({ kind: 'ACCOUNT_GROUP', groupId: g.id, accountIds: ids });
+    if (!r.bottleneckAccountId) throw new Error('no bottleneck');
+    if (ids.indexOf(r.bottleneckAccountId) === -1) throw new Error('bottleneck not in group');
+    deleteAccountGroup(g.id);
+  });
+
+  console.log('\n=== PHASE 0.5 TESTS ===');
+  results.forEach(function(r) { console.log(r) });
+  var pass = results.filter(function(r) { return r.startsWith('✓') }).length;
+  var fail = results.filter(function(r) { return r.startsWith('✗') }).length;
+  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  return { pass: pass, fail: fail };
+}
+
 /* ─── PROP FIRMS & PAYOUTS (lecture/écriture aurum_capital_v1) ─── */
 var CK='aurum_capital_v1';
 function _loadCap(){try{var r=localStorage.getItem(CK);return r?JSON.parse(r):{payouts:[],propfirms:[],portfolio:[],passifs:[],expenses:[],entities:[],abonnements:[],categories:[],history:[]}}catch(e){return{payouts:[],propfirms:[]}}}
