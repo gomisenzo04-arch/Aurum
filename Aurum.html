@@ -1531,6 +1531,11 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 </div>
 </div>
 
+<!-- SESSION -->
+<div class="panel" id="session">
+<div id="sessionView"></div>
+</div>
+
 <!-- CHECKLIST -->
 <div class="panel" id="check">
 <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
@@ -2383,6 +2388,7 @@ function R() {
   else if (pg === 'viab') { rViability(); rCoaching() }
   else if (pg === 'backup') { rBackupStats() }
   else if (pg === 'settings') { ldS() }
+  else if (pg === 'session') { rSession() }
   else if (pg === 'propfirms') { rJPF() }
   else if (pg === 'payouts') { rJPO() }
 
@@ -6409,6 +6415,267 @@ function testPhase0Services() {
 }
 
 /* ═══════════════════════════════════════════════════════
+   SESSION VIEW — Phase 3
+   ═══════════════════════════════════════════════════════ */
+
+var _currentSession = null;
+
+function rSession() {
+  try {
+    var el = document.getElementById('sessionView');
+    if (!el) return;
+
+    /* Pré-condition : cible valide */
+    if (D.activeAcc === 'all') {
+      el.innerHTML = '<div style="text-align:center;padding:40px 20px;max-width:500px;margin:0 auto">' +
+        '<div style="font-size:28px;margin-bottom:12px">⚠️</div>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px">La vue "Tous les comptes" ne permet pas d\'ouvrir une session.</div>' +
+        '<div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:16px">Pour trader, sélectionne un compte spécifique dans la barre en haut.</div>' +
+        '</div>';
+      return;
+    }
+
+    var target = { kind: 'SINGLE_ACCOUNT', accountId: D.activeAcc };
+
+    /* Chercher session active */
+    var active = getActiveSession(target);
+    if (active) { _currentSession = active }
+
+    if (_currentSession && _currentSession.status === 'OPERATING') {
+      rSessionOperating(el);
+      return;
+    }
+    if (_currentSession && _currentSession.status === 'DEBRIEF') {
+      rSessionDebrief(el);
+      return;
+    }
+    if (_currentSession && _currentSession.status === 'LOCKED') {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t2)">🔒 Session verrouillée — <a href="#" onclick="go(\'hist\');return false" style="color:var(--gold)">Voir dans Historique</a></div>';
+      _currentSession = null;
+      return;
+    }
+
+    /* Vue BRIEFING */
+    rSessionBriefing(el, target);
+  } catch(e) { console.error('rSession:', e) }
+}
+
+function rSessionBriefing(el, target) {
+  try {
+    var ctx = dailyContextReader([target.accountId]);
+    var timing = sessionTimingDetector();
+    var acc = D.accounts.find(function(a) { return a.id === target.accountId });
+    if (!acc) { el.innerHTML = '<div style="padding:20px;color:var(--red)">Compte introuvable</div>'; return }
+
+    var prevCount = ctx.perAccountCumul.length ? ctx.perAccountCumul[0].cumulativeTradesToday : 0;
+    var prevPnl = ctx.cumulativePnlToday;
+
+    /* Header 3 variantes */
+    var headerIcon, headerTitle, headerSub, headerAlert = '';
+    var sessions = loadSessions();
+    var today = new Date().toISOString().slice(0, 10);
+    var todaySessions = sessions.filter(function(s) { return s.dayDate === today && s.target.accountId === target.accountId && s.status === 'LOCKED' });
+
+    if (ctx.hasReachedDailyCap) {
+      headerIcon = '🚨'; headerTitle = 'BRIEFING — CAP JOURNALIER ATTEINT';
+      headerSub = 'Tu as fait ' + (prevPnl >= 0 ? '+' : '') + '$' + prevPnl.toFixed(0) + ' aujourd\'hui. Ouvrir une session est déconseillé.';
+      headerAlert = '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-o" onclick="aT=\'replay\';adaptForm();R()" style="font-size:11px;padding:8px 14px">Passer en Replay</button></div>';
+    } else if (todaySessions.length === 0) {
+      headerIcon = '🌅'; headerTitle = 'BRIEFING — PREMIÈRE SESSION DU JOUR';
+      headerSub = 'Pas de session précédente. Prépare ton ouverture.';
+    } else {
+      var last = todaySessions[todaySessions.length - 1];
+      headerIcon = '🌤'; headerTitle = 'BRIEFING — SESSION #' + (todaySessions.length + 1) + ' DU JOUR';
+      headerSub = 'Session #' + todaySessions.length + ' close · ' + last.logicalTradeCount + ' trades · ' + (prevPnl >= 0 ? '+' : '') + '$' + prevPnl.toFixed(0);
+    }
+
+    var h = '';
+
+    /* Header */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">';
+    h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="font-size:24px">' + headerIcon + '</span>';
+    h += '<div><div style="font-size:16px;font-weight:800;color:var(--t1)">' + headerTitle + '</div>';
+    h += '<div style="font-size:12px;color:var(--t2)">' + headerSub + '</div></div></div>';
+    h += headerAlert + '</div>';
+
+    /* Contexte + Mental en 2 colonnes */
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">';
+
+    /* Carte Contexte */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Contexte du jour</div>';
+    h += '<div style="font-size:12px;color:var(--t2);line-height:2">';
+    h += '<div>Compte : <b style="color:var(--t1)">' + acc.name + '</b></div>';
+    h += '<div>Solde : <b style="color:var(--gold);font-family:JetBrains Mono,monospace">$' + acc.bal.toLocaleString('en-US') + '</b></div>';
+    var capMax = acc.bal * (acc.cap || 8) / 100;
+    var ddMax = acc.bal * (acc.daily || 4) / 100;
+    var remCap = ctx.perAccountCumul.length ? ctx.perAccountCumul[0].remainingDailyCapDollar : capMax;
+    var remDD = ctx.perAccountCumul.length ? ctx.perAccountCumul[0].remainingDailyDrawdownDollar : ddMax;
+    h += '<div>Cap jour : $' + capMax.toFixed(0) + ' · reste <b style="color:' + (remCap < capMax * 0.3 ? 'var(--red)' : 'var(--green)') + '">$' + remCap.toFixed(0) + '</b></div>';
+    h += '<div>DD jour : $' + ddMax.toFixed(0) + ' · reste <b style="color:' + (remDD < ddMax * 0.3 ? 'var(--red)' : 'var(--green)') + '">$' + remDD.toFixed(0) + '</b></div>';
+    h += '<div>Trades aujourd\'hui : <b>' + prevCount + '</b></div>';
+    h += '</div></div>';
+
+    /* Carte État mental */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">État mental</div>';
+    h += '<div style="display:grid;gap:10px">';
+    h += '<div><label style="font-size:11px;color:var(--t2);display:block;margin-bottom:4px">Énergie <span id="sessEnVal" style="font-family:JetBrains Mono,monospace;color:var(--gold)">5</span>/10</label><input type="range" id="sessEnergy" min="1" max="10" value="5" style="width:100%;accent-color:var(--gold)" oninput="document.getElementById(\'sessEnVal\').textContent=this.value"></div>';
+    h += '<div><label style="font-size:11px;color:var(--t2);display:block;margin-bottom:4px">Stress <span id="sessStVal" style="font-family:JetBrains Mono,monospace;color:var(--gold)">5</span>/10</label><input type="range" id="sessStress" min="1" max="10" value="5" style="width:100%;accent-color:var(--gold)" oninput="document.getElementById(\'sessStVal\').textContent=this.value"></div>';
+    h += '<div><label style="font-size:11px;color:var(--t2);display:block;margin-bottom:4px">Sommeil (h)</label><input type="number" id="sessSleep" min="0" max="14" step="0.5" placeholder="optionnel" style="width:80px;padding:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"></div>';
+    h += '</div>';
+    h += '<div id="sessMentalReco" style="margin-top:8px;font-size:11px;color:var(--gold)"></div>';
+    h += '</div>';
+
+    h += '</div>'; /* fin grid 2 col */
+
+    /* Section Préparation (items SESSION_PREP inline) */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Préparation session</div>';
+    var prepItems = checklistScopeReader('SESSION_PREP');
+    h += '<div style="display:grid;gap:6px">';
+    prepItems.forEach(function(item) {
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><input type="checkbox" ' + (item.checked ? 'checked' : '') + ' onchange="var ck=document.querySelector(\'#checkContent .ck[data-n=&quot;' + item.n + '&quot;] input\');if(ck)ck.checked=this.checked;updCkProgress()" style="accent-color:var(--gold)"><span style="font-size:12px;color:var(--t2)"><b style="color:var(--t1)">' + item.label + '</b> ' + item.description + '</span></div>';
+    });
+    h += '</div></div>';
+
+    /* Section Plan */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Plan de la session</div>';
+    if (!timing.isReliable) {
+      h += '<div style="font-size:11px;color:var(--t3);margin-bottom:10px;padding:8px;background:var(--bg3);border-radius:6px">💡 Pas assez d\'historique pour personnaliser. Saisis manuellement — les suggestions arriveront après ~30 trades.</div>';
+    } else {
+      h += '<div style="font-size:11px;color:var(--gold);margin-bottom:10px;padding:8px;background:rgba(212,160,23,.04);border-radius:6px">💡 Suggéré depuis ton historique (' + timing.basedOnTradeCount + ' trades)</div>';
+    }
+    var sugMax = timing.isReliable ? timing.suggestedMaxTrades : 4;
+    var sugLoss = timing.isReliable ? Math.min(timing.suggestedMaxLossDollar, remDD) : '';
+    var sugTarget = timing.isReliable ? Math.min(timing.suggestedTargetDollar, remCap) : '';
+
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">';
+    h += '<div><label style="color:var(--t3);font-size:10px;display:block;margin-bottom:4px">Max trades</label><input type="number" id="sessPlanMax" value="' + sugMax + '" min="1" max="10" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:14px"></div>';
+    h += '<div><label style="color:var(--t3);font-size:10px;display:block;margin-bottom:4px">Perte max ($)</label><input type="number" id="sessPlanLoss" value="' + (sugLoss || '') + '" min="0" placeholder="—" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:14px"></div>';
+    h += '<div><label style="color:var(--t3);font-size:10px;display:block;margin-bottom:4px">Target ($)</label><input type="number" id="sessPlanTarget" value="' + (sugTarget || '') + '" min="0" placeholder="—" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:14px"></div>';
+    h += '<div><label style="color:var(--t3);font-size:10px;display:block;margin-bottom:4px">Fenêtre</label><div style="font-size:12px;color:var(--t2);padding:8px">' + (timing.suggestedNextSessionWindow ? timing.suggestedNextSessionWindow.startTime.getHours() + 'h — ' + timing.suggestedNextSessionWindow.endTime.getHours() + 'h' : '—') + '</div></div>';
+    h += '</div></div>';
+
+    /* CTA Ouvrir */
+    var isFirst = todaySessions.length === 0;
+    h += '<div style="text-align:center;padding:16px 0">';
+    h += '<button class="btn btn-g" onclick="openSessionFromBriefing()" style="padding:14px 32px;font-size:15px;font-weight:800;border-radius:12px">🔒 ' + (isFirst ? 'OUVRIR LA SESSION' : 'OUVRIR UNE NOUVELLE SESSION') + '</button>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-top:6px">Le plan sera verrouillé et inviolable.</div>';
+    h += '</div>';
+
+    el.innerHTML = h;
+
+    /* Recommandations mental */
+    setTimeout(function() {
+      var en = document.getElementById('sessEnergy');
+      var st = document.getElementById('sessStress');
+      if (en) en.addEventListener('input', updateMentalReco);
+      if (st) st.addEventListener('input', updateMentalReco);
+    }, 100);
+  } catch(e) { console.error('rSessionBriefing:', e) }
+}
+
+function updateMentalReco() {
+  try {
+    var el = document.getElementById('sessMentalReco');
+    if (!el) return;
+    var en = parseInt(document.getElementById('sessEnergy').value) || 5;
+    var st = parseInt(document.getElementById('sessStress').value) || 5;
+    var msgs = [];
+    if (en < 5) msgs.push('⚠ Énergie basse — Replay recommandé');
+    if (st > 7) msgs.push('⚠ Stress élevé — pause avant d\'ouvrir');
+    el.innerHTML = msgs.join('<br>');
+  } catch(e) {}
+}
+
+function openSessionFromBriefing() {
+  try {
+    var target = { kind: 'SINGLE_ACCOUNT', accountId: D.activeAcc };
+    var session = createSession(target, aT);
+
+    /* Sauver état mental */
+    session.briefing.mentalState.energy = parseInt(document.getElementById('sessEnergy').value) || 5;
+    session.briefing.mentalState.stress = parseInt(document.getElementById('sessStress').value) || 5;
+    var sleep = document.getElementById('sessSleep');
+    if (sleep && sleep.value) session.briefing.mentalState.sleepHours = parseFloat(sleep.value);
+
+    /* Sauver plan */
+    session.briefing.plan.aggregated.maxTrades = parseInt(document.getElementById('sessPlanMax').value) || 4;
+    session.briefing.plan.aggregated.maxLossDollar = parseFloat(document.getElementById('sessPlanLoss').value) || 0;
+    session.briefing.plan.aggregated.targetDollar = parseFloat(document.getElementById('sessPlanTarget').value) || 0;
+
+    var sessions = loadSessions();
+    var idx = sessions.findIndex(function(s) { return s.id === session.id });
+    if (idx >= 0) sessions[idx] = session;
+    saveSessions(sessions);
+
+    /* Lock briefing → OPERATING */
+    lockBriefing(session.id);
+    _currentSession = session;
+    _currentSession.status = 'OPERATING';
+    toast('Session #' + session.sessionIndexInDay + ' ouverte');
+    rSession();
+  } catch(e) { console.error('openSessionFromBriefing:', e) }
+}
+
+/* Stubs pour OPERATING et DEBRIEF (Phase 4+6) */
+function rSessionOperating(el) {
+  try {
+    var s = _currentSession;
+    el.innerHTML = '<div style="background:rgba(212,160,23,.06);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:12px;padding:20px;margin-bottom:16px">' +
+      '<div style="font-size:16px;font-weight:800;color:var(--gold)">⚡ SESSION #' + s.sessionIndexInDay + ' · EN COURS</div>' +
+      '<div style="font-size:12px;color:var(--t2);margin-top:4px">Trades : ' + s.logicalTradeCount + '/' + (s.briefing.plan.aggregated.maxTrades || '—') + '</div>' +
+      '</div>' +
+      '<div style="text-align:center;padding:20px"><button class="btn btn-g" onclick="go(\'check\')" style="padding:12px 24px;margin-right:8px">✅ Checklist</button><button class="btn btn-g" onclick="go(\'calc\')" style="padding:12px 24px;margin-right:8px">🔢 Calculateur</button><button class="btn btn-g" onclick="go(\'add\')" style="padding:12px 24px">➕ Trade</button></div>' +
+      '<div style="text-align:center;margin-top:16px"><button class="btn btn-o" onclick="closeCurrentSession()" style="padding:10px 20px;font-size:12px">⊗ Clôturer la session</button></div>';
+  } catch(e) { console.error('rSessionOperating:', e) }
+}
+
+function rSessionDebrief(el) {
+  try {
+    var s = _currentSession;
+    el.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px">' +
+      '<div style="font-size:16px;font-weight:800;color:var(--t1)">🌒 DEBRIEF — SESSION #' + s.sessionIndexInDay + '</div>' +
+      '<div style="font-size:12px;color:var(--t2);margin-top:4px">' + s.logicalTradeCount + ' trades · Clôturée</div>' +
+      '<div style="margin-top:16px"><label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Note personnelle</label><textarea id="sessDebriefNote" rows="3" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-family:inherit;font-size:12px;resize:vertical" placeholder="Comment s\'est passée cette session ?">' + (s.debrief && s.debrief.journalNote || '') + '</textarea></div>' +
+      '<div style="text-align:center;margin-top:16px"><button class="btn btn-g" onclick="lockCurrentSession()" style="padding:12px 24px;font-size:13px">🔒 VERROUILLER LA SESSION</button><div style="font-size:10px;color:var(--t3);margin-top:4px">Action irréversible.</div></div>' +
+      '</div>';
+  } catch(e) { console.error('rSessionDebrief:', e) }
+}
+
+function closeCurrentSession() {
+  try {
+    if (!_currentSession) return;
+    if (!confirm('Clôturer la session ?')) return;
+    openDebrief(_currentSession.id);
+    _currentSession.status = 'DEBRIEF';
+    rSession();
+    toast('Session clôturée');
+  } catch(e) { console.error(e) }
+}
+
+function lockCurrentSession() {
+  try {
+    if (!_currentSession) return;
+    /* Sauver note */
+    var note = document.getElementById('sessDebriefNote');
+    if (note && _currentSession.debrief) {
+      _currentSession.debrief.journalNote = note.value;
+      var sessions = loadSessions();
+      var idx = sessions.findIndex(function(s) { return s.id === _currentSession.id });
+      if (idx >= 0) { sessions[idx].debrief = _currentSession.debrief; saveSessions(sessions) }
+    }
+    if (!confirm('Verrouiller la session ? Cette action est irréversible.')) return;
+    lockSession(_currentSession.id);
+    _currentSession = null;
+    rSession();
+    toast('Session verrouillée');
+  } catch(e) { console.error(e) }
+}
+
+/* ═══════════════════════════════════════════════════════
    SESSION MODEL — Phase 2
    ═══════════════════════════════════════════════════════ */
 
@@ -7008,7 +7275,7 @@ try{if(window.self!==window.top){
   var groups = [
     {id:'dash', label:'📊 Dashboard', pages:[]},
     {id:'trader', label:'Trader', pages:[
-      {p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}
+      {p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}
     ]},
     {id:'analyser', label:'Analyser', pages:[
       {p:'hist',l:'Historique'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
