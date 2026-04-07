@@ -6107,6 +6107,308 @@ cLot();
 checkSession();
 adaptForm();
 loadDraft();
+/* ═══════════════════════════════════════════════════════
+   SESSION SERVICES — Phase 0 (lecture seule)
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── A. sessionTimingDetector ─── */
+function sessionTimingDetector() {
+  try {
+    var trades = D.live.filter(function(t) { return t.date && t.time });
+    var result = {
+      detectedWindows: [],
+      averageSessionsPerDay: 0,
+      averageSessionDurationMinutes: 0,
+      suggestedNextSessionWindow: null,
+      suggestedMaxTrades: 4,
+      suggestedMaxLossDollar: 0,
+      suggestedTargetDollar: 0,
+      basedOnTradeCount: trades.length,
+      isReliable: trades.length >= 30
+    };
+
+    if (!result.isReliable) return result;
+
+    /* Clustering 1D sur les heures d'ouverture */
+    var hours = trades.map(function(t) {
+      var parts = t.time.split(':');
+      return parseInt(parts[0]) + parseInt(parts[1]) / 60;
+    });
+
+    /* Détection de modes (pic d'activité par tranche de 2h) */
+    var bins = {};
+    hours.forEach(function(h) {
+      var bin = Math.floor(h / 2) * 2;
+      bins[bin] = (bins[bin] || 0) + 1;
+    });
+
+    var sortedBins = Object.keys(bins).sort(function(a, b) { return bins[b] - bins[a] });
+    var topBins = sortedBins.slice(0, 3);
+
+    result.detectedWindows = topBins.map(function(bin) {
+      var start = parseInt(bin);
+      return {
+        startHourLocal: start,
+        endHourLocal: start + 2,
+        confidence: bins[bin] / trades.length,
+        averageTradesInWindow: bins[bin] / Math.max(1, new Set(trades.filter(function(t) {
+          var h = parseInt(t.time.split(':')[0]);
+          return h >= start && h < start + 2;
+        }).map(function(t) { return t.date })).size)
+      };
+    });
+
+    /* Stats par jour */
+    var dayMap = {};
+    trades.forEach(function(t) {
+      if (!dayMap[t.date]) dayMap[t.date] = { count: 0, pnl: 0 };
+      dayMap[t.date].count++;
+      dayMap[t.date].pnl += parseFloat(t.pl) || 0;
+    });
+
+    var days = Object.keys(dayMap);
+    var totalTrades = trades.length;
+    var avgPerDay = totalTrades / Math.max(1, days.length);
+
+    result.averageSessionsPerDay = Math.round(avgPerDay > 3 ? 2 : 1);
+    result.suggestedMaxTrades = Math.min(4, Math.ceil(avgPerDay));
+
+    /* Suggestion P&L basée sur historique */
+    var s = S();
+    var riskAmt = s.bal * (s.risk || 1) / 100;
+    result.suggestedMaxLossDollar = Math.round(riskAmt * result.suggestedMaxTrades);
+    result.suggestedTargetDollar = Math.round(riskAmt * result.suggestedMaxTrades * 2);
+
+    /* Fenêtre suggérée */
+    if (result.detectedWindows.length) {
+      var w = result.detectedWindows[0];
+      var now = new Date();
+      var start = new Date(now); start.setHours(w.startHourLocal, 0, 0, 0);
+      var end = new Date(now); end.setHours(w.endHourLocal, 0, 0, 0);
+      if (end <= now && result.detectedWindows.length > 1) {
+        var w2 = result.detectedWindows[1];
+        start.setHours(w2.startHourLocal, 0, 0, 0);
+        end.setHours(w2.endHourLocal, 0, 0, 0);
+      }
+      result.suggestedNextSessionWindow = { startTime: start, endTime: end };
+    }
+
+    return result;
+  } catch(e) { console.error('sessionTimingDetector:', e); return { isReliable: false, basedOnTradeCount: 0, detectedWindows: [] } }
+}
+
+/* ─── B. dailyContextReader ─── */
+function dailyContextReader(targetAccountIds) {
+  try {
+    var today = new Date().toISOString().slice(0, 10);
+    var ids = targetAccountIds || (D.activeAcc === 'all' ? D.accounts.map(function(a) { return a.id }) : [D.activeAcc]);
+
+    var ctx = {
+      date: today,
+      cumulativePnlToday: 0,
+      cumulativeTradesToday: 0,
+      remainingDailyCapDollar: 0,
+      remainingDailyDrawdownDollar: 0,
+      hasReachedDailyCap: false,
+      hasReachedDailyDrawdown: false,
+      perAccountCumul: []
+    };
+
+    ids.forEach(function(accId) {
+      var acc = D.accounts.find(function(a) { return a.id === accId });
+      if (!acc) return;
+
+      var todayTrades = D.live.filter(function(t) { return t.date === today && t.accId === accId });
+      var pnl = todayTrades.reduce(function(s, t) { return s + (parseFloat(t.pl) || 0) }, 0);
+      var capMax = acc.bal * (acc.cap || 8) / 100;
+      var ddMax = acc.bal * (acc.daily || 4) / 100;
+
+      ctx.cumulativePnlToday += pnl;
+      ctx.cumulativeTradesToday += todayTrades.length;
+
+      var remCap = capMax - pnl;
+      var remDD = ddMax + pnl; /* pnl négatif = consomme le DD */
+
+      ctx.perAccountCumul.push({
+        accountId: accId,
+        cumulativePnlToday: pnl,
+        cumulativeTradesToday: todayTrades.length,
+        remainingDailyCapDollar: Math.max(0, remCap),
+        remainingDailyDrawdownDollar: Math.max(0, remDD)
+      });
+    });
+
+    /* Agrégés */
+    ctx.remainingDailyCapDollar = ctx.perAccountCumul.reduce(function(s, a) { return s + a.remainingDailyCapDollar }, 0);
+    ctx.remainingDailyDrawdownDollar = ctx.perAccountCumul.reduce(function(s, a) { return s + a.remainingDailyDrawdownDollar }, 0);
+    ctx.hasReachedDailyCap = ctx.perAccountCumul.some(function(a) { return a.remainingDailyCapDollar <= 0 });
+    ctx.hasReachedDailyDrawdown = ctx.perAccountCumul.some(function(a) { return a.remainingDailyDrawdownDollar <= 0 });
+
+    return ctx;
+  } catch(e) { console.error('dailyContextReader:', e); return { date: '', cumulativePnlToday: 0, cumulativeTradesToday: 0, perAccountCumul: [] } }
+}
+
+/* ─── C. strategyConfigReader (STUB) ─── */
+function strategyConfigReader() {
+  try {
+    return {
+      id: 'aurum-xauusd-v1',
+      name: 'Aurum XAUUSD',
+      setups: [
+        { id: 'qm', label: 'QM', icon: '◆', description: 'Quasimodo — pattern de retournement', enabled: true },
+        { id: 'gaps', label: 'Gaps', icon: '⚡', description: 'Variante gaps > 1200 pts', enabled: true }
+      ],
+      directions: [
+        { id: 'buy', label: 'Buy', icon: '↑' },
+        { id: 'sell', label: 'Sell', icon: '↓' }
+      ],
+      exitTypes: [
+        { id: 'tp', label: 'TP', icon: '🎯' },
+        { id: 'sl', label: 'SL', icon: '🛑' },
+        { id: 'trail', label: 'Trail', icon: '📐' },
+        { id: '21h', label: '21h', icon: '🕘' }
+      ],
+      standardSLPoints: typeof SL_PRESETS !== 'undefined' ? SL_PRESETS : [250, 300, 350, 400, 450, 500, 550, 600, 700, 800, 900, 1000, 1200],
+      riskPerTradePercent: S().risk || 1,
+      dailyCapPercent: S().cap || 8,
+      dailyDrawdownPercent: S().daily || 4,
+      preferredCurrency: 'USD'
+    };
+  } catch(e) { console.error('strategyConfigReader:', e); return { setups: [], directions: [], exitTypes: [], standardSLPoints: [] } }
+}
+
+/* ─── D. tradingReadinessEvaluator ─── */
+function tradingReadinessEvaluator() {
+  try {
+    /* HIDDEN si pas Live ou Tous comptes */
+    if (aT !== 'live' || D.activeAcc === 'all') {
+      return { status: 'HIDDEN', discipline30d: 0, formShortTerm: 'flat', message: '', primaryCta: { label: '', target: '' } };
+    }
+
+    var s = S();
+    var tr = getTr();
+    var n = tr.length;
+
+    /* NEW_ACCOUNT */
+    if (s.created) {
+      var days = Math.floor((Date.now() - new Date(s.created).getTime()) / 86400000);
+      if (days < 7 && n < 5) {
+        return {
+          status: 'NEW_ACCOUNT', discipline30d: 0, formShortTerm: 'flat',
+          message: 'Nouveau compte — commence par Replay pour valider ton edge.',
+          primaryCta: { label: 'Passer en Replay', target: 'replay' }
+        };
+      }
+    }
+
+    /* Discipline 30j */
+    var recent30 = tr.slice(-Math.min(n, 30));
+    var wins30 = recent30.filter(function(t) { return (parseFloat(t.pl) || 0) > 0 }).length;
+    var discipline30d = recent30.length >= 3 ? Math.round(wins30 / recent30.length * 100) : 50;
+
+    /* Forme court terme (5 derniers trades) */
+    var last5 = tr.slice(-5);
+    var pnl5 = last5.reduce(function(s, t) { return s + (parseFloat(t.pl) || 0) }, 0);
+    var formShortTerm = pnl5 > 0 ? 'up' : pnl5 < 0 ? 'down' : 'flat';
+
+    /* Série de pertes */
+    var lossStreak = 0;
+    for (var i = tr.length - 1; i >= 0; i--) {
+      if ((parseFloat(tr[i].pl) || 0) < 0) lossStreak++;
+      else break;
+    }
+
+    /* Drawdown courant */
+    var cum = 0, pk = 0, mdd = 0;
+    tr.forEach(function(t) { cum += (parseFloat(t.pl) || 0); if (cum > pk) pk = cum; if (cum - pk < mdd) mdd = cum - pk });
+    var ddPct = s.bal > 0 ? Math.abs(mdd / s.bal * 100) : 0;
+
+    /* Décision */
+    if (discipline30d >= 85 && ddPct < 8 && lossStreak <= 2) {
+      return {
+        status: 'READY', discipline30d: discipline30d, formShortTerm: formShortTerm,
+        message: 'Discipline ' + discipline30d + '% · Forme ' + formShortTerm + '. Prêt à trader.',
+        primaryCta: { label: 'Ouvrir Checklist', target: 'check' }
+      };
+    } else if (discipline30d >= 60 && lossStreak < 4) {
+      return {
+        status: 'CAUTION', discipline30d: discipline30d, formShortTerm: formShortTerm,
+        message: 'Discipline ' + discipline30d + '% · ' + (lossStreak >= 2 ? lossStreak + ' pertes consécutives' : 'Forme moyenne') + '.',
+        primaryCta: { label: 'Checklist avec prudence', target: 'check' },
+        secondaryCta: { label: 'Passer en Replay', target: 'replay' }
+      };
+    } else {
+      return {
+        status: 'NO_GO', discipline30d: discipline30d, formShortTerm: formShortTerm,
+        message: 'Discipline ' + discipline30d + '% · ' + (lossStreak >= 4 ? lossStreak + ' pertes consécutives' : 'DD ' + ddPct.toFixed(1) + '%') + '. Pause recommandée.',
+        primaryCta: { label: 'Voir Viabilité', target: 'viab' },
+        secondaryCta: { label: 'Passer en Replay', target: 'replay' }
+      };
+    }
+  } catch(e) { console.error('tradingReadinessEvaluator:', e); return { status: 'HIDDEN', discipline30d: 0, formShortTerm: 'flat', message: '', primaryCta: { label: '', target: '' } } }
+}
+
+/* ─── Tests unitaires Phase 0 (exécuter via console) ─── */
+function testPhase0Services() {
+  var results = [];
+  function test(name, fn) {
+    try { fn(); results.push('✓ ' + name) } catch(e) { results.push('✗ ' + name + ': ' + e.message) }
+  }
+
+  test('sessionTimingDetector retourne un objet', function() {
+    var r = sessionTimingDetector();
+    if (typeof r !== 'object') throw new Error('not object');
+    if (typeof r.isReliable !== 'boolean') throw new Error('isReliable not boolean');
+    if (typeof r.basedOnTradeCount !== 'number') throw new Error('basedOnTradeCount not number');
+  });
+
+  test('sessionTimingDetector.isReliable false si <30 trades', function() {
+    var r = sessionTimingDetector();
+    if (D.live.length < 30 && r.isReliable) throw new Error('should be unreliable');
+  });
+
+  test('dailyContextReader retourne contexte', function() {
+    var r = dailyContextReader([D.activeAcc]);
+    if (!r.date) throw new Error('no date');
+    if (typeof r.cumulativePnlToday !== 'number') throw new Error('pnl not number');
+    if (!Array.isArray(r.perAccountCumul)) throw new Error('perAccountCumul not array');
+  });
+
+  test('dailyContextReader multi-compte', function() {
+    var ids = D.accounts.map(function(a) { return a.id });
+    var r = dailyContextReader(ids);
+    if (r.perAccountCumul.length !== ids.length) throw new Error('count mismatch');
+  });
+
+  test('strategyConfigReader retourne config', function() {
+    var r = strategyConfigReader();
+    if (!r.setups || !r.setups.length) throw new Error('no setups');
+    if (!r.directions || !r.directions.length) throw new Error('no directions');
+    if (!r.standardSLPoints || !r.standardSLPoints.length) throw new Error('no SL presets');
+    if (r.standardSLPoints[0] !== 250) throw new Error('first SL not 250');
+  });
+
+  test('tradingReadinessEvaluator retourne status', function() {
+    var r = tradingReadinessEvaluator();
+    var valid = ['READY', 'CAUTION', 'NO_GO', 'NEW_ACCOUNT', 'HIDDEN'];
+    if (valid.indexOf(r.status) === -1) throw new Error('invalid status: ' + r.status);
+    if (typeof r.discipline30d !== 'number') throw new Error('discipline not number');
+  });
+
+  test('tradingReadinessEvaluator.primaryCta existe', function() {
+    var r = tradingReadinessEvaluator();
+    if (!r.primaryCta) throw new Error('no primaryCta');
+    if (typeof r.primaryCta.label !== 'string') throw new Error('label not string');
+  });
+
+  console.log('\n=== PHASE 0 SERVICES TESTS ===');
+  results.forEach(function(r) { console.log(r) });
+  var pass = results.filter(function(r) { return r.startsWith('✓') }).length;
+  var fail = results.filter(function(r) { return r.startsWith('✗') }).length;
+  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  return { pass: pass, fail: fail };
+}
+
 /* ─── PROP FIRMS & PAYOUTS (lecture/écriture aurum_capital_v1) ─── */
 var CK='aurum_capital_v1';
 function _loadCap(){try{var r=localStorage.getItem(CK);return r?JSON.parse(r):{payouts:[],propfirms:[],portfolio:[],passifs:[],expenses:[],entities:[],abonnements:[],categories:[],history:[]}}catch(e){return{payouts:[],propfirms:[]}}}
