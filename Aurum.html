@@ -1550,6 +1550,11 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 </div>
 </div>
 
+<!-- SESSIONS HISTORY -->
+<div class="panel" id="sessHist">
+<div id="sessHistView"></div>
+</div>
+
 <!-- SESSION -->
 <div class="panel" id="session">
 <div id="sessionView"></div>
@@ -2421,6 +2426,7 @@ function R() {
   else if (pg === 'backup') { rBackupStats() }
   else if (pg === 'settings') { ldS() }
   else if (pg === 'session') { rSession() }
+  else if (pg === 'sessHist') { rSessHist() }
   else if (pg === 'propfirms') { rJPF() }
   else if (pg === 'payouts') { rJPO() }
 
@@ -6446,6 +6452,65 @@ function testPhase0Services() {
   return { pass: pass, fail: fail };
 }
 
+/* ─── SESSIONS HISTORY ─── */
+function rSessHist() {
+  try {
+    var el = document.getElementById('sessHistView');
+    if (!el) return;
+    var sessions = loadSessions();
+    var accId = D.activeAcc;
+
+    /* Filtrer par compte actif (sauf "all") */
+    var filtered = accId === 'all' ? sessions : sessions.filter(function(s) {
+      return s.target && s.target.accountId === accId;
+    });
+
+    /* Trier par date desc */
+    filtered.sort(function(a, b) { return (b.openedAt || '').localeCompare(a.openedAt || '') });
+
+    if (!filtered.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--t3);font-size:13px">Aucune session enregistrée.<br>Ouvre une session dans Trader > Session.</div>';
+      return;
+    }
+
+    var h = '<div style="font-size:16px;font-weight:800;color:var(--t1);margin-bottom:16px">Historique des sessions (' + filtered.length + ')</div>';
+    h += '<div style="display:grid;gap:8px">';
+
+    filtered.forEach(function(s) {
+      var statusIcon = { BRIEFING: '📝', OPERATING: '⚡', DEBRIEF: '🌒', LOCKED: '🔒' }[s.status] || '?';
+      var statusLabel = { BRIEFING: 'Briefing', OPERATING: 'En cours', DEBRIEF: 'Debrief', LOCKED: 'Verrouillée' }[s.status] || s.status;
+
+      /* P&L session */
+      var openTime = new Date(s.openedAt).getTime();
+      var sessTrades = D.live.filter(function(t) { return t.date === s.dayDate && (s.target.accountId ? t.accId === s.target.accountId : true) && (t.ts || 0) >= openTime });
+      var pnl = sessTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+
+      var openDate = new Date(s.openedAt);
+      var dateStr = s.dayDate;
+      var timeStr = openDate.getHours().toString().padStart(2, '0') + ':' + openDate.getMinutes().toString().padStart(2, '0');
+      var dur = s.closedAt ? Math.floor((new Date(s.closedAt) - openDate) / 60000) : Math.floor((Date.now() - openDate.getTime()) / 60000);
+      var durStr = dur < 60 ? dur + 'min' : Math.floor(dur / 60) + 'h' + String(dur % 60).padStart(2, '0');
+      var disc = s.debrief ? s.debrief.selfDisciplineScore : '—';
+      var pnlCol = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
+      h += '<span style="font-size:18px">' + statusIcon + '</span>';
+      h += '<div style="flex:1;min-width:120px">';
+      h += '<div style="font-size:13px;font-weight:700;color:var(--t1)">#' + s.sessionIndexInDay + ' · ' + dateStr + ' ' + timeStr + '</div>';
+      h += '<div style="font-size:11px;color:var(--t3)">' + statusLabel + ' · ' + s.logicalTradeCount + ' trades · ' + durStr + '</div>';
+      h += '</div>';
+      h += '<div style="text-align:right">';
+      h += '<div style="font-size:16px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + pnlCol + '">' + (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(0) + '</div>';
+      h += '<div style="font-size:10px;color:var(--t3)">Disc. ' + disc + '</div>';
+      h += '</div>';
+      h += '</div>';
+    });
+
+    h += '</div>';
+    el.innerHTML = h;
+  } catch(e) { console.error('rSessHist:', e) }
+}
+
 /* ═══════════════════════════════════════════════════════
    SESSION VIEW — Phase 3
    ═══════════════════════════════════════════════════════ */
@@ -7069,9 +7134,14 @@ function submitTFM() {
     closeTFM();
     toast((pl >= 0 ? '✅ Trade gagnant' : '📉 Trade enregistré') + ' · ' + dir + ' ' + type + ' · ' + (pl >= 0 ? '+' : '') + '$' + pl.toFixed(2));
 
-    /* Rafraîchir la vue session */
-    if (_currentSession) rSession();
-    else R();
+    /* Rafraîchir la vue session et scroller vers les trades */
+    if (_currentSession) {
+      rSession();
+      setTimeout(function() {
+        var tradesList = document.querySelector('#sessionView [style*="Trades de la session"]');
+        if (tradesList) tradesList.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
+    } else R();
   } catch(e) { console.error('submitTFM:', e) }
 }
 
@@ -7808,7 +7878,7 @@ try{if(window.self!==window.top){
       {p:'session',l:'Session'},{p:'add',l:'Trade'}
     ]},
     {id:'analyser', label:'Analyser', pages:[
-      {p:'hist',l:'Historique'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
+      {p:'hist',l:'Historique'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
     ]},
     {id:'systeme', label:'Système', pages:[
       {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'}
