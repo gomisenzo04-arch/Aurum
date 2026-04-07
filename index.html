@@ -43,7 +43,7 @@
       --blue: #5b8def;
       --purple: #a78bfa;
       --t1: #edf2f7;
-      --t2: #9bafd4;
+      --t2: #a8bdd4;
       --t3: #8a9fc0;
       --radius: 12px;
       --transition: .25s cubic-bezier(.4, 0, .2, 1);
@@ -505,7 +505,7 @@
 
     .splash.hide {
       opacity: 0;
-      transform: scale(1.05);
+      transform: scale(1);
       pointer-events: none;
     }
 
@@ -1093,6 +1093,16 @@
         var hash = window.location.hash.replace('#', '');
         var startPage = PAGES[hash] ? hash : 'hub';
         navigate(startPage, true);
+        /* Pulse la nav au premier lancement pour que le débutant la repère */
+        if (!sessionStorage.getItem('aurum_nav_seen')) {
+          sessionStorage.setItem('aurum_nav_seen', '1');
+          var nav = document.getElementById('bottomNav');
+          if (nav) {
+            nav.style.transition = 'box-shadow .5s';
+            nav.style.boxShadow = '0 -4px 20px rgba(212,160,23,.3)';
+            setTimeout(function() { nav.style.boxShadow = ''; }, 2000);
+          }
+        }
       } catch(e) {}
     }
 
