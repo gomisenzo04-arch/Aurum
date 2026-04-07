@@ -6957,12 +6957,100 @@ function submitTFM() {
 function rSessionDebrief(el) {
   try {
     var s = _currentSession;
-    el.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px">' +
-      '<div style="font-size:16px;font-weight:800;color:var(--t1)">🌒 DEBRIEF — SESSION #' + s.sessionIndexInDay + '</div>' +
-      '<div style="font-size:12px;color:var(--t2);margin-top:4px">' + s.logicalTradeCount + ' trades · Clôturée</div>' +
-      '<div style="margin-top:16px"><label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Note personnelle</label><textarea id="sessDebriefNote" rows="3" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-family:inherit;font-size:12px;resize:vertical" placeholder="Comment s\'est passée cette session ?">' + (s.debrief && s.debrief.journalNote || '') + '</textarea></div>' +
-      '<div style="text-align:center;margin-top:16px"><button class="btn btn-g" onclick="lockCurrentSession()" style="padding:12px 24px;font-size:13px">🔒 VERROUILLER LA SESSION</button><div style="font-size:10px;color:var(--t3);margin-top:4px">Action irréversible.</div></div>' +
-      '</div>';
+    /* Relire depuis storage */
+    var sessions = loadSessions();
+    var fresh = sessions.find(function(x) { return x.id === s.id });
+    if (fresh) { _currentSession = fresh; s = fresh }
+
+    var plan = s.briefing.plan.aggregated || {};
+    var dur = s.closedAt ? Math.floor((new Date(s.closedAt) - new Date(s.openedAt)) / 60000) : 0;
+    var durStr = dur < 60 ? dur + 'min' : Math.floor(dur / 60) + 'h' + String(dur % 60).padStart(2, '0');
+    var closeTime = s.closedAt ? new Date(s.closedAt).getHours().toString().padStart(2, '0') + ':' + new Date(s.closedAt).getMinutes().toString().padStart(2, '0') : '—';
+
+    /* P&L session */
+    var openTime = new Date(s.openedAt).getTime();
+    var sessTrades = D.live.filter(function(t) { return t.date === s.dayDate && t.accId === s.target.accountId && (t.ts || 0) >= openTime });
+    var sessPnl = sessTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+
+    var h = '';
+
+    /* Header */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">';
+    h += '<div style="font-size:18px;font-weight:800;color:var(--t1)">🌒 DEBRIEF — SESSION #' + s.sessionIndexInDay + '</div>';
+    h += '<div style="font-size:12px;color:var(--t2);margin-top:4px">Clôturée à ' + closeTime + ' · Durée ' + durStr + ' · ' + s.logicalTradeCount + ' trades · <b style="color:' + (sessPnl >= 0 ? 'var(--green)' : 'var(--red)') + ';font-family:JetBrains Mono,monospace">' + (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(2) + '</b></div>';
+    h += '</div>';
+
+    /* Plan vs Réalité */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Plan vs Réalité</div>';
+    h += '<table style="width:100%;font-size:12px;border-collapse:collapse">';
+    h += '<thead><tr style="color:var(--t3);font-size:10px;text-transform:uppercase"><th style="text-align:left;padding:6px">Critère</th><th style="text-align:center;padding:6px">Plan</th><th style="text-align:center;padding:6px">Réalité</th><th style="text-align:center;padding:6px">Écart</th></tr></thead><tbody>';
+
+    var rows = [
+      { label: 'Trades', plan: plan.maxTrades || '—', real: s.logicalTradeCount },
+      { label: 'P&L', plan: plan.targetDollar ? '$' + plan.targetDollar : '—', real: (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(0) },
+      { label: 'Perte max', plan: plan.maxLossDollar ? '$' + plan.maxLossDollar : '—', real: sessPnl < 0 ? '$' + Math.abs(sessPnl).toFixed(0) : '$0' }
+    ];
+    rows.forEach(function(r) {
+      var planVal = typeof r.plan === 'number' ? r.plan : r.plan;
+      var realVal = typeof r.real === 'number' ? r.real : r.real;
+      var ok = true;
+      if (r.label === 'Trades' && typeof r.plan === 'number') ok = r.real <= r.plan;
+      if (r.label === 'Perte max' && plan.maxLossDollar && sessPnl < 0) ok = Math.abs(sessPnl) <= plan.maxLossDollar;
+      var icon = ok ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>';
+      h += '<tr style="border-top:1px solid var(--border)"><td style="padding:8px;color:var(--t2)">' + r.label + '</td><td style="padding:8px;text-align:center;font-family:JetBrains Mono,monospace;color:var(--t3)">' + planVal + '</td><td style="padding:8px;text-align:center;font-family:JetBrains Mono,monospace;color:var(--t1)">' + realVal + '</td><td style="padding:8px;text-align:center">' + icon + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+
+    /* Discipline */
+    var totalChecks = 0, doneChecks = 0;
+    var allItems = checklistScopeReader('SESSION_PREP').concat(checklistScopeReader('TRADE_PREP'));
+    totalChecks = allItems.length * Math.max(1, s.logicalTradeCount);
+    doneChecks = allItems.filter(function(i) { return i.checked }).length * Math.max(1, s.logicalTradeCount);
+    var discScore = totalChecks > 0 ? Math.round(doneChecks / totalChecks * 100) : 0;
+    var discCol = discScore >= 80 ? 'var(--green)' : discScore >= 50 ? 'var(--gold)' : 'var(--red)';
+
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Discipline de la session</div>';
+    h += '<div style="font-size:48px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + discCol + '">' + discScore + '</div>';
+    h += '<div style="font-size:12px;color:var(--t3)">/100</div>';
+    h += '</div>';
+
+    /* Insights auto */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Insights</div>';
+    var insights = [];
+    if (sessPnl > 0 && s.logicalTradeCount <= (plan.maxTrades || 99)) insights.push('💡 Session rentable et disciplinée.');
+    if (sessPnl < 0 && s.logicalTradeCount >= (plan.maxTrades || 99)) insights.push('⚠ Perte atteinte au max trades — bonne discipline de s\'être arrêté.');
+    if (sessPnl > (plan.targetDollar || 9999)) insights.push('📈 Target dépassé — excellent.');
+    if (discScore < 50) insights.push('🔻 Discipline faible — revois ta préparation.');
+    if (dur > 180) insights.push('⏱ Session longue (>' + Math.floor(dur / 60) + 'h) — fatigue possible.');
+    if (!insights.length) insights.push('💡 Session standard. Continue ta routine.');
+    h += insights.map(function(i) { return '<div style="font-size:12px;color:var(--t2);padding:4px 0">' + i + '</div>' }).join('');
+    h += '</div>';
+
+    /* Note personnelle */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Note personnelle</div>';
+    h += '<textarea id="sessDebriefNote" rows="4" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-family:inherit;font-size:12px;resize:vertical" placeholder="Comment s\'est passée cette session ? Qu\'as-tu appris ?">' + (s.debrief && s.debrief.journalNote || '') + '</textarea>';
+    h += '</div>';
+
+    /* CTA Verrouiller */
+    h += '<div style="text-align:center;padding:16px 0">';
+    h += '<button class="btn btn-g" onclick="lockCurrentSession()" style="padding:14px 28px;font-size:15px;font-weight:800;border-radius:12px">🔒 VERROUILLER LA SESSION</button>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-top:6px">Action irréversible. Données figées.</div>';
+    h += '</div>';
+
+    el.innerHTML = h;
+
+    /* Sauver discipline dans la session */
+    if (s.debrief) {
+      s.debrief.selfDisciplineScore = discScore;
+      s.debrief.autoInsights = insights;
+      var allSess = loadSessions();
+      var idx = allSess.findIndex(function(x) { return x.id === s.id });
+      if (idx >= 0) { allSess[idx].debrief = s.debrief; saveSessions(allSess) }
+    }
   } catch(e) { console.error('rSessionDebrief:', e) }
 }
 
