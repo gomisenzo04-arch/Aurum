@@ -5931,50 +5931,93 @@ cLot();
 checkSession();
 adaptForm();
 loadDraft();
-/* ─── Détection iframe + création barre de tabs ─── */
+/* ─── Détection iframe + création navigation 2 niveaux ─── */
 try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');
-  var itabs=[
-    {p:'dash',l:'📊 Dashboard',g:''},
-    {p:'_g1',l:'SESSION',g:'label'},
-    {p:'check',l:'✅ Checklist',g:''},
-    {p:'calc',l:'🔢 Calculateur',g:''},
-    {p:'add',l:'➕ Trade',g:''},
-    {p:'_g2',l:'ANALYSE',g:'label'},
-    {p:'hist',l:'📋 Historique',g:''},
-    {p:'time',l:'🕐 Horaires',g:''},
-    {p:'review',l:'📝 Review',g:''},
-    {p:'_g3',l:'OUTILS',g:'label'},
-    {p:'rules',l:'📖 Règles',g:''},
-    {p:'viab',l:'📈 Viabilité',g:''},
-    {p:'backup',l:'💾 Backup',g:''},
-    {p:'settings',l:'⚙️ Réglages',g:''}
+
+  /* Tier 1 : 5 groupes principaux */
+  var groups = [
+    {id:'dash', label:'📊 Dashboard', pages:[]},
+    {id:'trader', label:'Trader', pages:[
+      {p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}
+    ]},
+    {id:'analyser', label:'Analyser', pages:[
+      {p:'hist',l:'Historique'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
+    ]},
+    {id:'systeme', label:'Système', pages:[
+      {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'}
+    ]},
+    {id:'comptes', label:'Comptes', pages:[
+      {p:'settings',l:'Comptes prop'}
+    ]}
   ];
-  var bar=document.createElement('div');bar.className='itabs';bar.id='iframeTabs';
-  itabs.forEach(function(t){
-    if(t.g==='sep'){
-      var sep=document.createElement('div');
-      sep.style.cssText='width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0';
-      bar.appendChild(sep);
-      return;
+
+  var activeGroup = 'dash';
+
+  /* Barre tier 1 */
+  var bar1 = document.createElement('div');
+  bar1.className = 'itabs';
+  bar1.id = 'iframeTabs';
+  bar1.style.cssText += 'border-bottom:none;padding-bottom:0';
+
+  /* Barre tier 2 */
+  var bar2 = document.createElement('div');
+  bar2.className = 'itabs';
+  bar2.id = 'iframeSubTabs';
+  bar2.style.cssText += 'padding-top:0;border-top:none;font-size:10px';
+
+  function renderSubTabs(groupId) {
+    var grp = groups.find(function(g){return g.id===groupId});
+    bar2.innerHTML = '';
+    if (!grp || !grp.pages.length) { bar2.style.display = 'none'; return; }
+    bar2.style.display = 'flex';
+    grp.pages.forEach(function(p) {
+      var b = document.createElement('button');
+      b.className = 'itab';
+      b.textContent = p.l;
+      b.setAttribute('data-p', p.p);
+      b.onclick = function() {
+        go(p.p);
+        bar2.querySelectorAll('.itab').forEach(function(x){x.classList.remove('on')});
+        b.classList.add('on');
+      };
+      bar2.appendChild(b);
+    });
+    /* Activer le premier sub-tab */
+    if (grp.pages.length) {
+      go(grp.pages[0].p);
+      bar2.querySelector('.itab').classList.add('on');
     }
-    if(t.g==='label'){
-      var lbl=document.createElement('span');
-      lbl.textContent=t.l;
-      lbl.style.cssText='font-size:8px;font-weight:700;color:var(--t3);letter-spacing:1.5px;padding:0 6px;flex-shrink:0;opacity:.6';
-      bar.appendChild(lbl);
-      return;
-    }
-    var b=document.createElement('button');b.className='itab'+(t.p==='dash'?' on':'');
-    b.textContent=t.l;b.setAttribute('data-p',t.p);
-    b.onclick=function(){
-      go(t.p);
-      bar.querySelectorAll('.itab').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-p')===t.p)});
+  }
+
+  groups.forEach(function(g) {
+    var b = document.createElement('button');
+    b.className = 'itab' + (g.id === 'dash' ? ' on' : '');
+    b.textContent = g.label;
+    b.setAttribute('data-g', g.id);
+    b.onclick = function() {
+      activeGroup = g.id;
+      bar1.querySelectorAll('.itab').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+      if (g.pages.length === 0) {
+        /* Dashboard direct */
+        go(g.id);
+        bar2.style.display = 'none';
+      } else {
+        renderSubTabs(g.id);
+      }
     };
-    bar.appendChild(b);
+    bar1.appendChild(b);
   });
-  var ct=document.getElementById('mainContent');
-  if(ct)ct.insertBefore(bar,ct.firstChild);
+
+  var ct = document.getElementById('mainContent');
+  if (ct) {
+    ct.insertBefore(bar2, ct.firstChild);
+    ct.insertBefore(bar1, ct.firstChild);
+  }
+
+  /* Cacher tier 2 au démarrage (Dashboard actif) */
+  bar2.style.display = 'none';
 }}catch(e){}
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
