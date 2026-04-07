@@ -1351,6 +1351,10 @@ body::before {
   font-style: normal;
   pointer-events: none;
 }
+/* ─── SESSION VIEW ANIMATIONS ─── */
+#sessionView > div { animation: sessViewIn .3s cubic-bezier(.4,0,.2,1) }
+@keyframes sessViewIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
 /* ─── TRADE FLOW MODAL ─── */
 .tfm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:center;justify-content:center;animation:tfmFade .2s}
 @keyframes tfmFade{from{opacity:0}to{opacity:1}}
@@ -6477,7 +6481,24 @@ function rSession() {
       return;
     }
     if (_currentSession && _currentSession.status === 'LOCKED') {
-      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t2)">🔒 Session verrouillée — <a href="#" onclick="go(\'hist\');return false" style="color:var(--gold)">Voir dans Historique</a></div>';
+      /* Vue LOCKED : résumé lecture seule */
+      var ls = _currentSession;
+      var lsPnl = 0;
+      if (ls.dayDate) {
+        var lsTrades = D.live.filter(function(t) { return t.date === ls.dayDate && t.accId === ls.target.accountId && (t.ts || 0) >= new Date(ls.openedAt).getTime() });
+        lsPnl = lsTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+      }
+      el.innerHTML = '<div style="background:rgba(212,160,23,.04);border:1px solid rgba(212,160,23,.15);border-radius:14px;padding:20px;margin-bottom:16px">' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:20px">🔒</span><div style="font-size:16px;font-weight:800;color:var(--t1)">Session #' + ls.sessionIndexInDay + ' verrouillée</div></div>' +
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;text-align:center">' +
+        '<div><div style="color:var(--t3)">Trades</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t1)">' + ls.logicalTradeCount + '</div></div>' +
+        '<div><div style="color:var(--t3)">P&L</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:' + (lsPnl >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (lsPnl >= 0 ? '+' : '') + '$' + lsPnl.toFixed(0) + '</div></div>' +
+        '<div><div style="color:var(--t3)">Discipline</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t1)">' + (ls.debrief ? ls.debrief.selfDisciplineScore : '—') + '</div></div>' +
+        '<div><div style="color:var(--t3)">Durée</div><div style="font-weight:700;color:var(--t1)">' + (ls.closedAt ? Math.floor((new Date(ls.closedAt) - new Date(ls.openedAt)) / 60000) + 'min' : '—') + '</div></div>' +
+        '</div>' +
+        (ls.debrief && ls.debrief.journalNote ? '<div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--t2);font-style:italic">"' + ls.debrief.journalNote + '"</div>' : '') +
+        '</div>' +
+        '<div style="text-align:center"><a href="#" onclick="go(\'hist\');return false" style="color:var(--gold);font-size:12px;font-weight:600">Voir dans Historique →</a></div>';
       _currentSession = null;
       return;
     }
