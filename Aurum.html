@@ -1351,6 +1351,20 @@ body::before {
   font-style: normal;
   pointer-events: none;
 }
+/* ─── TRADE FLOW MODAL ─── */
+.tfm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:center;justify-content:center;animation:tfmFade .2s}
+@keyframes tfmFade{from{opacity:0}to{opacity:1}}
+.tfm-box{background:var(--bg);border:1px solid var(--border);border-radius:16px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;padding:24px;position:relative}
+.tfm-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.tfm-title{font-size:16px;font-weight:800;color:var(--t1)}
+.tfm-close{width:32px;height:32px;border-radius:8px;border:none;background:var(--bg3);color:var(--t3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.tfm-close:hover{background:var(--bg4);color:var(--t1)}
+.tfm-steps{display:flex;gap:4px;margin-bottom:16px}
+.tfm-step{flex:1;height:4px;border-radius:2px;background:var(--bg4);transition:background .3s}
+.tfm-step.done{background:var(--green)}
+.tfm-step.active{background:var(--gold)}
+.tfm-body{min-height:200px}
+.tfm-nav{display:flex;justify-content:space-between;margin-top:16px;gap:8px}
 /* ─── POLISH UNIFIÉ ─── */
 .card { position:relative; overflow:hidden; transition:all .25s cubic-bezier(.4,0,.2,1) }
 .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0; transition:opacity .3s }
@@ -2086,6 +2100,19 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 </div>
 <div id="jpoSum"></div>
 <div id="jpoList"></div>
+</div>
+
+<!-- TRADE FLOW MODAL -->
+<div class="tfm-overlay" id="tradeFlowModal" style="display:none">
+<div class="tfm-box">
+<div class="tfm-header">
+<div class="tfm-title" id="tfmTitle">Nouveau trade</div>
+<button class="tfm-close" onclick="closeTFM()">×</button>
+</div>
+<div class="tfm-steps"><div class="tfm-step active" id="tfmS1"></div><div class="tfm-step" id="tfmS2"></div><div class="tfm-step" id="tfmS3"></div></div>
+<div class="tfm-body" id="tfmBody"></div>
+<div class="tfm-nav" id="tfmNav"></div>
+</div>
 </div>
 
 <!-- ADMIN -->
@@ -6720,7 +6747,7 @@ function rSessionOperating(el) {
       h += '<button class="btn btn-o" disabled style="padding:14px 28px;font-size:14px;opacity:.5;cursor:not-allowed">➕ Prochain trade</button>';
       h += '<div style="font-size:11px;color:var(--red);margin-top:4px">' + reason + '</div>';
     } else {
-      h += '<button class="btn btn-g" onclick="go(\'add\')" style="padding:14px 28px;font-size:14px;font-weight:800;border-radius:12px">➕ Prochain trade</button>';
+      h += '<button class="btn btn-g" onclick="openTFM()" style="padding:14px 28px;font-size:14px;font-weight:800;border-radius:12px">➕ Prochain trade</button>';
       if (railBroken) h += '<div style="font-size:11px;color:var(--gold);margin-top:4px">⚠ Certains rails non validés</div>';
     }
     h += '</div>';
@@ -6782,6 +6809,149 @@ function resumeCurrentSession() {
     rSession();
     toast('Session reprise');
   } catch(e) { console.error(e) }
+}
+
+/* ═══════════════════════════════════════════════════════
+   TRADE FLOW MODAL — Phase 5
+   ═══════════════════════════════════════════════════════ */
+
+var _tfmStep = 1;
+var _tfmChecks = {};
+
+function openTFM() {
+  try {
+    _tfmStep = 1;
+    _tfmChecks = {};
+    document.getElementById('tradeFlowModal').style.display = 'flex';
+    renderTFMStep();
+  } catch(e) { console.error('openTFM:', e) }
+}
+
+function closeTFM() {
+  try { document.getElementById('tradeFlowModal').style.display = 'none' } catch(e) {}
+}
+
+function renderTFMStep() {
+  try {
+    var body = document.getElementById('tfmBody');
+    var nav = document.getElementById('tfmNav');
+    var title = document.getElementById('tfmTitle');
+
+    /* Step indicators */
+    document.getElementById('tfmS1').className = 'tfm-step ' + (_tfmStep > 1 ? 'done' : _tfmStep === 1 ? 'active' : '');
+    document.getElementById('tfmS2').className = 'tfm-step ' + (_tfmStep > 2 ? 'done' : _tfmStep === 2 ? 'active' : '');
+    document.getElementById('tfmS3').className = 'tfm-step ' + (_tfmStep > 3 ? 'done' : _tfmStep === 3 ? 'active' : '');
+
+    if (_tfmStep === 1) {
+      /* Étape 1 : Checklist trade-level */
+      title.textContent = 'Étape 1 — Checklist trade';
+      var items = checklistScopeReader('TRADE_PREP');
+      var config = strategyConfigReader();
+      var h = '';
+
+      /* Setups dynamiques */
+      h += '<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Setup</div>';
+      h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+      config.setups.forEach(function(s) {
+        h += '<button class="btn ' + (_tfmChecks.setup === s.id ? 'btn-g' : 'btn-o') + '" onclick="_tfmChecks.setup=\'' + s.id + '\';renderTFMStep()" style="padding:8px 14px;font-size:12px">' + s.icon + ' ' + s.label + '</button>';
+      });
+      h += '</div></div>';
+
+      /* Direction */
+      h += '<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Direction</div>';
+      h += '<div style="display:flex;gap:6px">';
+      config.directions.forEach(function(d) {
+        h += '<button class="btn ' + (_tfmChecks.dir === d.id ? 'btn-g' : 'btn-o') + '" onclick="_tfmChecks.dir=\'' + d.id + '\';renderTFMStep()" style="padding:8px 14px;font-size:12px">' + d.icon + ' ' + d.label + '</button>';
+      });
+      h += '</div></div>';
+
+      /* Items TRADE_PREP */
+      h += '<div style="margin-bottom:8px"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Vérifications</div>';
+      items.forEach(function(item) {
+        var checked = _tfmChecks['ck_' + item.n] || false;
+        h += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="_tfmChecks[\'ck_' + item.n + '\']=this.checked" style="accent-color:var(--gold)"><span style="font-size:12px;color:var(--t2)"><b style="color:var(--t1)">' + item.label + '</b> ' + item.description + '</span></div>';
+      });
+      h += '</div>';
+
+      body.innerHTML = h;
+      nav.innerHTML = '<div></div><button class="btn btn-g" onclick="_tfmStep=2;renderTFMStep()" style="padding:10px 20px">Calculateur →</button>';
+
+    } else if (_tfmStep === 2) {
+      /* Étape 2 : Calculateur inline */
+      title.textContent = 'Étape 2 — Calculateur';
+      var s = S();
+      var sl = parseInt(document.getElementById('cSL').value) || 350;
+      var lot = document.getElementById('cRes').textContent || '0.00';
+
+      body.innerHTML = '<div style="text-align:center;padding:16px 0">' +
+        '<div style="font-size:12px;color:var(--t3);margin-bottom:8px">Compte : <b style="color:var(--t1)">' + s.name + '</b> · Risque ' + s.risk + '% · $' + s.bal + '</div>' +
+        '<div style="font-size:11px;color:var(--t3);margin-bottom:16px">SL actuel : <b style="color:var(--gold);font-family:JetBrains Mono,monospace">' + sl + ' pts</b></div>' +
+        '<div style="font-size:48px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace;margin-bottom:4px">' + lot + '</div>' +
+        '<div style="font-size:13px;color:var(--t2)">lots sur MT5</div>' +
+        '<div style="margin-top:16px;font-size:11px;color:var(--t3)">Ajuste le SL dans le Calculateur si besoin avant de continuer.</div>' +
+        '<button class="btn btn-o" onclick="closeTFM();go(\'calc\')" style="margin-top:8px;padding:8px 16px;font-size:11px">Ouvrir le Calculateur complet</button>' +
+        '</div>';
+
+      nav.innerHTML = '<button class="btn btn-o" onclick="_tfmStep=1;renderTFMStep()" style="padding:10px 20px">← Retour</button>' +
+        '<button class="btn btn-g" onclick="_tfmStep=3;renderTFMStep()" style="padding:10px 20px">Enregistrer →</button>';
+
+    } else if (_tfmStep === 3) {
+      /* Étape 3 : Confirmation + enregistrement */
+      title.textContent = 'Étape 3 — Confirmer le trade';
+      var config = strategyConfigReader();
+      var setupLabel = (_tfmChecks.setup ? config.setups.find(function(s) { return s.id === _tfmChecks.setup }) : null);
+      var dirLabel = (_tfmChecks.dir ? config.directions.find(function(d) { return d.id === _tfmChecks.dir }) : null);
+      var sl = parseInt(document.getElementById('cSL').value) || 350;
+      var lot = document.getElementById('cRes').textContent || '0.00';
+
+      body.innerHTML = '<div style="padding:16px 0">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin-bottom:16px">' +
+        '<div style="background:var(--bg2);padding:12px;border-radius:8px"><div style="color:var(--t3);font-size:10px;text-transform:uppercase">Setup</div><div style="font-weight:700;color:var(--t1);margin-top:2px">' + (setupLabel ? setupLabel.icon + ' ' + setupLabel.label : '—') + '</div></div>' +
+        '<div style="background:var(--bg2);padding:12px;border-radius:8px"><div style="color:var(--t3);font-size:10px;text-transform:uppercase">Direction</div><div style="font-weight:700;color:var(--t1);margin-top:2px">' + (dirLabel ? dirLabel.icon + ' ' + dirLabel.label : '—') + '</div></div>' +
+        '<div style="background:var(--bg2);padding:12px;border-radius:8px"><div style="color:var(--t3);font-size:10px;text-transform:uppercase">SL</div><div style="font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace;margin-top:2px">' + sl + ' pts</div></div>' +
+        '<div style="background:var(--bg2);padding:12px;border-radius:8px"><div style="color:var(--t3);font-size:10px;text-transform:uppercase">Lot</div><div style="font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace;margin-top:2px">' + lot + '</div></div>' +
+        '</div>' +
+        '<div style="text-align:center;font-size:12px;color:var(--t3)">Le trade sera enregistré dans le formulaire. Complète-le et valide.</div>' +
+        '</div>';
+
+      nav.innerHTML = '<button class="btn btn-o" onclick="_tfmStep=2;renderTFMStep()" style="padding:10px 20px">← Retour</button>' +
+        '<button class="btn btn-g" onclick="submitTFM()" style="padding:10px 20px;font-weight:800">✓ Enregistrer</button>';
+    }
+  } catch(e) { console.error('renderTFMStep:', e) }
+}
+
+function submitTFM() {
+  try {
+    /* Pré-remplir le formulaire trade existant */
+    var config = strategyConfigReader();
+    var dirMap = { buy: 'Buy', sell: 'Sell' };
+    var typeMap = { qm: 'QM', gaps: 'Gaps' };
+
+    if (_tfmChecks.dir && formState) formState.dir = dirMap[_tfmChecks.dir] || '';
+    if (_tfmChecks.setup && formState) formState.type = typeMap[_tfmChecks.setup] || '';
+
+    var fD = document.getElementById('fD');
+    var fT = document.getElementById('fT');
+    if (fD) fD.valueAsDate = new Date();
+    if (fT) { var n = new Date(); fT.value = n.getHours().toString().padStart(2, '0') + ':' + n.getMinutes().toString().padStart(2, '0') }
+
+    /* SL + lot depuis calculateur */
+    var sl = parseInt(document.getElementById('cSL').value) || 350;
+    var lot = document.getElementById('cRes').textContent || '';
+    var fSL = document.getElementById('fSL');
+    var fLo = document.getElementById('fLo');
+    if (fSL) fSL.value = sl;
+    if (fLo) fLo.value = lot;
+
+    closeTFM();
+    go('add');
+    toast('Trade pré-rempli — complète et valide');
+
+    /* Incrémenter session si active */
+    if (_currentSession && _currentSession.status === 'OPERATING') {
+      recordSessionTrade(_currentSession.id, Date.now().toString(), 'lg_' + Date.now(), false, null);
+    }
+  } catch(e) { console.error('submitTFM:', e) }
 }
 
 function rSessionDebrief(el) {
