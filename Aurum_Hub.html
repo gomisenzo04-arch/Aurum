@@ -166,7 +166,31 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 /* ═══ RESPONSIVE UNIVERSES ═══ */
 @media(max-width:600px){
   .universes-grid{grid-template-columns:1fr!important}
+  .hub{padding:16px 12px 40px}
+  #scoreCard{padding:16px}
+  #scoreCard [style*="font-size:64px"]{font-size:48px!important}
 }
+
+/* ═══ ANIMATIONS MOUNT ═══ */
+.hub-fade{opacity:0;transform:translateY(12px);animation:hubMount .4s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes hubMount{to{opacity:1;transform:translateY(0)}}
+.hub-fade:nth-child(1){animation-delay:.05s}
+.hub-fade:nth-child(2){animation-delay:.1s}
+.hub-fade:nth-child(3){animation-delay:.15s}
+.hub-fade:nth-child(4){animation-delay:.2s}
+.hub-fade:nth-child(5){animation-delay:.25s}
+.hub-fade:nth-child(6){animation-delay:.3s}
+
+/* ═══ SCORE CARD HOVER ═══ */
+#scoreCard{transition:border-color .3s,box-shadow .3s}
+#scoreCard:hover{border-color:var(--gold);box-shadow:0 4px 24px rgba(212,160,23,.08)}
+
+/* ═══ DRAWER ANIMATION ═══ */
+#scoreDrawer{animation:drawerSlide .3s cubic-bezier(.4,0,.2,1)}
+@keyframes drawerSlide{from{opacity:0;max-height:0;padding:0 20px}to{opacity:1;max-height:500px}}
+
+/* ═══ BANDEAU ALERTE CRITIQUE ═══ */
+.hub-alert-banner{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:12px;font-weight:600;color:var(--red);text-align:center;animation:hubMount .3s ease}
 </style>
 </head>
 <body>
@@ -430,17 +454,31 @@ function loadHub(){
     renderBackup();
     renderDataSize();
 
-    // Stagger animation des éléments
-    var items = document.querySelectorAll('.app-card, .sec-box');
-    items.forEach(function(el, i) {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(12px)';
-      setTimeout(function() {
-        el.style.transition = 'all .4s cubic-bezier(.4,0,.2,1)';
-        el.style.opacity = '1';
-        el.style.transform = 'translateY(0)';
-      }, 80 * i);
-    });
+    /* Fade-in séquentiel (max 400ms total) */
+    var blocks=document.querySelectorAll('#hub > div, #hub > [style]');
+    blocks.forEach(function(el,i){el.classList.add('hub-fade');el.style.animationDelay=(i*60)+'ms'});
+
+    /* Refresh silencieux toutes les 60s */
+    setInterval(function(){
+      try{renderGreeting();renderScore();renderUniverses();renderBackup()}catch(e){}
+    },60000);
+
+    /* Bandeau alerte si score critique ou backup jamais fait */
+    try{
+      var scoreEl=document.getElementById('scoreValue');
+      var sc=parseInt(scoreEl?scoreEl.textContent:0)||0;
+      var bkJ=localStorage.getItem('aurum_backup_journal');
+      var existing=document.getElementById('hubAlertBanner');
+      if(existing)existing.remove();
+      if(sc<=40||!bkJ){
+        var banner=document.createElement('div');
+        banner.id='hubAlertBanner';
+        banner.className='hub-alert-banner';
+        banner.textContent=sc<=40?'Score santé critique ('+sc+'/100) — vérifie tes indicateurs':'Aucun backup effectué — exporte tes données maintenant';
+        var hub=document.getElementById('hub');
+        if(hub)hub.insertBefore(banner,hub.firstChild);
+      }
+    }catch(e){}
   }catch(e){console.error(e)}
 }
 
@@ -549,11 +587,10 @@ function renderGreeting(){
     var now=new Date();
     var days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
     var months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-    document.getElementById('greetDate').textContent=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()];
-    var h=now.getHours();
-    var msg=h<12?'Bonne matinée':h<18?'Bon après-midi':'Bonne soirée';
-    document.getElementById('greetMsg').textContent=msg+' 👋';
-    updateClock();
+    var h=now.getHours();var m=now.getMinutes();
+    var msg=h>=5&&h<12?'Bonjour ✦':h>=12&&h<18?'Bon après-midi ✦':h>=18&&h<23?'Bonsoir ✦':'Tu veilles ✦';
+    document.getElementById('greetMsg').textContent=msg;
+    document.getElementById('greetDate').textContent=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()]+', '+h.toString().padStart(2,'0')+':'+m.toString().padStart(2,'0');
   }catch(e){}
 }
 
