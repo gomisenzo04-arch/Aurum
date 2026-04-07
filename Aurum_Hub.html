@@ -162,6 +162,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
   background-origin: border-box;
   background-clip: padding-box, border-box;
 }
+
+/* ═══ RESPONSIVE UNIVERSES ═══ */
+@media(max-width:600px){
+  .universes-grid{grid-template-columns:1fr!important}
+}
 </style>
 </head>
 <body>
@@ -231,112 +236,72 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 
 <!-- ═══ MAIN HUB ═══ -->
 <div class="hub" id="hub">
-  <!-- Header -->
-  <div class="hub-hdr">
-    <svg class="logo-sm" viewBox="0 0 36 36" fill="none"><defs><linearGradient id="hlg" x1="0" y1="0" x2="36" y2="36"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="36" height="36" rx="10" fill="url(#hlg)"/><text x="18" y="24" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="15" fill="#1a1000">Au</text></svg>
-    <div class="greeting">
-      <div class="g1" id="greetDate"></div>
-      <div class="g2" id="greetMsg"></div>
-    </div>
-    <div class="streak">
-      <div class="s-num" id="streakNum">0</div>
-      <div class="s-lbl">🔥 jours</div>
-    </div>
-    <span class="hub-clock" id="liveClock"></span>
+  <!-- 1. HEADER -->
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:24px">
+    <div id="greetMsg" style="font-size:22px;font-weight:800;color:var(--t1)"></div>
+    <div id="greetDate" style="font-size:13px;color:var(--t3);font-family:'JetBrains Mono',monospace"></div>
   </div>
 
-  <!-- Today widget -->
-  <div class="today" id="todayWidget"></div>
-
-  <!-- Citation motivante -->
-  <div class="hub-citation" id="hubCitation"></div>
-
-  <!-- Score Santé + Coaching widgets -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px" id="hubWidgets"></div>
-
-  <!-- App cards -->
-  <div class="apps">
-    <a href="Aurum_Academy.html" class="app-card" id="cardAcademy">
-      <div class="app-ic" style="background:rgba(91,141,239,.1);border:1px solid rgba(91,141,239,.15)">🎓</div>
-      <div class="app-glow" style="background:var(--blue)"></div>
-      <div class="app-info">
-        <div class="app-name">Academy</div>
-        <div class="app-desc">Stratégie · App · Capital</div>
+  <!-- 2. SCORE SANTÉ -->
+  <div id="scoreCard" style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px;cursor:pointer" onclick="toggleDrawer()">
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div>
+        <div id="scoreValue" style="font-size:64px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1">—</div>
+        <div style="font-size:13px;color:var(--t3);margin-top:2px">/ 100 · <span id="scoreLabel">—</span></div>
       </div>
-      <div class="app-stat">
-        <div class="app-val" style="color:var(--blue)" id="statFormation">—</div>
-        <div class="app-lbl">modules</div>
-        <div class="app-sub" id="subFormation"></div>
+      <div style="flex:1;min-width:150px">
+        <div id="scoreDots" style="display:flex;gap:6px;margin-bottom:8px"></div>
+        <div style="font-size:12px;color:var(--t3)">Cliquer pour voir le détail →</div>
       </div>
-      <div class="app-arrow">→</div>
+    </div>
+  </div>
+  <div id="scoreDrawer" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+    <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Détail du score</div>
+    <div id="scoreBreakdown"></div>
+  </div>
+
+  <!-- 3. ACTION PRIORITAIRE -->
+  <div id="actionBlock" style="margin-bottom:20px"></div>
+
+  <!-- 4. TES 3 UNIVERS -->
+  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;text-align:center">── Tes 3 univers ──</div>
+  <div class="universes-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+    <a href="Aurum_Academy.html" class="app-card" style="flex-direction:column;align-items:stretch;padding:18px;text-align:center;gap:8px">
+      <div style="font-size:24px">📚</div>
+      <div style="font-size:14px;font-weight:700;color:var(--t1)">Academy</div>
+      <div id="uniAcademy" style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--blue)">—</div>
+      <div id="uniAcademySub" style="font-size:10px;color:var(--t3)"></div>
+      <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:4px"><div id="uniAcademyBar" style="height:100%;width:0%;background:var(--blue);border-radius:2px;transition:width .4s"></div></div>
+      <div style="font-size:11px;font-weight:600;color:var(--blue);margin-top:4px">Reprendre →</div>
     </a>
-
-    <a href="Aurum.html" class="app-card" id="cardJournal">
-      <div class="app-ic" style="background:rgba(212,160,23,.08);border:1px solid rgba(212,160,23,.15)">📊</div>
-      <div class="app-glow" style="background:var(--gold)"></div>
-      <div class="app-info">
-        <div class="app-name">Journal</div>
-        <div class="app-desc">Trades · Analytics · Reviews</div>
-      </div>
-      <div class="app-stat">
-        <div class="app-val" style="color:var(--gold)" id="statJournal">0</div>
-        <div class="app-lbl">trades</div>
-        <div class="app-sub" id="subJournal"></div>
-      </div>
-      <div class="app-arrow">→</div>
+    <a href="Aurum.html" class="app-card" style="flex-direction:column;align-items:stretch;padding:18px;text-align:center;gap:8px">
+      <div style="font-size:24px">📊</div>
+      <div style="font-size:14px;font-weight:700;color:var(--t1)">Journal</div>
+      <div id="uniJournal" style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--gold)">—</div>
+      <div id="uniJournalSub" style="font-size:10px;color:var(--t3)"></div>
+      <div style="font-size:11px;font-weight:600;color:var(--gold);margin-top:4px">Voir Journal →</div>
     </a>
-
-    <a href="Aurum_Capital.html" class="app-card" id="cardCapital">
-      <div class="app-ic" style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.15)">💎</div>
-      <div class="app-glow" style="background:var(--purple)"></div>
-      <div class="app-info">
-        <div class="app-name">Capital</div>
-        <div class="app-desc">Patrimoine · Entités · Fiscal</div>
-      </div>
-      <div class="app-stat">
-        <div class="app-val" style="color:var(--purple)" id="statCapital">$0</div>
-        <div class="app-lbl">patrimoine</div>
-        <div class="app-sub" id="subCapital"></div>
-      </div>
-      <div class="app-arrow">→</div>
+    <a href="Aurum_Capital.html" class="app-card" style="flex-direction:column;align-items:stretch;padding:18px;text-align:center;gap:8px">
+      <div style="font-size:24px">💎</div>
+      <div style="font-size:14px;font-weight:700;color:var(--t1)">Capital</div>
+      <div id="uniCapital" style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--purple)">—</div>
+      <div id="uniCapitalSub" style="font-size:10px;color:var(--t3)"></div>
+      <div style="font-size:11px;font-weight:600;color:var(--purple);margin-top:4px">Voir Capital →</div>
     </a>
   </div>
 
-  <!-- Backup compact -->
+  <!-- 5. COACH -->
+  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;text-align:center">── Coach ──</div>
+  <div id="coachInsights" style="display:grid;gap:8px;margin-bottom:20px"></div>
+
+  <!-- 6. FOOTER -->
   <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px">
     <div style="font-size:14px">💾</div>
     <div style="flex:1;font-size:12px" id="backupStatus"></div>
     <button class="bb bb-gold" onclick="exportAll()" style="flex:none;padding:8px 14px;font-size:11px">Exporter</button>
     <label class="bb bb-outline" style="flex:none;padding:8px 14px;font-size:11px;cursor:pointer">Importer<input type="file" accept=".json" style="display:none" onchange="importAll(event)"></label>
   </div>
-
-  <!-- Security guide (hidden by default) -->
-  <div class="sec-box" id="secGuide" style="display:none">
-    <div class="sec-title">📖 Protéger tes données</div>
-    <div class="guide-item"><div class="guide-num">1</div><div>Tes données sont dans le <b>navigateur</b> (localStorage). Privé, rapide — mais si tu vides le cache, elles disparaissent.</div></div>
-    <div class="guide-item"><div class="guide-num">2</div><div><b>Chaque vendredi</b> : clique "Tout exporter". Ça télécharge 2 fichiers JSON (Journal + Capital).</div></div>
-    <div class="guide-item"><div class="guide-num">3</div><div>Stocke-les sur <b>Google Drive</b>, une <b>clé USB</b>, ou envoie-les par <b>email</b>. 3 copies = tranquillité.</div></div>
-    <div class="guide-item"><div class="guide-num">4</div><div>Pour restaurer : ouvre l'app → <b>Backup → Importer</b>. Sélectionne le fichier. Tout revient.</div></div>
-    <div class="guide-item"><div class="guide-num">5</div><div>Si tu changes de navigateur ou de PC : exporte avant, importe après. <b>Rien ne se synchronise automatiquement.</b></div></div>
-  </div>
-
-  <!-- Glossaire (lien vers Academy) -->
-  <div class="sec-box" style="margin-top:4px;display:none">
-    <div id="hubGloss" style="display:none;font-size:11px;color:var(--t2);line-height:1.8">
-      <div><b style="color:var(--gold)">XAUUSD</b> — Or (XAU) contre Dollar (USD). L'instrument tradé dans Aurum.</div>
-      <div><b style="color:var(--gold)">WR</b> — Win Rate. Pourcentage de trades gagnants.</div>
-      <div><b style="color:var(--gold)">SL / TP</b> — Stop Loss (limite de perte) / Take Profit (prise de gain).</div>
-      <div><b style="color:var(--gold)">QM</b> — Quasimodo. Pattern de retournement = signal d'entrée.</div>
-      <div><b style="color:var(--gold)">R:R</b> — Ratio Risque/Récompense. Aurum utilise 1:2 (tu risques 1 pour gagner 2).</div>
-      <div><b style="color:var(--gold)">Trailing</b> — Le SL se déplace pour protéger tes gains.</div>
-      <div><b style="color:var(--gold)">Prop Firm</b> — Société qui te prête du capital pour trader. Tu gardes un % des gains.</div>
-      <div><b style="color:var(--gold)">Payout</b> — Retrait d'argent (prop firm, salaire, business).</div>
-      <div><b style="color:var(--gold)">Patrimoine net</b> — Tous tes actifs − toutes tes dettes.</div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div class="hub-footer">
+  <div style="text-align:center;font-size:10px;color:var(--t3);padding:8px 0">
     Aurum Écosystème · <span id="dataSize"></span>
   </div>
 </div>
@@ -458,17 +423,15 @@ function loadHub(){
   try{
     updateStreak();
     renderGreeting();
-    renderStreak();
-    renderToday();
-    renderCitation();
-    renderStats();
-    renderWidgets();
+    renderScore();
+    renderAction();
+    renderUniverses();
+    renderCoach();
     renderBackup();
     renderDataSize();
-    setInterval(updateClock, 30000);
 
     // Stagger animation des éléments
-    var items = document.querySelectorAll('.app-card, .sec-box, .today');
+    var items = document.querySelectorAll('.app-card, .sec-box');
     items.forEach(function(el, i) {
       el.style.opacity = '0';
       el.style.transform = 'translateY(12px)';
@@ -911,6 +874,152 @@ function renderWidgets(){
 
     el.innerHTML=h;
   }catch(e){console.error('renderWidgets:',e)}
+}
+
+function toggleDrawer(){
+  try{var d=document.getElementById('scoreDrawer');d.style.display=d.style.display==='none'?'block':'none'}catch(e){}
+}
+
+function renderScore(){
+  try{
+    /* Calcul score santé pondéré */
+    var sc=0;
+    var signals=[];
+    var j=readJournal();
+    var capRaw=localStorage.getItem('aurum_capital_v1');
+    var cap=capRaw?JSON.parse(capRaw):{};
+
+    /* 1. Discipline (25%) */
+    var disc=50;
+    if(j.trades.length>=5){var recent=j.trades.slice(-20);var wr=recent.filter(function(t){return(parseFloat(t.pl)||0)>0}).length/recent.length;disc=Math.round(wr*100)}
+    signals.push({name:'Discipline trading',value:disc,weight:25});
+
+    /* 2. Performance (20%) */
+    var perf=50;
+    if(j.trades.length>=3){var gains=j.trades.reduce(function(s,t){var p=parseFloat(t.pl)||0;return s+(p>0?p:0)},0);var losses=Math.abs(j.trades.reduce(function(s,t){var p=parseFloat(t.pl)||0;return s+(p<0?p:0)},0));var pf=losses>0?gains/losses:0;perf=Math.min(100,Math.round(pf*40))}
+    signals.push({name:'Performance trading',value:perf,weight:20});
+
+    /* 3. Trajectoire patrimoine (25%) */
+    var traj=50;
+    var pN=(cap.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0);
+    var pV=(cap.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0);
+    var db=(cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0);
+    if(pN>0||pV>0){traj=db>0?Math.max(10,Math.min(100,Math.round((1-db/(pN+pV))*100))):80}
+    signals.push({name:'Trajectoire patrimoine',value:traj,weight:25});
+
+    /* 4. Hygiène financière (15%) */
+    var hyg=60;
+    if((cap.expenses||[]).length>0||db===0)hyg=75;
+    if(db===0&&(cap.portfolio||[]).length>0)hyg=90;
+    signals.push({name:'Hygiène financière',value:hyg,weight:15});
+
+    /* 5. Hygiène système (15%) */
+    var sys=50;
+    var bkJ=localStorage.getItem('aurum_backup_journal');
+    var bkC=localStorage.getItem('aurum_backup_capital');
+    if(bkJ&&bkC){var days=Math.max(Math.floor((Date.now()-new Date(bkJ).getTime())/86400000),Math.floor((Date.now()-new Date(bkC).getTime())/86400000));sys=days<=7?100:days<=14?70:30}
+    signals.push({name:'Hygiène système',value:sys,weight:15});
+
+    /* Score total */
+    signals.forEach(function(s){sc+=s.value*s.weight/100;s.contribution=Math.round(s.value*s.weight/100)});
+    sc=Math.max(0,Math.min(100,Math.round(sc)));
+
+    /* Render */
+    var col=sc<=40?'var(--red)':sc<=60?'var(--gold)':sc<=80?'var(--gold)':sc<=95?'var(--green)':'var(--green)';
+    var label=sc<=40?'Critique':sc<=60?'Faible':sc<=80?'Correct':sc<=95?'Bon':'Excellent';
+    document.getElementById('scoreValue').textContent=sc;
+    document.getElementById('scoreValue').style.color=col;
+    document.getElementById('scoreLabel').textContent=label;
+    document.getElementById('scoreLabel').style.color=col;
+
+    var quintile=Math.ceil(sc/20);
+    var dots='';for(var i=1;i<=5;i++){dots+='<div style="width:12px;height:12px;border-radius:50%;background:'+(i<=quintile?col:'var(--bg4)')+'"></div>'}
+    document.getElementById('scoreDots').innerHTML=dots;
+
+    /* Breakdown drawer */
+    document.getElementById('scoreBreakdown').innerHTML=signals.map(function(s){
+      var c=s.value>=70?'var(--green)':s.value>=45?'var(--gold)':'var(--red)';
+      return'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:12px;color:var(--t2)">'+s.name+' <span style="color:var(--t3)">('+s.weight+'%)</span></div><div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+c+'">'+s.value+'</div><div style="font-size:11px;color:var(--t3);width:40px;text-align:right">+'+s.contribution+'</div></div>'
+    }).join('');
+  }catch(e){console.error('renderScore:',e)}
+}
+
+function renderAction(){
+  try{
+    var el=document.getElementById('actionBlock');
+    if(!el)return;
+    var bkJ=localStorage.getItem('aurum_backup_journal');
+    var bkDays=bkJ?Math.floor((Date.now()-new Date(bkJ).getTime())/86400000):999;
+    var formRaw=localStorage.getItem('aurum_formation_v1');
+    var formDone=0;if(formRaw){try{formDone=(JSON.parse(formRaw).d||[]).length}catch(e){}}
+    var j=readJournal();
+
+    var action=null;
+    if(bkDays>14||bkDays===999) action={icon:'🔴',label:'Backup urgent — données non sauvegardées depuis '+(bkDays===999?'jamais':bkDays+'j'),cta:'Exporter',onclick:'exportAll()'};
+    else if(formDone<32&&j.trades.length>0) action={icon:'🟠',label:'Formation incomplète ('+formDone+'/32) — termine avant de trader',cta:'Academy →',href:'Aurum_Academy.html'};
+    else if(formDone<32) action={icon:'🟡',label:'Continue ta formation — module '+(formDone+1)+'/32',cta:'Academy →',href:'Aurum_Academy.html'};
+
+    if(!action){el.innerHTML='<div style="text-align:center;padding:12px;font-size:13px;color:var(--green);font-weight:600">✓ Tout est en ordre. Bonne journée.</div>';return}
+
+    var bg=action.icon==='🔴'?'rgba(255,71,87,.06)':action.icon==='🟠'?'rgba(212,160,23,.06)':'rgba(212,160,23,.04)';
+    var border=action.icon==='🔴'?'var(--red)':action.icon==='🟠'?'var(--gold)':'var(--gold)';
+    el.innerHTML='<div style="display:flex;align-items:center;gap:12px;background:'+bg+';border:1px solid var(--border);border-left:3px solid '+border+';border-radius:var(--radius);padding:14px 16px"><span style="font-size:18px">'+action.icon+'</span><div style="flex:1;font-size:13px;font-weight:600;color:var(--t1)">'+action.label+'</div>'+(action.onclick?'<button class="bb bb-gold" onclick="'+action.onclick+'" style="flex:none;padding:8px 16px;font-size:11px">'+action.cta+'</button>':'<a href="'+action.href+'" style="flex:none;padding:8px 16px;border-radius:8px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-size:11px;font-weight:700;text-decoration:none">'+action.cta+'</a>')+'</div>';
+  }catch(e){console.error('renderAction:',e)}
+}
+
+function renderUniverses(){
+  try{
+    /* Academy */
+    var formRaw=localStorage.getItem('aurum_formation_v1');
+    var formDone=0;if(formRaw){try{formDone=(JSON.parse(formRaw).d||[]).length}catch(e){}}
+    document.getElementById('uniAcademy').textContent=formDone+'/32';
+    document.getElementById('uniAcademySub').textContent=formDone>=32?'Terminé':formDone>0?'En cours':'Pas commencé';
+    document.getElementById('uniAcademyBar').style.width=Math.round(formDone/32*100)+'%';
+
+    /* Journal */
+    var j=readJournal();
+    document.getElementById('uniJournal').textContent=j.trades.length;
+    var wr=j.trades.length>=3?Math.round(j.trades.filter(function(t){return(parseFloat(t.pl)||0)>0}).length/j.trades.length*100):0;
+    document.getElementById('uniJournalSub').textContent=j.trades.length?'trades · WR '+wr+'%':'Aucun trade';
+
+    /* Capital */
+    var capRaw=localStorage.getItem('aurum_capital_v1');
+    var nw=0;
+    if(capRaw){try{var cap=JSON.parse(capRaw);nw=(cap.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0)+(cap.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0)-(cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0)}catch(e){}}
+    j.accounts.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel')nw+=a.balance||0});
+    document.getElementById('uniCapital').textContent='$'+Math.round(nw).toLocaleString('en-US');
+    document.getElementById('uniCapitalSub').textContent='patrimoine net';
+  }catch(e){console.error('renderUniverses:',e)}
+}
+
+function renderCoach(){
+  try{
+    var el=document.getElementById('coachInsights');
+    if(!el)return;
+    var insights=[];
+    var j=readJournal();
+
+    if(j.trades.length>=5){
+      var wr=Math.round(j.trades.filter(function(t){return(parseFloat(t.pl)||0)>0}).length/j.trades.length*100);
+      if(wr>=55) insights.push({icon:'📈',text:'Win rate à '+wr+'% — ton edge fonctionne.',src:'Journal'});
+      else if(wr<40) insights.push({icon:'🔻',text:'Win rate à '+wr+'% — révise ta sélection de setups.',src:'Journal'});
+    }
+
+    var bkJ=localStorage.getItem('aurum_backup_journal');
+    var bkDays=bkJ?Math.floor((Date.now()-new Date(bkJ).getTime())/86400000):999;
+    if(bkDays>7) insights.push({icon:'⚠',text:'Dernier backup il y a '+(bkDays===999?'jamais':bkDays+'j')+'. Exporte tes données.',src:'Système'});
+
+    var capRaw=localStorage.getItem('aurum_capital_v1');
+    if(capRaw){try{var cap=JSON.parse(capRaw);var db=(cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0);if(db>0)insights.push({icon:'💡',text:'Tu as $'+Math.round(db).toLocaleString('en-US')+' de dettes. Priorise le remboursement.',src:'Capital'})}catch(e){}}
+
+    if(j.trades.length===0) insights.push({icon:'💡',text:'Aucun trade enregistré. Commence par la Checklist.',src:'Journal'});
+
+    if(!insights.length) insights.push({icon:'💡',text:'Tout est en ordre. Continue ta routine.',src:'Aurum'});
+
+    el.innerHTML=insights.slice(0,3).map(function(i){
+      return'<div style="display:flex;align-items:start;gap:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)"><span style="font-size:16px;flex-shrink:0">'+i.icon+'</span><div style="flex:1"><div style="font-size:12px;color:var(--t2);line-height:1.5">'+i.text+'</div><div style="font-size:10px;color:var(--t3);margin-top:2px">via '+i.src+'</div></div></div>'
+    }).join('');
+  }catch(e){console.error('renderCoach:',e)}
 }
 
 function renderBackup(){
