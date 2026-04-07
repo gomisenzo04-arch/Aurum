@@ -772,15 +772,15 @@ try{if(window.self!==window.top){
     {p:'dash',l:'📊 Dashboard',g:''},
     {p:'coach',l:'🎯 Coaching',g:''},
     {p:'health',l:'💊 Santé',g:''},
-    {p:'_sep1',l:'',g:'sep'},
+    {p:'_g1',l:'TRADING',g:'label'},
     {p:'acc',l:'📈 Comptes',g:''},
     {p:'pf',l:'🏆 Prop Firms',g:''},
     {p:'po',l:'💰 Payouts',g:''},
-    {p:'_sep2',l:'',g:'sep'},
+    {p:'_g2',l:'PATRIMOINE',g:'label'},
     {p:'inv',l:'🎯 Portfolio',g:''},
     {p:'bud',l:'💳 Budget',g:''},
     {p:'pas',l:'📉 Dettes',g:''},
-    {p:'_sep3',l:'',g:'sep'},
+    {p:'_g3',l:'BUSINESS',g:'label'},
     {p:'ent',l:'🏛 Entités',g:''},
     {p:'fis',l:'📋 Fiscal',g:''},
     {p:'bak',l:'💾 Backup',g:''}
@@ -791,6 +791,13 @@ try{if(window.self!==window.top){
       var sep=document.createElement('div');
       sep.style.cssText='width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0';
       bar.appendChild(sep);
+      return;
+    }
+    if(t.g==='label'){
+      var lbl=document.createElement('span');
+      lbl.textContent=t.l;
+      lbl.style.cssText='font-size:8px;font-weight:700;color:var(--t3);letter-spacing:1.5px;padding:0 6px;flex-shrink:0;opacity:.6';
+      bar.appendChild(lbl);
       return;
     }
     var b=document.createElement('button');b.className='itab'+(t.p==='dash'?' on':'');
