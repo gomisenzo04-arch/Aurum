@@ -251,6 +251,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
   <!-- Citation motivante -->
   <div class="hub-citation" id="hubCitation"></div>
 
+  <!-- Score Santé + Coaching widgets -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px" id="hubWidgets"></div>
+
   <!-- App cards -->
   <div class="apps">
     <a href="Aurum_Academy.html" class="app-card" id="cardAcademy">
@@ -317,9 +320,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
     <div class="guide-item"><div class="guide-num">5</div><div>Si tu changes de navigateur ou de PC : exporte avant, importe après. <b>Rien ne se synchronise automatiquement.</b></div></div>
   </div>
 
-  <!-- Glossaire -->
-  <div class="sec-box" style="margin-top:4px">
-    <div class="sec-title" style="cursor:pointer" onclick="var g=document.getElementById('hubGloss');g.style.display=g.style.display==='none'?'block':'none'">📖 Glossaire trading <span style="font-size:9px;color:var(--t3);font-weight:400;margin-left:4px">cliquer</span></div>
+  <!-- Glossaire (lien vers Academy) -->
+  <div class="sec-box" style="margin-top:4px;display:none">
     <div id="hubGloss" style="display:none;font-size:11px;color:var(--t2);line-height:1.8">
       <div><b style="color:var(--gold)">XAUUSD</b> — Or (XAU) contre Dollar (USD). L'instrument tradé dans Aurum.</div>
       <div><b style="color:var(--gold)">WR</b> — Win Rate. Pourcentage de trades gagnants.</div>
@@ -460,6 +462,7 @@ function loadHub(){
     renderToday();
     renderCitation();
     renderStats();
+    renderWidgets();
     renderBackup();
     renderDataSize();
     setInterval(updateClock, 30000);
@@ -843,6 +846,71 @@ function backupBar(days){
     var pct=days===999?100:Math.min(Math.round((days/21)*100),100);
     return '<div style="height:3px;border-radius:2px;background:var(--bg4);margin-top:4px;width:100px"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:2px;transition:width .4s ease"></div></div>';
   }catch(e){return '';}
+}
+
+function renderWidgets(){
+  try{
+    var el=document.getElementById('hubWidgets');
+    if(!el) return;
+    var h='';
+
+    /* Widget Score Santé — calculé depuis Capital+Journal */
+    var score=50; /* défaut */
+    try{
+      var capRaw=localStorage.getItem('aurum_capital_v1');
+      if(capRaw){
+        var cap=JSON.parse(capRaw);
+        var sc=0;
+        var pN=(cap.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0);
+        var db=(cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0);
+        var pV=(cap.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0);
+        var nw=pV+pN-db;
+        /* Endettement 25pts */
+        if(nw>0){var dr=db/nw;sc+=dr<=0?25:dr<=.3?18:dr<=.5?10:0}else sc+=db===0?25:0;
+        /* Diversification 25pts */
+        var cn=new Set((cap.portfolio||[]).map(function(p){return p.cat})).size;
+        sc+=cn>=4?25:cn>=2?15:cn>=1?8:0;
+        /* Revenus 25pts */
+        var src=new Set((cap.payouts||[]).map(function(p){return p.source}));
+        sc+=src.size>=3?25:src.size>=2?15:src.size>=1?8:0;
+        /* Trading 25pts */
+        var j=readJournal();
+        if(j.trades.length>=5){
+          var wins=j.trades.filter(function(t){return(parseFloat(t.pl)||0)>0}).length;
+          var wr=wins/j.trades.length;
+          sc+=wr>=.55?25:wr>=.45?15:wr>=.35?8:0;
+        }else sc+=10;
+        score=Math.max(0,Math.min(100,sc));
+      }
+    }catch(e){}
+    var sCol=score>=70?'var(--green)':score>=45?'var(--gold)':'var(--red)';
+    var sLabel=score>=70?'Bonne':score>=45?'Attention':'Critique';
+    h+='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center">';
+    h+='<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Santé</div>';
+    h+='<div style="font-size:28px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+sCol+'">'+score+'</div>';
+    h+='<div style="font-size:10px;color:'+sCol+';font-weight:600">/100 · '+sLabel+'</div>';
+    h+='</div>';
+
+    /* Widget Coaching — prochain palier */
+    var nw2=0;
+    try{
+      var capRaw2=localStorage.getItem('aurum_capital_v1');
+      if(capRaw2){var cap2=JSON.parse(capRaw2);nw2=(cap2.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0)+(cap2.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0)-(cap2.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0)}
+      var j2=readJournal();j2.accounts.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel')nw2+=a.balance||0});
+    }catch(e){}
+    var paliers=[{t:5000,l:'$5K',e:'🌱'},{t:10000,l:'$10K',e:'🥉'},{t:25000,l:'$25K',e:'🥈'},{t:50000,l:'$50K',e:'🥇'},{t:100000,l:'$100K',e:'💎'},{t:250000,l:'$250K',e:'👑'},{t:500000,l:'$500K',e:'🏰'},{t:1000000,l:'$1M',e:'🏆'}];
+    var next=paliers.find(function(p){return p.t>nw2})||paliers[paliers.length-1];
+    var pct=Math.min(100,Math.round(nw2/next.t*100));
+    h+='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center">';
+    h+='<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Prochain palier</div>';
+    h+='<div style="font-size:20px;margin-bottom:4px">'+next.e+'</div>';
+    h+='<div style="font-size:16px;font-weight:800;color:var(--purple)">'+next.l+'</div>';
+    h+='<div style="height:4px;background:var(--bg4);border-radius:2px;margin-top:8px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--purple),var(--gold));border-radius:2px"></div></div>';
+    h+='<div style="font-size:10px;color:var(--t3);margin-top:4px">'+pct+'%</div>';
+    h+='</div>';
+
+    el.innerHTML=h;
+  }catch(e){console.error('renderWidgets:',e)}
 }
 
 function renderBackup(){
