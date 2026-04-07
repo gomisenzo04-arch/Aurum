@@ -1321,6 +1321,36 @@ body::before {
   .panel { max-width: 100% !important }
 }
 
+/* ─── GLOSSAIRE TOOLTIPS ─── */
+.term {
+  cursor: help;
+  border-bottom: 1px dotted var(--gold);
+  position: relative;
+  display: inline;
+}
+.term:hover::after {
+  content: attr(data-def);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg4);
+  color: var(--t1);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 250px;
+  white-space: normal;
+  z-index: 100;
+  border: 1px solid var(--border2);
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  margin-bottom: 4px;
+  line-height: 1.5;
+  font-style: normal;
+  pointer-events: none;
+}
 /* ─── POLISH UNIFIÉ ─── */
 .card { position:relative; overflow:hidden; transition:all .25s cubic-bezier(.4,0,.2,1) }
 .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0; transition:opacity .3s }
@@ -1460,6 +1490,22 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 <div class="calendar-grid" id="calGrid"></div>
 <div id="calSummary" style="display:none;font-size:12px;padding:8px 0;text-align:center"></div>
 <div id="calDayDetail" class="cal-day-detail"></div>
+</div>
+<!-- Glossaire rapide -->
+<div class="box" style="margin-bottom:18px">
+<div class="box-title" style="cursor:pointer" onclick="var g=document.getElementById('glossBody');g.style.display=g.style.display==='none'?'block':'none'">📖 Glossaire des termes <span style="font-size:10px;color:var(--t3);font-weight:400">cliquer pour ouvrir</span></div>
+<div id="glossBody" style="display:none;font-size:12px;color:var(--t2);line-height:1.8;columns:2;column-gap:20px">
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">WR (Win Rate)</b> — Pourcentage de trades gagnants. Ex: 60% = 6 trades sur 10 sont positifs.</div>
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">SL (Stop Loss)</b> — Niveau de prix où ta perte est coupée automatiquement. Protège ton capital.</div>
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">TP (Take Profit)</b> — Niveau de prix où ton gain est pris automatiquement. Toujours = 2x le SL.</div>
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">QM (Quasimodo)</b> — Pattern de retournement. Le signal d'entrée principal de la stratégie Aurum.</div>
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">R:R (Risk:Reward)</b> — Ratio risque/récompense. 1:2 = tu risques 1 pour gagner 2.</div>
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">Trailing</b> — Le SL se déplace pour protéger les gains quand le trade va dans ton sens.</div>
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">P&L</b> — Profit & Loss. Le résultat financier d'un trade ou d'une période.</div>
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">Lot</b> — Taille de ta position. Calculée selon ton risque et ton SL.</div>
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">DD (Drawdown)</b> — Perte maximale depuis un pic. Mesure la "douleur" de ta stratégie.</div>
+<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">Profit Factor</b> — Gains totaux ÷ Pertes totales. >1.5 = bon, >2 = excellent.</div>
+</div>
 </div>
 </div>
 
