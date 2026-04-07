@@ -537,7 +537,36 @@ function renderCitation(){
       color='var(--gold)';
     }
 
-    el.innerHTML='<div style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(212,160,23,.05),rgba(167,139,250,.03));border:1px solid var(--border);border-left:3px solid '+color+';border-radius:var(--radius);padding:12px 16px"><div style="flex:1;font-size:13px;font-weight:600;color:var(--t1)">'+action+'</div><a href="'+href+'" style="padding:8px 16px;border-radius:8px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .2s">'+btn+'</a></div>';
+    var alerts = '';
+    /* Checklist persistée */
+    try {
+      var ckRaw = localStorage.getItem('aurum_checklist');
+      if (ckRaw) {
+        var ckState = JSON.parse(ckRaw);
+        var today = new Date().toISOString().slice(0,10);
+        if (ckState.date === today && ckState.checks) {
+          var done = ckState.checks.filter(function(c){return c}).length;
+          var total = ckState.checks.length;
+          if (done > 0 && done < total) {
+            alerts += '<div style="font-size:11px;color:var(--gold);padding:4px 0">✅ Checklist en cours : '+done+'/'+total+'</div>';
+          }
+        }
+      }
+    } catch(e) {}
+    /* Capital santé */
+    try {
+      var capRaw = localStorage.getItem('aurum_capital_v1');
+      if (capRaw) {
+        var cap = JSON.parse(capRaw);
+        var db = (cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0);
+        var pV = (cap.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0);
+        var pN = (cap.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0);
+        var nw = pV + pN - db;
+        if (nw > 0 && db/nw > 0.5) alerts += '<div style="font-size:11px;color:var(--red);padding:4px 0">⚠️ Ratio dettes > 50% — vérifie dans Capital</div>';
+      }
+    } catch(e) {}
+
+    el.innerHTML='<div style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(212,160,23,.05),rgba(167,139,250,.03));border:1px solid var(--border);border-left:3px solid '+color+';border-radius:var(--radius);padding:12px 16px"><div style="flex:1;font-size:13px;font-weight:600;color:var(--t1)">'+action+'</div><a href="'+href+'" style="padding:8px 16px;border-radius:8px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .2s">'+btn+'</a></div>'+alerts;
   }catch(e){}
 }
 

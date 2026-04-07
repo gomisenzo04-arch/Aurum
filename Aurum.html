@@ -5609,6 +5609,37 @@ function updCkProgress() {
     bar.style.background = 'linear-gradient(90deg, var(--gold), #f5d060)';
     if (count) count.style.color = 'var(--t3)';
   }
+
+  // Persister l'état checklist
+  try {
+    var ckState = [];
+    document.querySelectorAll('#checkContent .ck input[type=checkbox]').forEach(function(cb) {
+      ckState.push(cb.checked);
+    });
+    var today = new Date().toISOString().slice(0,10);
+    localStorage.setItem('aurum_checklist', JSON.stringify({date: today, checks: ckState, trades: ckValidatedTrades || []}));
+  } catch(e) {}
+}
+
+// Charger l'état checklist au démarrage
+function loadChecklist() {
+  try {
+    var raw = localStorage.getItem('aurum_checklist');
+    if (!raw) return;
+    var state = JSON.parse(raw);
+    var today = new Date().toISOString().slice(0,10);
+    if (state.date !== today) { localStorage.removeItem('aurum_checklist'); return; } // Reset si pas aujourd'hui
+    var cbs = document.querySelectorAll('#checkContent .ck input[type=checkbox]');
+    if (state.checks && state.checks.length === cbs.length) {
+      cbs.forEach(function(cb, i) { cb.checked = state.checks[i]; });
+    }
+    if (state.trades && state.trades.length > 0) {
+      ckTradeNum = state.trades.length;
+      ckValidatedTrades = state.trades;
+      renderValidatedTrades();
+    }
+    updCkProgress();
+  } catch(e) {}
 }
 
 // ─── MULTI-TRADE CHECKLIST ───
@@ -5759,6 +5790,9 @@ document.addEventListener('change', e => {
   }
 });
 
+// Charger checklist persistée
+loadChecklist();
+
 // ─── MILESTONE CELEBRATIONS ───
 function checkMilestones() {
   try {
@@ -5849,15 +5883,15 @@ try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');
   var itabs=[
     {p:'dash',l:'📊 Dashboard',g:''},
-    {p:'_s1',l:'',g:'sep'},
+    {p:'_g1',l:'SESSION',g:'label'},
     {p:'check',l:'✅ Checklist',g:''},
     {p:'calc',l:'🔢 Calculateur',g:''},
     {p:'add',l:'➕ Trade',g:''},
-    {p:'_s2',l:'',g:'sep'},
+    {p:'_g2',l:'ANALYSE',g:'label'},
     {p:'hist',l:'📋 Historique',g:''},
     {p:'time',l:'🕐 Horaires',g:''},
     {p:'review',l:'📝 Review',g:''},
-    {p:'_s3',l:'',g:'sep'},
+    {p:'_g3',l:'OUTILS',g:'label'},
     {p:'rules',l:'📖 Règles',g:''},
     {p:'viab',l:'📈 Viabilité',g:''},
     {p:'backup',l:'💾 Backup',g:''},
@@ -5869,6 +5903,13 @@ try{if(window.self!==window.top){
       var sep=document.createElement('div');
       sep.style.cssText='width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0';
       bar.appendChild(sep);
+      return;
+    }
+    if(t.g==='label'){
+      var lbl=document.createElement('span');
+      lbl.textContent=t.l;
+      lbl.style.cssText='font-size:8px;font-weight:700;color:var(--t3);letter-spacing:1.5px;padding:0 6px;flex-shrink:0;opacity:.6';
+      bar.appendChild(lbl);
       return;
     }
     var b=document.createElement('button');b.className='itab'+(t.p==='dash'?' on':'');
