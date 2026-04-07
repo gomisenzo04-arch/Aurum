@@ -6409,6 +6409,288 @@ function testPhase0Services() {
 }
 
 /* ═══════════════════════════════════════════════════════
+   SESSION MODEL — Phase 2
+   ═══════════════════════════════════════════════════════ */
+
+var SESS_KEY = 'aurum_sessions';
+
+function loadSessions() {
+  try { var r = localStorage.getItem(SESS_KEY); return r ? JSON.parse(r) : [] }
+  catch(e) { return [] }
+}
+
+function saveSessions(sessions) {
+  try { localStorage.setItem(SESS_KEY, JSON.stringify(sessions)) }
+  catch(e) { console.error('saveSessions:', e) }
+}
+
+function _sessId() { return 'sess_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4) }
+
+/* ─── Machine à états ─── */
+
+function createSession(target, mode) {
+  try {
+    if (!target || !target.kind) throw new Error('target required');
+    var today = new Date().toISOString().slice(0, 10);
+    var sessions = loadSessions();
+    var todaySessions = sessions.filter(function(s) { return s.dayDate === today && s.target.kind === target.kind && (target.kind === 'SINGLE_ACCOUNT' ? s.target.accountId === target.accountId : s.target.groupId === target.groupId) });
+
+    var ctx = dailyContextReader(target.kind === 'SINGLE_ACCOUNT' ? [target.accountId] : (target.accountIds || []));
+    var timing = sessionTimingDetector();
+
+    var session = {
+      id: _sessId(),
+      target: target,
+      status: 'BRIEFING',
+      mode: mode || 'LIVE',
+      dayDate: today,
+      sessionIndexInDay: todaySessions.length + 1,
+      openedAt: new Date().toISOString(),
+      closedAt: null,
+      perAccountSnapshot: [],
+      briefing: {
+        sessionPrepCheckRefs: [],
+        contextNotes: '',
+        mentalState: { energy: 5, stress: 5, sleepHours: null },
+        plan: {
+          mode: 'AGGREGATED',
+          aggregated: {
+            maxTrades: timing.isReliable ? timing.suggestedMaxTrades : 4,
+            maxLossDollar: timing.isReliable ? Math.min(timing.suggestedMaxLossDollar, ctx.remainingDailyDrawdownDollar || 9999) : 0,
+            maxLossPercent: 0,
+            targetDollar: timing.isReliable ? Math.min(timing.suggestedTargetDollar, ctx.remainingDailyCapDollar || 9999) : 0
+          },
+          perAccount: null,
+          timeWindowStart: timing.suggestedNextSessionWindow ? timing.suggestedNextSessionWindow.startTime : null,
+          timeWindowEnd: timing.suggestedNextSessionWindow ? timing.suggestedNextSessionWindow.endTime : null
+        }
+      },
+      tradeIds: [],
+      logicalTradeCount: 0,
+      guardrailEvents: [],
+      pauseEvents: [],
+      debrief: null
+    };
+
+    sessions.push(session);
+    saveSessions(sessions);
+    return session;
+  } catch(e) { console.error('createSession:', e); return null }
+}
+
+function lockBriefing(sessionId) {
+  try {
+    var sessions = loadSessions();
+    var s = sessions.find(function(x) { return x.id === sessionId });
+    if (!s || s.status !== 'BRIEFING') return null;
+
+    /* Snapshot comptes */
+    var ids = s.target.kind === 'SINGLE_ACCOUNT' ? [s.target.accountId] : (s.target.accountIds || []);
+    s.perAccountSnapshot = ids.map(function(accId) {
+      var acc = D.accounts.find(function(a) { return a.id === accId });
+      if (!acc) return null;
+      return {
+        accountId: accId,
+        initialBalance: acc.bal,
+        dailyCapAtOpen: acc.bal * (acc.cap || 8) / 100,
+        dailyDrawdownAtOpen: acc.bal * (acc.daily || 4) / 100
+      };
+    }).filter(Boolean);
+
+    s.status = 'OPERATING';
+    saveSessions(sessions);
+    return s;
+  } catch(e) { console.error('lockBriefing:', e); return null }
+}
+
+function recordSessionTrade(sessionId, tradeId, logicalGroupId, isReplicated, replicationRole) {
+  try {
+    var sessions = loadSessions();
+    var s = sessions.find(function(x) { return x.id === sessionId });
+    if (!s || s.status !== 'OPERATING') return null;
+
+    s.tradeIds.push(tradeId);
+    if (!isReplicated || replicationRole === 'SOURCE') {
+      s.logicalTradeCount++;
+    }
+
+    saveSessions(sessions);
+    return s;
+  } catch(e) { console.error('recordSessionTrade:', e); return null }
+}
+
+function pauseSession(sessionId, reason) {
+  try {
+    var sessions = loadSessions();
+    var s = sessions.find(function(x) { return x.id === sessionId });
+    if (!s || s.status !== 'OPERATING') return null;
+
+    s.pauseEvents.push({ type: 'PAUSE', at: new Date().toISOString(), reason: reason || '' });
+    saveSessions(sessions);
+    return s;
+  } catch(e) { console.error('pauseSession:', e); return null }
+}
+
+function resumeSession(sessionId) {
+  try {
+    var sessions = loadSessions();
+    var s = sessions.find(function(x) { return x.id === sessionId });
+    if (!s || s.status !== 'OPERATING') return null;
+
+    s.pauseEvents.push({ type: 'RESUME', at: new Date().toISOString() });
+    saveSessions(sessions);
+    return s;
+  } catch(e) { console.error('resumeSession:', e); return null }
+}
+
+function openDebrief(sessionId) {
+  try {
+    var sessions = loadSessions();
+    var s = sessions.find(function(x) { return x.id === sessionId });
+    if (!s || s.status !== 'OPERATING') return null;
+
+    s.status = 'DEBRIEF';
+    s.closedAt = new Date().toISOString();
+    s.debrief = { journalNote: '', selfDisciplineScore: 0, autoInsights: [], planVsReality: {} };
+    saveSessions(sessions);
+    return s;
+  } catch(e) { console.error('openDebrief:', e); return null }
+}
+
+function lockSession(sessionId) {
+  try {
+    var sessions = loadSessions();
+    var s = sessions.find(function(x) { return x.id === sessionId });
+    if (!s || s.status !== 'DEBRIEF') return null;
+
+    s.status = 'LOCKED';
+    saveSessions(sessions);
+    return s;
+  } catch(e) { console.error('lockSession:', e); return null }
+}
+
+function getActiveSession(target) {
+  try {
+    var sessions = loadSessions();
+    var today = new Date().toISOString().slice(0, 10);
+    return sessions.find(function(s) {
+      return s.dayDate === today && (s.status === 'BRIEFING' || s.status === 'OPERATING') &&
+        s.target.kind === target.kind &&
+        (target.kind === 'SINGLE_ACCOUNT' ? s.target.accountId === target.accountId : s.target.groupId === target.groupId);
+    }) || null;
+  } catch(e) { return null }
+}
+
+/* ─── Tests Phase 2 ─── */
+function testPhase2() {
+  var results = [];
+  function test(name, fn) {
+    try { fn(); results.push('✓ ' + name) } catch(e) { results.push('✗ ' + name + ': ' + e.message) }
+  }
+
+  var accId = D.accounts[0] ? D.accounts[0].id : 'test';
+  var target = { kind: 'SINGLE_ACCOUNT', accountId: accId };
+
+  test('createSession crée une session BRIEFING', function() {
+    var s = createSession(target, 'LIVE');
+    if (!s || !s.id) throw new Error('no id');
+    if (s.status !== 'BRIEFING') throw new Error('status: ' + s.status);
+    if (s.sessionIndexInDay < 1) throw new Error('index: ' + s.sessionIndexInDay);
+  });
+
+  test('lockBriefing passe BRIEFING → OPERATING', function() {
+    var s = createSession(target, 'LIVE');
+    var locked = lockBriefing(s.id);
+    if (!locked) throw new Error('null');
+    if (locked.status !== 'OPERATING') throw new Error('status: ' + locked.status);
+    if (!locked.perAccountSnapshot.length) throw new Error('no snapshot');
+  });
+
+  test('recordSessionTrade incrémente', function() {
+    var s = createSession(target, 'LIVE');
+    lockBriefing(s.id);
+    recordSessionTrade(s.id, 'trade_1', 'lg_1', false, null);
+    var sessions = loadSessions();
+    var updated = sessions.find(function(x) { return x.id === s.id });
+    if (updated.tradeIds.length !== 1) throw new Error('tradeIds: ' + updated.tradeIds.length);
+    if (updated.logicalTradeCount !== 1) throw new Error('logical: ' + updated.logicalTradeCount);
+  });
+
+  test('recordSessionTrade avec réplication MIRROR ne double pas logicalCount', function() {
+    var s = createSession(target, 'LIVE');
+    lockBriefing(s.id);
+    recordSessionTrade(s.id, 'trade_src', 'lg_2', false, 'SOURCE');
+    recordSessionTrade(s.id, 'trade_mir', 'lg_2', true, 'MIRROR');
+    var sessions = loadSessions();
+    var updated = sessions.find(function(x) { return x.id === s.id });
+    if (updated.tradeIds.length !== 2) throw new Error('tradeIds: ' + updated.tradeIds.length);
+    if (updated.logicalTradeCount !== 1) throw new Error('logical: ' + updated.logicalTradeCount);
+  });
+
+  test('pauseSession + resumeSession', function() {
+    var s = createSession(target, 'LIVE');
+    lockBriefing(s.id);
+    pauseSession(s.id, 'fatigue');
+    resumeSession(s.id);
+    var sessions = loadSessions();
+    var updated = sessions.find(function(x) { return x.id === s.id });
+    if (updated.pauseEvents.length !== 2) throw new Error('events: ' + updated.pauseEvents.length);
+    if (updated.pauseEvents[0].type !== 'PAUSE') throw new Error('first not PAUSE');
+    if (updated.pauseEvents[1].type !== 'RESUME') throw new Error('second not RESUME');
+  });
+
+  test('openDebrief → DEBRIEF', function() {
+    var s = createSession(target, 'LIVE');
+    lockBriefing(s.id);
+    openDebrief(s.id);
+    var sessions = loadSessions();
+    var updated = sessions.find(function(x) { return x.id === s.id });
+    if (updated.status !== 'DEBRIEF') throw new Error('status: ' + updated.status);
+    if (!updated.closedAt) throw new Error('no closedAt');
+  });
+
+  test('lockSession → LOCKED (irréversible)', function() {
+    var s = createSession(target, 'LIVE');
+    lockBriefing(s.id);
+    openDebrief(s.id);
+    lockSession(s.id);
+    var sessions = loadSessions();
+    var updated = sessions.find(function(x) { return x.id === s.id });
+    if (updated.status !== 'LOCKED') throw new Error('status: ' + updated.status);
+    /* Irréversibilité : lockBriefing sur LOCKED = null */
+    var r = lockBriefing(s.id);
+    if (r !== null) throw new Error('should be null');
+  });
+
+  test('getActiveSession trouve session active', function() {
+    var s = createSession(target, 'LIVE');
+    var found = getActiveSession(target);
+    if (!found) throw new Error('not found');
+    if (found.id !== s.id) throw new Error('wrong session');
+  });
+
+  test('Multi-sessions/jour : sessionIndexInDay incrémente', function() {
+    var s1 = createSession(target, 'LIVE');
+    lockBriefing(s1.id);
+    openDebrief(s1.id);
+    lockSession(s1.id);
+    var s2 = createSession(target, 'LIVE');
+    if (s2.sessionIndexInDay <= s1.sessionIndexInDay) throw new Error('index not incremented');
+  });
+
+  /* Cleanup sessions de test */
+  var sessions = loadSessions();
+  saveSessions(sessions.filter(function(s) { return !s.id.startsWith('sess_') || s.status === 'LOCKED' }));
+
+  console.log('\n=== PHASE 2 TESTS ===');
+  results.forEach(function(r) { console.log(r) });
+  var pass = results.filter(function(r) { return r.startsWith('✓') }).length;
+  var fail = results.filter(function(r) { return r.startsWith('✗') }).length;
+  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  return { pass: pass, fail: fail };
+}
+
+/* ═══════════════════════════════════════════════════════
    CHECKLIST SCOPE READER — Phase 1
    ═══════════════════════════════════════════════════════ */
 
