@@ -2828,9 +2828,9 @@ function rConvergence() {
     }
 
     el.innerHTML = '<div class="box-title" style="display:flex;align-items:center;justify-content:space-between">' +
-      '<span>Convergence Live / Replay</span>' +
-      '<span style="font-size:12px;font-weight:700;color:'+convCol+'">'+Math.round(conv)+'% — '+convLabel+'</span></div>' +
-      '<div style="font-size:11px;color:var(--t3);margin-bottom:10px">Compare ta performance en argent réel vs entraînement. Plus c\'est proche, plus ton edge est fiable.</div>' +
+      '<span>⭐ Convergence Live / Replay</span>' +
+      '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:var(--gold);border:1px solid rgba(212,160,23,.2);padding:2px 8px;border-radius:4px;font-weight:600">Signature Aurum</span><span style="font-size:12px;font-weight:700;color:'+convCol+'">'+Math.round(conv)+'%</span></div></div>' +
+      '<div style="font-size:11px;color:var(--t3);margin-bottom:10px">Ton edge d\'entraînement tient-il en argent réel ?</div>' +
       '<table style="width:100%;font-size:12px"><thead><tr>' +
       '<th style="text-align:left;color:var(--t3)">Métrique</th>' +
       '<th style="color:var(--gold)">Live ($)</th>' +
@@ -3056,7 +3056,18 @@ function rCalendar() {
   if (calSummary) {
     if (mt > 0) {
       const mwr = (mw/mt*100).toFixed(0);
-      calSummary.innerHTML = `<span style="color:var(--t1);font-weight:600">${monthNames[calMonth]}</span> : <b style="color:var(--t1)">${mt}</b> trades sur <b>${tradingDays}</b> jours · WR <b style="color:${parseFloat(mwr)>=50?'var(--green)':'var(--red)'}">${mwr}%</b> · P&L <b style="color:${monthPL>=0?'var(--green)':'var(--red)'};font-family:'JetBrains Mono',monospace">${isLive?(monthPL>=0?'+':'')+monthPL.toFixed(0)+'$':(monthPL>=0?'+':'')+monthPL.toFixed(1)+'R'}</b>`;
+      /* Meilleur et pire jour */
+      let bestDay='—',bestPL=0,worstDay='—',worstPL=0;
+      monthTrades.forEach(d=>{const pl=dayMap[d].pl;if(pl>bestPL){bestPL=pl;bestDay=d}if(pl<worstPL){worstPL=pl;worstDay=d}});
+      const bestF=isLive?(bestPL>=0?'+':'')+bestPL.toFixed(0)+'$':(bestPL>=0?'+':'')+bestPL.toFixed(1)+'R';
+      const worstF=isLive?worstPL.toFixed(0)+'$':worstPL.toFixed(1)+'R';
+      calSummary.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;text-align:center;font-size:11px">` +
+        `<div><div style="color:var(--t3)">Trades</div><div style="font-weight:700;color:var(--t1)">${mt} sur ${tradingDays}j</div></div>` +
+        `<div><div style="color:var(--t3)">WR</div><div style="font-weight:700;color:${parseFloat(mwr)>=50?'var(--green)':'var(--red)'}">${mwr}%</div></div>` +
+        `<div><div style="color:var(--t3)">P&L</div><div style="font-weight:700;color:${monthPL>=0?'var(--green)':'var(--red)'};font-family:JetBrains Mono,monospace">${isLive?(monthPL>=0?'+':'')+monthPL.toFixed(0)+'$':(monthPL>=0?'+':'')+monthPL.toFixed(1)+'R'}</div></div>` +
+        `<div><div style="color:var(--t3)">Meilleur</div><div style="font-weight:700;color:var(--green)">${bestF}</div></div>` +
+        `<div><div style="color:var(--t3)">Pire</div><div style="font-weight:700;color:var(--red)">${worstF}</div></div>` +
+        `</div>`;
       calSummary.style.display = '';
     } else { calSummary.style.display = 'none' }
   }
