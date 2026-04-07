@@ -1466,23 +1466,38 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 
 <!-- DASHBOARD -->
 <div class="panel active" id="dash">
+
+<!-- Zone 1 : Filtres -->
 <div class="filter-bar" id="dashFilters"></div>
 <div class="filter-summary" id="dashFilterSum" style="display:none"></div>
-<div class="cards" id="cards"></div>
-<!-- Financial overview -->
+
+<!-- Zone 2 : Bandeau GO/NO-GO -->
+<div id="goNoGo" style="margin-bottom:16px"></div>
+
+<!-- Zone 3 : Hero KPIs (3 cartes) -->
+<div id="heroKpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px"></div>
+
+<!-- Zone 4 : Secondary KPIs (5 cartes) -->
+<div id="cards" style="grid-template-columns:repeat(5,1fr)"></div>
+
+<!-- Zone 5 : Equity Curve + Win/Loss -->
 <div id="dashFinancial" style="display:none"></div>
 <div class="grid2">
 <div class="box"><div class="box-title">Equity Curve</div><div style="position:relative"><canvas id="eqC"></canvas></div></div>
 <div class="box"><div class="box-title">Win / Loss</div><div style="position:relative"><canvas id="piC"></canvas></div></div>
 </div>
+
+<!-- Zone 6 : P&L par trade + Breakdown -->
 <div class="grid2">
 <div class="box"><div class="box-title">P&L par trade</div><div style="position:relative"><canvas id="baC"></canvas></div></div>
 <div class="box"><div class="box-title">Breakdown</div><div id="bd"></div></div>
 </div>
+
 <!-- Per-account breakdown (all mode) -->
 <div id="dashAccBreakdown" style="display:none"></div>
-<!-- Convergence Live vs Replay -->
-<div id="convergence" class="box" style="margin-bottom:18px"></div>
+
+<!-- Zone 7 : Convergence Live/Replay ⭐ -->
+<div id="convergence" class="box" style="margin-bottom:18px;border:1px solid rgba(212,160,23,.15)"></div>
 <!-- Calendar -->
 <div class="box" style="margin-bottom:18px">
 <div class="box-title" style="display:flex;align-items:center;justify-content:space-between">
@@ -2353,7 +2368,7 @@ function R() {
   if (pg === 'dash') {
     renderFilterBar('dashFilters');
     const dispTr = getTr(); renderFilterSummary('dashFilterSum', dispTr, applyFilters(dispTr), aT==='live');
-    rCards(); rDashFinancial(); rCharts(); rBd(); rDashAccBreakdown(); rConvergence(); rCalendar();
+    rGoNoGo(); rHeroKpis(); rCards(); rDashFinancial(); rCharts(); rBd(); rDashAccBreakdown(); rConvergence(); rCalendar();
   }
   else if (pg === 'hist') { rHist() }
   else if (pg === 'time') { rHours() }
@@ -2470,6 +2485,110 @@ function rAlert() {
 }
 
 // ─── STAT CARDS ───
+/* ─── Zone 2 : Bandeau GO/NO-GO ─── */
+function rGoNoGo() {
+  try {
+    var el = document.getElementById('goNoGo');
+    if (!el) return;
+    /* HIDDEN si Replay, Insights, ou "Tous" */
+    if (aT !== 'live' || D.activeAcc === 'all') { el.innerHTML = ''; return; }
+
+    var tr = getTr();
+    var n = tr.length;
+    var s = S();
+
+    /* NEW_ACCOUNT : <7j et <5 trades */
+    if (s.created) {
+      var days = Math.floor((Date.now() - new Date(s.created).getTime()) / 86400000);
+      if (days < 7 && n < 5) {
+        el.innerHTML = '<div style="background:rgba(91,141,239,.08);border:1px solid rgba(91,141,239,.2);border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:12px"><span style="font-size:20px">🔵</span><div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--blue)">Nouveau compte</div><div style="font-size:12px;color:var(--t2)">Commence par Replay pour valider ton edge avant le Live.</div></div><button class="btn btn-o" onclick="aT=\'replay\';adaptForm();R()" style="font-size:11px;padding:8px 14px">Passer en Replay →</button></div>';
+        return;
+      }
+    }
+
+    /* Calculs */
+    var recent = tr.slice(-20);
+    var wins = recent.filter(function(t) { return (parseFloat(t.pl)||0) > 0 }).length;
+    var discipline = recent.length >= 3 ? Math.round(wins / recent.length * 100) : 50;
+    var lossStreak = 0;
+    for (var i = tr.length - 1; i >= 0; i--) {
+      if ((parseFloat(tr[i].pl)||0) < 0) lossStreak++;
+      else break;
+    }
+    var cum = 0, pk = 0, mdd = 0;
+    tr.forEach(function(t) { cum += (parseFloat(t.pl)||0); if (cum > pk) pk = cum; if (cum - pk < mdd) mdd = cum - pk });
+    var ddPct = s.bal > 0 ? Math.abs(mdd / s.bal * 100) : 0;
+
+    var status, bg, border, icon, title, msg, cta;
+    if (discipline >= 85 && ddPct < 8 && lossStreak <= 2) {
+      status = 'READY'; bg = 'rgba(0,214,143,.06)'; border = 'var(--green)'; icon = '🟢';
+      title = 'Prêt à trader'; msg = 'Discipline ' + discipline + '% · Forme solide.';
+      cta = '<button class="btn btn-g" onclick="go(\'check\')" style="font-size:11px;padding:8px 14px">Ouvrir Checklist →</button>';
+    } else if (discipline >= 60 && lossStreak < 4) {
+      status = 'CAUTION'; bg = 'rgba(212,160,23,.06)'; border = 'var(--gold)'; icon = '🟡';
+      title = 'Prudence'; msg = 'Discipline ' + discipline + '% · ' + (lossStreak >= 2 ? lossStreak + ' pertes consécutives.' : 'Forme moyenne.');
+      cta = '<button class="btn btn-o" onclick="go(\'check\')" style="font-size:11px;padding:8px 14px">Checklist →</button>';
+    } else {
+      status = 'NO_GO'; bg = 'rgba(255,71,87,.06)'; border = 'var(--red)'; icon = '🔴';
+      title = 'Pause recommandée'; msg = 'Discipline ' + discipline + '% · ' + (lossStreak >= 4 ? lossStreak + ' pertes consécutives.' : 'Drawdown ' + ddPct.toFixed(1) + '%.');
+      cta = '<button class="btn btn-o" onclick="go(\'viab\')" style="font-size:11px;padding:8px 14px">Voir Viabilité →</button>';
+    }
+
+    el.innerHTML = '<div style="background:' + bg + ';border:1px solid var(--border);border-left:3px solid ' + border + ';border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:20px">' + icon + '</span><div style="flex:1;min-width:150px"><div style="font-size:14px;font-weight:700;color:' + border + '">' + title + '</div><div style="font-size:12px;color:var(--t2)">' + msg + '</div></div>' + cta + '</div>';
+  } catch(e) { console.error('rGoNoGo:', e) }
+}
+
+/* ─── Zone 3 : Hero KPIs (3 cartes) ─── */
+function rHeroKpis() {
+  try {
+    var el = document.getElementById('heroKpis');
+    if (!el) return;
+    var tr = applyFilters(getTr());
+    var n = tr.length;
+    var isLive = aT === 'live';
+
+    if (n === 0) {
+      el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--t3);font-size:13px">Ton premier trade affichera tes stats ici</div>';
+      return;
+    }
+
+    var w = tr.filter(function(t) { return isLive ? (parseFloat(t.pl)||0) > 0 : (parseFloat(t.rr)||0) > 0 }).length;
+    var l = n - w;
+    var wr = (w / n * 100).toFixed(1);
+
+    /* P&L */
+    var pnl, pnlPct, pnlLabel;
+    if (isLive) {
+      pnl = tr.reduce(function(a, t) { return a + (parseFloat(t.pl)||0) }, 0);
+      var bal = S().bal || 1;
+      pnlPct = (pnl / bal * 100).toFixed(1);
+      pnlLabel = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2) + ' / ' + (pnl >= 0 ? '+' : '') + pnlPct + '%';
+    } else {
+      pnl = tr.reduce(function(a, t) { return a + (parseFloat(t.rr)||0) }, 0);
+      pnlLabel = (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + 'R';
+    }
+
+    /* Profit Factor */
+    var gains = tr.reduce(function(s, t) { var p = isLive ? (parseFloat(t.pl)||0) : (parseFloat(t.rr)||0); return s + (p > 0 ? p : 0) }, 0);
+    var losses = Math.abs(tr.reduce(function(s, t) { var p = isLive ? (parseFloat(t.pl)||0) : (parseFloat(t.rr)||0); return s + (p < 0 ? p : 0) }, 0));
+    var pf = losses > 0 ? (gains / losses).toFixed(2) : '—';
+    var pfAdj = parseFloat(pf) < 1 ? 'Faible' : parseFloat(pf) < 1.5 ? 'Fragile' : parseFloat(pf) < 3 ? 'Solide' : 'Exceptionnel';
+    var pfCol = parseFloat(pf) < 1 ? 'var(--red)' : parseFloat(pf) < 1.5 ? 'var(--gold)' : 'var(--green)';
+
+    function heroCard(label, value, sub, col) {
+      return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center">' +
+        '<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">' + label + '</div>' +
+        '<div style="font-size:32px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + col + ';line-height:1">' + value + '</div>' +
+        '<div style="font-size:11px;color:var(--t3);margin-top:4px">' + sub + '</div></div>';
+    }
+
+    el.innerHTML =
+      heroCard('P&L Période', isLive ? (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(0) : pnlLabel, n + ' trades', pnl >= 0 ? 'var(--green)' : 'var(--red)') +
+      heroCard('Winrate', wr + '%', w + ' W / ' + l + ' L', parseFloat(wr) >= 50 ? 'var(--green)' : 'var(--red)') +
+      heroCard('Profit Factor', pf, pfAdj, pfCol);
+  } catch(e) { console.error('rHeroKpis:', e) }
+}
+
 function rCards() {
   try {
   const trAll = getTr(), isLive = aT === 'live';
