@@ -304,7 +304,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
     <div style="font-size:14px">💾</div>
     <div style="flex:1;font-size:12px" id="backupStatus"></div>
     <button class="bb bb-gold" onclick="exportAll()" style="flex:none;padding:8px 14px;font-size:11px">Exporter</button>
-    <button class="bb bb-outline" onclick="toggleGuide()" style="flex:none;padding:8px 14px;font-size:11px">?</button>
+    <label class="bb bb-outline" style="flex:none;padding:8px 14px;font-size:11px;cursor:pointer">Importer<input type="file" accept=".json" style="display:none" onchange="importAll(event)"></label>
   </div>
 
   <!-- Security guide (hidden by default) -->
@@ -903,38 +903,72 @@ function getLastBackupDays(){
 function exportAll(){
   try{
     var today=new Date().toISOString().slice(0,10);
-    /* Export Journal */
-    var jData=localStorage.getItem('enz_v4');
-    if(jData){
-      var b1=new Blob([jData],{type:'application/json'});
-      var a1=document.createElement('a');a1.href=URL.createObjectURL(b1);
-      a1.download='aurum_journal_'+today+'.json';a1.click();URL.revokeObjectURL(a1.href);
-      localStorage.setItem('aurum_backup_journal',new Date().toISOString());
-    }
-    /* Export Capital */
-    var cData=localStorage.getItem('aurum_capital_v1');
-    if(cData){
-      setTimeout(function(){
-        var b2=new Blob([cData],{type:'application/json'});
-        var a2=document.createElement('a');a2.href=URL.createObjectURL(b2);
-        a2.download='aurum_capital_'+today+'.json';a2.click();URL.revokeObjectURL(a2.href);
-        localStorage.setItem('aurum_backup_capital',new Date().toISOString());
-      },500);
-    }
-    /* Export Formation + Streak (backup complet) */
-    var fData=localStorage.getItem('aurum_formation_v1');
-    var sData=localStorage.getItem('aurum_streak');
-    if(fData||sData){
-      setTimeout(function(){
-        var extra={};
-        if(fData)extra.formation=JSON.parse(fData);
-        if(sData)extra.streak=JSON.parse(sData);
-        var b3=new Blob([JSON.stringify(extra)],{type:'application/json'});
-        var a3=document.createElement('a');a3.href=URL.createObjectURL(b3);
-        a3.download='aurum_formation_'+today+'.json';a3.click();URL.revokeObjectURL(a3.href);
-      },1000);
-    }
-    setTimeout(function(){renderBackup()},1500);
+    /* Backup UNIQUE — 1 seul fichier avec tout */
+    var backup={
+      _version: 1,
+      _date: new Date().toISOString(),
+      journal: null,
+      capital: null,
+      formation: null,
+      streak: null
+    };
+    var jRaw=localStorage.getItem('enz_v4');
+    if(jRaw) try{backup.journal=JSON.parse(jRaw)}catch(e){}
+    var cRaw=localStorage.getItem('aurum_capital_v1');
+    if(cRaw) try{backup.capital=JSON.parse(cRaw)}catch(e){}
+    var fRaw=localStorage.getItem('aurum_formation_v1');
+    if(fRaw) try{backup.formation=JSON.parse(fRaw)}catch(e){}
+    var sRaw=localStorage.getItem('aurum_streak');
+    if(sRaw) try{backup.streak=JSON.parse(sRaw)}catch(e){}
+
+    var blob=new Blob([JSON.stringify(backup)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='aurum_backup_'+today+'.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+
+    localStorage.setItem('aurum_backup_journal',new Date().toISOString());
+    localStorage.setItem('aurum_backup_capital',new Date().toISOString());
+    renderBackup();
+  }catch(e){console.error(e)}
+}
+
+function importAll(event){
+  try{
+    var file=event.target.files[0];
+    if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var backup=JSON.parse(e.target.result);
+        if(!backup._version){
+          /* Ancien format (fichier unique Journal ou Capital) */
+          if(backup.accounts||backup.live){
+            if(confirm('Fichier Journal détecté. Importer ?')){
+              localStorage.setItem('enz_v4',JSON.stringify(backup));
+            }
+          }else if(backup.payouts||backup.portfolio){
+            if(confirm('Fichier Capital détecté. Importer ?')){
+              localStorage.setItem('aurum_capital_v1',JSON.stringify(backup));
+            }
+          }
+          return;
+        }
+        /* Nouveau format unifié */
+        var parts=[];
+        if(backup.journal) parts.push('Journal');
+        if(backup.capital) parts.push('Capital');
+        if(backup.formation) parts.push('Formation');
+        if(!confirm('Importer le backup du '+backup._date.slice(0,10)+' ?\nContient : '+parts.join(', ')+'\n\nCela remplacera vos données actuelles.')) return;
+        if(backup.journal) localStorage.setItem('enz_v4',JSON.stringify(backup.journal));
+        if(backup.capital) localStorage.setItem('aurum_capital_v1',JSON.stringify(backup.capital));
+        if(backup.formation) localStorage.setItem('aurum_formation_v1',JSON.stringify(backup.formation));
+        if(backup.streak) localStorage.setItem('aurum_streak',JSON.stringify(backup.streak));
+        location.reload();
+      }catch(err){alert('Fichier invalide : '+err.message)}
+    };
+    reader.readAsText(file);
   }catch(e){console.error(e)}
 }
 
