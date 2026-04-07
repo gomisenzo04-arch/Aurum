@@ -765,51 +765,61 @@ function xreset(){try{if(!confirm('⚠ TOUT SUPPRIMER ?'))return;if(!confirm('De
 load();
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){console.error(e)}})();
 rCL();rCS();rAL();rD();
-/* ─── Détection iframe + création barre de tabs ─── */
+/* ─── Détection iframe + création navigation 2 niveaux ─── */
 try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');
-  var tabs=[
-    {p:'dash',l:'📊 Dashboard',g:''},
-    {p:'coach',l:'🎯 Coaching',g:''},
-    {p:'health',l:'💊 Santé',g:''},
-    {p:'_g1',l:'TRADING',g:'label'},
-    {p:'acc',l:'📈 Comptes',g:''},
-    {p:'pf',l:'🏆 Prop Firms',g:''},
-    {p:'po',l:'💰 Payouts',g:''},
-    {p:'_g2',l:'PATRIMOINE',g:'label'},
-    {p:'inv',l:'🎯 Portfolio',g:''},
-    {p:'bud',l:'💳 Budget',g:''},
-    {p:'pas',l:'📉 Dettes',g:''},
-    {p:'_g3',l:'BUSINESS',g:'label'},
-    {p:'ent',l:'🏛 Entités',g:''},
-    {p:'fis',l:'📋 Fiscal',g:''},
-    {p:'bak',l:'💾 Backup',g:''}
+
+  var groups=[
+    {id:'dash',label:'📊 Dashboard',pages:[]},
+    {id:'patrimoine',label:'Patrimoine',pages:[
+      {p:'inv',l:'Portfolio'},{p:'pas',l:'Dettes'}
+    ]},
+    {id:'gestion',label:'Gestion',pages:[
+      {p:'bud',l:'Budget'},{p:'fis',l:'Fiscal'}
+    ]},
+    {id:'business',label:'Business',pages:[
+      {p:'ent',l:'Entités'}
+    ]}
   ];
-  var bar=document.createElement('div');bar.className='itabs';
-  tabs.forEach(function(t){
-    if(t.g==='sep'){
-      var sep=document.createElement('div');
-      sep.style.cssText='width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0';
-      bar.appendChild(sep);
-      return;
-    }
-    if(t.g==='label'){
-      var lbl=document.createElement('span');
-      lbl.textContent=t.l;
-      lbl.style.cssText='font-size:8px;font-weight:700;color:var(--t3);letter-spacing:1.5px;padding:0 6px;flex-shrink:0;opacity:.6';
-      bar.appendChild(lbl);
-      return;
-    }
-    var b=document.createElement('button');b.className='itab'+(t.p==='dash'?' on':'');
-    b.textContent=t.l;b.setAttribute('data-p',t.p);
+
+  var bar1=document.createElement('div');bar1.className='itabs';
+  var bar2=document.createElement('div');bar2.className='itabs';
+  bar2.style.cssText+='padding-top:0;border-top:none;font-size:11px';
+
+  function renderCapSubTabs(gId){
+    var grp=groups.find(function(g){return g.id===gId});
+    bar2.innerHTML='';
+    if(!grp||!grp.pages.length){bar2.style.display='none';return}
+    bar2.style.display='flex';
+    grp.pages.forEach(function(p){
+      var b=document.createElement('button');b.className='itab';
+      b.textContent=p.l;b.setAttribute('data-p',p.p);
+      b.onclick=function(){
+        go(p.p);
+        bar2.querySelectorAll('.itab').forEach(function(x){x.classList.remove('on')});
+        b.classList.add('on');
+      };
+      bar2.appendChild(b);
+    });
+    if(grp.pages.length){go(grp.pages[0].p);bar2.querySelector('.itab').classList.add('on')}
+  }
+
+  groups.forEach(function(g){
+    var b=document.createElement('button');
+    b.className='itab'+(g.id==='dash'?' on':'');
+    b.textContent=g.label;b.setAttribute('data-g',g.id);
     b.onclick=function(){
-      go(t.p);
-      bar.querySelectorAll('.itab').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-p')===t.p)});
+      bar1.querySelectorAll('.itab').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+      if(g.pages.length===0){go(g.id);bar2.style.display='none'}
+      else{renderCapSubTabs(g.id)}
     };
-    bar.appendChild(b);
+    bar1.appendChild(b);
   });
+
   var mw=document.querySelector('.mw');
-  if(mw)mw.insertBefore(bar,mw.firstChild);
+  if(mw){mw.insertBefore(bar2,mw.firstChild);mw.insertBefore(bar1,mw.firstChild)}
+  bar2.style.display='none';
 }}catch(e){console.error(e)}
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
