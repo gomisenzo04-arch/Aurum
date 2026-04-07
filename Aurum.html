@@ -3803,8 +3803,45 @@ function aPct() {
   updateFormProgress(); buildSummary();
 }
 
+function saveDraft() {
+  try {
+    var draft = {
+      date: document.getElementById('fD').value,
+      time: document.getElementById('fT').value,
+      sl: document.getElementById('fSL').value,
+      notes: document.getElementById('fNotes') ? document.getElementById('fNotes').value : '',
+      ts: Date.now()
+    };
+    if (draft.date || draft.time || draft.sl) {
+      localStorage.setItem('aurum_draft_trade', JSON.stringify(draft));
+    }
+  } catch(e) {}
+}
+
+function loadDraft() {
+  try {
+    var raw = localStorage.getItem('aurum_draft_trade');
+    if (!raw) return;
+    var draft = JSON.parse(raw);
+    if (Date.now() - draft.ts > 12 * 3600 * 1000) { localStorage.removeItem('aurum_draft_trade'); return; } // Expire après 12h
+    var hasData = draft.date || draft.sl;
+    if (!hasData) return;
+    if (document.getElementById('fD').value || document.getElementById('fSL').value) return; // Ne pas écraser si déjà rempli
+    if (draft.date) document.getElementById('fD').value = draft.date;
+    if (draft.time) document.getElementById('fT').value = draft.time;
+    if (draft.sl) document.getElementById('fSL').value = draft.sl;
+    if (draft.notes && document.getElementById('fNotes')) document.getElementById('fNotes').value = draft.notes;
+    toast('Brouillon restauré');
+  } catch(e) {}
+}
+
+function clearDraft() {
+  try { localStorage.removeItem('aurum_draft_trade'); } catch(e) {}
+}
+
 function buildSummary() {
   try {
+  saveDraft();
   const el = document.getElementById('tradeSummary');
   const d = document.getElementById('fD').value;
   const t = document.getElementById('fT').value;
@@ -3884,6 +3921,7 @@ function save() {
     else if (t.res === 'SL' || t.pl < 0) toast('Trade enregistré — la discipline paie.', 'info');
     else toast('Trade enregistré', 'success');
   } else { toast('Trade enregistré', 'success') }
+  clearDraft();
   checkMilestones();
   } catch(e) { console.error('[Aurum] save:', e); toast('Erreur enregistrement', 'error') }
 }
@@ -5878,6 +5916,7 @@ document.getElementById('fD').valueAsDate = new Date();
 cLot();
 checkSession();
 adaptForm();
+loadDraft();
 /* ─── Détection iframe + création barre de tabs ─── */
 try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');

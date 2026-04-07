@@ -617,6 +617,29 @@ function drawProg(){
 function render(){
   var mod=ALL_MODS[S.c];
   if(!mod) return;
+
+  /* Écran formation terminée si tous modules complétés */
+  if(S.d.length>=TOTAL_MODS){
+    var ct=document.getElementById('ct');
+    if(ct){
+      var ts=totalStars(),ms=maxStars(),pct=Math.round(ts/ms*100);
+      ct.innerHTML='<div style="text-align:center;padding:40px 20px;max-width:500px;margin:0 auto">'+
+        '<div style="font-size:48px;margin-bottom:16px">🏆</div>'+
+        '<div style="font-size:24px;font-weight:800;color:var(--gold);margin-bottom:8px">Formation terminée !</div>'+
+        '<div style="font-size:14px;color:var(--t2);margin-bottom:20px;line-height:1.6">Tu as complété les <b style="color:var(--t1)">'+TOTAL_MODS+' modules</b>. Tu maîtrises la stratégie, l\'application et la gestion du capital.</div>'+
+        '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:24px">'+
+        '<div style="background:var(--bg3);padding:14px 20px;border-radius:12px;text-align:center"><div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--gold)">'+ts+'</div><div style="font-size:10px;color:var(--t3)">★ sur '+ms+'</div></div>'+
+        '<div style="background:var(--bg3);padding:14px 20px;border-radius:12px;text-align:center"><div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--green)">'+pct+'%</div><div style="font-size:10px;color:var(--t3)">excellence</div></div>'+
+        '<div style="background:var(--bg3);padding:14px 20px;border-radius:12px;text-align:center"><div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--purple)">'+TOTAL_MODS+'</div><div style="font-size:10px;color:var(--t3)">modules</div></div>'+
+        '</div>'+
+        '<div style="font-size:13px;color:var(--t2);margin-bottom:20px;line-height:1.6">La prochaine étape : <b style="color:var(--t1)">ouvre le Journal</b> et enregistre ton premier trade avec la checklist.</div>'+
+        '<a href="Aurum.html" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;transition:all .2s">Ouvrir le Journal →</a>'+
+        '<div style="margin-top:16px"><button onclick="goMod(0)" style="background:none;border:1px solid var(--brd2);color:var(--t3);padding:8px 16px;border-radius:8px;font-family:inherit;font-size:11px;cursor:pointer">Revoir les modules</button></div>'+
+        '</div>';
+    }
+    return;
+  }
+
   if(mod.engine==='edge') renderEdge(mod.edgeIdx);
   else if(mod.engine==='academy') renderAcademy(mod.acadIdx);
   else if(mod.engine==='capital') renderCapital(mod.capIdx);
