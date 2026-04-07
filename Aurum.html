@@ -1383,10 +1383,7 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 
 /* ─── IFRAME MODE ─── */
 .in-iframe .side { display: none !important }
-.in-iframe .top-bar h1 { display: none !important }
-.in-iframe .top-bar { height: auto !important; padding: 6px 12px !important; min-height: 0 !important; gap: 6px !important }
-.in-iframe .top-bar #accSelector { font-size: 11px }
-.in-iframe .top-bar .strip { display: none !important }
+.in-iframe .top-bar { display: none !important }
 .in-iframe .login-overlay { border-radius: 0 }
 .itabs {
   display: flex; align-items: center; gap: 4px; padding: 6px 12px;
@@ -6015,6 +6012,18 @@ try{if(window.self!==window.top){
   if (ct) {
     ct.insertBefore(bar2, ct.firstChild);
     ct.insertBefore(bar1, ct.firstChild);
+
+    /* Déplacer sélecteur de comptes + switch Live/Replay dans la barre tier 1 */
+    var accSel = document.getElementById('accSelector');
+    var tsw = document.getElementById('tsw');
+    if (accSel) {
+      accSel.style.cssText = 'display:flex;align-items:center;gap:6px;margin-left:auto;font-size:12px;flex-shrink:0';
+      bar1.appendChild(accSel);
+    }
+    if (tsw) {
+      tsw.style.cssText = 'display:flex;flex-shrink:0;margin-left:8px';
+      bar1.appendChild(tsw);
+    }
   }
 
   /* Cacher tier 2 au démarrage (Dashboard actif) */
