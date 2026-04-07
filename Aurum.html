@@ -1385,21 +1385,30 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 .in-iframe .side { display: none !important }
 .in-iframe .top-bar { display: none !important }
 .in-iframe .login-overlay { border-radius: 0 }
+/* ─── Navigation tiers ─── */
 .itabs {
-  display: flex; align-items: center; gap: 4px; padding: 6px 12px;
-  background: rgba(6,9,14,.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  display: flex; align-items: center; gap: 4px; padding: 8px 14px;
+  background: rgba(6,9,14,.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0;
-  scrollbar-width: none; position: sticky; top: 0; z-index: 200
+  scrollbar-width: none; position: sticky; top: 0; z-index: 200;
+  transition: all .2s
 }
 .itabs::-webkit-scrollbar { display: none }
+/* Tier 1 — onglets principaux */
 .itab {
-  display: flex; align-items: center; gap: 5px; padding: 10px 18px; border-radius: 10px;
-  font-size: 13px; font-weight: 700; color: var(--t3); cursor: pointer; white-space: nowrap;
-  transition: all .2s; flex-shrink: 0; border: none; background: none; font-family: inherit;
-  min-height: 40px
+  display: flex; align-items: center; gap: 5px; padding: 10px 20px; border-radius: 10px;
+  font-size: 14px; font-weight: 700; color: var(--t3); cursor: pointer; white-space: nowrap;
+  transition: all .2s cubic-bezier(.4,0,.2,1); flex-shrink: 0; border: none; background: none;
+  font-family: inherit; min-height: 42px; position: relative
 }
-.itab:hover { color: var(--t1); background: var(--bg3) }
-.itab.on { color: var(--gold); background: rgba(212,160,23,.1); border-bottom: 2px solid var(--gold) }
+.itab:hover { color: var(--t1); background: rgba(212,160,23,.06) }
+.itab.on { color: var(--gold); background: rgba(212,160,23,.08) }
+.itab.on::after { content:''; position:absolute; bottom:0; left:20%; right:20%; height:2px; background:var(--gold); border-radius:2px }
+.itab:active { transform: scale(.97) }
+/* Tier 2 — sous-onglets */
+.itabs + .itabs { padding: 4px 14px; background: rgba(12,16,24,.9); border-bottom-color: rgba(29,40,64,.5) }
+.itabs + .itabs .itab { font-size: 12px; font-weight: 600; padding: 8px 14px; min-height: 34px }
+.itabs + .itabs .itab.on::after { background: var(--gold3) }
 </style>
 </head>
 <body>

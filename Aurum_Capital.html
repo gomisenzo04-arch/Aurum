@@ -126,20 +126,17 @@ tbody tr:hover{background:rgba(167,139,250,.04)!important}
 /* ─── IFRAME MODE ─── */
 .in-iframe .side{display:none!important}
 .in-iframe .th .hb{display:none!important}
-.itabs{
-  display:flex;align-items:center;gap:4px;padding:6px 12px;
-  background:rgba(6,9,14,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;
-  scrollbar-width:none;position:sticky;top:0;z-index:200
-}
+/* ─── Navigation tiers ─── */
+.itabs{display:flex;align-items:center;gap:4px;padding:8px 14px;background:rgba(6,9,14,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;scrollbar-width:none;position:sticky;top:0;z-index:200;transition:all .2s}
 .itabs::-webkit-scrollbar{display:none}
-.itab{
-  display:flex;align-items:center;gap:5px;padding:10px 18px;border-radius:10px;
-  font-size:13px;font-weight:700;color:var(--t3);cursor:pointer;white-space:nowrap;
-  transition:all .15s;flex-shrink:0;border:none;background:none;font-family:inherit
-}
-.itab:hover{color:var(--t1);background:var(--bg3)}
-.itab.on{color:var(--purple);background:rgba(167,139,250,.1);border-bottom:2px solid var(--purple)}
+.itab{display:flex;align-items:center;gap:5px;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:700;color:var(--t3);cursor:pointer;white-space:nowrap;transition:all .2s cubic-bezier(.4,0,.2,1);flex-shrink:0;border:none;background:none;font-family:inherit;min-height:42px;position:relative}
+.itab:hover{color:var(--t1);background:rgba(167,139,250,.06)}
+.itab.on{color:var(--purple);background:rgba(167,139,250,.08)}
+.itab.on::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--purple);border-radius:2px}
+.itab:active{transform:scale(.97)}
+.itabs+.itabs{padding:4px 14px;background:rgba(12,16,24,.9);border-bottom-color:rgba(29,40,64,.5)}
+.itabs+.itabs .itab{font-size:12px;font-weight:600;padding:8px 14px;min-height:34px}
+.itabs+.itabs .itab.on::after{background:var(--purple)}
 </style>
 </head>
 <body>
