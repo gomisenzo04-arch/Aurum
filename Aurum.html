@@ -6624,13 +6624,164 @@ function openSessionFromBriefing() {
 function rSessionOperating(el) {
   try {
     var s = _currentSession;
-    el.innerHTML = '<div style="background:rgba(212,160,23,.06);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:12px;padding:20px;margin-bottom:16px">' +
-      '<div style="font-size:16px;font-weight:800;color:var(--gold)">⚡ SESSION #' + s.sessionIndexInDay + ' · EN COURS</div>' +
-      '<div style="font-size:12px;color:var(--t2);margin-top:4px">Trades : ' + s.logicalTradeCount + '/' + (s.briefing.plan.aggregated.maxTrades || '—') + '</div>' +
-      '</div>' +
-      '<div style="text-align:center;padding:20px"><button class="btn btn-g" onclick="go(\'check\')" style="padding:12px 24px;margin-right:8px">✅ Checklist</button><button class="btn btn-g" onclick="go(\'calc\')" style="padding:12px 24px;margin-right:8px">🔢 Calculateur</button><button class="btn btn-g" onclick="go(\'add\')" style="padding:12px 24px">➕ Trade</button></div>' +
-      '<div style="text-align:center;margin-top:16px"><button class="btn btn-o" onclick="closeCurrentSession()" style="padding:10px 20px;font-size:12px">⊗ Clôturer la session</button></div>';
+    /* Relire depuis storage pour avoir les données à jour */
+    var sessions = loadSessions();
+    var fresh = sessions.find(function(x) { return x.id === s.id });
+    if (fresh) { _currentSession = fresh; s = fresh }
+
+    var plan = s.briefing.plan.aggregated || {};
+    var maxT = plan.maxTrades || '—';
+    var maxL = plan.maxLossDollar || 0;
+    var tgt = plan.targetDollar || 0;
+
+    /* Calcul P&L session en temps réel */
+    var sessPnl = 0;
+    var sessTrades = D.live.filter(function(t) { return s.tradeIds.indexOf(t.ts ? t.ts.toString() : '') >= 0 });
+    /* Fallback : trades du jour après ouverture */
+    if (!sessTrades.length && s.tradeIds.length === 0) {
+      var openTime = new Date(s.openedAt).getTime();
+      sessTrades = D.live.filter(function(t) { return t.date === s.dayDate && t.accId === s.target.accountId && (t.ts || 0) >= openTime });
+    }
+    sessPnl = sessTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+
+    /* Durée */
+    var dur = Math.floor((Date.now() - new Date(s.openedAt).getTime()) / 60000);
+    var durStr = dur < 60 ? dur + 'min' : Math.floor(dur / 60) + 'h' + (dur % 60 > 0 ? String(dur % 60).padStart(2, '0') : '');
+
+    /* Pause active ? */
+    var isPaused = false;
+    if (s.pauseEvents && s.pauseEvents.length) {
+      var last = s.pauseEvents[s.pauseEvents.length - 1];
+      isPaused = last.type === 'PAUSE';
+    }
+
+    /* Rails */
+    var rails = checklistScopeReader('GUARDRAIL');
+    var railsHtml = '';
+    rails.forEach(function(r) {
+      var icon = r.checked ? '🟢' : '🔴';
+      var badge = '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--bg4);color:var(--t3);margin-left:4px">' + (r.evaluationScope || '').toLowerCase() + '</span>';
+      railsHtml += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span>' + icon + '</span><span style="color:var(--t2)">' + r.label + '</span>' + badge + '</div>';
+    });
+
+    /* Contexte jour */
+    var ctx = dailyContextReader([s.target.accountId]);
+    var dayPnl = ctx.cumulativePnlToday;
+    var dayTrades = ctx.cumulativeTradesToday;
+
+    var h = '';
+
+    /* Hub sticky */
+    h += '<div style="background:rgba(212,160,23,.04);border:1px solid rgba(212,160,23,.15);border-radius:14px;padding:16px;margin-bottom:16px;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px)">';
+
+    /* Ligne 1 : status */
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+    h += '<div style="font-size:14px;font-weight:800;color:var(--gold)">⚡ SESSION #' + s.sessionIndexInDay + ' · ' + (isPaused ? '⏸ PAUSE' : 'OUVERTE') + ' ' + durStr + '</div>';
+    h += '<div style="display:flex;gap:6px">';
+    if (isPaused) {
+      h += '<button class="btn btn-g" onclick="resumeCurrentSession()" style="padding:6px 14px;font-size:11px">▶ Reprendre</button>';
+    } else {
+      h += '<button class="btn btn-o" onclick="pauseCurrentSession()" style="padding:6px 14px;font-size:11px">⏸ Pause</button>';
+    }
+    h += '<button class="btn btn-o" onclick="closeCurrentSession()" style="padding:6px 14px;font-size:11px;color:var(--red);border-color:var(--red)">⊗ Clôturer</button>';
+    h += '</div></div>';
+
+    /* Ligne 2 : métriques */
+    var tradesPct = maxT !== '—' ? Math.round(s.logicalTradeCount / maxT * 100) : 0;
+    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;text-align:center">';
+    h += '<div><div style="color:var(--t3)">Trades</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t1)">' + s.logicalTradeCount + '/' + maxT + '</div></div>';
+    h += '<div><div style="color:var(--t3)">P&L</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:' + (sessPnl >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(0) + '</div></div>';
+    h += '<div><div style="color:var(--t3)">Target</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t2)">$' + (tgt || '—') + '</div></div>';
+    h += '<div><div style="color:var(--t3)">Perte max</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t2)">$' + (maxL || '—') + '</div></div>';
+    h += '</div>';
+
+    /* Ligne 3 : cumul jour */
+    h += '<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:8px;display:flex;justify-content:space-around;font-size:10px;color:var(--t3)">';
+    h += '<span>Jour : ' + dayTrades + ' trades</span>';
+    h += '<span>P&L jour : <b style="color:' + (dayPnl >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (dayPnl >= 0 ? '+' : '') + '$' + dayPnl.toFixed(0) + '</b></span>';
+    h += '</div>';
+    h += '</div>';
+
+    /* Section Rails */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Rails actifs</div>';
+    h += railsHtml;
+    h += '</div>';
+
+    /* CTA Prochain trade */
+    var maxReached = maxT !== '—' && s.logicalTradeCount >= maxT;
+    var lossReached = maxL > 0 && sessPnl <= -maxL;
+    var railBroken = rails.some(function(r) { return !r.checked });
+    var blocked = isPaused || maxReached || lossReached;
+
+    h += '<div style="text-align:center;margin-bottom:16px">';
+    if (blocked) {
+      var reason = isPaused ? 'Session en pause' : maxReached ? 'Max trades atteint' : 'Perte max atteinte';
+      h += '<button class="btn btn-o" disabled style="padding:14px 28px;font-size:14px;opacity:.5;cursor:not-allowed">➕ Prochain trade</button>';
+      h += '<div style="font-size:11px;color:var(--red);margin-top:4px">' + reason + '</div>';
+    } else {
+      h += '<button class="btn btn-g" onclick="go(\'add\')" style="padding:14px 28px;font-size:14px;font-weight:800;border-radius:12px">➕ Prochain trade</button>';
+      if (railBroken) h += '<div style="font-size:11px;color:var(--gold);margin-top:4px">⚠ Certains rails non validés</div>';
+    }
+    h += '</div>';
+
+    /* Section Trades de la session */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Trades de la session (' + s.logicalTradeCount + ')</div>';
+    if (sessTrades.length === 0) {
+      h += '<div style="text-align:center;padding:16px;font-size:12px;color:var(--t3)">Aucun trade encore. Clique "Prochain trade".</div>';
+    } else {
+      h += '<div style="display:grid;gap:4px">';
+      sessTrades.forEach(function(t, i) {
+        var col = (parseFloat(t.pl) || 0) >= 0 ? 'var(--green)' : 'var(--red)';
+        h += '<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg3);border-radius:6px;font-size:12px">';
+        h += '<span style="color:var(--t3);font-family:JetBrains Mono,monospace;font-size:10px">#' + (i + 1) + '</span>';
+        h += '<span style="color:var(--t2)">' + (t.time || '') + '</span>';
+        h += '<span style="font-weight:600;color:var(--t1)">' + (t.dir || '') + ' ' + (t.type || '') + '</span>';
+        h += '<span style="color:var(--t3)">SL ' + (t.sl || '') + '</span>';
+        h += '<span style="flex:1"></span>';
+        h += '<span style="font-weight:700;font-family:JetBrains Mono,monospace;color:' + col + '">' + ((parseFloat(t.pl) || 0) >= 0 ? '+' : '') + '$' + (parseFloat(t.pl) || 0).toFixed(2) + '</span>';
+        h += '</div>';
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+
+    /* Section Événements */
+    if (s.pauseEvents && s.pauseEvents.length) {
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px">';
+      h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Événements</div>';
+      s.pauseEvents.forEach(function(ev) {
+        var icon = ev.type === 'PAUSE' ? '⏸' : '▶';
+        var time = new Date(ev.at);
+        h += '<div style="font-size:11px;color:var(--t2);padding:3px 0">' + icon + ' ' + time.getHours().toString().padStart(2, '0') + ':' + time.getMinutes().toString().padStart(2, '0') + ' — ' + ev.type + (ev.reason ? ' · ' + ev.reason : '') + '</div>';
+      });
+      h += '</div>';
+    }
+
+    el.innerHTML = h;
   } catch(e) { console.error('rSessionOperating:', e) }
+}
+
+function pauseCurrentSession() {
+  try {
+    if (!_currentSession) return;
+    var reason = prompt('Raison de la pause (optionnel) :') || '';
+    pauseSession(_currentSession.id, reason);
+    _currentSession.pauseEvents.push({ type: 'PAUSE', at: new Date().toISOString(), reason: reason });
+    rSession();
+    toast('Session en pause');
+  } catch(e) { console.error(e) }
+}
+
+function resumeCurrentSession() {
+  try {
+    if (!_currentSession) return;
+    resumeSession(_currentSession.id);
+    _currentSession.pauseEvents.push({ type: 'RESUME', at: new Date().toISOString() });
+    rSession();
+    toast('Session reprise');
+  } catch(e) { console.error(e) }
 }
 
 function rSessionDebrief(el) {
