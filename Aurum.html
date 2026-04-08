@@ -9141,23 +9141,155 @@ function rReplayScenario(el) {
     var sc = st.scenario;
 
     var h = '';
+    /* Header */
     h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">';
     h += '<div><div style="font-size:16px;font-weight:800;color:var(--t1)">' + sc.name + '</div>';
     h += '<div style="font-size:11px;color:var(--t3)">' + sc.description + '</div></div>';
     h += '<button class="btn btn-o" onclick="_replayState=null;rReplay()" style="font-size:11px;padding:6px 14px">← Retour</button>';
     h += '</div>';
 
-    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px">';
+    /* Canvas */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px;position:relative">';
     h += '<canvas id="replayCanvas" style="width:100%;cursor:crosshair"></canvas>';
     h += '</div>';
 
+    /* Contrôles navigation bougies */
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px">';
-    h += '<button class="btn btn-g" onclick="replayNextCandle()" style="padding:10px 20px;font-size:13px">Bougie suivante →</button>';
+    if (st.phase === 'analysis') {
+      h += '<button class="btn btn-g" onclick="replayNextCandle()" style="padding:10px 20px;font-size:13px">Bougie suivante →</button>';
+    }
     h += '<span style="font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace">' + st.visibleCount + '/' + st.candles.length + '</span>';
     h += '</div>';
 
+    /* Filtres actifs (affichés si le scénario en a) */
+    if (sc.filters.newsUSD) {
+      h += '<div style="background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.15);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--red);display:flex;align-items:center;gap:8px">🔴 <b>News rouge USD</b> prévue dans 5 minutes</div>';
+    }
+    if (sc.filters.after21h) {
+      h += '<div style="background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.15);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--gold);display:flex;align-items:center;gap:8px">⏰ Il est <b>20h50</b> — fermeture obligatoire à 21h</div>';
+    }
+
+    /* Questions pas-à-pas */
+    if (st.phase === 'analysis') {
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">';
+
+      var steps = [
+        { key: 'direction', label: '1. Quelle est la direction ?', type: 'buttons' },
+        { key: 'liquidity', label: '2. Repère la liquidité', type: 'candle' },
+        { key: 'setup', label: '3. Quel setup ?', type: 'buttons' },
+        { key: 'shouldTrade', label: '4. Tu trades ?', type: 'buttons' }
+      ];
+
+      /* Afficher les étapes complétées + l'étape courante */
+      steps.forEach(function(step, i) {
+        var answered = st.answers[step.key] !== undefined;
+        var isCurrent = !answered && (i === 0 || st.answers[steps[i - 1].key] !== undefined);
+
+        if (answered) {
+          /* Étape complétée — afficher la réponse */
+          var val = st.answers[step.key];
+          var displayVal = val;
+          if (step.key === 'direction') displayVal = val === 'buy' ? '📈 Buy' : val === 'sell' ? '📉 Sell' : '❓ Incertain';
+          if (step.key === 'setup') displayVal = val === 'qm' ? '🔄 QM' : val === 'gaps' ? '📊 Gaps' : '⏸ Aucun';
+          if (step.key === 'shouldTrade') displayVal = val ? '✅ Oui, je trade' : '⛔ Non, j\'attends';
+          if (step.key === 'liquidity') displayVal = val === -1 ? 'Aucune visible' : 'Bougie #' + (val + 1);
+
+          h += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);opacity:.7">';
+          h += '<span style="font-size:11px;color:var(--t3)">' + step.label + '</span>';
+          h += '<span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--gold)">' + displayVal + '</span>';
+          h += '</div>';
+        } else if (isCurrent) {
+          /* Étape courante — afficher les boutons */
+          h += '<div style="padding:12px 0">';
+          h += '<div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:10px">' + step.label + '</div>';
+
+          if (step.key === 'direction') {
+            h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+            h += '<button class="btn btn-o" onclick="replayAnswer(\'direction\',\'buy\')" style="padding:10px 18px;font-size:13px">📈 Buy</button>';
+            h += '<button class="btn btn-o" onclick="replayAnswer(\'direction\',\'sell\')" style="padding:10px 18px;font-size:13px">📉 Sell</button>';
+            h += '</div>';
+          } else if (step.key === 'liquidity') {
+            h += '<div style="font-size:11px;color:var(--t3);margin-bottom:8px">Clique sur la bougie de liquidité dans le graphique, ou :</div>';
+            h += '<button class="btn btn-o" onclick="replayAnswer(\'liquidity\',-1)" style="padding:8px 14px;font-size:12px">Aucune visible</button>';
+          } else if (step.key === 'setup') {
+            h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+            h += '<button class="btn btn-o" onclick="replayAnswer(\'setup\',\'qm\')" style="padding:10px 18px;font-size:13px">🔄 QM</button>';
+            h += '<button class="btn btn-o" onclick="replayAnswer(\'setup\',\'gaps\')" style="padding:10px 18px;font-size:13px">📊 Gaps</button>';
+            h += '<button class="btn btn-o" onclick="replayAnswer(\'setup\',\'none\')" style="padding:10px 18px;font-size:13px">⏸ Aucun</button>';
+            h += '</div>';
+          } else if (step.key === 'shouldTrade') {
+            h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+            h += '<button class="btn btn-g" onclick="replayAnswer(\'shouldTrade\',true)" style="padding:10px 18px;font-size:13px">✅ Oui, je trade</button>';
+            h += '<button class="btn btn-o" onclick="replayAnswer(\'shouldTrade\',false)" style="padding:10px 18px;font-size:13px;color:var(--red);border-color:var(--red)">⛔ Non, j\'attends</button>';
+            h += '</div>';
+          }
+          h += '</div>';
+        }
+        /* Les étapes futures ne sont pas affichées */
+      });
+
+      /* Si shouldTrade === true, afficher les étapes entrée/SL */
+      if (st.answers.shouldTrade === true) {
+        if (st.answers.entry === undefined) {
+          h += '<div style="padding:12px 0;border-top:1px solid var(--border)">';
+          h += '<div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:8px">5. Place ton entrée</div>';
+          h += '<div style="font-size:11px;color:var(--t3)">Clique sur le niveau d\'entrée dans le graphique</div>';
+          h += '</div>';
+        } else if (st.answers.sl === undefined) {
+          h += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);opacity:.7">';
+          h += '<span style="font-size:11px;color:var(--t3)">5. Entrée</span>';
+          h += '<span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--gold);font-family:JetBrains Mono,monospace">' + st.answers.entry.toFixed(0) + '</span>';
+          h += '</div>';
+          h += '<div style="padding:12px 0">';
+          h += '<div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:8px">6. Place ton SL</div>';
+          h += '<div style="font-size:11px;color:var(--t3)">Clique sur le niveau du Stop Loss dans le graphique</div>';
+          h += '</div>';
+        } else {
+          /* Tout rempli — afficher récap + bouton pour passer en gestion */
+          h += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);opacity:.7">';
+          h += '<span style="font-size:11px;color:var(--t3)">5. Entrée</span>';
+          h += '<span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--gold);font-family:JetBrains Mono,monospace">' + st.answers.entry.toFixed(0) + '</span>';
+          h += '</div>';
+          h += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);opacity:.7">';
+          h += '<span style="font-size:11px;color:var(--t3)">6. SL</span>';
+          h += '<span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--red);font-family:JetBrains Mono,monospace">' + st.answers.sl.toFixed(0) + '</span>';
+          h += '</div>';
+          var tp = st.answers.direction === 'buy' ? st.answers.entry + (st.answers.entry - st.answers.sl) * 2 : st.answers.entry - (st.answers.sl - st.answers.entry) * 2;
+          h += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);opacity:.7">';
+          h += '<span style="font-size:11px;color:var(--t3)">TP (auto 2×SL)</span>';
+          h += '<span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--green);font-family:JetBrains Mono,monospace">' + tp.toFixed(0) + '</span>';
+          h += '</div>';
+          h += '<div style="text-align:center;padding:14px 0">';
+          h += '<button class="btn btn-g" onclick="replayStartManagement()" style="padding:12px 24px;font-size:14px;font-weight:800">▶ Lancer le trade</button>';
+          h += '</div>';
+        }
+      }
+
+      /* Si shouldTrade === false, bouton debrief */
+      if (st.answers.shouldTrade === false) {
+        h += '<div style="text-align:center;padding:14px 0;border-top:1px solid var(--border)">';
+        h += '<button class="btn btn-g" onclick="replayShowDebrief()" style="padding:12px 24px;font-size:14px;font-weight:800">Voir le debrief →</button>';
+        h += '</div>';
+      }
+
+      h += '</div>';
+    } else if (st.phase === 'management') {
+      /* Phase gestion — sera implémentée en Phase 4 */
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">';
+      h += '<div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:8px">⚡ Trade en cours...</div>';
+      h += '<div style="font-size:12px;color:var(--t3)">Phase gestion (à venir Phase 4)</div>';
+      h += '</div>';
+    } else if (st.phase === 'debrief') {
+      /* Phase debrief — sera implémentée en Phase 5 */
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">';
+      h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px">📊 Debrief</div>';
+      h += '<div style="font-size:12px;color:var(--t3)">Phase debrief (à venir Phase 5)</div>';
+      h += '</div>';
+    }
+
     el.innerHTML = h;
 
+    /* Render chart avec niveaux dynamiques */
     var levels = [];
     if (st.metadata.supports) {
       st.metadata.supports.forEach(function(s) {
@@ -9169,13 +9301,74 @@ function rReplayScenario(el) {
         if (r.index < st.visibleCount) levels.push({ price: r.level, label: 'R', color: 'rgba(255,71,87,.4)', dash: [4, 4] });
       });
     }
+    /* Afficher entrée/SL/TP si renseignés */
+    if (st.answers.entry !== undefined) {
+      levels.push({ price: st.answers.entry, label: 'Entrée', color: 'rgba(212,160,23,.8)', dash: [6, 3] });
+    }
+    if (st.answers.sl !== undefined) {
+      levels.push({ price: st.answers.sl, label: 'SL', color: 'rgba(255,71,87,.8)', dash: [6, 3] });
+    }
+    if (st.answers.entry !== undefined && st.answers.sl !== undefined) {
+      var tpLvl = st.answers.direction === 'buy' ? st.answers.entry + (st.answers.entry - st.answers.sl) * 2 : st.answers.entry - (st.answers.sl - st.answers.entry) * 2;
+      levels.push({ price: tpLvl, label: 'TP', color: 'rgba(0,214,143,.8)', dash: [6, 3] });
+    }
 
-    renderCandleChart('replayCanvas', st.candles, {
+    var chartInfo = renderCandleChart('replayCanvas', st.candles, {
       endIdx: st.visibleCount,
       height: 350,
-      levels: levels
+      levels: levels,
+      selectedCandle: st.answers._selectedCandle
     });
+
+    /* Clic sur le canvas pour sélectionner bougie ou niveau */
+    if (chartInfo) {
+      var canvas = document.getElementById('replayCanvas');
+      if (canvas) {
+        canvas.onclick = function(e) {
+          try {
+            var rect = canvas.getBoundingClientRect();
+            var mouseX = e.clientX - rect.left;
+            var mouseY = e.clientY - rect.top;
+
+            /* Si on attend la liquidité → sélectionner une bougie */
+            if (st.phase === 'analysis' && st.answers.direction !== undefined && st.answers.liquidity === undefined) {
+              var candleIdx = chartInfo.candleAtX(mouseX);
+              if (candleIdx >= 0) {
+                replayAnswer('liquidity', candleIdx);
+              }
+              return;
+            }
+
+            /* Si on attend l'entrée → sélectionner un niveau prix */
+            if (st.phase === 'analysis' && st.answers.shouldTrade === true && st.answers.entry === undefined) {
+              var price = chartInfo.priceAtY(mouseY);
+              if (price > 0) {
+                replayAnswer('entry', Math.round(price * 100) / 100);
+              }
+              return;
+            }
+
+            /* Si on attend le SL → sélectionner un niveau prix */
+            if (st.phase === 'analysis' && st.answers.entry !== undefined && st.answers.sl === undefined) {
+              var slPrice = chartInfo.priceAtY(mouseY);
+              if (slPrice > 0) {
+                replayAnswer('sl', Math.round(slPrice * 100) / 100);
+              }
+              return;
+            }
+          } catch(err) { console.error('canvas click:', err) }
+        };
+      }
+    }
   } catch(e) { console.error('rReplayScenario:', e) }
+}
+
+function replayAnswer(key, value) {
+  try {
+    if (!_replayState) return;
+    _replayState.answers[key] = value;
+    rReplay();
+  } catch(e) {}
 }
 
 function replayNextCandle() {
@@ -9185,8 +9378,26 @@ function replayNextCandle() {
       _replayState.visibleCount++;
       rReplay();
     } else {
-      toast('Fin du scénario');
+      toast('Toutes les bougies affichées');
     }
+  } catch(e) {}
+}
+
+function replayStartManagement() {
+  try {
+    if (!_replayState) return;
+    _replayState.phase = 'management';
+    _replayState.visibleCount = _replayState.scenario.analysisCandles || _replayState.visibleCount;
+    rReplay();
+  } catch(e) {}
+}
+
+function replayShowDebrief() {
+  try {
+    if (!_replayState) return;
+    _replayState.phase = 'debrief';
+    _replayState.visibleCount = _replayState.candles.length;
+    rReplay();
   } catch(e) {}
 }
 
