@@ -9242,10 +9242,39 @@ function rReplayScenario(el) {
       h += '<div style="margin-top:12px"><button class="btn btn-o" onclick="replayTrail()" style="padding:8px 14px;font-size:11px;width:100%">🔄 Trail</button></div>';
       h += '</div>';
     } else if (st.phase === 'debrief') {
+      var scoreData = st.answers._score || { score: 0, details: [] };
+      var scoreCol = scoreData.score >= 80 ? 'var(--green)' : scoreData.score >= 50 ? 'var(--gold)' : 'var(--red)';
+
       h += '<div style="padding:10px 12px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px">Debrief</div>';
-      h += '<div style="padding:12px;text-align:center">';
-      h += '<div style="font-size:28px;margin-bottom:8px">📊</div>';
-      h += '<div style="font-size:12px;color:var(--t1);font-weight:700">Debrief (à venir)</div>';
+
+      /* Score */
+      h += '<div style="padding:16px 12px;text-align:center;border-bottom:1px solid var(--border)">';
+      h += '<div style="font-size:36px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + scoreCol + '">' + scoreData.score + '</div>';
+      h += '<div style="font-size:10px;color:var(--t3)">/100</div>';
+      if (st.answers._tradeResult) {
+        var resIcon = st.answers._tradeResult.result === 'TP' ? '✅' : st.answers._tradeResult.result === 'SL' ? '📉' : '⏰';
+        h += '<div style="font-size:11px;color:var(--t2);margin-top:6px">' + resIcon + ' ' + st.answers._tradeResult.result + ' à la bougie #' + (st.answers._tradeResult.candle + 1) + '</div>';
+      }
+      h += '</div>';
+
+      /* Détails ligne par ligne */
+      scoreData.details.forEach(function(d) {
+        var ok = d.pts === d.max;
+        h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--border);font-size:10px">';
+        h += '<span style="color:var(--t3)">' + d.label + '</span>';
+        h += '<div style="display:flex;align-items:center;gap:6px">';
+        h += '<span style="color:' + (ok ? 'var(--green)' : 'var(--red)') + ';font-weight:600">' + d.yours + '</span>';
+        if (!ok) h += '<span style="color:var(--t3);font-size:9px">→ ' + d.correct + '</span>';
+        h += '<span style="font-family:JetBrains Mono,monospace;color:' + (ok ? 'var(--green)' : 'var(--red)') + ';min-width:28px;text-align:right">' + d.pts + '/' + d.max + '</span>';
+        h += '</div></div>';
+      });
+
+      /* Boutons */
+      h += '<div style="padding:10px 12px;display:grid;gap:6px">';
+      h += '<button class="btn btn-g" onclick="startReplayScenario(' + sc.id + ')" style="padding:8px;font-size:11px;width:100%">🔄 Rejouer</button>';
+      var nextId = sc.id < REPLAY_SCENARIOS.length ? sc.id + 1 : null;
+      if (nextId) h += '<button class="btn btn-o" onclick="startReplayScenario(' + nextId + ')" style="padding:8px;font-size:11px;width:100%">Suivant →</button>';
+      h += '<button class="btn btn-o" onclick="_replayState=null;rReplay()" style="padding:8px;font-size:11px;width:100%">← Liste</button>';
       h += '</div>';
     }
 
@@ -9363,6 +9392,28 @@ function rReplayScenario(el) {
 /* ─── Auto-play helpers ─── */
 var _replayTimer = null;
 
+function replayCheckTPSL() {
+  try {
+    if (!_replayState || !_replayState.answers.entry || !_replayState.answers.sl) return null;
+    var st = _replayState;
+    var candle = st.candles[st.visibleCount - 1];
+    if (!candle) return null;
+    var entry = st.answers.entry;
+    var sl = st.answers.sl;
+    var tp = st.answers.direction === 'buy' ? entry + (entry - sl) * 2 : entry - (sl - entry) * 2;
+    var trailSL = st.answers._activeTrailSL || null;
+
+    if (st.answers.direction === 'buy') {
+      if (candle.low <= (trailSL || sl)) return { result: 'SL', price: trailSL || sl, candle: st.visibleCount - 1 };
+      if (candle.high >= tp) return { result: 'TP', price: tp, candle: st.visibleCount - 1 };
+    } else {
+      if (candle.high >= (trailSL || sl)) return { result: 'SL', price: trailSL || sl, candle: st.visibleCount - 1 };
+      if (candle.low <= tp) return { result: 'TP', price: tp, candle: st.visibleCount - 1 };
+    }
+    return null;
+  } catch(e) { return null }
+}
+
 function replayPausePlay() {
   try {
     if (!_replayState) return;
@@ -9376,11 +9427,24 @@ function replayPausePlay() {
         if (!_replayState || !_replayState._autoPlaying) { clearInterval(_replayTimer); return }
         if (_replayState.visibleCount < _replayState.candles.length) {
           _replayState.visibleCount++;
+          /* Vérifier TP/SL */
+          var hit = replayCheckTPSL();
+          if (hit) {
+            clearInterval(_replayTimer);
+            _replayState._autoPlaying = false;
+            _replayState.answers._tradeResult = hit;
+            toast(hit.result === 'TP' ? '✅ TP touché !' : '📉 SL touché');
+            setTimeout(function() { replayShowDebrief() }, 1500);
+            rReplay();
+            return;
+          }
           rReplay();
         } else {
           clearInterval(_replayTimer);
           _replayState._autoPlaying = false;
-          toast('Fin du scénario');
+          _replayState.answers._tradeResult = { result: '21h', price: _replayState.candles[_replayState.candles.length - 1].close, candle: _replayState.candles.length - 1 };
+          toast('⏰ Fin du scénario — fermeture 21h');
+          setTimeout(function() { replayShowDebrief() }, 1500);
           rReplay();
         }
       }, 1000 / (_replayState._speed || 1));
@@ -9399,6 +9463,16 @@ function replaySetSpeed(s) {
         if (!_replayState || !_replayState._autoPlaying) { clearInterval(_replayTimer); return }
         if (_replayState.visibleCount < _replayState.candles.length) {
           _replayState.visibleCount++;
+          var hit = replayCheckTPSL();
+          if (hit) {
+            clearInterval(_replayTimer);
+            _replayState._autoPlaying = false;
+            _replayState.answers._tradeResult = hit;
+            toast(hit.result === 'TP' ? '✅ TP touché !' : '📉 SL touché');
+            setTimeout(function() { replayShowDebrief() }, 1500);
+            rReplay();
+            return;
+          }
           rReplay();
         } else {
           clearInterval(_replayTimer);
@@ -9413,10 +9487,21 @@ function replaySetSpeed(s) {
 
 function replayTrail() {
   try {
-    if (!_replayState) return;
+    if (!_replayState || !_replayState.answers.entry) return;
     if (!_replayState.answers._trails) _replayState.answers._trails = [];
     _replayState.answers._trails.push(_replayState.visibleCount);
-    toast('Trail déclenché à la bougie #' + _replayState.visibleCount);
+    /* Calculer nouveau SL trailing : mèche extrême des 3 dernières bougies + 40 pts */
+    var st = _replayState;
+    var recent = st.candles.slice(Math.max(0, st.visibleCount - 3), st.visibleCount);
+    if (st.answers.direction === 'buy') {
+      var lowWick = Math.min.apply(null, recent.map(function(c) { return c.low }));
+      st.answers._activeTrailSL = lowWick - 40;
+    } else {
+      var highWick = Math.max.apply(null, recent.map(function(c) { return c.high }));
+      st.answers._activeTrailSL = highWick + 40;
+    }
+    toast('Trail → SL déplacé à ' + st.answers._activeTrailSL.toFixed(0));
+    rReplay();
   } catch(e) {}
 }
 
@@ -9444,18 +9529,128 @@ function replayStartManagement() {
   try {
     if (!_replayState) return;
     _replayState.phase = 'management';
+    _replayState._speed = 1;
+    _replayState._autoPlaying = false;
     _replayState.visibleCount = _replayState.scenario.analysisCandles || _replayState.visibleCount;
     rReplay();
+    /* Auto-démarrer le play après rendu */
+    setTimeout(function() { replayPausePlay() }, 500);
   } catch(e) {}
 }
 
 function replayShowDebrief() {
   try {
     if (!_replayState) return;
+    clearInterval(_replayTimer);
+    _replayState._autoPlaying = false;
     _replayState.phase = 'debrief';
     _replayState.visibleCount = _replayState.candles.length;
+    /* Calculer le score */
+    _replayState.answers._score = replayCalcScore();
+    /* Sauver la progression */
+    replaySaveProgress();
     rReplay();
   } catch(e) {}
+}
+
+function replayCalcScore() {
+  try {
+    var st = _replayState;
+    var sc = st.scenario;
+    var correct = sc.correct;
+    var answers = st.answers;
+    var score = 0;
+    var details = [];
+
+    /* Direction (15 pts) */
+    var dirOk = answers.direction === correct.direction;
+    score += dirOk ? 15 : 0;
+    details.push({ label: 'Direction', yours: answers.direction === 'buy' ? 'Buy' : 'Sell', correct: correct.direction === 'buy' ? 'Buy' : 'Sell', pts: dirOk ? 15 : 0, max: 15 });
+
+    /* Setup (15 pts) */
+    var setupOk = answers.setup === correct.setup;
+    score += setupOk ? 15 : 0;
+    var setupLabels = { qm: 'QM', gaps: 'Gaps', none: 'Aucun' };
+    details.push({ label: 'Setup', yours: setupLabels[answers.setup] || '—', correct: setupLabels[correct.setup] || '—', pts: setupOk ? 15 : 0, max: 15 });
+
+    /* Décision (15 pts) */
+    var decisionOk = answers.shouldTrade === correct.shouldTrade;
+    score += decisionOk ? 15 : 0;
+    details.push({ label: 'Décision', yours: answers.shouldTrade ? 'Trade' : 'Attendre', correct: correct.shouldTrade ? 'Trade' : 'Attendre', pts: decisionOk ? 15 : 0, max: 15 });
+
+    /* Liquidité (10 pts) */
+    var liqOk = false;
+    if (st.metadata.liquidities && st.metadata.liquidities.length && answers.liquidity !== undefined) {
+      var closestLiq = st.metadata.liquidities[0];
+      liqOk = Math.abs(answers.liquidity - closestLiq.index) <= 2;
+    } else if (!st.metadata.liquidities.length && answers.liquidity === -1) {
+      liqOk = true;
+    }
+    score += liqOk ? 10 : 0;
+    details.push({ label: 'Liquidité', yours: answers.liquidity === -1 ? 'Aucune' : '#' + (answers.liquidity + 1), correct: st.metadata.liquidities.length ? '#' + (st.metadata.liquidities[0].index + 1) : 'Aucune', pts: liqOk ? 10 : 0, max: 10 });
+
+    if (correct.shouldTrade && answers.shouldTrade) {
+      /* Entrée (15 pts) — tolérance ±50 pts */
+      var entryOk = false;
+      if (answers.entry !== undefined && st.metadata.entryLevel) {
+        entryOk = Math.abs(answers.entry - st.metadata.entryLevel) <= 50;
+      }
+      score += entryOk ? 15 : 0;
+      details.push({ label: 'Entrée', yours: answers.entry ? answers.entry.toFixed(0) : '—', correct: st.metadata.entryLevel ? st.metadata.entryLevel.toFixed(0) : '—', pts: entryOk ? 15 : 0, max: 15 });
+
+      /* SL (15 pts) — tolérance ±30 pts */
+      var slOk = false;
+      if (answers.sl !== undefined && st.metadata.slLevel) {
+        slOk = Math.abs(answers.sl - st.metadata.slLevel) <= 30;
+      }
+      score += slOk ? 15 : 0;
+      details.push({ label: 'SL', yours: answers.sl ? answers.sl.toFixed(0) : '—', correct: st.metadata.slLevel ? st.metadata.slLevel.toFixed(0) : '—', pts: slOk ? 15 : 0, max: 15 });
+
+      /* Trailing (15 pts si applicable) */
+      if (correct.trailAt) {
+        var trailOk = answers._trails && answers._trails.length > 0;
+        score += trailOk ? 15 : 0;
+        details.push({ label: 'Trailing', yours: trailOk ? 'Oui (#' + answers._trails[0] + ')' : 'Non', correct: 'Oui', pts: trailOk ? 15 : 0, max: 15 });
+      }
+    } else if (!correct.shouldTrade && !answers.shouldTrade) {
+      /* Bon refus — bonus 40 pts redistribués */
+      score += 40;
+      details.push({ label: 'Refus correct', yours: '✓', correct: '✓', pts: 40, max: 40 });
+    }
+
+    /* Filtre respecté (5 pts si applicable) */
+    if (sc.filters.newsUSD || sc.filters.after21h) {
+      var filterOk = !answers.shouldTrade || (sc.filters.after21h && answers._tradeResult && answers._tradeResult.result === '21h');
+      if (sc.filters.newsUSD && !answers.shouldTrade) filterOk = true;
+      score += filterOk ? 5 : 0;
+      details.push({ label: 'Filtre', yours: filterOk ? 'Respecté' : 'Ignoré', correct: 'Respecté', pts: filterOk ? 5 : 0, max: 5 });
+    }
+
+    /* Normaliser sur 100 */
+    var maxPts = details.reduce(function(a, d) { return a + d.max }, 0);
+    var normalized = maxPts > 0 ? Math.round(score / maxPts * 100) : 0;
+
+    return { score: normalized, details: details, raw: score, max: maxPts };
+  } catch(e) { console.error('replayCalcScore:', e); return { score: 0, details: [], raw: 0, max: 100 } }
+}
+
+function replaySaveProgress() {
+  try {
+    var st = _replayState;
+    var raw = localStorage.getItem('enz_v4');
+    var data = raw ? JSON.parse(raw) : {};
+    if (!data.replayProgress) data.replayProgress = { completed: [], scores: {}, bestScores: {}, attempts: {} };
+    var p = data.replayProgress;
+    var id = st.scenario.id;
+    var sc = st.answers._score ? st.answers._score.score : 0;
+
+    if (p.completed.indexOf(id) === -1) p.completed.push(id);
+    p.scores[id] = sc;
+    p.attempts[id] = (p.attempts[id] || 0) + 1;
+    if (!p.bestScores[id] || sc > p.bestScores[id]) p.bestScores[id] = sc;
+
+    localStorage.setItem('enz_v4', JSON.stringify(data));
+  } catch(e) { console.error('replaySaveProgress:', e) }
 }
 
 /* ═══════════════════════════════════════════════════════
