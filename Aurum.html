@@ -10310,21 +10310,7 @@ try{if(window.self!==window.top){
     ]}
   ];
 
-  /* Progressive disclosure : masquer les tabs avancés si peu de trades */
-  var _totalTrades = D.live.length;
-  if (_totalTrades < 10) {
-    /* Masquer Analyser sauf Historique */
-    var analyserGrp = groups.find(function(g) { return g.id === 'analyser' });
-    if (analyserGrp) analyserGrp.pages = [{p:'hist',l:'Historique'}];
-    /* Masquer Système */
-    var systemeGrp = groups.find(function(g) { return g.id === 'systeme' });
-    if (systemeGrp) systemeGrp.pages = [];
-    /* Masquer Comptes si 1 seul compte */
-    if (D.accounts.length <= 1) {
-      var comptesGrp = groups.find(function(g) { return g.id === 'comptes' });
-      if (comptesGrp) comptesGrp.pages = [];
-    }
-  }
+  /* Progressive disclosure désactivée — tous les tabs visibles */
 
   var activeGroup = 'dash';
 
