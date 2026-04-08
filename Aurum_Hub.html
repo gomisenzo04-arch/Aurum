@@ -322,7 +322,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
     <div style="font-size:14px">💾</div>
     <div style="flex:1;font-size:12px" id="backupStatus"></div>
     <button class="bb bb-gold" onclick="exportAll()" style="flex:none;padding:8px 14px;font-size:11px">Exporter</button>
-    <label class="bb bb-outline" style="flex:none;padding:8px 14px;font-size:11px;cursor:pointer">Importer<input type="file" accept=".json" style="display:none" onchange="importAll(event)"></label>
+    <label class="bb bb-outline" style="flex:none;padding:8px 14px;font-size:11px;cursor:pointer">Importer<input type="file" accept=".json" multiple style="display:none" onchange="importAll(event)"></label>
   </div>
   <div style="text-align:center;font-size:10px;color:var(--t3);padding:8px 0">
     Aurum Écosystème · <span id="dataSize"></span>
@@ -451,6 +451,32 @@ function loadHub(){
     renderUniverses();
     renderCoach();
     renderBackup();
+
+    /* Notification navigateur si backup > 7 jours */
+    try {
+      var bkDays = getLastBackupDays();
+      var worst = Math.max(bkDays.journal, bkDays.capital);
+      if (worst > 7 && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('Aurum — Backup requis', {
+            body: 'Dernier backup il y a ' + (worst === 999 ? 'jamais' : worst + ' jours') + '. Exporte tes données maintenant.',
+            icon: 'icons/icon-192.svg',
+            tag: 'aurum-backup-reminder'
+          });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(function(perm) {
+            if (perm === 'granted') {
+              new Notification('Aurum — Backup requis', {
+                body: 'Dernier backup il y a ' + (worst === 999 ? 'jamais' : worst + ' jours') + '. Exporte tes données maintenant.',
+                icon: 'icons/icon-192.svg',
+                tag: 'aurum-backup-reminder'
+              });
+            }
+          });
+        }
+      }
+    } catch(notifErr) {}
+
     renderDataSize();
 
     /* Fade-in séquentiel (max 400ms total) */
@@ -1159,40 +1185,195 @@ function exportAll(){
 
 function importAll(event){
   try{
-    var file=event.target.files[0];
-    if(!file) return;
-    var reader=new FileReader();
-    reader.onload=function(e){
-      try{
-        var backup=JSON.parse(e.target.result);
-        if(!backup._version){
-          /* Ancien format (fichier unique Journal ou Capital) */
-          if(backup.accounts||backup.live){
-            if(confirm('Fichier Journal détecté. Importer ?')){
-              localStorage.setItem('enz_v4',JSON.stringify(backup));
-            }
-          }else if(backup.payouts||backup.portfolio){
-            if(confirm('Fichier Capital détecté. Importer ?')){
-              localStorage.setItem('aurum_capital_v1',JSON.stringify(backup));
+    var files=event.target.files;
+    if(!files||!files.length) return;
+    var fileCount=files.length;
+    var parsed=[];
+    var loaded=0;
+    for(var fi=0;fi<fileCount;fi++){
+      (function(f){
+        var reader=new FileReader();
+        reader.onload=function(e){
+          try{ parsed.push({name:f.name, data:JSON.parse(e.target.result)}) }
+          catch(err){ parsed.push({name:f.name, data:null, error:err.message}) }
+          loaded++;
+          if(loaded===fileCount) mergeAllBackups(parsed);
+        };
+        reader.readAsText(f);
+      })(files[fi]);
+    }
+  }catch(e){console.error('importAll:',e)}
+}
+
+function mergeAllBackups(files){
+  try{
+    var validFiles=files.filter(function(f){return f.data!==null});
+    var errorFiles=files.filter(function(f){return f.data===null});
+    if(errorFiles.length){
+      alert('Fichiers invalides : '+errorFiles.map(function(f){return f.name+' ('+f.error+')'}).join(', '));
+    }
+    if(!validFiles.length) return;
+
+    /* Normaliser chaque fichier en format unifié */
+    var backups=validFiles.map(function(f){
+      var d=f.data;
+      if(d._version){
+        return {journal:d.journal||null, capital:d.capital||null, formation:d.formation||null, streak:d.streak||null, date:d._date||''};
+      }else if(d.accounts||d.live){
+        return {journal:d, capital:null, formation:null, streak:null, date:''};
+      }else if(d.payouts||d.portfolio){
+        return {journal:null, capital:d, formation:null, streak:null, date:''};
+      }else if(d.c!==undefined&&d.d){
+        return {journal:null, capital:null, formation:d, streak:null, date:''};
+      }
+      return {journal:null, capital:null, formation:null, streak:null, date:''};
+    });
+
+    /* Trier par date (plus ancien d'abord) */
+    backups.sort(function(a,b){return(a.date||'').localeCompare(b.date||'')});
+
+    /* Fusionner Journal */
+    var mergedJournal=null;
+    backups.forEach(function(bk){
+      if(!bk.journal) return;
+      if(!mergedJournal){mergedJournal=JSON.parse(JSON.stringify(bk.journal));return}
+      var src=bk.journal;
+      if(src.accounts){
+        src.accounts.forEach(function(srcAcc){
+          var existing=mergedJournal.accounts.find(function(a){return a.id===srcAcc.id||a.name===srcAcc.name});
+          if(!existing){ mergedJournal.accounts.push(srcAcc) }
+          else{
+            if((srcAcc.bal||0)!==(existing.bal||0)) existing.bal=srcAcc.bal;
+            if(srcAcc.trades){
+              var existingTs={};
+              (existing.trades||[]).forEach(function(t){if(t.ts)existingTs[t.ts]=true});
+              srcAcc.trades.forEach(function(t){
+                if(t.ts&&!existingTs[t.ts]){
+                  if(!existing.trades)existing.trades=[];
+                  existing.trades.push(t);
+                }
+              });
             }
           }
-          return;
-        }
-        /* Nouveau format unifié */
-        var parts=[];
-        if(backup.journal) parts.push('Journal');
-        if(backup.capital) parts.push('Capital');
-        if(backup.formation) parts.push('Formation');
-        if(!confirm('Importer le backup du '+backup._date.slice(0,10)+' ?\nContient : '+parts.join(', ')+'\n\nCela remplacera vos données actuelles.')) return;
-        if(backup.journal) localStorage.setItem('enz_v4',JSON.stringify(backup.journal));
-        if(backup.capital) localStorage.setItem('aurum_capital_v1',JSON.stringify(backup.capital));
-        if(backup.formation) localStorage.setItem('aurum_formation_v1',JSON.stringify(backup.formation));
-        if(backup.streak) localStorage.setItem('aurum_streak',JSON.stringify(backup.streak));
-        location.reload();
-      }catch(err){alert('Fichier invalide : '+err.message)}
-    };
-    reader.readAsText(file);
-  }catch(e){console.error(e)}
+        });
+      }
+      if(src.live){
+        var existingTs={};
+        (mergedJournal.live||[]).forEach(function(t){if(t.ts)existingTs[t.ts]=true});
+        src.live.forEach(function(t){
+          if(t.ts&&!existingTs[t.ts]){
+            if(!mergedJournal.live)mergedJournal.live=[];
+            mergedJournal.live.push(t);
+          }
+        });
+      }
+      if(src.reviews){
+        var existingRts={};
+        (mergedJournal.reviews||[]).forEach(function(r){if(r.ts)existingRts[r.ts]=true});
+        src.reviews.forEach(function(r){
+          if(r.ts&&!existingRts[r.ts]){
+            if(!mergedJournal.reviews)mergedJournal.reviews=[];
+            mergedJournal.reviews.push(r);
+          }
+        });
+      }
+      if(src.accountGroups) mergedJournal.accountGroups=src.accountGroups;
+    });
+
+    /* Fusionner Capital */
+    var mergedCapital=null;
+    backups.forEach(function(bk){
+      if(!bk.capital) return;
+      if(!mergedCapital){mergedCapital=JSON.parse(JSON.stringify(bk.capital));return}
+      var src=bk.capital;
+      if(src.payouts){
+        var existingIds={};
+        (mergedCapital.payouts||[]).forEach(function(p){if(p.id)existingIds[p.id]=true});
+        src.payouts.forEach(function(p){if(p.id&&!existingIds[p.id]){mergedCapital.payouts.push(p)}});
+      }
+      if(src.propfirms){
+        var existingPfIds={};
+        (mergedCapital.propfirms||[]).forEach(function(p){if(p.id)existingPfIds[p.id]=true});
+        src.propfirms.forEach(function(p){if(p.id&&!existingPfIds[p.id]){mergedCapital.propfirms.push(p)}});
+      }
+      if(src.portfolio){
+        var existingInvIds={};
+        (mergedCapital.portfolio||[]).forEach(function(p){existingInvIds[p.id||p.name]=true});
+        src.portfolio.forEach(function(p){if(!existingInvIds[p.id||p.name]){mergedCapital.portfolio.push(p)}});
+      }
+      if(src.entities){
+        var existingEntIds={};
+        (mergedCapital.entities||[]).forEach(function(e){if(e.id)existingEntIds[e.id]=true});
+        src.entities.forEach(function(e){if(e.id&&!existingEntIds[e.id]){mergedCapital.entities.push(e)}});
+      }
+      if(src.expenses){
+        var existingExpKeys={};
+        (mergedCapital.expenses||[]).forEach(function(e){existingExpKeys[(e.month||'')+'_'+(e.category||'')+'_'+(e.amount||0)]=true});
+        src.expenses.forEach(function(e){
+          var key=(e.month||'')+'_'+(e.category||'')+'_'+(e.amount||0);
+          if(!existingExpKeys[key]){mergedCapital.expenses.push(e);existingExpKeys[key]=true}
+        });
+      }
+      if(src.passifs){
+        var existingPasIds={};
+        (mergedCapital.passifs||[]).forEach(function(p){existingPasIds[p.id||p.name]=true});
+        src.passifs.forEach(function(p){if(!existingPasIds[p.id||p.name]){mergedCapital.passifs.push(p)}});
+      }
+      if(src.abonnements){
+        var existingAboNames={};
+        (mergedCapital.abonnements||[]).forEach(function(a){existingAboNames[a.name||a.label]=true});
+        src.abonnements.forEach(function(a){if(!existingAboNames[a.name||a.label]){mergedCapital.abonnements.push(a)}});
+      }
+      if(src.categories){
+        src.categories.forEach(function(c){
+          if(mergedCapital.categories.indexOf(c)===-1)mergedCapital.categories.push(c);
+        });
+      }
+      if(src.history) mergedCapital.history=src.history;
+    });
+
+    /* Fusionner Formation : prendre celle avec le plus de modules */
+    var mergedFormation=null;
+    backups.forEach(function(bk){
+      if(!bk.formation) return;
+      if(!mergedFormation||(bk.formation.d||[]).length>(mergedFormation.d||[]).length){
+        mergedFormation=bk.formation;
+      }
+    });
+
+    /* Streak : prendre le plus récent */
+    var mergedStreak=null;
+    backups.forEach(function(bk){ if(bk.streak) mergedStreak=bk.streak });
+
+    /* Résumé */
+    var parts=[];
+    if(mergedJournal){
+      var tradeCount=(mergedJournal.live||[]).length;
+      var accCount=(mergedJournal.accounts||[]).length;
+      parts.push('Journal ('+accCount+' comptes, '+tradeCount+' trades)');
+    }
+    if(mergedCapital){
+      var payCount=(mergedCapital.payouts||[]).length;
+      parts.push('Capital ('+payCount+' payouts)');
+    }
+    if(mergedFormation){
+      parts.push('Formation ('+(mergedFormation.d||[]).length+' modules)');
+    }
+    if(!parts.length){alert('Aucune donnée exploitable dans les fichiers.');return}
+
+    var msg='Fusion de '+validFiles.length+' fichier(s) :\n\n'+parts.join('\n')+'\n\nCela remplacera vos données actuelles. Continuer ?';
+    if(!confirm(msg)) return;
+
+    if(mergedJournal) localStorage.setItem('enz_v4',JSON.stringify(mergedJournal));
+    if(mergedCapital) localStorage.setItem('aurum_capital_v1',JSON.stringify(mergedCapital));
+    if(mergedFormation) localStorage.setItem('aurum_formation_v1',JSON.stringify(mergedFormation));
+    if(mergedStreak) localStorage.setItem('aurum_streak',JSON.stringify(mergedStreak));
+    localStorage.setItem('aurum_backup_journal',new Date().toISOString());
+    localStorage.setItem('aurum_backup_capital',new Date().toISOString());
+
+    alert('✅ '+validFiles.length+' fichier(s) fusionnés avec succès');
+    location.reload();
+  }catch(e){alert('Erreur de fusion : '+e.message);console.error('mergeAllBackups:',e)}
 }
 
 function toggleGuide(){
