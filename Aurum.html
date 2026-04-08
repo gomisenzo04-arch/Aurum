@@ -2202,6 +2202,17 @@ function _l() {
         _s();
       }
       if (!D.activeAcc && D.accounts.length) D.activeAcc = D.accounts[0].id;
+      /* Restaurer dernière cible si persistée */
+      if (d.lastTarget) {
+        if (d.lastTarget === 'all' || D.accounts.some(function(a) { return a.id === d.lastTarget })) {
+          D.activeAcc = d.lastTarget;
+        } else if (d.lastTarget.startsWith('ag_')) {
+          var grps = loadAccountGroups();
+          if (grps.some(function(g) { return g.id === d.lastTarget })) {
+            D.activeAcc = d.lastTarget;
+          }
+        }
+      }
     }
   } catch(e) {}
 }
