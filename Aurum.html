@@ -8185,6 +8185,24 @@ function testPhase05() {
     if (el.innerHTML.indexOf('UITest') !== -1) throw new Error('group still rendered after delete');
   });
 
+  test('selectTarget persiste dans enz_v4.lastTarget', function() {
+    var origAcc = D.activeAcc;
+    selectTarget(D.accounts[0].id);
+    var raw = JSON.parse(localStorage.getItem('enz_v4'));
+    if (raw.lastTarget !== D.accounts[0].id) throw new Error('lastTarget not persisted');
+    D.activeAcc = origAcc;
+  });
+
+  test('selectTarget avec groupe', function() {
+    if (D.accounts.length < 2) { results.push('⊘ selectTarget group: need 2+ accounts'); return }
+    var ids = D.accounts.slice(0, 2).map(function(a) { return a.id });
+    var g = createAccountGroup('SelTest', 'PARALLEL', ids);
+    selectTarget(g.id);
+    if (D.activeAcc !== g.id) throw new Error('activeAcc not set to group');
+    deleteAccountGroup(g.id);
+    selectTarget(D.accounts[0].id);
+  });
+
   console.log('\n=== PHASE 0.5 TESTS ===');
   results.forEach(function(r) { console.log(r) });
   var pass = results.filter(function(r) { return r.startsWith('✓') }).length;
