@@ -8063,6 +8063,156 @@ function addJPO(){try{var dt=document.getElementById('jpo-d').value;var b=parseF
 function rJPO(){try{var d=_loadCap();var el=document.getElementById('jpoList');var sum=document.getElementById('jpoSum');if(!el)return;if(!d.payouts||!d.payouts.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">Aucun payout. Clique + Payout.</div>';if(sum)sum.innerHTML='';return}var t=0;var h='<div style="display:grid;gap:4px">';d.payouts.sort(function(a,b){return(b.date||'').localeCompare(a.date||'')}).forEach(function(p){t+=p.net||0;h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:12px"><span style="color:var(--t3);font-family:JetBrains Mono,monospace;font-size:11px">'+p.date+'</span><span style="flex:1;color:var(--t2)">'+p.source+'</span><span style="font-weight:700;color:var(--green);font-family:JetBrains Mono,monospace">'+_fm(p.net)+'</span><button class="btn btn-o" style="font-size:10px;padding:4px 8px;color:var(--red)" onclick="delJPO(\''+p.id+'\')">×</button></div>'});h+='</div>';el.innerHTML=h;if(sum)sum.innerHTML='<div style="text-align:center;padding:12px;background:rgba(0,214,143,.06);border-radius:8px;margin-bottom:10px"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px">Total Payouts</div><div style="font-size:24px;font-weight:800;color:var(--green);font-family:JetBrains Mono,monospace">'+_fm(t)+'</div></div>'}catch(e){console.error(e)}}
 function delJPO(id){try{if(!confirm('Supprimer ?'))return;var d=_loadCap();d.payouts=d.payouts.filter(function(p){return p.id!==id});_saveCap(d);rJPO();toast('Supprimé')}catch(e){}}
 
+/* ═══════════════════════════════════════════════════════
+   GROUPES LIÉS — UI Stub
+   ═══════════════════════════════════════════════════════ */
+
+function tgGrpForm(editId) {
+  try {
+    var el = document.getElementById('grpForm');
+    if (!el) return;
+    var isOpen = el.style.display !== 'none';
+
+    if (editId) {
+      /* Mode édition : pré-remplir */
+      var groups = loadAccountGroups();
+      var g = groups.find(function(x) { return x.id === editId });
+      if (!g) return;
+      el.style.display = 'block';
+      document.getElementById('grp-n').value = g.name;
+      document.getElementById('grp-t').value = g.type;
+      el.setAttribute('data-edit', editId);
+      renderAccPicker(g.accountIds);
+    } else if (isOpen) {
+      el.style.display = 'none';
+      el.removeAttribute('data-edit');
+      document.getElementById('grp-n').value = '';
+    } else {
+      el.style.display = 'block';
+      el.removeAttribute('data-edit');
+      document.getElementById('grp-n').value = '';
+      renderAccPicker([]);
+    }
+  } catch(e) { console.error('tgGrpForm:', e) }
+}
+
+function renderAccPicker(selectedIds) {
+  try {
+    var el = document.getElementById('grpAccPicker');
+    if (!el) return;
+    var accs = D.accounts || [];
+    if (!accs.length) {
+      el.innerHTML = '<div style="font-size:11px;color:var(--t3)">Aucun compte — crée d\'abord un compte dans Mes comptes.</div>';
+      return;
+    }
+    var h = '<div style="font-size:11px;color:var(--t3);margin-bottom:6px">Sélectionne les comptes du groupe :</div>';
+    h += '<div style="display:grid;gap:4px">';
+    accs.forEach(function(a) {
+      var checked = selectedIds.indexOf(a.id) >= 0 ? ' checked' : '';
+      h += '<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;color:var(--t2)">';
+      h += '<input type="checkbox" class="grp-acc-cb" value="' + a.id + '"' + checked + '>';
+      h += '<span>' + (a.name || 'Sans nom') + '</span>';
+      h += '<span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--t3)">$' + (a.bal || 0).toLocaleString() + '</span>';
+      h += '</label>';
+    });
+    h += '</div>';
+    el.innerHTML = h;
+  } catch(e) { console.error('renderAccPicker:', e) }
+}
+
+function addGroup() {
+  try {
+    var nameEl = document.getElementById('grp-n');
+    var name = nameEl.value.trim();
+    if (!name) { toast('Nom requis'); return; }
+
+    var type = document.getElementById('grp-t').value;
+    var cbs = document.querySelectorAll('.grp-acc-cb:checked');
+    var ids = [];
+    cbs.forEach(function(cb) { ids.push(cb.value) });
+    if (ids.length < 2) { toast('Sélectionne au moins 2 comptes'); return; }
+
+    var formEl = document.getElementById('grpForm');
+    var editId = formEl.getAttribute('data-edit');
+
+    if (editId) {
+      updateAccountGroup(editId, { name: name, type: type, accountIds: ids });
+      toast('Groupe modifié');
+    } else {
+      createAccountGroup(name, type, ids);
+      toast('Groupe créé');
+    }
+
+    formEl.style.display = 'none';
+    formEl.removeAttribute('data-edit');
+    nameEl.value = '';
+    rGroups();
+  } catch(e) { console.error('addGroup:', e) }
+}
+
+function delGroup(id) {
+  try {
+    if (!confirm('Supprimer ce groupe ?')) return;
+    deleteAccountGroup(id);
+    rGroups();
+    toast('Groupe supprimé');
+  } catch(e) { console.error('delGroup:', e) }
+}
+
+function rGroups() {
+  try {
+    var el = document.getElementById('grpList');
+    if (!el) return;
+    var groups = loadAccountGroups();
+
+    if (!groups.length) {
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--t3);font-size:12px">' +
+        'Aucun groupe.<br>Un groupe lie plusieurs comptes pour trader en parallèle ou en mirror.' +
+        '</div>';
+      return;
+    }
+
+    var typeIco = { 'MIRROR': '🔗', 'PARALLEL': '⚡' };
+    var typeLabel = { 'MIRROR': 'Mirror', 'PARALLEL': 'Parallel' };
+    var h = '<div style="display:grid;gap:8px">';
+
+    groups.forEach(function(g) {
+      var ico = typeIco[g.type] || '';
+      var lbl = typeLabel[g.type] || g.type;
+      var accNames = g.accountIds.map(function(id) {
+        var acc = D.accounts.find(function(a) { return a.id === id });
+        return acc ? acc.name : '(supprimé)';
+      });
+
+      h += '<div style="padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)">';
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
+      h += '<div style="display:flex;align-items:center;gap:8px">';
+      h += '<span style="font-size:16px">' + ico + '</span>';
+      h += '<b style="color:var(--t1);font-size:13px">' + g.name + '</b>';
+      h += '<span style="font-size:10px;padding:2px 8px;background:var(--bg3);border-radius:4px;color:var(--t3)">' + lbl + '</span>';
+      h += '</div>';
+      h += '<div style="display:flex;gap:4px">';
+      h += '<button class="btn btn-o" style="font-size:10px;padding:4px 8px" onclick="tgGrpForm(\'' + g.id + '\')">✎</button>';
+      h += '<button class="btn btn-o" style="font-size:10px;padding:4px 8px;color:var(--red)" onclick="delGroup(\'' + g.id + '\')">×</button>';
+      h += '</div></div>';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      accNames.forEach(function(n) {
+        h += '<span style="font-size:10px;padding:3px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--t2)">' + n + '</span>';
+      });
+      h += '</div>';
+      if (g.type === 'MIRROR' && g.mirrorPolicy) {
+        var pol = g.mirrorPolicy.lotCalculation === 'SAME_PERCENT_RISK' ? 'Même % risque' :
+                  g.mirrorPolicy.lotCalculation === 'SAME_DOLLAR_RISK' ? 'Même $ risque' : 'Par compte';
+        h += '<div style="font-size:10px;color:var(--t3);margin-top:6px">Lot : ' + pol + ' · Sync entrées : ' + (g.mirrorPolicy.syncEntries ? '✓' : '✗') + ' · Sync sorties : ' + (g.mirrorPolicy.syncExits ? '✓' : '✗') + '</div>';
+      }
+      h += '</div>';
+    });
+
+    h += '</div>';
+    el.innerHTML = h;
+  } catch(e) { console.error('rGroups:', e) }
+}
+
 /* ─── Détection iframe + création navigation 2 niveaux ─── */
 try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');
