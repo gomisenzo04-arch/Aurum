@@ -1558,6 +1558,11 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 <div id="sessHistView"></div>
 </div>
 
+<!-- COMPARAISON COMPTES -->
+<div class="panel" id="compare">
+<div id="compareView"></div>
+</div>
+
 <!-- REPLAY MODE -->
 <div class="panel" id="replay">
 <div id="replayView"></div>
@@ -2440,6 +2445,7 @@ function R() {
   else if (pg === 'sessHist') { rSessHist() }
   else if (pg === 'groups') { rGroups() }
   else if (pg === 'monthly') { rMonthly() }
+  else if (pg === 'compare') { rCompare() }
   else if (pg === 'replay') { rReplay() }
 
 }
@@ -7139,6 +7145,7 @@ function rSessionOperating(el) {
         h += '<span style="color:var(--t2)">' + (t.time || '') + '</span>';
         h += '<span style="font-weight:600;color:var(--t1)">' + (t.dir || '') + ' ' + (t.type || '') + '</span>';
         h += '<span style="color:var(--t3)">SL ' + (t.sl || '') + '</span>';
+        if (t.tags && t.tags.length) h += '<span style="display:flex;gap:3px;flex-wrap:wrap">' + t.tags.map(function(tg) { return '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(167,139,250,.1);color:var(--purple)">' + tg + '</span>' }).join('') + '</span>';
         h += '<span style="flex:1"></span>';
         h += '<span style="font-weight:700;font-family:JetBrains Mono,monospace;color:' + col + '">' + ((parseFloat(t.pl) || 0) >= 0 ? '+' : '') + '$' + (parseFloat(t.pl) || 0).toFixed(2) + '</span>';
         h += '</div>';
@@ -7359,9 +7366,13 @@ function renderTFMStep() {
       h3 += '<button class="btn ' + (_tfmChecks.news === 'Oui' ? 'btn-g' : 'btn-o') + '" onclick="_tfmChecks.news=\'Oui\';renderTFMStep()" style="padding:8px 14px;font-size:12px">Oui</button>';
       h3 += '</div></div></div>';
 
+      /* Tags */
+      h3 += '<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--t3);margin-bottom:4px">Tags (optionnel)</div>';
+      h3 += '<input type="text" id="tfmTags" placeholder="QM clean, over-traded, news spike..." value="' + (_tfmChecks.tags || '') + '" onchange="_tfmChecks.tags=this.value" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px">';
+      h3 += '<div style="font-size:9px;color:var(--t3);margin-top:3px">Sépare par des virgules</div></div>';
       /* Notes */
       h3 += '<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--t3);margin-bottom:4px">Notes (optionnel)</div>';
-      h3 += '<input type="text" id="tfmNotes" placeholder="QM clean, bon timing..." value="' + (_tfmChecks.notes || '') + '" onchange="_tfmChecks.notes=this.value" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"></div>';
+      h3 += '<input type="text" id="tfmNotes" placeholder="Détails du trade..." value="' + (_tfmChecks.notes || '') + '" onchange="_tfmChecks.notes=this.value" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"></div>';
 
       body.innerHTML = h3;
 
@@ -7412,6 +7423,7 @@ function submitTFM() {
       s1: '',
       sr: '',
       notes: notes,
+      tags: (_tfmChecks.tags || '').split(',').map(function(t) { return t.trim() }).filter(function(t) { return t }),
       ts: Date.now(),
       accId: D.activeAcc
     };
@@ -8296,6 +8308,38 @@ function navMonth(dir) {
   } catch(e) {}
 }
 
+function exportMonthlyPDF() {
+  try {
+    var el = document.getElementById('monthlyView');
+    if (!el || typeof html2pdf === 'undefined') { toast('html2pdf non disponible'); return }
+    toast('Génération du PDF...');
+    var clone = el.cloneNode(true);
+    /* Retirer le canvas (pas supporté par html2pdf) et le remplacer par un placeholder */
+    var canvases = clone.querySelectorAll('canvas');
+    canvases.forEach(function(c) {
+      var placeholder = document.createElement('div');
+      placeholder.style.cssText = 'padding:20px;text-align:center;color:#8a9fc0;font-size:12px;background:#141a26;border-radius:8px';
+      placeholder.textContent = '[Graphique — voir l\'app pour la version interactive]';
+      c.parentNode.replaceChild(placeholder, c);
+    });
+    /* Retirer les boutons de navigation */
+    var btns = clone.querySelectorAll('button');
+    btns.forEach(function(b) { b.remove() });
+    /* Retirer le dropdown */
+    var dd = clone.querySelector('#monthDropdown');
+    if (dd) dd.remove();
+
+    html2pdf().set({
+      margin: [10, 10, 10, 10],
+      filename: 'aurum_mensuel_' + _monthlyKey + '.pdf',
+      html2canvas: { scale: 2, backgroundColor: '#06090e', useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(clone).save().then(function() {
+      toast('PDF exporté');
+    });
+  } catch(e) { console.error('exportMonthlyPDF:', e); toast('Erreur export PDF') }
+}
+
 function toggleMonthDropdown() {
   try {
     var dd = document.getElementById('monthDropdown');
@@ -8325,6 +8369,7 @@ function rMonthly() {
     });
     h += '</div></div>';
     h += '<button class="btn btn-o" onclick="navMonth(1)" style="padding:8px 12px;font-size:14px">▶</button>';
+    h += '<button class="btn btn-o" onclick="exportMonthlyPDF()" style="padding:6px 12px;font-size:11px;margin-left:12px">📄 PDF</button>';
     h += '</div>';
 
     if (!trades.length) {
@@ -8534,6 +8579,130 @@ function renderMonthlyChart(ym, dayPnl, daysInMonth) {
       }]
     });
   } catch(e) { console.error('renderMonthlyChart:', e) }
+}
+
+/* ═══════════════════════════════════════════════════════
+   COMPARAISON ENTRE COMPTES
+   ═══════════════════════════════════════════════════════ */
+
+function rCompare() {
+  try {
+    var el = document.getElementById('compareView');
+    if (!el) return;
+
+    if (D.accounts.length < 2) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--t3);font-size:13px">Il faut au moins 2 comptes pour comparer.</div>';
+      return;
+    }
+
+    var h = '';
+    h += '<div style="font-size:18px;font-weight:800;color:var(--t1);text-align:center;margin-bottom:16px">Comparaison des comptes</div>';
+
+    /* Calcul stats par compte */
+    var stats = D.accounts.map(function(acc) {
+      var trades = D.live.filter(function(t) { return t.accId === acc.id });
+      var wins = trades.filter(function(t) { return (parseFloat(t.pl) || 0) > 0 }).length;
+      var losses = trades.filter(function(t) { return (parseFloat(t.pl) || 0) < 0 }).length;
+      var totalPnl = trades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+      var wr = trades.length ? (wins / trades.length * 100).toFixed(1) : '0';
+      var avgW = wins ? trades.filter(function(t) { return t.pl > 0 }).reduce(function(a, t) { return a + t.pl }, 0) / wins : 0;
+      var avgL = losses ? Math.abs(trades.filter(function(t) { return t.pl < 0 }).reduce(function(a, t) { return a + t.pl }, 0) / losses) : 0;
+      var pf = avgL > 0 ? (avgW / avgL).toFixed(2) : '—';
+
+      /* Max drawdown */
+      var cum = 0, pk = 0, mdd = 0;
+      trades.forEach(function(t) { cum += (parseFloat(t.pl) || 0); if (cum > pk) pk = cum; if (cum - pk < mdd) mdd = cum - pk });
+
+      /* Jours actifs */
+      var daysSet = {};
+      trades.forEach(function(t) { if (t.date) daysSet[t.date] = true });
+
+      return {
+        name: acc.name || 'Sans nom',
+        type: acc.type || '',
+        bal: acc.bal || 0,
+        trades: trades.length,
+        wins: wins,
+        losses: losses,
+        totalPnl: totalPnl,
+        wr: wr,
+        pf: pf,
+        avgW: avgW,
+        avgL: avgL,
+        mdd: mdd,
+        days: Object.keys(daysSet).length
+      };
+    });
+
+    /* Tableau comparatif */
+    h += '<div style="overflow-x:auto;margin-bottom:16px">';
+    h += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+
+    /* Header */
+    h += '<thead><tr style="border-bottom:2px solid var(--border)">';
+    h += '<th style="text-align:left;padding:10px 8px;color:var(--t3);font-size:10px;text-transform:uppercase">Métrique</th>';
+    stats.forEach(function(s) {
+      var typeIcon = { prop: '🏆', funded: '✓', perso: '👤', demo: '◎' };
+      h += '<th style="text-align:center;padding:10px 8px;color:var(--t1);font-weight:700;min-width:100px">' + (typeIcon[s.type] || '') + ' ' + s.name + '</th>';
+    });
+    h += '</tr></thead><tbody>';
+
+    /* Lignes */
+    var rows = [
+      { label: 'Solde', key: 'bal', fmt: function(v) { return '$' + v.toLocaleString('en-US') }, color: 'var(--gold)' },
+      { label: 'Trades', key: 'trades', fmt: function(v) { return v }, color: 'var(--t1)' },
+      { label: 'Win Rate', key: 'wr', fmt: function(v) { return v + '%' }, color: function(v) { return parseFloat(v) >= 50 ? 'var(--green)' : 'var(--red)' } },
+      { label: 'P&L Total', key: 'totalPnl', fmt: function(v) { return (v >= 0 ? '+' : '') + '$' + v.toFixed(0) }, color: function(v) { return v >= 0 ? 'var(--green)' : 'var(--red)' } },
+      { label: 'Profit Factor', key: 'pf', fmt: function(v) { return v }, color: function(v) { return parseFloat(v) >= 1.5 ? 'var(--green)' : parseFloat(v) >= 1 ? 'var(--gold)' : 'var(--red)' } },
+      { label: 'Gain moyen', key: 'avgW', fmt: function(v) { return '+$' + v.toFixed(0) }, color: 'var(--green)' },
+      { label: 'Perte moyenne', key: 'avgL', fmt: function(v) { return '-$' + v.toFixed(0) }, color: 'var(--red)' },
+      { label: 'Max Drawdown', key: 'mdd', fmt: function(v) { return '$' + v.toFixed(0) }, color: 'var(--red)' },
+      { label: 'Gagnants', key: 'wins', fmt: function(v) { return v }, color: 'var(--green)' },
+      { label: 'Perdants', key: 'losses', fmt: function(v) { return v }, color: 'var(--red)' },
+      { label: 'Jours actifs', key: 'days', fmt: function(v) { return v }, color: 'var(--t2)' }
+    ];
+
+    rows.forEach(function(row, ri) {
+      /* Trouver le meilleur */
+      var vals = stats.map(function(s) { return typeof s[row.key] === 'string' ? parseFloat(s[row.key]) || 0 : s[row.key] });
+      var bestIdx = -1;
+      if (row.key !== 'mdd' && row.key !== 'losses' && row.key !== 'avgL') {
+        var maxVal = -Infinity; vals.forEach(function(v, i) { if (v > maxVal) { maxVal = v; bestIdx = i } });
+      }
+
+      h += '<tr style="border-bottom:1px solid var(--border);' + (ri % 2 ? 'background:rgba(12,16,24,.5)' : '') + '">';
+      h += '<td style="padding:8px;color:var(--t3);font-size:11px">' + row.label + '</td>';
+      stats.forEach(function(s, si) {
+        var val = s[row.key];
+        var col = typeof row.color === 'function' ? row.color(val) : row.color;
+        var isBest = si === bestIdx;
+        h += '<td style="text-align:center;padding:8px;font-family:JetBrains Mono,monospace;font-weight:' + (isBest ? '800' : '500') + ';color:' + col + ';font-size:' + (isBest ? '13px' : '12px') + '">';
+        h += row.fmt(val);
+        if (isBest && stats.length > 1) h += ' <span style="font-size:8px;color:var(--gold)">★</span>';
+        h += '</td>';
+      });
+      h += '</tr>';
+    });
+
+    h += '</tbody></table></div>';
+
+    /* Résumé visuel — barres P&L */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">P&L par compte</div>';
+    var maxPnl = Math.max.apply(null, stats.map(function(s) { return Math.abs(s.totalPnl) })) || 1;
+    stats.forEach(function(s) {
+      var pct = Math.abs(s.totalPnl) / maxPnl * 100;
+      var col = s.totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+      h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">';
+      h += '<span style="font-size:11px;color:var(--t2);min-width:80px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap">' + s.name + '</span>';
+      h += '<div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + pct.toFixed(0) + '%;background:' + col + ';border-radius:4px"></div></div>';
+      h += '<span style="font-size:11px;font-family:JetBrains Mono,monospace;color:' + col + ';min-width:70px;text-align:right">' + (s.totalPnl >= 0 ? '+' : '') + '$' + s.totalPnl.toFixed(0) + '</span>';
+      h += '</div>';
+    });
+    h += '</div>';
+
+    el.innerHTML = h;
+  } catch(e) { console.error('rCompare:', e) }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -9814,7 +9983,7 @@ try{if(window.self!==window.top){
       aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
     },
     {id:'analyser', label:'Analyser', pages:[
-      {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
+      {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'compare',l:'Comptes'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
     ]},
     {id:'systeme', label:'Système', pages:[
       {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'}
