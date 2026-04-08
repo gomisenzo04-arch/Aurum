@@ -8040,6 +8040,25 @@ function testPhase05() {
     deleteAccountGroup(g.id);
   });
 
+  test('rGroups ne crash pas avec 0 groupes', function() {
+    var el = document.getElementById('grpList');
+    if (!el) throw new Error('grpList not found — panel not in DOM?');
+    rGroups();
+    if (!el.innerHTML) throw new Error('empty innerHTML');
+  });
+
+  test('CRUD UI : create + render + delete', function() {
+    var ids = D.accounts.slice(0, 2).map(function(a) { return a.id });
+    if (ids.length < 2) throw new Error('need 2+ accounts');
+    var g = createAccountGroup('UITest', 'PARALLEL', ids);
+    rGroups();
+    var el = document.getElementById('grpList');
+    if (el.innerHTML.indexOf('UITest') === -1) throw new Error('group not rendered');
+    deleteAccountGroup(g.id);
+    rGroups();
+    if (el.innerHTML.indexOf('UITest') !== -1) throw new Error('group still rendered after delete');
+  });
+
   console.log('\n=== PHASE 0.5 TESTS ===');
   results.forEach(function(r) { console.log(r) });
   var pass = results.filter(function(r) { return r.startsWith('✓') }).length;
