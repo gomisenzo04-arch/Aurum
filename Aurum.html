@@ -9185,125 +9185,343 @@ function generateCandles(phases, startPrice) {
 function renderCandleChart(canvasId, candles, options) {
   try {
     var canvas = document.getElementById(canvasId);
-    if (!canvas || !candles.length) return;
+    if (!canvas || !candles.length) return null;
     var ctx = canvas.getContext('2d');
     var opts = options || {};
     var startIdx = opts.startIdx || 0;
     var endIdx = opts.endIdx || candles.length;
     var visibleCandles = candles.slice(startIdx, endIdx);
-    if (!visibleCandles.length) return;
+    if (!visibleCandles.length) return null;
 
+    /* ─── DPR + dimensions ─── */
     var dpr = window.devicePixelRatio || 1;
     var rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = (opts.height || 350) * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = (opts.height || 350) + 'px';
-    ctx.scale(dpr, dpr);
     var W = rect.width;
-    var H = opts.height || 350;
+    var H = opts.height || rect.height || 400;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
 
-    var marginLeft = 55;
-    var marginRight = 10;
-    var marginTop = 10;
-    var marginBottom = 25;
+    /* ─── Marges (axe prix à DROITE comme TradingView) ─── */
+    var marginLeft = 8;
+    var marginRight = 65;
+    var marginTop = 8;
+    var marginBottom = 22;
     var chartW = W - marginLeft - marginRight;
     var chartH = H - marginTop - marginBottom;
 
+    /* ─── Calcul min/max prix ─── */
     var allPrices = [];
     visibleCandles.forEach(function(c) { allPrices.push(c.high, c.low) });
     var minP = Math.min.apply(null, allPrices);
     var maxP = Math.max.apply(null, allPrices);
     var range = maxP - minP || 1;
-    minP -= range * 0.05;
-    maxP += range * 0.05;
+    minP -= range * 0.06;
+    maxP += range * 0.06;
     range = maxP - minP;
 
+    /* ─── Helpers ─── */
     function priceY(p) { return marginTop + chartH - ((p - minP) / range * chartH) }
-    var candleW = Math.max(3, Math.min(12, (chartW / visibleCandles.length) - 2));
-    var gap = Math.max(1, (chartW - candleW * visibleCandles.length) / (visibleCandles.length + 1));
+    var totalSpace = chartW;
+    var candleW = Math.max(2, Math.min(14, totalSpace / visibleCandles.length * 0.7));
+    var spacing = totalSpace / visibleCandles.length;
 
+    function candleX(i) { return marginLeft + spacing * i + spacing / 2 }
+
+    /* ─── Clear + fond ─── */
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#0c1018';
+    ctx.fillStyle = '#0a0e14';
     ctx.fillRect(0, 0, W, H);
 
-    ctx.strokeStyle = 'rgba(29,40,64,.4)';
-    ctx.lineWidth = 0.5;
-    var steps = 5;
-    for (var gi = 0; gi <= steps; gi++) {
-      var gp = minP + (range / steps) * gi;
+    /* ─── Grille horizontale + labels prix à DROITE ─── */
+    var priceStep = range / 6;
+    var roundTo = priceStep > 10 ? 10 : priceStep > 1 ? 1 : 0.5;
+    var firstGrid = Math.ceil(minP / roundTo) * roundTo;
+    ctx.textAlign = 'left';
+    for (var gp = firstGrid; gp <= maxP; gp += roundTo) {
       var gy = priceY(gp);
+      if (gy < marginTop || gy > H - marginBottom) continue;
+      ctx.strokeStyle = 'rgba(42,54,84,.3)';
+      ctx.lineWidth = 0.5;
       ctx.beginPath();
       ctx.moveTo(marginLeft, gy);
       ctx.lineTo(W - marginRight, gy);
       ctx.stroke();
-      ctx.fillStyle = '#8a9fc0';
+      /* Label prix à droite */
+      ctx.fillStyle = '#5b6a85';
       ctx.font = '10px JetBrains Mono, monospace';
-      ctx.textAlign = 'right';
-      ctx.fillText(gp.toFixed(0), marginLeft - 5, gy + 3);
+      ctx.fillText(gp.toFixed(gp >= 100 ? 0 : 2), W - marginRight + 6, gy + 3);
     }
 
+    /* ─── Barre séparation axe prix ─── */
+    ctx.strokeStyle = 'rgba(42,54,84,.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W - marginRight, marginTop);
+    ctx.lineTo(W - marginRight, H - marginBottom);
+    ctx.stroke();
+
+    /* ─── Dessiner les bougies (style TradingView) ─── */
     visibleCandles.forEach(function(c, i) {
-      var x = marginLeft + gap + i * (candleW + gap);
+      var cx = candleX(i);
       var isGreen = c.close >= c.open;
       var bodyTop = priceY(Math.max(c.open, c.close));
       var bodyBot = priceY(Math.min(c.open, c.close));
       var bodyH = Math.max(1, bodyBot - bodyTop);
 
-      ctx.strokeStyle = isGreen ? '#00d68f' : '#ff4757';
+      /* Couleurs TradingView */
+      var bullColor = '#26a69a';
+      var bearColor = '#ef5350';
+      var color = isGreen ? bullColor : bearColor;
+
+      /* Mèche (wick) — 1px centré */
+      ctx.strokeStyle = color;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(x + candleW / 2, priceY(c.high));
-      ctx.lineTo(x + candleW / 2, priceY(c.low));
+      ctx.moveTo(cx, priceY(c.high));
+      ctx.lineTo(cx, priceY(c.low));
       ctx.stroke();
 
-      ctx.fillStyle = isGreen ? '#00d68f' : '#ff4757';
-      ctx.fillRect(x, bodyTop, candleW, bodyH);
+      /* Corps — rempli si baissier, contour si haussier (style TradingView) */
+      var halfW = candleW / 2;
+      if (isGreen) {
+        /* Haussier : contour + fond léger */
+        ctx.fillStyle = 'rgba(38,166,154,.15)';
+        ctx.fillRect(cx - halfW, bodyTop, candleW, bodyH);
+        ctx.strokeStyle = bullColor;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - halfW, bodyTop, candleW, bodyH);
+      } else {
+        /* Baissier : rempli */
+        ctx.fillStyle = bearColor;
+        ctx.fillRect(cx - halfW, bodyTop, candleW, bodyH);
+      }
     });
 
+    /* ─── Lignes de niveaux (S/R, entrée, SL, TP) ─── */
     if (opts.levels) {
       opts.levels.forEach(function(lv) {
-        ctx.strokeStyle = lv.color || 'rgba(212,160,23,.5)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash(lv.dash || [4, 4]);
-        ctx.beginPath();
         var ly = priceY(lv.price);
+        if (ly < marginTop || ly > H - marginBottom) return;
+        ctx.strokeStyle = lv.color || 'rgba(212,160,23,.6)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash(lv.dash || [4, 3]);
+        ctx.beginPath();
         ctx.moveTo(marginLeft, ly);
         ctx.lineTo(W - marginRight, ly);
         ctx.stroke();
         ctx.setLineDash([]);
+        /* Label sur l'axe prix à droite */
         if (lv.label) {
           ctx.fillStyle = lv.color || '#d4a017';
-          ctx.font = '9px DM Sans, sans-serif';
+          ctx.font = 'bold 9px DM Sans, sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText(lv.label, W - marginRight - 60, ly - 3);
+          var labelBg = lv.color || '#d4a017';
+          ctx.fillStyle = labelBg;
+          ctx.globalAlpha = 0.9;
+          ctx.fillRect(W - marginRight, ly - 8, marginRight, 16);
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = '#0a0e14';
+          ctx.fillText(lv.label + ' ' + lv.price.toFixed(0), W - marginRight + 3, ly + 3);
         }
       });
     }
 
+    /* ─── Bougie sélectionnée (highlight) ─── */
     if (opts.selectedCandle !== undefined && opts.selectedCandle >= startIdx && opts.selectedCandle < endIdx) {
       var selI = opts.selectedCandle - startIdx;
-      var sx = marginLeft + gap + selI * (candleW + gap);
-      ctx.strokeStyle = 'rgba(212,160,23,.6)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(sx - 1, marginTop, candleW + 2, chartH);
+      var selX = candleX(selI);
+      ctx.strokeStyle = 'rgba(212,160,23,.4)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(selX, marginTop);
+      ctx.lineTo(selX, H - marginBottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
+    /* ─── Prix actuel (dernière bougie) — badge sur l'axe ─── */
+    var lastC = visibleCandles[visibleCandles.length - 1];
+    if (lastC) {
+      var lastY = priceY(lastC.close);
+      var lastCol = lastC.close >= lastC.open ? '#26a69a' : '#ef5350';
+      /* Ligne pointillée horizontale */
+      ctx.strokeStyle = lastCol;
+      ctx.lineWidth = 0.5;
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath();
+      ctx.moveTo(marginLeft, lastY);
+      ctx.lineTo(W - marginRight, lastY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      /* Badge prix */
+      ctx.fillStyle = lastCol;
+      ctx.fillRect(W - marginRight, lastY - 9, marginRight, 18);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px JetBrains Mono, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(lastC.close.toFixed(2), W - marginRight + 3, lastY + 4);
+    }
+
+    /* ─── Axe temps en bas ─── */
+    ctx.fillStyle = '#5b6a85';
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    var labelEvery = Math.max(1, Math.floor(visibleCandles.length / 8));
+    visibleCandles.forEach(function(c, i) {
+      if (i % labelEvery !== 0) return;
+      ctx.fillText(String(i + startIdx + 1), candleX(i), H - 4);
+    });
+
+    /* ─── Retourner les infos pour interaction ─── */
     return {
-      candleWidth: candleW, gap: gap, marginLeft: marginLeft, marginTop: marginTop,
-      chartW: chartW, chartH: chartH, minP: minP, maxP: maxP, range: range, priceY: priceY,
+      candleWidth: candleW, spacing: spacing, marginLeft: marginLeft, marginRight: marginRight,
+      marginTop: marginTop, chartW: chartW, chartH: chartH, minP: minP, maxP: maxP, range: range,
+      priceY: priceY, candleX: candleX, W: W, H: H,
       candleAtX: function(mouseX) {
-        var relX = mouseX - marginLeft - gap;
-        if (relX < 0) return -1;
-        var idx = Math.floor(relX / (candleW + gap));
+        var idx = Math.round((mouseX - marginLeft - spacing / 2) / spacing);
         return idx >= 0 && idx < visibleCandles.length ? idx + startIdx : -1;
       },
       priceAtY: function(mouseY) {
         var relY = mouseY - marginTop;
         return maxP - (relY / chartH) * range;
+      },
+      /* Dessiner crosshair par-dessus */
+      drawCrosshair: function(mouseX, mouseY) {
+        if (mouseX < marginLeft || mouseX > W - marginRight || mouseY < marginTop || mouseY > H - marginBottom) return;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(138,159,192,.3)';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([3, 3]);
+        /* Ligne verticale */
+        ctx.beginPath();
+        ctx.moveTo(mouseX, marginTop);
+        ctx.lineTo(mouseX, H - marginBottom);
+        ctx.stroke();
+        /* Ligne horizontale */
+        ctx.beginPath();
+        ctx.moveTo(marginLeft, mouseY);
+        ctx.lineTo(W - marginRight, mouseY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        /* Prix sur l'axe droit */
+        var price = maxP - ((mouseY - marginTop) / chartH) * range;
+        ctx.fillStyle = '#2a3654';
+        ctx.fillRect(W - marginRight, mouseY - 9, marginRight, 18);
+        ctx.fillStyle = '#c8d6e5';
+        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(price.toFixed(2), W - marginRight + 3, mouseY + 4);
+        /* Index bougie en bas */
+        var candleIdx = Math.round((mouseX - marginLeft - spacing / 2) / spacing);
+        if (candleIdx >= 0 && candleIdx < visibleCandles.length) {
+          ctx.fillStyle = '#2a3654';
+          ctx.fillRect(mouseX - 12, H - marginBottom, 24, marginBottom);
+          ctx.fillStyle = '#c8d6e5';
+          ctx.font = '9px JetBrains Mono, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(String(candleIdx + startIdx + 1), mouseX, H - 4);
+        }
+        ctx.restore();
       }
     };
   } catch(e) { console.error('renderCandleChart:', e); return null }
+}
+
+/* ─── Zoom/Pan/Crosshair pour le canvas replay ─── */
+var _chartZoom = { offset: 0, zoom: 1 };
+var _chartDrag = { dragging: false, startX: 0, startOffset: 0 };
+var _chartInfo = null;
+
+function setupChartInteractions(canvasId) {
+  try {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    /* Crosshair — mousemove */
+    canvas.addEventListener('mousemove', function(e) {
+      if (_chartDrag.dragging) {
+        var dx = e.clientX - _chartDrag.startX;
+        var candlesMoved = Math.round(dx / (_chartInfo ? _chartInfo.spacing : 10));
+        _chartZoom.offset = Math.max(0, _chartDrag.startOffset - candlesMoved);
+        replayRedraw();
+        return;
+      }
+      if (!_chartInfo) return;
+      replayRedraw();
+      var rect = canvas.getBoundingClientRect();
+      _chartInfo.drawCrosshair(e.clientX - rect.left, e.clientY - rect.top);
+    });
+
+    canvas.addEventListener('mouseleave', function() {
+      if (!_chartDrag.dragging) replayRedraw();
+    });
+
+    /* Pan — mousedown/up */
+    canvas.addEventListener('mousedown', function(e) {
+      if (e.button === 0 && !e.ctrlKey) {
+        _chartDrag.dragging = true;
+        _chartDrag.startX = e.clientX;
+        _chartDrag.startOffset = _chartZoom.offset;
+        canvas.style.cursor = 'grabbing';
+      }
+    });
+
+    window.addEventListener('mouseup', function() {
+      if (_chartDrag.dragging) {
+        _chartDrag.dragging = false;
+        var c = document.getElementById(canvasId);
+        if (c) c.style.cursor = 'crosshair';
+      }
+    });
+
+    /* Zoom — wheel */
+    canvas.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var delta = e.deltaY > 0 ? 1 : -1;
+      _chartZoom.zoom = Math.max(0.3, Math.min(3, _chartZoom.zoom + delta * 0.15));
+      replayRedraw();
+    }, { passive: false });
+  } catch(e) {}
+}
+
+function replayRedraw() {
+  try {
+    if (!_replayState) return;
+    var st = _replayState;
+    var totalVisible = Math.round(st.visibleCount / _chartZoom.zoom);
+    totalVisible = Math.max(10, Math.min(st.visibleCount, totalVisible));
+    var startIdx = Math.max(0, st.visibleCount - totalVisible - _chartZoom.offset);
+    var endIdx = Math.min(st.visibleCount, startIdx + totalVisible);
+
+    var levels = [];
+    if (st.metadata.supports) {
+      st.metadata.supports.forEach(function(s) { if (s.index < st.visibleCount) levels.push({ price: s.level, label: 'S', color: 'rgba(38,166,154,.5)', dash: [4, 3] }) });
+    }
+    if (st.metadata.resistances) {
+      st.metadata.resistances.forEach(function(r) { if (r.index < st.visibleCount) levels.push({ price: r.level, label: 'R', color: 'rgba(239,83,80,.5)', dash: [4, 3] }) });
+    }
+    if (st.answers && st.answers.entry !== undefined) levels.push({ price: st.answers.entry, label: 'Entrée', color: 'rgba(212,160,23,.8)', dash: [6, 3] });
+    if (st.answers && st.answers.sl !== undefined) levels.push({ price: st.answers.sl, label: 'SL', color: 'rgba(239,83,80,.8)', dash: [6, 3] });
+    if (st.answers && st.answers.entry !== undefined && st.answers.sl !== undefined) {
+      var tpLvl = st.answers.direction === 'buy' ? st.answers.entry + (st.answers.entry - st.answers.sl) * 2 : st.answers.entry - (st.answers.sl - st.answers.entry) * 2;
+      levels.push({ price: tpLvl, label: 'TP', color: 'rgba(38,166,154,.8)', dash: [6, 3] });
+    }
+
+    var container = document.getElementById('replayCanvas');
+    var containerH = container && container.parentElement ? container.parentElement.offsetHeight : 400;
+
+    _chartInfo = renderCandleChart('replayCanvas', st.candles, {
+      startIdx: startIdx,
+      endIdx: endIdx,
+      height: Math.max(300, containerH),
+      levels: levels,
+      selectedCandle: st.answers ? st.answers._selectedCandle : undefined
+    });
+  } catch(e) {}
 }
 
 /* ─── État du replay ─── */
@@ -9591,7 +9809,11 @@ function rReplayScenario(el) {
     /* Filtres actifs dans la toolbar */
     if (sc.filters.newsUSD) h += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,71,87,.1);color:var(--red);font-weight:600">🔴 News USD</span>';
     if (sc.filters.after21h) h += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:600">⏰ 20h50</span>';
-    h += '<span style="font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace">XAUUSD · 1min</span>';
+    h += '<div style="display:flex;align-items:center;gap:4px">';
+    h += '<button class="btn btn-o" onclick="replaySetTF(\'5min\')" style="padding:3px 8px;font-size:10px;' + ((st._timeframe || '5min') === '5min' ? 'color:var(--gold);border-color:var(--gold)' : '') + '">5m</button>';
+    h += '<button class="btn btn-o" onclick="replaySetTF(\'1min\')" style="padding:3px 8px;font-size:10px;' + ((st._timeframe || '5min') === '1min' ? 'color:var(--gold);border-color:var(--gold)' : '') + '">1m</button>';
+    h += '<span style="font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace;margin-left:4px">XAUUSD</span>';
+    h += '</div>';
     h += '</div></div>';
 
     /* ─── ZONE PRINCIPALE : CANVAS + PANNEAU LATÉRAL ─── */
@@ -9815,62 +10037,39 @@ function rReplayScenario(el) {
       levels.push({ price: tpLvl, label: 'TP', color: 'rgba(0,214,143,.8)', dash: [6, 3] });
     }
 
-    /* Le canvas prend toute la hauteur disponible */
-    var canvasContainer = document.getElementById('replayCanvas');
-    if (canvasContainer && canvasContainer.parentElement) {
-      var containerH = canvasContainer.parentElement.offsetHeight;
-      var chartInfo = renderCandleChart('replayCanvas', st.candles, {
-        endIdx: st.visibleCount,
-        height: Math.max(300, containerH),
-        levels: levels,
-        selectedCandle: st.answers._selectedCandle
+    /* Render chart avec zoom/pan */
+    _chartZoom = { offset: 0, zoom: _chartZoom ? _chartZoom.zoom : 1 };
+    replayRedraw();
+    setupChartInteractions('replayCanvas');
+
+    /* Clic sur le canvas pour sélection */
+    var canvasEl = document.getElementById('replayCanvas');
+    if (canvasEl) {
+      canvasEl.addEventListener('click', function(e) {
+        try {
+          if (_chartDrag.dragging) return;
+          if (!_chartInfo) return;
+          var rect = canvasEl.getBoundingClientRect();
+          var mouseX = e.clientX - rect.left;
+          var mouseY = e.clientY - rect.top;
+
+          if (st.phase === 'analysis' && st.answers.direction !== undefined && st.answers.liquidity === undefined) {
+            var candleIdx = _chartInfo.candleAtX(mouseX);
+            if (candleIdx >= 0) replayAnswer('liquidity', candleIdx);
+            return;
+          }
+          if (st.phase === 'analysis' && st.answers.shouldTrade === true && st.answers.entry === undefined) {
+            var price = _chartInfo.priceAtY(mouseY);
+            if (price > 0) replayAnswer('entry', Math.round(price * 100) / 100);
+            return;
+          }
+          if (st.phase === 'analysis' && st.answers.entry !== undefined && st.answers.sl === undefined) {
+            var slPrice = _chartInfo.priceAtY(mouseY);
+            if (slPrice > 0) replayAnswer('sl', Math.round(slPrice * 100) / 100);
+            return;
+          }
+        } catch(err) {}
       });
-
-      /* Clic sur le canvas */
-      if (chartInfo) {
-        canvasContainer.onclick = function(e) {
-          try {
-            var rect = canvasContainer.getBoundingClientRect();
-            var mouseX = e.clientX - rect.left;
-            var mouseY = e.clientY - rect.top;
-
-            if (st.phase === 'analysis' && st.answers.direction !== undefined && st.answers.liquidity === undefined) {
-              var candleIdx = chartInfo.candleAtX(mouseX);
-              if (candleIdx >= 0) replayAnswer('liquidity', candleIdx);
-              return;
-            }
-            if (st.phase === 'analysis' && st.answers.shouldTrade === true && st.answers.entry === undefined) {
-              var price = chartInfo.priceAtY(mouseY);
-              if (price > 0) replayAnswer('entry', Math.round(price * 100) / 100);
-              return;
-            }
-            if (st.phase === 'analysis' && st.answers.entry !== undefined && st.answers.sl === undefined) {
-              var slPrice = chartInfo.priceAtY(mouseY);
-              if (slPrice > 0) replayAnswer('sl', Math.round(slPrice * 100) / 100);
-              return;
-            }
-          } catch(err) { console.error('canvas click:', err) }
-        };
-
-        /* Hover prix sous curseur */
-        canvasContainer.onmousemove = function(e) {
-          try {
-            var tag = document.getElementById('replayPriceTag');
-            if (!tag) return;
-            var rect = canvasContainer.getBoundingClientRect();
-            var mouseY = e.clientY - rect.top;
-            var price = chartInfo.priceAtY(mouseY);
-            if (price > 0) {
-              tag.style.display = 'block';
-              tag.style.top = mouseY + 'px';
-              tag.textContent = price.toFixed(2);
-            }
-          } catch(err) {}
-        };
-        canvasContainer.onmouseleave = function() {
-          try { var tag = document.getElementById('replayPriceTag'); if (tag) tag.style.display = 'none' } catch(e) {}
-        };
-      }
     }
   } catch(e) { console.error('rReplayScenario:', e) }
 }
@@ -9967,6 +10166,45 @@ function replaySetSpeed(s) {
         }
       }, 1000 / s);
     }
+    rReplay();
+  } catch(e) {}
+}
+
+function replaySetTF(tf) {
+  try {
+    if (!_replayState) return;
+    _replayState._timeframe = tf;
+    /* En 1min : on montre 5× plus de bougies (simulation) */
+    if (tf === '1min' && !_replayState._candles1min) {
+      /* Générer les bougies 1min à partir des bougies 5min */
+      var candles5 = _replayState.candles;
+      var candles1 = [];
+      candles5.forEach(function(c5) {
+        /* Chaque bougie 5min = 5 bougies 1min */
+        var prices = [c5.open];
+        for (var i = 1; i < 4; i++) {
+          prices.push(c5.open + (c5.close - c5.open) * (i / 4) + (Math.random() - 0.5) * Math.abs(c5.high - c5.low) * 0.3);
+        }
+        prices.push(c5.close);
+        for (var j = 0; j < 5; j++) {
+          var o = prices[j];
+          var cl = prices[j + 1] || c5.close;
+          var hi = Math.max(o, cl) + Math.random() * Math.abs(c5.high - Math.max(c5.open, c5.close)) * 0.4;
+          var lo = Math.min(o, cl) - Math.random() * Math.abs(Math.min(c5.open, c5.close) - c5.low) * 0.4;
+          candles1.push({ open: Math.round(o * 100) / 100, high: Math.round(hi * 100) / 100, low: Math.round(lo * 100) / 100, close: Math.round(cl * 100) / 100 });
+        }
+      });
+      _replayState._candles1min = candles1;
+      _replayState._candles5min = candles5;
+    }
+    if (tf === '1min' && _replayState._candles1min) {
+      _replayState.candles = _replayState._candles1min;
+      _replayState.visibleCount = Math.min(_replayState.visibleCount * 5, _replayState.candles.length);
+    } else if (tf === '5min' && _replayState._candles5min) {
+      _replayState.candles = _replayState._candles5min;
+      _replayState.visibleCount = Math.min(Math.ceil(_replayState.visibleCount / 5), _replayState.candles.length);
+    }
+    _chartZoom = { offset: 0, zoom: 1 };
     rReplay();
   } catch(e) {}
 }
