@@ -1558,6 +1558,11 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 <div id="sessHistView"></div>
 </div>
 
+<!-- REPLAY MODE -->
+<div class="panel" id="replay">
+<div id="replayView"></div>
+</div>
+
 <!-- MONTHLY SUMMARY -->
 <div class="panel" id="monthly">
 <div id="monthlyView"></div>
@@ -2473,6 +2478,7 @@ function R() {
   else if (pg === 'payouts') { rJPO() }
   else if (pg === 'groups') { rGroups() }
   else if (pg === 'monthly') { rMonthly() }
+  else if (pg === 'replay') { rReplay() }
 
 }
 
@@ -4024,6 +4030,16 @@ function adaptForm() {
   if (msgEl) msgEl.style.display = 'none';
   const ptsWrap = document.getElementById('ptsRealWrap');
   if (ptsWrap) ptsWrap.style.display = 'none';
+  /* Reconstruire navigation iframe si en mode iframe */
+  try {
+    if (window.self !== window.top && typeof groups !== 'undefined') {
+      var traderGroup = groups.find(function(g) { return g.id === 'trader' });
+      if (traderGroup) {
+        traderGroup.pages = aT === 'replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'add',l:'Trade'}];
+        if (activeGroup === 'trader') renderSubTabs('trader');
+      }
+    }
+  } catch(e) {}
 }
 
 function autoRR() {
@@ -8729,9 +8745,9 @@ try{if(window.self!==window.top){
   /* Tier 1 : 5 groupes principaux */
   var groups = [
     {id:'dash', label:'📊 Dashboard', pages:[]},
-    {id:'trader', label:'Trader', pages:[
-      {p:'session',l:'Session'},{p:'add',l:'Trade'}
-    ]},
+    {id:'trader', label:'Trader', pages:
+      aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'add',l:'Trade'}]
+    },
     {id:'analyser', label:'Analyser', pages:[
       {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
     ]},
