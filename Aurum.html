@@ -1503,6 +1503,7 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 
 <!-- Zone 5 : Equity Curve + Win/Loss -->
 <div id="dashFinancial" style="display:none"></div>
+<div id="dashMonthly" style="display:none"></div>
 <div class="grid2">
 <div class="box"><div class="box-title">Equity Curve</div><div style="position:relative"><canvas id="eqC"></canvas></div></div>
 <div class="box"><div class="box-title">Win / Loss</div><div style="position:relative"><canvas id="piC"></canvas></div></div>
@@ -1555,6 +1556,11 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 <!-- SESSIONS HISTORY -->
 <div class="panel" id="sessHist">
 <div id="sessHistView"></div>
+</div>
+
+<!-- MONTHLY SUMMARY -->
+<div class="panel" id="monthly">
+<div id="monthlyView"></div>
 </div>
 
 <!-- SESSION -->
@@ -2445,7 +2451,7 @@ function R() {
   if (pg === 'dash') {
     renderFilterBar('dashFilters');
     const dispTr = getTr(); renderFilterSummary('dashFilterSum', dispTr, applyFilters(dispTr), aT==='live');
-    rGoNoGo(); rHeroKpis(); rCards(); rDashFinancial(); rCharts(); rBd(); rDashAccBreakdown(); rConvergence(); rCalendar();
+    rGoNoGo(); rHeroKpis(); rCards(); rDashFinancial(); rDashMonthly(); rCharts(); rBd(); rDashAccBreakdown(); rConvergence(); rCalendar();
   }
   else if (pg === 'hist') { rHist() }
   else if (pg === 'time') { rHours() }
@@ -2466,6 +2472,7 @@ function R() {
   else if (pg === 'propfirms') { rJPF() }
   else if (pg === 'payouts') { rJPO() }
   else if (pg === 'groups') { rGroups() }
+  else if (pg === 'monthly') { rMonthly() }
 
 }
 
@@ -8403,7 +8410,7 @@ try{if(window.self!==window.top){
       {p:'session',l:'Session'},{p:'add',l:'Trade'}
     ]},
     {id:'analyser', label:'Analyser', pages:[
-      {p:'hist',l:'Historique'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
+      {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
     ]},
     {id:'systeme', label:'Système', pages:[
       {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'}
