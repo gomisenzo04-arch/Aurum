@@ -8249,6 +8249,329 @@ function addJPO(){try{var dt=document.getElementById('jpo-d').value;var b=parseF
 function rJPO(){try{var d=_loadCap();var el=document.getElementById('jpoList');var sum=document.getElementById('jpoSum');if(!el)return;if(!d.payouts||!d.payouts.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">Aucun payout. Clique + Payout.</div>';if(sum)sum.innerHTML='';return}var t=0;var h='<div style="display:grid;gap:4px">';d.payouts.sort(function(a,b){return(b.date||'').localeCompare(a.date||'')}).forEach(function(p){t+=p.net||0;h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:12px"><span style="color:var(--t3);font-family:JetBrains Mono,monospace;font-size:11px">'+p.date+'</span><span style="flex:1;color:var(--t2)">'+p.source+'</span><span style="font-weight:700;color:var(--green);font-family:JetBrains Mono,monospace">'+_fm(p.net)+'</span><button class="btn btn-o" style="font-size:10px;padding:4px 8px;color:var(--red)" onclick="delJPO(\''+p.id+'\')">×</button></div>'});h+='</div>';el.innerHTML=h;if(sum)sum.innerHTML='<div style="text-align:center;padding:12px;background:rgba(0,214,143,.06);border-radius:8px;margin-bottom:10px"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px">Total Payouts</div><div style="font-size:24px;font-weight:800;color:var(--green);font-family:JetBrains Mono,monospace">'+_fm(t)+'</div></div>'}catch(e){console.error(e)}}
 function delJPO(id){try{if(!confirm('Supprimer ?'))return;var d=_loadCap();d.payouts=d.payouts.filter(function(p){return p.id!==id});_saveCap(d);rJPO();toast('Supprimé')}catch(e){}}
 
+/* ─── Dashboard Monthly Widget ─── */
+function rDashMonthly() {
+  try {
+    var el = document.getElementById('dashMonthly');
+    if (!el || aT !== 'live') { if (el) el.style.display = 'none'; return }
+
+    var ym = new Date().toISOString().slice(0, 7);
+    var trades = D.live.filter(function(t) {
+      return t.date && t.date.slice(0, 7) === ym && (D.activeAcc === 'all' || t.accId === D.activeAcc);
+    });
+
+    if (!trades.length) { el.style.display = 'none'; return }
+
+    var totalPnl = trades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+    var wins = trades.filter(function(t) { return (parseFloat(t.pl) || 0) > 0 }).length;
+    var wr = (wins / trades.length * 100).toFixed(0);
+    var pnlCol = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+
+    el.style.display = 'block';
+    el.innerHTML = '<div onclick="go(\'monthly\')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+      '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">📅 Ce mois · ' + monthLabel(ym) + '</div>' +
+      '<span style="font-size:10px;color:var(--gold)">Voir le détail →</span></div>' +
+      '<div style="display:flex;gap:16px;font-size:13px">' +
+      '<div>P&L <b style="color:' + pnlCol + ';font-family:JetBrains Mono,monospace">' + (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(0) + '</b></div>' +
+      '<div>WR <b style="color:var(--t1);font-family:JetBrains Mono,monospace">' + wr + '%</b></div>' +
+      '<div>Trades <b style="color:var(--t1);font-family:JetBrains Mono,monospace">' + trades.length + '</b></div>' +
+      '</div></div>';
+  } catch(e) { console.error('rDashMonthly:', e) }
+}
+
+/* ═══════════════════════════════════════════════════════
+   RÉSUMÉ MENSUEL
+   ═══════════════════════════════════════════════════════ */
+
+var _monthlyKey = new Date().toISOString().slice(0, 7);
+var _monthlyChart = null;
+
+var MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function getMonthlyTrades(ym) {
+  try {
+    var trades = D.live.filter(function(t) {
+      return t.date && t.date.slice(0, 7) === ym && (D.activeAcc === 'all' || t.accId === D.activeAcc);
+    });
+    trades.sort(function(a, b) { return (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')) });
+    return trades;
+  } catch(e) { return [] }
+}
+
+function getAvailableMonths() {
+  try {
+    var months = {};
+    D.live.forEach(function(t) {
+      if (!t.date) return;
+      if (D.activeAcc !== 'all' && t.accId !== D.activeAcc) return;
+      var ym = t.date.slice(0, 7);
+      if (!months[ym]) months[ym] = 0;
+      months[ym]++;
+    });
+    return Object.keys(months).sort().reverse();
+  } catch(e) { return [] }
+}
+
+function monthLabel(ym) {
+  try {
+    var parts = ym.split('-');
+    return MOIS_FR[parseInt(parts[1]) - 1] + ' ' + parts[0];
+  } catch(e) { return ym }
+}
+
+function navMonth(dir) {
+  try {
+    var parts = _monthlyKey.split('-');
+    var y = parseInt(parts[0]);
+    var m = parseInt(parts[1]) - 1 + dir;
+    if (m > 11) { m = 0; y++ }
+    if (m < 0) { m = 11; y-- }
+    _monthlyKey = y + '-' + String(m + 1).padStart(2, '0');
+    rMonthly();
+  } catch(e) {}
+}
+
+function toggleMonthDropdown() {
+  try {
+    var dd = document.getElementById('monthDropdown');
+    if (dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  } catch(e) {}
+}
+
+function rMonthly() {
+  try {
+    var el = document.getElementById('monthlyView');
+    if (!el) return;
+    var ym = _monthlyKey;
+    var trades = getMonthlyTrades(ym);
+    var available = getAvailableMonths();
+
+    var h = '';
+
+    /* Navigation mois */
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px">';
+    h += '<button class="btn btn-o" onclick="navMonth(-1)" style="padding:8px 12px;font-size:14px">◀</button>';
+    h += '<div style="position:relative;display:inline-block">';
+    h += '<button id="monthlyLabel" onclick="toggleMonthDropdown()" style="background:none;border:none;font-family:inherit;font-size:18px;font-weight:800;color:var(--t1);cursor:pointer;padding:4px 8px">' + monthLabel(ym) + ' <span style="font-size:10px;color:var(--t3)">▼</span></button>';
+    h += '<div id="monthDropdown" style="display:none;position:absolute;left:50%;transform:translateX(-50%);top:100%;margin-top:4px;min-width:180px;max-height:300px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:200;padding:4px 0">';
+    available.forEach(function(m) {
+      var active = m === ym;
+      h += '<div onclick="_monthlyKey=\'' + m + '\';rMonthly()" style="padding:8px 14px;cursor:pointer;font-size:13px;color:' + (active ? 'var(--gold)' : 'var(--t2)') + ';font-weight:' + (active ? '700' : '400') + '" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">' + monthLabel(m) + ' <span style="font-size:10px;color:var(--t3)">' + (getMonthlyTrades(m).length) + ' trades</span></div>';
+    });
+    h += '</div></div>';
+    h += '<button class="btn btn-o" onclick="navMonth(1)" style="padding:8px 12px;font-size:14px">▶</button>';
+    h += '</div>';
+
+    if (!trades.length) {
+      h += '<div style="text-align:center;padding:40px;color:var(--t3);font-size:13px">Aucun trade en ' + monthLabel(ym) + '</div>';
+      el.innerHTML = h;
+      return;
+    }
+
+    /* Calculs */
+    var totalPnl = trades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+    var wins = trades.filter(function(t) { return (parseFloat(t.pl) || 0) > 0 }).length;
+    var losses = trades.filter(function(t) { return (parseFloat(t.pl) || 0) < 0 }).length;
+    var wr = trades.length ? (wins / trades.length * 100).toFixed(1) : '0';
+    var avgW = wins ? trades.filter(function(t) { return t.pl > 0 }).reduce(function(a, t) { return a + t.pl }, 0) / wins : 0;
+    var avgL = losses ? Math.abs(trades.filter(function(t) { return t.pl < 0 }).reduce(function(a, t) { return a + t.pl }, 0) / losses) : 0;
+    var pf = avgL > 0 ? (avgW / avgL).toFixed(2) : '∞';
+
+    var dayPnl = {};
+    trades.forEach(function(t) {
+      if (!dayPnl[t.date]) dayPnl[t.date] = 0;
+      dayPnl[t.date] += parseFloat(t.pl) || 0;
+    });
+    var days = Object.keys(dayPnl);
+    var bestDay = days[0] || '', worstDay = days[0] || '';
+    days.forEach(function(d) {
+      if (dayPnl[d] > dayPnl[bestDay]) bestDay = d;
+      if (dayPnl[d] < dayPnl[worstDay]) worstDay = d;
+    });
+
+    var prevParts = ym.split('-');
+    var prevM = parseInt(prevParts[1]) - 2;
+    var prevY = parseInt(prevParts[0]);
+    if (prevM < 0) { prevM = 11; prevY-- }
+    var prevKey = prevY + '-' + String(prevM + 1).padStart(2, '0');
+    var prevTrades = getMonthlyTrades(prevKey);
+    var prevPnl = prevTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+    var delta = totalPnl - prevPnl;
+
+    var s = S();
+    var balStart = s.bal - totalPnl;
+
+    /* Section 1 — KPIs */
+    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">';
+    var kpis = [
+      { l: 'P&L', v: (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(0), sub: balStart > 0 ? (totalPnl / balStart * 100).toFixed(1) + '%' : '', c: totalPnl >= 0 ? 'var(--green)' : 'var(--red)' },
+      { l: 'Win Rate', v: wr + '%', sub: wins + 'W / ' + losses + 'L', c: parseFloat(wr) >= 50 ? 'var(--green)' : 'var(--red)' },
+      { l: 'Trades', v: trades.length, sub: Object.keys(dayPnl).length + ' jours actifs', c: 'var(--t1)' },
+      { l: 'Profit Factor', v: pf, sub: '', c: parseFloat(pf) >= 1.5 ? 'var(--green)' : parseFloat(pf) >= 1 ? 'var(--gold)' : 'var(--red)' },
+      { l: 'Meilleur jour', v: '+$' + (dayPnl[bestDay] || 0).toFixed(0), sub: bestDay.slice(5), c: 'var(--green)' },
+      { l: 'Pire jour', v: '$' + (dayPnl[worstDay] || 0).toFixed(0), sub: worstDay.slice(5), c: 'var(--red)' },
+      { l: 'vs mois préc.', v: (delta >= 0 ? '+' : '') + '$' + delta.toFixed(0), sub: prevTrades.length ? prevTrades.length + ' trades' : 'aucun', c: delta >= 0 ? 'var(--green)' : 'var(--red)' }
+    ];
+    kpis.forEach(function(k) {
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">';
+      h += '<div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">' + k.l + '</div>';
+      h += '<div style="font-size:20px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + k.c + '">' + k.v + '</div>';
+      if (k.sub) h += '<div style="font-size:10px;color:var(--t3);margin-top:2px">' + k.sub + '</div>';
+      h += '</div>';
+    });
+    h += '</div>';
+
+    /* Section 2 — Discipline */
+    var sessions = loadSessions();
+    var monthSessions = sessions.filter(function(ss) { return ss.dayDate && ss.dayDate.slice(0, 7) === ym && ss.status === 'LOCKED' });
+    var avgDisc = 0;
+    if (monthSessions.length) {
+      var totalDisc = monthSessions.reduce(function(a, ss) { return a + (ss.debrief ? ss.debrief.selfDisciplineScore || 0 : 0) }, 0);
+      avgDisc = Math.round(totalDisc / monthSessions.length);
+    }
+    var setupCount = {};
+    trades.forEach(function(t) { var tp = t.type || 'Autre'; if (!setupCount[tp]) setupCount[tp] = 0; setupCount[tp]++ });
+    var ymParts = ym.split('-');
+    var daysInMonth = new Date(parseInt(ymParts[0]), parseInt(ymParts[1]), 0).getDate();
+    var tradingDays = Object.keys(dayPnl).length;
+
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Discipline</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">';
+    var discCol = avgDisc >= 80 ? 'var(--green)' : avgDisc >= 50 ? 'var(--gold)' : 'var(--red)';
+    h += '<div style="text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Discipline moy.</div><div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + discCol + '">' + (monthSessions.length ? avgDisc : '—') + '</div></div>';
+    h += '<div style="text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Sessions</div><div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--t1)">' + monthSessions.length + '</div></div>';
+    h += '<div style="text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Jours actifs</div><div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--t1)">' + tradingDays + '/' + daysInMonth + '</div></div>';
+    h += '</div>';
+
+    var setupKeys = Object.keys(setupCount);
+    if (setupKeys.length) {
+      h += '<div style="font-size:10px;color:var(--t3);margin-bottom:6px">Setups</div>';
+      setupKeys.forEach(function(sk) {
+        var pct = (setupCount[sk] / trades.length * 100).toFixed(0);
+        h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+        h += '<span style="font-size:11px;color:var(--t2);min-width:50px">' + sk + '</span>';
+        h += '<div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:var(--gold);border-radius:3px"></div></div>';
+        h += '<span style="font-size:10px;color:var(--t3);font-family:JetBrains Mono,monospace;min-width:30px;text-align:right">' + pct + '%</span>';
+        h += '</div>';
+      });
+    }
+    h += '</div>';
+
+    /* Section 3 — Calendrier visuel */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Calendrier</div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10px;color:var(--t3);margin-bottom:6px">';
+    ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].forEach(function(d) { h += '<div style="font-weight:600">' + d + '</div>' });
+    h += '</div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+
+    var firstDay = new Date(parseInt(ymParts[0]), parseInt(ymParts[1]) - 1, 1).getDay();
+    var offset = firstDay === 0 ? 6 : firstDay - 1;
+    for (var pad = 0; pad < offset; pad++) h += '<div></div>';
+
+    var maxAbsPnl = 1;
+    days.forEach(function(d) { if (Math.abs(dayPnl[d]) > maxAbsPnl) maxAbsPnl = Math.abs(dayPnl[d]) });
+
+    for (var day = 1; day <= daysInMonth; day++) {
+      var dateStr = ym + '-' + String(day).padStart(2, '0');
+      var dp = dayPnl[dateStr];
+      var bg = 'var(--bg3)';
+      var color = 'var(--t3)';
+      if (dp !== undefined) {
+        var intensity = Math.min(1, Math.abs(dp) / maxAbsPnl);
+        var alpha = 0.15 + intensity * 0.45;
+        if (dp > 0) { bg = 'rgba(0,214,143,' + alpha.toFixed(2) + ')'; color = 'var(--green)' }
+        else if (dp < 0) { bg = 'rgba(255,71,87,' + alpha.toFixed(2) + ')'; color = 'var(--red)' }
+        else { bg = 'rgba(212,160,23,.1)'; color = 'var(--t2)' }
+      }
+      var dayTrades = dp !== undefined ? trades.filter(function(t) { return t.date === dateStr }).length : 0;
+      var tooltip = dp !== undefined ? (dp >= 0 ? '+' : '') + '$' + dp.toFixed(0) + ' · ' + dayTrades + ' trades' : '';
+      h += '<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:11px;font-weight:600;background:' + bg + ';color:' + color + ';cursor:' + (tooltip ? 'pointer' : 'default') + '"' + (tooltip ? ' title="' + tooltip + '"' : '') + '>' + day + '</div>';
+    }
+    h += '</div></div>';
+
+    /* Section 4 — Equity curve */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Equity curve du mois</div>';
+    h += '<div style="position:relative;height:200px;max-height:200px;overflow:hidden"><canvas id="monthlyEqChart"></canvas></div>';
+    h += '</div>';
+
+    el.innerHTML = h;
+
+    renderMonthlyChart(ym, dayPnl, daysInMonth);
+  } catch(e) { console.error('rMonthly:', e) }
+}
+
+function renderMonthlyChart(ym, dayPnl, daysInMonth) {
+  try {
+    var canvas = document.getElementById('monthlyEqChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    if (_monthlyChart) { _monthlyChart.destroy(); _monthlyChart = null }
+
+    var labels = [];
+    var data = [];
+    var cum = 0;
+    for (var d = 1; d <= daysInMonth; d++) {
+      var dateStr = ym + '-' + String(d).padStart(2, '0');
+      labels.push(d);
+      if (dayPnl[dateStr] !== undefined) cum += dayPnl[dateStr];
+      data.push(cum);
+    }
+
+    _monthlyChart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          borderColor: '#d4a017',
+          backgroundColor: 'rgba(212,160,23,.08)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(ctx) { return (ctx.raw >= 0 ? '+' : '') + '$' + ctx.raw.toFixed(0) } } }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(29,40,64,.3)' }, ticks: { color: '#8a9fc0', font: { size: 10 } } },
+          y: {
+            grid: { color: 'rgba(29,40,64,.3)' },
+            ticks: { color: '#8a9fc0', font: { size: 10, family: 'JetBrains Mono' }, callback: function(v) { return '$' + v } }
+          }
+        }
+      },
+      plugins: [{
+        id: 'zeroLine',
+        afterDraw: function(chart) {
+          try {
+            var yScale = chart.scales.y;
+            var ctx2 = chart.ctx;
+            var y0 = yScale.getPixelForValue(0);
+            ctx2.save();
+            ctx2.strokeStyle = 'rgba(138,159,192,.3)';
+            ctx2.lineWidth = 1;
+            ctx2.setLineDash([4, 4]);
+            ctx2.beginPath();
+            ctx2.moveTo(chart.chartArea.left, y0);
+            ctx2.lineTo(chart.chartArea.right, y0);
+            ctx2.stroke();
+            ctx2.restore();
+          } catch(e) {}
+        }
+      }]
+    });
+  } catch(e) { console.error('renderMonthlyChart:', e) }
+}
+
 /* ═══════════════════════════════════════════════════════
    GROUPES LIÉS — UI Stub
    ═══════════════════════════════════════════════════════ */
