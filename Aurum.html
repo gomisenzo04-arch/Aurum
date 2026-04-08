@@ -1558,6 +1558,11 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 <div id="sessHistView"></div>
 </div>
 
+<!-- INSIGHTS -->
+<div class="panel" id="insights">
+<div id="insightsView"></div>
+</div>
+
 <!-- COMPARAISON COMPTES -->
 <div class="panel" id="compare">
 <div id="compareView"></div>
@@ -2446,6 +2451,7 @@ function R() {
   else if (pg === 'groups') { rGroups() }
   else if (pg === 'monthly') { rMonthly() }
   else if (pg === 'compare') { rCompare() }
+  else if (pg === 'insights') { rInsights() }
   else if (pg === 'replay') { rReplay() }
 
 }
@@ -4003,7 +4009,7 @@ function adaptForm() {
     if (window.self !== window.top && typeof groups !== 'undefined') {
       var traderGroup = groups.find(function(g) { return g.id === 'trader' });
       if (traderGroup) {
-        traderGroup.pages = aT === 'replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}];
+        traderGroup.pages = aT === 'replay' ? [{p:'replay',l:'Replay'}] : aT === 'insights' ? [{p:'insights',l:'Analytics'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}];
         if (activeGroup === 'trader') renderSubTabs('trader');
       }
     }
@@ -8582,6 +8588,195 @@ function renderMonthlyChart(ym, dayPnl, daysInMonth) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   INSIGHTS — Analytics avancés
+   ═══════════════════════════════════════════════════════ */
+
+function rInsights() {
+  try {
+    var el = document.getElementById('insightsView');
+    if (!el) return;
+
+    var trades = D.live.filter(function(t) { return D.activeAcc === 'all' || t.accId === D.activeAcc });
+    if (!trades.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--t3);font-size:13px">Aucun trade. Les insights apparaîtront avec tes premiers trades.</div>';
+      return;
+    }
+
+    var h = '';
+    h += '<div style="font-size:18px;font-weight:800;color:var(--t1);text-align:center;margin-bottom:16px">📊 Insights & Analytics</div>';
+
+    /* ═══ 1. Heatmap Setup × Résultat ═══ */
+    var setups = {};
+    trades.forEach(function(t) {
+      var setup = t.type || 'Autre';
+      if (!setups[setup]) setups[setup] = { total: 0, wins: 0, pnl: 0 };
+      setups[setup].total++;
+      if ((parseFloat(t.pl) || 0) > 0) setups[setup].wins++;
+      setups[setup].pnl += parseFloat(t.pl) || 0;
+    });
+
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Performance par setup</div>';
+    h += '<div style="display:grid;gap:8px">';
+    Object.keys(setups).forEach(function(setup) {
+      var s = setups[setup];
+      var wr = (s.wins / s.total * 100).toFixed(0);
+      var wrCol = parseFloat(wr) >= 50 ? 'var(--green)' : 'var(--red)';
+      var pnlCol = s.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+      h += '<div style="display:grid;grid-template-columns:80px 1fr 60px 80px;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:8px">';
+      h += '<span style="font-weight:700;color:var(--t1);font-size:13px">' + setup + '</span>';
+      h += '<div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:' + wr + '%;background:' + wrCol + ';border-radius:3px"></div></div>';
+      h += '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:' + wrCol + ';text-align:center">' + wr + '%</span>';
+      h += '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:' + pnlCol + ';text-align:right">' + (s.pnl >= 0 ? '+' : '') + '$' + s.pnl.toFixed(0) + '</span>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+
+    /* ═══ 2. Heatmap Horaire × WR ═══ */
+    var hours = {};
+    trades.forEach(function(t) {
+      if (!t.time) return;
+      var hr = parseInt(t.time.split(':')[0]);
+      if (!hours[hr]) hours[hr] = { total: 0, wins: 0, pnl: 0 };
+      hours[hr].total++;
+      if ((parseFloat(t.pl) || 0) > 0) hours[hr].wins++;
+      hours[hr].pnl += parseFloat(t.pl) || 0;
+    });
+
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Performance par horaire</div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:4px">';
+    for (var hr = 7; hr <= 22; hr++) {
+      var hd = hours[hr];
+      if (!hd) {
+        h += '<div style="text-align:center;padding:8px 4px;background:var(--bg3);border-radius:6px"><div style="font-size:10px;color:var(--t3)">' + hr + 'h</div><div style="font-size:9px;color:var(--t3)">—</div></div>';
+        continue;
+      }
+      var hwr = (hd.wins / hd.total * 100).toFixed(0);
+      var intensity = Math.min(1, hd.total / 10);
+      var bgCol = parseFloat(hwr) >= 50 ? 'rgba(0,214,143,' + (0.05 + intensity * 0.2).toFixed(2) + ')' : 'rgba(255,71,87,' + (0.05 + intensity * 0.2).toFixed(2) + ')';
+      h += '<div style="text-align:center;padding:8px 4px;background:' + bgCol + ';border-radius:6px">';
+      h += '<div style="font-size:10px;font-weight:700;color:var(--t1)">' + hr + 'h</div>';
+      h += '<div style="font-size:12px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + (parseFloat(hwr) >= 50 ? 'var(--green)' : 'var(--red)') + '">' + hwr + '%</div>';
+      h += '<div style="font-size:8px;color:var(--t3)">' + hd.total + ' trades</div>';
+      h += '</div>';
+    }
+    h += '</div></div>';
+
+    /* ═══ 3. Jour de la semaine ═══ */
+    var days = { 1: { n: 'Lun', t: 0, w: 0, pnl: 0 }, 2: { n: 'Mar', t: 0, w: 0, pnl: 0 }, 3: { n: 'Mer', t: 0, w: 0, pnl: 0 }, 4: { n: 'Jeu', t: 0, w: 0, pnl: 0 }, 5: { n: 'Ven', t: 0, w: 0, pnl: 0 } };
+    trades.forEach(function(t) {
+      if (!t.date) return;
+      var d = new Date(t.date).getDay();
+      if (d >= 1 && d <= 5 && days[d]) {
+        days[d].t++;
+        if ((parseFloat(t.pl) || 0) > 0) days[d].w++;
+        days[d].pnl += parseFloat(t.pl) || 0;
+      }
+    });
+
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Performance par jour</div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">';
+    [1, 2, 3, 4, 5].forEach(function(d) {
+      var dd = days[d];
+      var dwr = dd.t ? (dd.w / dd.t * 100).toFixed(0) : '—';
+      var dwrCol = dd.t && parseFloat(dwr) >= 50 ? 'var(--green)' : dd.t ? 'var(--red)' : 'var(--t3)';
+      h += '<div style="text-align:center;padding:10px;background:var(--bg3);border-radius:8px">';
+      h += '<div style="font-size:12px;font-weight:700;color:var(--t1)">' + dd.n + '</div>';
+      h += '<div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + dwrCol + ';margin:4px 0">' + dwr + (dwr !== '—' ? '%' : '') + '</div>';
+      h += '<div style="font-size:10px;color:var(--t3)">' + dd.t + ' trades</div>';
+      h += '<div style="font-size:10px;font-family:JetBrains Mono,monospace;color:' + (dd.pnl >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (dd.pnl >= 0 ? '+' : '') + '$' + dd.pnl.toFixed(0) + '</div>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+
+    /* ═══ 4. Corrélation Setup × Horaire (heatmap) ═══ */
+    var setupHours = {};
+    var allSetups = [];
+    trades.forEach(function(t) {
+      var setup = t.type || 'Autre';
+      var hr = t.time ? parseInt(t.time.split(':')[0]) : null;
+      if (hr === null) return;
+      if (allSetups.indexOf(setup) === -1) allSetups.push(setup);
+      var key = setup + '_' + hr;
+      if (!setupHours[key]) setupHours[key] = { total: 0, wins: 0 };
+      setupHours[key].total++;
+      if ((parseFloat(t.pl) || 0) > 0) setupHours[key].wins++;
+    });
+
+    if (allSetups.length && Object.keys(setupHours).length > 2) {
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+      h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Setup × Horaire (WR%)</div>';
+      h += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">';
+      h += '<thead><tr><th style="padding:6px;color:var(--t3)"></th>';
+      for (var hh = 8; hh <= 21; hh++) h += '<th style="padding:6px;color:var(--t3);text-align:center">' + hh + 'h</th>';
+      h += '</tr></thead><tbody>';
+      allSetups.forEach(function(setup) {
+        h += '<tr><td style="padding:6px;font-weight:700;color:var(--t1)">' + setup + '</td>';
+        for (var hh2 = 8; hh2 <= 21; hh2++) {
+          var cell = setupHours[setup + '_' + hh2];
+          if (!cell || cell.total === 0) {
+            h += '<td style="padding:6px;text-align:center;color:var(--t3)">—</td>';
+          } else {
+            var cwr = (cell.wins / cell.total * 100).toFixed(0);
+            var cBg = parseFloat(cwr) >= 50 ? 'rgba(0,214,143,' + Math.min(0.4, cell.total * 0.08).toFixed(2) + ')' : 'rgba(255,71,87,' + Math.min(0.4, cell.total * 0.08).toFixed(2) + ')';
+            h += '<td style="padding:6px;text-align:center;font-weight:700;font-family:JetBrains Mono,monospace;background:' + cBg + ';border-radius:4px;color:' + (parseFloat(cwr) >= 50 ? 'var(--green)' : 'var(--red)') + '">' + cwr + '</td>';
+          }
+        }
+        h += '</tr>';
+      });
+      h += '</tbody></table></div></div>';
+    }
+
+    /* ═══ 5. Streaks & Séries ═══ */
+    var streaks = [];
+    var currentStreak = { type: null, count: 0, pnl: 0 };
+    trades.sort(function(a, b) { return (a.ts || 0) - (b.ts || 0) });
+    trades.forEach(function(t) {
+      var isWin = (parseFloat(t.pl) || 0) > 0;
+      var type = isWin ? 'W' : 'L';
+      if (type === currentStreak.type) {
+        currentStreak.count++;
+        currentStreak.pnl += parseFloat(t.pl) || 0;
+      } else {
+        if (currentStreak.type) streaks.push({ type: currentStreak.type, count: currentStreak.count, pnl: currentStreak.pnl });
+        currentStreak = { type: type, count: 1, pnl: parseFloat(t.pl) || 0 };
+      }
+    });
+    if (currentStreak.type) streaks.push(currentStreak);
+
+    var maxWStreak = 0, maxLStreak = 0;
+    streaks.forEach(function(s) {
+      if (s.type === 'W' && s.count > maxWStreak) maxWStreak = s.count;
+      if (s.type === 'L' && s.count > maxLStreak) maxLStreak = s.count;
+    });
+
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Séries & Streaks</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">';
+    h += '<div style="text-align:center;padding:12px;background:rgba(0,214,143,.04);border-radius:8px"><div style="font-size:9px;color:var(--t3);text-transform:uppercase">Max série gagnante</div><div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--green)">' + maxWStreak + '</div></div>';
+    h += '<div style="text-align:center;padding:12px;background:rgba(255,71,87,.04);border-radius:8px"><div style="font-size:9px;color:var(--t3);text-transform:uppercase">Max série perdante</div><div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--red)">' + maxLStreak + '</div></div>';
+    h += '</div>';
+    /* Dernières 20 séries en mini barres */
+    var recent = streaks.slice(-20);
+    if (recent.length) {
+      h += '<div style="display:flex;gap:2px;align-items:end;height:40px">';
+      var maxC = Math.max.apply(null, recent.map(function(s) { return s.count }));
+      recent.forEach(function(s) {
+        var hPct = Math.max(10, s.count / maxC * 100);
+        var col = s.type === 'W' ? 'var(--green)' : 'var(--red)';
+        h += '<div style="flex:1;height:' + hPct + '%;background:' + col + ';border-radius:2px;min-width:4px" title="' + s.type + s.count + '"></div>';
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+
+    el.innerHTML = h;
+  } catch(e) { console.error('rInsights:', e) }
+}
+
+/* ═══════════════════════════════════════════════════════
    COMPARAISON ENTRE COMPTES
    ═══════════════════════════════════════════════════════ */
 
@@ -9980,7 +10175,7 @@ try{if(window.self!==window.top){
   var groups = [
     {id:'dash', label:'📊 Dashboard', pages:[]},
     {id:'trader', label:'Trader', pages:
-      aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
+      aT==='replay' ? [{p:'replay',l:'Replay'}] : aT==='insights' ? [{p:'insights',l:'Analytics'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
     },
     {id:'analyser', label:'Analyser', pages:[
       {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'compare',l:'Comptes'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}

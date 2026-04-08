@@ -1084,6 +1084,57 @@ function renderCoach(){
     var capRaw=localStorage.getItem('aurum_capital_v1');
     if(capRaw){try{var cap=JSON.parse(capRaw);var db=(cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0);if(db>0)insights.push({icon:'💡',text:'Tu as $'+Math.round(db).toLocaleString('en-US')+' de dettes. Priorise le remboursement.',src:'Capital'})}catch(e){}}
 
+    /* Alertes intelligentes basées sur les patterns trading */
+    try {
+      if(j.trades.length>=10){
+        /* Meilleur jour de la semaine */
+        var dayWR={};
+        var dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+        j.trades.forEach(function(t){
+          if(!t.date)return;
+          var d=new Date(t.date).getDay();
+          if(!dayWR[d])dayWR[d]={w:0,t:0};
+          dayWR[d].t++;
+          if((parseFloat(t.pl||t.pnl)||0)>0)dayWR[d].w++;
+        });
+        var bestDay=null,bestWR=0;
+        Object.keys(dayWR).forEach(function(d){
+          var wr=dayWR[d].t>=3?dayWR[d].w/dayWR[d].t*100:0;
+          if(wr>bestWR){bestWR=wr;bestDay=parseInt(d)}
+        });
+        if(bestDay!==null&&bestWR>=60)insights.push({icon:'📅',text:'Ton meilleur jour : <b>'+dayNames[bestDay]+'</b> ('+bestWR.toFixed(0)+'% WR). Concentre tes sessions là.',src:'Pattern'});
+
+        /* WR en baisse sur les 2 dernières semaines */
+        var now=new Date();
+        var twoWeeksAgo=new Date(now.getTime()-14*24*3600*1000).toISOString().slice(0,10);
+        var fourWeeksAgo=new Date(now.getTime()-28*24*3600*1000).toISOString().slice(0,10);
+        var recent=j.trades.filter(function(t){return t.date>=twoWeeksAgo});
+        var prior=j.trades.filter(function(t){return t.date>=fourWeeksAgo&&t.date<twoWeeksAgo});
+        if(recent.length>=5&&prior.length>=5){
+          var recentWR=recent.filter(function(t){return(parseFloat(t.pl||t.pnl)||0)>0}).length/recent.length*100;
+          var priorWR=prior.filter(function(t){return(parseFloat(t.pl||t.pnl)||0)>0}).length/prior.length*100;
+          if(recentWR<priorWR-10)insights.push({icon:'⚠️',text:'WR en baisse : <b>'+recentWR.toFixed(0)+'%</b> (2 dernières sem.) vs '+priorWR.toFixed(0)+'% avant. Revois ta discipline.',src:'Pattern'});
+          if(recentWR>priorWR+10)insights.push({icon:'📈',text:'WR en hausse : <b>'+recentWR.toFixed(0)+'%</b> ! Continue comme ça.',src:'Pattern'});
+        }
+
+        /* Meilleure heure */
+        var hourWR={};
+        j.trades.forEach(function(t){
+          if(!t.time)return;
+          var hr=parseInt(t.time.split(':')[0]);
+          if(!hourWR[hr])hourWR[hr]={w:0,t:0};
+          hourWR[hr].t++;
+          if((parseFloat(t.pl||t.pnl)||0)>0)hourWR[hr].w++;
+        });
+        var bestHour=null,bestHWR=0;
+        Object.keys(hourWR).forEach(function(hr){
+          var wr=hourWR[hr].t>=3?hourWR[hr].w/hourWR[hr].t*100:0;
+          if(wr>bestHWR){bestHWR=wr;bestHour=parseInt(hr)}
+        });
+        if(bestHour!==null&&bestHWR>=60)insights.push({icon:'⏰',text:'Meilleur créneau : <b>'+bestHour+'h-'+(bestHour+1)+'h</b> ('+bestHWR.toFixed(0)+'% WR sur '+hourWR[bestHour].t+' trades).',src:'Pattern'});
+      }
+    }catch(pe){}
+
     if(j.trades.length===0) insights.push({icon:'💡',text:'Aucun trade enregistré. Commence par la Checklist.',src:'Journal'});
 
     if(!insights.length) insights.push({icon:'💡',text:'Tout est en ordre. Continue ta routine.',src:'Aurum'});
