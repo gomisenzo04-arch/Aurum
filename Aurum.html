@@ -6813,6 +6813,31 @@ function rSession() {
       return;
     }
 
+    /* Tutoriel premier trade */
+    if (D.live.length === 0 && D.replay.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:30px 20px;max-width:550px;margin:0 auto">' +
+        '<div style="font-size:40px;margin-bottom:12px">🎓</div>' +
+        '<div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:8px">Bienvenue dans le Journal</div>' +
+        '<div style="font-size:13px;color:var(--t2);line-height:1.8;margin-bottom:24px">Voici ton flux de trading quotidien. Suis ces étapes dans l\'ordre :</div>' +
+        '<div style="display:grid;gap:10px;text-align:left;max-width:400px;margin:0 auto">' +
+        '<div onclick="go(\'check\')" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+        '<div style="width:32px;height:32px;border-radius:8px;background:rgba(212,160,23,.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--gold)">1</div>' +
+        '<div><div style="font-size:13px;font-weight:700;color:var(--t1)">Checklist</div><div style="font-size:11px;color:var(--t3)">Prépare ta session : news, direction, S/R, liquidités</div></div></div>' +
+        '<div onclick="go(\'calc\')" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:10px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--blue)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+        '<div style="width:32px;height:32px;border-radius:8px;background:rgba(91,141,239,.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--blue)">2</div>' +
+        '<div><div style="font-size:13px;font-weight:700;color:var(--t1)">Calculateur</div><div style="font-size:11px;color:var(--t3)">Calcule ton lot en fonction du SL et du risque</div></div></div>' +
+        '<div onclick="go(\'session\')" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:10px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--green)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+        '<div style="width:32px;height:32px;border-radius:8px;background:rgba(0,214,143,.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--green)">3</div>' +
+        '<div><div style="font-size:13px;font-weight:700;color:var(--t1)">Session</div><div style="font-size:11px;color:var(--t3)">Ouvre une session de trading et enregistre tes trades</div></div></div>' +
+        '<div onclick="go(\'add\')" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:10px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--purple)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+        '<div style="width:32px;height:32px;border-radius:8px;background:rgba(167,139,250,.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--purple)">4</div>' +
+        '<div><div style="font-size:13px;font-weight:700;color:var(--t1)">Trade</div><div style="font-size:11px;color:var(--t3)">Enregistre le résultat de ton trade (ou via Session)</div></div></div>' +
+        '</div>' +
+        '<div style="margin-top:20px;font-size:11px;color:var(--t3)">💡 Commence par la <b>Formation</b> si tu n\'as pas encore appris la stratégie.</div>' +
+        '</div>';
+      return;
+    }
+
     var target;
     if (D.activeAcc && D.activeAcc.startsWith('ag_')) {
       var grp = loadAccountGroups().find(function(g) { return g.id === D.activeAcc });
@@ -10187,6 +10212,22 @@ try{if(window.self!==window.top){
       {p:'settings',l:'Mes comptes'},{p:'groups',l:'Groupes liés'}
     ]}
   ];
+
+  /* Progressive disclosure : masquer les tabs avancés si peu de trades */
+  var _totalTrades = D.live.length;
+  if (_totalTrades < 10) {
+    /* Masquer Analyser sauf Historique */
+    var analyserGrp = groups.find(function(g) { return g.id === 'analyser' });
+    if (analyserGrp) analyserGrp.pages = [{p:'hist',l:'Historique'}];
+    /* Masquer Système */
+    var systemeGrp = groups.find(function(g) { return g.id === 'systeme' });
+    if (systemeGrp) systemeGrp.pages = [];
+    /* Masquer Comptes si 1 seul compte */
+    if (D.accounts.length <= 1) {
+      var comptesGrp = groups.find(function(g) { return g.id === 'comptes' });
+      if (comptesGrp) comptesGrp.pages = [];
+    }
+  }
 
   var activeGroup = 'dash';
 
