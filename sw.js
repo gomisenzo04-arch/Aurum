@@ -3,7 +3,7 @@
    Mode hors-ligne complet pour les 4 pages
    ============================================ */
 
-var CACHE_NAME = 'aurum-v73';
+var CACHE_NAME = 'aurum-v74';
 
 console.log('[Aurum SW] v3 active');
 
