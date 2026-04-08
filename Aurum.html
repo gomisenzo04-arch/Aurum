@@ -8895,6 +8895,176 @@ var REPLAY_SCENARIOS = [
     analysisCandles: 25,
     correct: { direction: 'buy', setup: 'qm', shouldTrade: true },
     filters: { newsUSD: false, after21h: false }
+  },
+  {
+    id: 2, name: 'QM Sell classique', difficulty: 'facile',
+    description: 'Un QM baissier. Identifie la tendance haussière, le retournement et le point de vente.',
+    phases: [
+      { type: 'trend', direction: 'up', candles: 8, volatility: 5 },
+      { type: 'resistance', candles: 2, volatility: 4 },
+      { type: 'pullback', direction: 'down', candles: 4, volatility: 4 },
+      { type: 'support', candles: 2, volatility: 4 },
+      { type: 'breakout', direction: 'up', candles: 3, volatility: 5 },
+      { type: 'pullback', direction: 'down', candles: 3, volatility: 4 },
+      { type: 'breakout', direction: 'down', candles: 3, volatility: 5 },
+      { type: 'continuation', direction: 'down', candles: 15, volatility: 4 }
+    ],
+    startPrice: 2380,
+    analysisCandles: 25,
+    correct: { direction: 'sell', setup: 'qm', shouldTrade: true },
+    filters: { newsUSD: false, after21h: false }
+  },
+  {
+    id: 3, name: 'QM + Trailing', difficulty: 'moyen',
+    description: 'QM Buy avec un retracement valide en 1min. Déclenche le trailing au bon moment.',
+    phases: [
+      { type: 'trend', direction: 'down', candles: 6, volatility: 5 },
+      { type: 'support', candles: 2, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 3, volatility: 4 },
+      { type: 'resistance', candles: 2, volatility: 4 },
+      { type: 'breakout', direction: 'down', candles: 2, volatility: 5 },
+      { type: 'pullback', direction: 'up', candles: 2, volatility: 3 },
+      { type: 'breakout', direction: 'up', candles: 3, volatility: 5 },
+      { type: 'continuation', direction: 'up', candles: 8, volatility: 4 },
+      { type: 'pullback', direction: 'down', candles: 3, volatility: 3 },
+      { type: 'continuation', direction: 'up', candles: 10, volatility: 4 }
+    ],
+    startPrice: 2350,
+    analysisCandles: 22,
+    correct: { direction: 'buy', setup: 'qm', shouldTrade: true, trailAt: 30 },
+    filters: { newsUSD: false, after21h: false }
+  },
+  {
+    id: 4, name: 'Gaps (écart > 1200)', difficulty: 'moyen',
+    description: 'Écart R/S trop grand pour un QM. Cherche 2 gaps consécutifs et entre après la 2ème cassure.',
+    phases: [
+      { type: 'trend', direction: 'up', candles: 10, volatility: 8 },
+      { type: 'resistance', candles: 2, volatility: 6 },
+      { type: 'trend', direction: 'down', candles: 12, volatility: 8 },
+      { type: 'support', candles: 2, volatility: 6 },
+      { type: 'gap', direction: 'up', candles: 2, volatility: 6 },
+      { type: 'pullback', direction: 'down', candles: 2, volatility: 4 },
+      { type: 'gap', direction: 'up', candles: 2, volatility: 6 },
+      { type: 'breakout', direction: 'up', candles: 3, volatility: 7 },
+      { type: 'continuation', direction: 'up', candles: 12, volatility: 5 }
+    ],
+    startPrice: 2300,
+    analysisCandles: 30,
+    correct: { direction: 'buy', setup: 'gaps', shouldTrade: true },
+    filters: { newsUSD: false, after21h: false }
+  },
+  {
+    id: 5, name: 'Piège — pas de setup', difficulty: 'moyen',
+    description: 'Marché latéral sans structure claire. Il n\'y a rien à trader — patience.',
+    phases: [
+      { type: 'range', candles: 10, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 2, volatility: 3 },
+      { type: 'range', candles: 8, volatility: 3 },
+      { type: 'pullback', direction: 'down', candles: 2, volatility: 3 },
+      { type: 'range', candles: 10, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 3, volatility: 3 },
+      { type: 'range', candles: 8, volatility: 3 }
+    ],
+    startPrice: 2360,
+    analysisCandles: 35,
+    correct: { direction: 'sell', setup: 'none', shouldTrade: false },
+    filters: { newsUSD: false, after21h: false }
+  },
+  {
+    id: 6, name: 'News rouge USD', difficulty: 'moyen',
+    description: 'Un QM valide se forme, mais une news rouge USD est prévue dans les 5 minutes. Ne pas trader.',
+    phases: [
+      { type: 'trend', direction: 'down', candles: 6, volatility: 5 },
+      { type: 'support', candles: 2, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 3, volatility: 4 },
+      { type: 'resistance', candles: 2, volatility: 4 },
+      { type: 'breakout', direction: 'down', candles: 2, volatility: 5 },
+      { type: 'pullback', direction: 'up', candles: 2, volatility: 3 },
+      { type: 'breakout', direction: 'up', candles: 3, volatility: 6 },
+      { type: 'trend', direction: 'up', candles: 6, volatility: 8 },
+      { type: 'trend', direction: 'down', candles: 8, volatility: 10 }
+    ],
+    startPrice: 2345,
+    analysisCandles: 22,
+    correct: { direction: 'buy', setup: 'qm', shouldTrade: false },
+    filters: { newsUSD: true, after21h: false }
+  },
+  {
+    id: 7, name: 'QM avec SL réduit', difficulty: 'difficile',
+    description: 'Le SL standard dépasse 1000 pts. Applique la règle du SL réduit (mèche cassure + 50).',
+    phases: [
+      { type: 'trend', direction: 'up', candles: 10, volatility: 9 },
+      { type: 'resistance', candles: 2, volatility: 8 },
+      { type: 'pullback', direction: 'down', candles: 5, volatility: 7 },
+      { type: 'support', candles: 2, volatility: 8 },
+      { type: 'breakout', direction: 'up', candles: 4, volatility: 10 },
+      { type: 'pullback', direction: 'down', candles: 3, volatility: 6 },
+      { type: 'breakout', direction: 'down', candles: 3, volatility: 9 },
+      { type: 'continuation', direction: 'down', candles: 12, volatility: 7 }
+    ],
+    startPrice: 2400,
+    analysisCandles: 28,
+    correct: { direction: 'sell', setup: 'qm', shouldTrade: true, slReduced: true },
+    filters: { newsUSD: false, after21h: false }
+  },
+  {
+    id: 8, name: '21h — fermeture forcée', difficulty: 'difficile',
+    description: 'Trade ouvert à 20h50. Le TP n\'est pas touché avant 21h — tu dois fermer manuellement.',
+    phases: [
+      { type: 'trend', direction: 'down', candles: 6, volatility: 5 },
+      { type: 'support', candles: 2, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 3, volatility: 4 },
+      { type: 'resistance', candles: 2, volatility: 4 },
+      { type: 'breakout', direction: 'down', candles: 2, volatility: 5 },
+      { type: 'breakout', direction: 'up', candles: 2, volatility: 4 },
+      { type: 'range', candles: 8, volatility: 3 },
+      { type: 'continuation', direction: 'up', candles: 5, volatility: 3 }
+    ],
+    startPrice: 2355,
+    analysisCandles: 20,
+    correct: { direction: 'buy', setup: 'qm', shouldTrade: true, closeAt21h: true },
+    filters: { newsUSD: false, after21h: true }
+  },
+  {
+    id: 9, name: 'QM inversé (piège)', difficulty: 'difficile',
+    description: 'Un pattern ressemble à un QM mais la cassure ne se confirme pas. Ne pas entrer.',
+    phases: [
+      { type: 'trend', direction: 'down', candles: 6, volatility: 5 },
+      { type: 'support', candles: 2, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 4, volatility: 4 },
+      { type: 'resistance', candles: 2, volatility: 4 },
+      { type: 'breakout', direction: 'down', candles: 2, volatility: 5 },
+      { type: 'pullback', direction: 'up', candles: 3, volatility: 4 },
+      { type: 'pullback', direction: 'down', candles: 2, volatility: 3 },
+      { type: 'range', candles: 6, volatility: 3 },
+      { type: 'trend', direction: 'down', candles: 8, volatility: 5 }
+    ],
+    startPrice: 2340,
+    analysisCandles: 25,
+    correct: { direction: 'buy', setup: 'qm', shouldTrade: false },
+    filters: { newsUSD: false, after21h: false }
+  },
+  {
+    id: 10, name: 'Trailing multiple', difficulty: 'difficile',
+    description: 'QM Sell avec 2 retracements successifs. Déplace ton trailing 2 fois au bon moment.',
+    phases: [
+      { type: 'trend', direction: 'up', candles: 7, volatility: 5 },
+      { type: 'resistance', candles: 2, volatility: 4 },
+      { type: 'pullback', direction: 'down', candles: 3, volatility: 4 },
+      { type: 'support', candles: 2, volatility: 4 },
+      { type: 'breakout', direction: 'up', candles: 3, volatility: 5 },
+      { type: 'pullback', direction: 'down', candles: 2, volatility: 3 },
+      { type: 'breakout', direction: 'down', candles: 3, volatility: 5 },
+      { type: 'continuation', direction: 'down', candles: 6, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 3, volatility: 3 },
+      { type: 'continuation', direction: 'down', candles: 5, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 2, volatility: 3 },
+      { type: 'continuation', direction: 'down', candles: 8, volatility: 4 }
+    ],
+    startPrice: 2370,
+    analysisCandles: 24,
+    correct: { direction: 'sell', setup: 'qm', shouldTrade: true, trailAt: 27, trailAt2: 35 },
+    filters: { newsUSD: false, after21h: false }
   }
 ];
 
