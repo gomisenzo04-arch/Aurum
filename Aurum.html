@@ -2088,42 +2088,6 @@ tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0;
 </div>
 </div>
 
-<!-- PROP FIRMS (données dans aurum_capital_v1) -->
-<div class="panel" id="propfirms">
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-<h2 style="font-size:16px;font-weight:700;color:var(--t1);margin:0">Prop Firms</h2>
-<button class="btn btn-g" onclick="tgJPF()">+ Challenge</button>
-</div>
-<div id="jpfForm" style="display:none;margin-bottom:14px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)">
-<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-<input id="jpf-f" placeholder="Nom firme" style="flex:1;min-width:120px;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px">
-<input type="number" id="jpf-s" placeholder="Taille $" min="0" style="width:90px;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px">
-<input type="number" id="jpf-c" placeholder="Coût $" min="0" style="width:80px;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px">
-<select id="jpf-st" style="padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"><option>En cours</option><option>Phase 2</option><option>Funded</option><option>Échoué</option></select>
-</div>
-<button class="btn btn-g" onclick="addJPF()" style="font-size:11px">Ajouter</button>
-</div>
-<div id="jpfList"></div>
-</div>
-
-<!-- PAYOUTS (données dans aurum_capital_v1) -->
-<div class="panel" id="payouts">
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-<h2 style="font-size:16px;font-weight:700;color:var(--t1);margin:0">Payouts</h2>
-<button class="btn btn-g" onclick="tgJPO()">+ Payout</button>
-</div>
-<div id="jpoForm" style="display:none;margin-bottom:14px;padding:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius)">
-<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-<input type="date" id="jpo-d" style="padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px">
-<select id="jpo-s" style="padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"><option>Prop Firm</option><option>Salaire</option><option>Business</option><option>Autre</option></select>
-<input type="number" id="jpo-b" placeholder="Brut $" min="0" step="0.01" style="width:90px;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px">
-<input type="number" id="jpo-f" placeholder="Frais $" min="0" step="0.01" value="0" style="width:80px;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px">
-</div>
-<button class="btn btn-g" onclick="addJPO()" style="font-size:11px">Ajouter</button>
-</div>
-<div id="jpoSum"></div>
-<div id="jpoList"></div>
-</div>
 
 <!-- GROUPES LIÉS -->
 <div class="panel" id="groups">
@@ -2474,8 +2438,6 @@ function R() {
   else if (pg === 'settings') { ldS() }
   else if (pg === 'session') { rSession() }
   else if (pg === 'sessHist') { rSessHist() }
-  else if (pg === 'propfirms') { rJPF() }
-  else if (pg === 'payouts') { rJPO() }
   else if (pg === 'groups') { rGroups() }
   else if (pg === 'monthly') { rMonthly() }
   else if (pg === 'replay') { rReplay() }
@@ -4035,7 +3997,7 @@ function adaptForm() {
     if (window.self !== window.top && typeof groups !== 'undefined') {
       var traderGroup = groups.find(function(g) { return g.id === 'trader' });
       if (traderGroup) {
-        traderGroup.pages = aT === 'replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'add',l:'Trade'}];
+        traderGroup.pages = aT === 'replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}];
         if (activeGroup === 'trader') renderSubTabs('trader');
       }
     }
@@ -8250,20 +8212,6 @@ function testPhase05() {
   return { pass: pass, fail: fail };
 }
 
-/* ─── PROP FIRMS & PAYOUTS (lecture/écriture aurum_capital_v1) ─── */
-var CK='aurum_capital_v1';
-function _loadCap(){try{var r=localStorage.getItem(CK);return r?JSON.parse(r):{payouts:[],propfirms:[],portfolio:[],passifs:[],expenses:[],entities:[],abonnements:[],categories:[],history:[]}}catch(e){return{payouts:[],propfirms:[]}}}
-function _saveCap(d){try{localStorage.setItem(CK,JSON.stringify(d))}catch(e){console.error('saveCap:',e)}}
-function _uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)}
-function _fm(n){return'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
-function tgJPF(){var e=document.getElementById('jpfForm');e.style.display=e.style.display==='none'?'block':'none'}
-function tgJPO(){var e=document.getElementById('jpoForm');e.style.display=e.style.display==='none'?'block':'none'}
-function addJPF(){try{var f=document.getElementById('jpf-f').value.trim();if(!f){toast('Nom requis');return}var d=_loadCap();d.propfirms.push({id:_uid(),firm:f,type:'',size:parseFloat(document.getElementById('jpf-s').value)||0,cost:parseFloat(document.getElementById('jpf-c').value)||0,split:80,status:document.getElementById('jpf-st').value});_saveCap(d);rJPF();tgJPF();toast('Challenge ajouté');document.getElementById('jpf-f').value=''}catch(e){console.error(e)}}
-function rJPF(){try{var d=_loadCap();var el=document.getElementById('jpfList');if(!el)return;if(!d.propfirms||!d.propfirms.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">Aucun challenge. Clique + Challenge.</div>';return}var sIco={'En cours':'⏳','Phase 2':'🔄','Funded':'🎉','Échoué':'❌','Perdu':'⛔'};var h='<div style="display:grid;gap:6px">';d.propfirms.forEach(function(p){var ic=sIco[p.status]||'';h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px"><div style="flex:1"><b style="color:var(--t1)">'+p.firm+'</b> <span style="font-size:11px;color:var(--t3)">'+_fm(p.size)+'</span></div><span style="font-size:12px">'+ic+' '+p.status+'</span><button class="btn btn-o" style="font-size:10px;padding:4px 8px;color:var(--red)" onclick="delJPF(\''+p.id+'\')">×</button></div>'});h+='</div>';el.innerHTML=h}catch(e){console.error(e)}}
-function delJPF(id){try{if(!confirm('Supprimer ?'))return;var d=_loadCap();d.propfirms=d.propfirms.filter(function(p){return p.id!==id});_saveCap(d);rJPF();toast('Supprimé')}catch(e){}}
-function addJPO(){try{var dt=document.getElementById('jpo-d').value;var b=parseFloat(document.getElementById('jpo-b').value)||0;if(!dt||b<=0){toast('Date et montant requis');return}var f=parseFloat(document.getElementById('jpo-f').value)||0;var d=_loadCap();d.payouts.push({id:_uid(),date:dt,source:document.getElementById('jpo-s').value,brut:b,frais:f,net:b-f});_saveCap(d);rJPO();tgJPO();toast('Payout ajouté');document.getElementById('jpo-b').value=''}catch(e){console.error(e)}}
-function rJPO(){try{var d=_loadCap();var el=document.getElementById('jpoList');var sum=document.getElementById('jpoSum');if(!el)return;if(!d.payouts||!d.payouts.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">Aucun payout. Clique + Payout.</div>';if(sum)sum.innerHTML='';return}var t=0;var h='<div style="display:grid;gap:4px">';d.payouts.sort(function(a,b){return(b.date||'').localeCompare(a.date||'')}).forEach(function(p){t+=p.net||0;h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:12px"><span style="color:var(--t3);font-family:JetBrains Mono,monospace;font-size:11px">'+p.date+'</span><span style="flex:1;color:var(--t2)">'+p.source+'</span><span style="font-weight:700;color:var(--green);font-family:JetBrains Mono,monospace">'+_fm(p.net)+'</span><button class="btn btn-o" style="font-size:10px;padding:4px 8px;color:var(--red)" onclick="delJPO(\''+p.id+'\')">×</button></div>'});h+='</div>';el.innerHTML=h;if(sum)sum.innerHTML='<div style="text-align:center;padding:12px;background:rgba(0,214,143,.06);border-radius:8px;margin-bottom:10px"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px">Total Payouts</div><div style="font-size:24px;font-weight:800;color:var(--green);font-family:JetBrains Mono,monospace">'+_fm(t)+'</div></div>'}catch(e){console.error(e)}}
-function delJPO(id){try{if(!confirm('Supprimer ?'))return;var d=_loadCap();d.payouts=d.payouts.filter(function(p){return p.id!==id});_saveCap(d);rJPO();toast('Supprimé')}catch(e){}}
 
 /* ─── Dashboard Monthly Widget ─── */
 function rDashMonthly() {
@@ -9559,7 +9507,7 @@ try{if(window.self!==window.top){
   var groups = [
     {id:'dash', label:'📊 Dashboard', pages:[]},
     {id:'trader', label:'Trader', pages:
-      aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'add',l:'Trade'}]
+      aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
     },
     {id:'analyser', label:'Analyser', pages:[
       {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
@@ -9568,7 +9516,7 @@ try{if(window.self!==window.top){
       {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'}
     ]},
     {id:'comptes', label:'Comptes', pages:[
-      {p:'settings',l:'Mes comptes'},{p:'groups',l:'Groupes liés'},{p:'propfirms',l:'Prop Firms'},{p:'payouts',l:'Payouts'}
+      {p:'settings',l:'Mes comptes'},{p:'groups',l:'Groupes liés'}
     ]}
   ];
 
