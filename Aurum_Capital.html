@@ -278,6 +278,7 @@ Tout ce que tu dois rembourser : crédit auto, prêt immobilier, dette perso, et
 <div style="display:flex;gap:6px"><button class="btn bp bs" onclick="aPS()">Ajouter la dette</button><button class="btn bo bs" onclick="tg('psF')">Annuler</button></div>
 </div>
 <div class="tw"><table><thead><tr><th>Nom</th><th>Restant</th><th>Mensualité</th><th>Mois restants</th><th></th></tr></thead><tbody id="psT"></tbody><tfoot><tr><td style="font-weight:700;color:var(--t1)">Total</td><td class="mn ng" id="psTot">$0</td><td class="mn ng" id="psMt">$0</td><td></td><td></td></tr></tfoot></table></div></div>
+<div class="pnl" id="p-yir"><div id="yirView"></div></div>
 <div class="pnl" id="p-bak">
 <div class="st">Sauvegarder & Restaurer</div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px">
@@ -331,7 +332,7 @@ var PG=['dash','coach','health','acc','pf','po','ent','fis','inv','bud','pas','b
 var cP='dash';
 function go(p){try{cP=p;PG.forEach(function(x){var e=document.getElementById('p-'+x);if(e)e.classList.toggle('on',x===p)});document.querySelectorAll('.ni').forEach(function(n){n.classList.toggle('on',n.dataset.p===p)});rP(p)}catch(e){console.error(e)}}
 document.querySelectorAll('.ni').forEach(function(n){n.addEventListener('click',function(){go(n.dataset.p)})});
-function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA()}catch(e){console.error(e)}}
+function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA();else if(p==='yir')rYIR()}catch(e){console.error(e)}}
 /* ─── KPI helper ─── */
 function kp(l,v,c,icon){
   try {
@@ -405,6 +406,8 @@ document.getElementById('dK').innerHTML=kp('Patrimoine net',fm(nw),nw>=0?'var(--
 var tips=gWT();document.getElementById('dW').innerHTML=tips.length?'<div class="tip"><div class="tt2">📋 Cette semaine</div>'+tips.map(function(t){return'<div style="margin-bottom:4px">→ '+t+'</div>'}).join('')+'</div>':'';
 /* Charts */
 requestAnimationFrame(function(){rAC();rEC();rRC()});rDF();
+/* Bouton Bilan annuel */
+try{var yirBtnEl=document.getElementById('dP');if(yirBtnEl){var yirDiv=document.createElement('div');yirDiv.innerHTML='<div onclick="go(\'yir\')" style="background:linear-gradient(135deg,rgba(212,160,23,.06),rgba(167,139,250,.04));border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:space-between" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'"><div><div style="font-size:13px;font-weight:700;color:var(--t1)">📊 Bilan '+new Date().getFullYear()+'</div><div style="font-size:11px;color:var(--t3)">Patrimoine, fiscal, coaching — vue annuelle</div></div><span style="color:var(--gold);font-size:12px">Voir →</span></div>';yirBtnEl.parentNode.insertBefore(yirDiv,yirBtnEl)}}catch(_yb){}
 var rec=(D.history||[]).slice(0,10);document.getElementById('dA').innerHTML=rec.length?rec.map(function(h){var i=h.type==='payout'?'💰':h.type==='portfolio'?'📈':h.type==='propfirm'?'🏆':'🔄';return'<div class="ci"><span>'+i+'</span><span style="flex:1;color:var(--t2)">'+h.text+'</span><span style="color:var(--t3);font-size:10px">'+h.date+'</span></div>'}).join(''):'<div style="padding:8px;color:var(--t3)">Ajoute des données.</div>';
 /* Projection */
 var ms2=Object.keys(mp).sort();
@@ -767,7 +770,7 @@ try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');
 
   var groups=[
-    {id:'dash',label:'📊 Dashboard',pages:[]},
+    {id:'dash',label:'📊 Dashboard',pages:[{p:'yir',l:'Bilan annuel'}]},
     {id:'patrimoine',label:'Patrimoine',pages:[
       {p:'inv',l:'Portfolio'},{p:'pas',l:'Dettes'}
     ]},
