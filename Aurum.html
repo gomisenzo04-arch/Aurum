@@ -8589,6 +8589,438 @@ function renderMonthlyChart(ym, dayPnl, daysInMonth) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   REPLAY MODE — Moteur de bougies
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Générateur de bruit gaussien ─── */
+function gaussRand() {
+  try {
+    var u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  } catch(e) { return 0 }
+}
+
+/* ─── Génération d'une bougie réaliste ─── */
+function makeCandle(prevClose, drift, volatility) {
+  try {
+    var vol = volatility || 4;
+    var open = prevClose;
+    var bodySize = Math.abs(gaussRand() * vol * 0.7 + drift);
+    var direction = (Math.random() + drift * 0.3) > 0.5 ? 1 : -1;
+    if (drift > 0.3) direction = Math.random() > 0.25 ? 1 : -1;
+    if (drift < -0.3) direction = Math.random() > 0.25 ? -1 : 1;
+    var close = open + direction * bodySize;
+    var wickUp = Math.abs(gaussRand() * vol * 0.5);
+    var wickDown = Math.abs(gaussRand() * vol * 0.5);
+    var high = Math.max(open, close) + wickUp;
+    var low = Math.min(open, close) - wickDown;
+    return { open: Math.round(open * 100) / 100, high: Math.round(high * 100) / 100, low: Math.round(low * 100) / 100, close: Math.round(close * 100) / 100 };
+  } catch(e) { return { open: prevClose, high: prevClose + 1, low: prevClose - 1, close: prevClose } }
+}
+
+/* ─── Génération de bougies par phases ─── */
+function generateCandles(phases, startPrice) {
+  try {
+    var candles = [];
+    var price = startPrice || 2340;
+    var metadata = { supports: [], resistances: [], liquidities: [], qmLevel: null, entryLevel: null, slLevel: null };
+
+    phases.forEach(function(phase) {
+      var n = phase.candles || 5;
+      var vol = phase.volatility || 4;
+
+      if (phase.type === 'trend') {
+        var dir = phase.direction === 'up' ? 1 : -1;
+        for (var i = 0; i < n; i++) {
+          var drift = dir * (0.4 + Math.random() * 0.3);
+          var c = makeCandle(price, drift, vol);
+          candles.push(c);
+          price = c.close;
+        }
+      } else if (phase.type === 'support') {
+        var bear = makeCandle(price, -0.5, vol);
+        candles.push(bear);
+        price = bear.close;
+        metadata.supports.push({ index: candles.length - 1, level: bear.close });
+        var bull = makeCandle(price, 0.6, vol);
+        candles.push(bull);
+        price = bull.close;
+        for (var si = 2; si < n; si++) {
+          var sc = makeCandle(price, 0.2, vol * 0.7);
+          candles.push(sc);
+          price = sc.close;
+        }
+      } else if (phase.type === 'resistance') {
+        var bullR = makeCandle(price, 0.5, vol);
+        candles.push(bullR);
+        price = bullR.close;
+        metadata.resistances.push({ index: candles.length - 1, level: bullR.close });
+        var bearR = makeCandle(price, -0.6, vol);
+        candles.push(bearR);
+        price = bearR.close;
+        for (var ri = 2; ri < n; ri++) {
+          var rc = makeCandle(price, -0.2, vol * 0.7);
+          candles.push(rc);
+          price = rc.close;
+        }
+      } else if (phase.type === 'pullback') {
+        var pbDir = phase.direction === 'up' ? 1 : -1;
+        for (var pi = 0; pi < n; pi++) {
+          var pbDrift = pbDir * (0.3 + Math.random() * 0.2);
+          var pbc = makeCandle(price, pbDrift, vol * 0.8);
+          candles.push(pbc);
+          price = pbc.close;
+        }
+      } else if (phase.type === 'breakout') {
+        var boDir = phase.direction === 'up' ? 1 : -1;
+        for (var bi = 0; bi < n; bi++) {
+          var boDrift = boDir * (0.6 + Math.random() * 0.4);
+          var boc = makeCandle(price, boDrift, vol * 1.2);
+          candles.push(boc);
+          price = boc.close;
+        }
+        if (phase.direction === 'down' && metadata.supports.length) {
+          metadata.entryLevel = metadata.supports[metadata.supports.length - 1].level;
+        } else if (phase.direction === 'up' && metadata.resistances.length) {
+          metadata.entryLevel = metadata.resistances[metadata.resistances.length - 1].level;
+        }
+      } else if (phase.type === 'liquidity') {
+        var liq1 = makeCandle(price, 0, vol * 0.6);
+        candles.push(liq1);
+        price = liq1.close;
+        var liq2 = makeCandle(price, 0, vol);
+        if (phase.position === 'high') {
+          liq2.high = Math.max(liq1.high, price) + vol * 1.5;
+          metadata.liquidities.push({ index: candles.length, level: liq2.high, type: 'bearish' });
+        } else {
+          liq2.low = Math.min(liq1.low, price) - vol * 1.5;
+          metadata.liquidities.push({ index: candles.length, level: liq2.low, type: 'bullish' });
+        }
+        candles.push(liq2);
+        price = liq2.close;
+        var liq3 = makeCandle(price, 0, vol * 0.6);
+        if (phase.position === 'high' && liq3.high >= liq2.high) liq3.high = liq2.high - vol * 0.5;
+        if (phase.position === 'low' && liq3.low <= liq2.low) liq3.low = liq2.low + vol * 0.5;
+        candles.push(liq3);
+        price = liq3.close;
+      } else if (phase.type === 'continuation') {
+        var coDir = phase.direction === 'up' ? 1 : -1;
+        for (var ci = 0; ci < n; ci++) {
+          var coDrift = coDir * (0.2 + Math.random() * 0.3);
+          var coc = makeCandle(price, coDrift, vol);
+          candles.push(coc);
+          price = coc.close;
+        }
+      } else if (phase.type === 'range') {
+        var center = price;
+        for (var rgi = 0; rgi < n; rgi++) {
+          var rgDrift = (center - price) * 0.1;
+          var rgc = makeCandle(price, rgDrift, vol * 0.6);
+          candles.push(rgc);
+          price = rgc.close;
+        }
+      } else if (phase.type === 'gap') {
+        var gapDir = phase.direction === 'up' ? 1 : -1;
+        var gap1 = makeCandle(price, gapDir * 0.5, vol);
+        candles.push(gap1);
+        price = gap1.close;
+        var gap2 = makeCandle(price, gapDir * 0.5, vol);
+        candles.push(gap2);
+        price = gap2.close;
+      }
+    });
+
+    if (metadata.entryLevel) {
+      var allHighs = candles.map(function(c) { return c.high });
+      var allLows = candles.map(function(c) { return c.low });
+      var extremeHigh = Math.max.apply(null, allHighs.slice(-10));
+      var extremeLow = Math.min.apply(null, allLows.slice(-10));
+      if (metadata.entryLevel > price) {
+        metadata.slLevel = extremeHigh + 50;
+      } else {
+        metadata.slLevel = extremeLow - 50;
+      }
+    }
+
+    return { candles: candles, metadata: metadata };
+  } catch(e) { console.error('generateCandles:', e); return { candles: [], metadata: {} } }
+}
+
+/* ─── Rendu canvas des bougies ─── */
+function renderCandleChart(canvasId, candles, options) {
+  try {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas || !candles.length) return;
+    var ctx = canvas.getContext('2d');
+    var opts = options || {};
+    var startIdx = opts.startIdx || 0;
+    var endIdx = opts.endIdx || candles.length;
+    var visibleCandles = candles.slice(startIdx, endIdx);
+    if (!visibleCandles.length) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = (opts.height || 350) * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = (opts.height || 350) + 'px';
+    ctx.scale(dpr, dpr);
+    var W = rect.width;
+    var H = opts.height || 350;
+
+    var marginLeft = 55;
+    var marginRight = 10;
+    var marginTop = 10;
+    var marginBottom = 25;
+    var chartW = W - marginLeft - marginRight;
+    var chartH = H - marginTop - marginBottom;
+
+    var allPrices = [];
+    visibleCandles.forEach(function(c) { allPrices.push(c.high, c.low) });
+    var minP = Math.min.apply(null, allPrices);
+    var maxP = Math.max.apply(null, allPrices);
+    var range = maxP - minP || 1;
+    minP -= range * 0.05;
+    maxP += range * 0.05;
+    range = maxP - minP;
+
+    function priceY(p) { return marginTop + chartH - ((p - minP) / range * chartH) }
+    var candleW = Math.max(3, Math.min(12, (chartW / visibleCandles.length) - 2));
+    var gap = Math.max(1, (chartW - candleW * visibleCandles.length) / (visibleCandles.length + 1));
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0c1018';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.strokeStyle = 'rgba(29,40,64,.4)';
+    ctx.lineWidth = 0.5;
+    var steps = 5;
+    for (var gi = 0; gi <= steps; gi++) {
+      var gp = minP + (range / steps) * gi;
+      var gy = priceY(gp);
+      ctx.beginPath();
+      ctx.moveTo(marginLeft, gy);
+      ctx.lineTo(W - marginRight, gy);
+      ctx.stroke();
+      ctx.fillStyle = '#8a9fc0';
+      ctx.font = '10px JetBrains Mono, monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(gp.toFixed(0), marginLeft - 5, gy + 3);
+    }
+
+    visibleCandles.forEach(function(c, i) {
+      var x = marginLeft + gap + i * (candleW + gap);
+      var isGreen = c.close >= c.open;
+      var bodyTop = priceY(Math.max(c.open, c.close));
+      var bodyBot = priceY(Math.min(c.open, c.close));
+      var bodyH = Math.max(1, bodyBot - bodyTop);
+
+      ctx.strokeStyle = isGreen ? '#00d68f' : '#ff4757';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + candleW / 2, priceY(c.high));
+      ctx.lineTo(x + candleW / 2, priceY(c.low));
+      ctx.stroke();
+
+      ctx.fillStyle = isGreen ? '#00d68f' : '#ff4757';
+      ctx.fillRect(x, bodyTop, candleW, bodyH);
+    });
+
+    if (opts.levels) {
+      opts.levels.forEach(function(lv) {
+        ctx.strokeStyle = lv.color || 'rgba(212,160,23,.5)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash(lv.dash || [4, 4]);
+        ctx.beginPath();
+        var ly = priceY(lv.price);
+        ctx.moveTo(marginLeft, ly);
+        ctx.lineTo(W - marginRight, ly);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (lv.label) {
+          ctx.fillStyle = lv.color || '#d4a017';
+          ctx.font = '9px DM Sans, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(lv.label, W - marginRight - 60, ly - 3);
+        }
+      });
+    }
+
+    if (opts.selectedCandle !== undefined && opts.selectedCandle >= startIdx && opts.selectedCandle < endIdx) {
+      var selI = opts.selectedCandle - startIdx;
+      var sx = marginLeft + gap + selI * (candleW + gap);
+      ctx.strokeStyle = 'rgba(212,160,23,.6)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(sx - 1, marginTop, candleW + 2, chartH);
+    }
+
+    return {
+      candleWidth: candleW, gap: gap, marginLeft: marginLeft, marginTop: marginTop,
+      chartW: chartW, chartH: chartH, minP: minP, maxP: maxP, range: range, priceY: priceY,
+      candleAtX: function(mouseX) {
+        var relX = mouseX - marginLeft - gap;
+        if (relX < 0) return -1;
+        var idx = Math.floor(relX / (candleW + gap));
+        return idx >= 0 && idx < visibleCandles.length ? idx + startIdx : -1;
+      },
+      priceAtY: function(mouseY) {
+        var relY = mouseY - marginTop;
+        return maxP - (relY / chartH) * range;
+      }
+    };
+  } catch(e) { console.error('renderCandleChart:', e); return null }
+}
+
+/* ─── État du replay ─── */
+var _replayState = null;
+
+/* ─── Scénarios (Phase 2 complétera les 10) ─── */
+var REPLAY_SCENARIOS = [
+  {
+    id: 1, name: 'QM Buy classique', difficulty: 'facile',
+    description: 'Un QM haussier simple. Identifie la direction, la liquidité et le point d\'entrée.',
+    phases: [
+      { type: 'trend', direction: 'down', candles: 8, volatility: 5 },
+      { type: 'support', candles: 2, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 4, volatility: 4 },
+      { type: 'resistance', candles: 2, volatility: 4 },
+      { type: 'breakout', direction: 'down', candles: 3, volatility: 5 },
+      { type: 'pullback', direction: 'up', candles: 3, volatility: 4 },
+      { type: 'breakout', direction: 'up', candles: 3, volatility: 5 },
+      { type: 'continuation', direction: 'up', candles: 15, volatility: 4 }
+    ],
+    startPrice: 2340,
+    analysisCandles: 25,
+    correct: { direction: 'buy', setup: 'qm', shouldTrade: true },
+    filters: { newsUSD: false, after21h: false }
+  }
+];
+
+/* ─── Rendu principal ─── */
+function rReplay() {
+  try {
+    var el = document.getElementById('replayView');
+    if (!el) return;
+
+    if (_replayState) {
+      rReplayScenario(el);
+      return;
+    }
+
+    var progress = {};
+    try {
+      var raw = localStorage.getItem('enz_v4');
+      if (raw) { var d = JSON.parse(raw); progress = d.replayProgress || {} }
+    } catch(e) {}
+
+    var h = '';
+    h += '<div style="text-align:center;margin-bottom:20px">';
+    h += '<div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:4px">🎯 Mode Replay</div>';
+    h += '<div style="font-size:12px;color:var(--t2)">Entraîne-toi sur des scénarios de marché simulés</div>';
+    h += '</div>';
+
+    var diffColors = { facile: 'var(--green)', moyen: 'var(--gold)', difficile: 'var(--red)' };
+
+    h += '<div style="display:grid;gap:10px;max-width:600px;margin:0 auto">';
+    REPLAY_SCENARIOS.forEach(function(sc) {
+      var completed = progress.completed && progress.completed.indexOf(sc.id) >= 0;
+      var best = progress.bestScores ? progress.bestScores[sc.id] : null;
+      var attempts = progress.attempts ? progress.attempts[sc.id] : 0;
+
+      h += '<div onclick="startReplayScenario(' + sc.id + ')" style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">';
+      h += '<div style="width:40px;height:40px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:' + (completed ? 'var(--green)' : 'var(--t3)') + '">' + (completed ? '✓' : sc.id) + '</div>';
+      h += '<div style="flex:1">';
+      h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><b style="color:var(--t1);font-size:13px">' + sc.name + '</b>';
+      h += '<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,.2);color:' + (diffColors[sc.difficulty] || 'var(--t3)') + ';font-weight:600;text-transform:uppercase">' + sc.difficulty + '</span></div>';
+      h += '<div style="font-size:11px;color:var(--t3)">' + sc.description + '</div>';
+      h += '</div>';
+      if (best !== null) {
+        h += '<div style="text-align:right"><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + (best >= 80 ? 'var(--green)' : best >= 50 ? 'var(--gold)' : 'var(--red)') + '">' + best + '</div><div style="font-size:9px;color:var(--t3)">/100 · ' + attempts + 'x</div></div>';
+      }
+      h += '</div>';
+    });
+    h += '</div>';
+
+    el.innerHTML = h;
+  } catch(e) { console.error('rReplay:', e) }
+}
+
+function startReplayScenario(id) {
+  try {
+    var sc = REPLAY_SCENARIOS.find(function(s) { return s.id === id });
+    if (!sc) return;
+    var result = generateCandles(sc.phases, sc.startPrice);
+    _replayState = {
+      scenario: sc,
+      candles: result.candles,
+      metadata: result.metadata,
+      visibleCount: Math.min(5, sc.analysisCandles || 25),
+      phase: 'analysis',
+      step: 0,
+      answers: {}
+    };
+    rReplay();
+  } catch(e) { console.error('startReplayScenario:', e) }
+}
+
+function rReplayScenario(el) {
+  try {
+    var st = _replayState;
+    var sc = st.scenario;
+
+    var h = '';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">';
+    h += '<div><div style="font-size:16px;font-weight:800;color:var(--t1)">' + sc.name + '</div>';
+    h += '<div style="font-size:11px;color:var(--t3)">' + sc.description + '</div></div>';
+    h += '<button class="btn btn-o" onclick="_replayState=null;rReplay()" style="font-size:11px;padding:6px 14px">← Retour</button>';
+    h += '</div>';
+
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px">';
+    h += '<canvas id="replayCanvas" style="width:100%;cursor:crosshair"></canvas>';
+    h += '</div>';
+
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px">';
+    h += '<button class="btn btn-g" onclick="replayNextCandle()" style="padding:10px 20px;font-size:13px">Bougie suivante →</button>';
+    h += '<span style="font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace">' + st.visibleCount + '/' + st.candles.length + '</span>';
+    h += '</div>';
+
+    el.innerHTML = h;
+
+    var levels = [];
+    if (st.metadata.supports) {
+      st.metadata.supports.forEach(function(s) {
+        if (s.index < st.visibleCount) levels.push({ price: s.level, label: 'S', color: 'rgba(0,214,143,.4)', dash: [4, 4] });
+      });
+    }
+    if (st.metadata.resistances) {
+      st.metadata.resistances.forEach(function(r) {
+        if (r.index < st.visibleCount) levels.push({ price: r.level, label: 'R', color: 'rgba(255,71,87,.4)', dash: [4, 4] });
+      });
+    }
+
+    renderCandleChart('replayCanvas', st.candles, {
+      endIdx: st.visibleCount,
+      height: 350,
+      levels: levels
+    });
+  } catch(e) { console.error('rReplayScenario:', e) }
+}
+
+function replayNextCandle() {
+  try {
+    if (!_replayState) return;
+    if (_replayState.visibleCount < _replayState.candles.length) {
+      _replayState.visibleCount++;
+      rReplay();
+    } else {
+      toast('Fin du scénario');
+    }
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════════════
    GROUPES LIÉS — UI Stub
    ═══════════════════════════════════════════════════════ */
 
