@@ -5513,15 +5513,119 @@ function rAccounts() {
 }
 function rAccSelector() {
   try {
-  const el = document.getElementById('accSelector');
-  if (!el || aT !== 'live') { if (el) el.innerHTML = ''; return }
-  if (D.accounts.length <= 1) { el.innerHTML = ''; return }
-  const typeIcon = { prop:'🏆', funded:'✓', perso:'👤', demo:'◎' };
-  el.innerHTML = `<select onchange="setActiveAcc(this.value)" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;color:var(--t1);font-family:inherit;font-size:12px;outline:none;cursor:pointer;max-width:220px">
-    <option value="all" ${D.activeAcc==='all'?'selected':''}>📊 Tous les comptes</option>
-    ${D.accounts.map(a => `<option value="${a.id}" ${a.id===D.activeAcc?'selected':''}>${typeIcon[a.type]||''} ${a.name||'Sans nom'}</option>`).join('')}
-  </select>`;
-} catch(e) { console.error("[Aurum] rAccSelector:", e) }
+    var el = document.getElementById('accSelector');
+    if (!el || aT !== 'live') { if (el) el.innerHTML = ''; return }
+    if (D.accounts.length <= 1 && loadAccountGroups().length === 0) { el.innerHTML = ''; return }
+
+    var typeIcon = { prop:'🏆', funded:'✓', perso:'👤', demo:'◎' };
+    var groups = loadAccountGroups();
+    var currentLabel = '';
+
+    if (D.activeAcc === 'all') {
+      currentLabel = '📊 Tous les comptes';
+    } else if (D.activeAcc && D.activeAcc.startsWith('ag_')) {
+      var grp = groups.find(function(g) { return g.id === D.activeAcc });
+      currentLabel = grp ? '👥 ' + grp.name : '👥 Groupe';
+    } else {
+      var acc = D.accounts.find(function(a) { return a.id === D.activeAcc });
+      currentLabel = acc ? (typeIcon[acc.type] || '') + ' ' + (acc.name || 'Sans nom') : 'Sélectionner';
+    }
+
+    var h = '<div style="position:relative;display:inline-block">';
+    h += '<button id="accSelBtn" onclick="toggleAccDropdown()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:6px 12px;color:var(--t1);font-family:inherit;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">';
+    h += '<span style="overflow:hidden;text-overflow:ellipsis">' + currentLabel + '</span>';
+    h += '<span style="font-size:8px;color:var(--t3);flex-shrink:0">▼</span></button>';
+
+    h += '<div id="accDropdown" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;min-width:260px;max-height:400px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:200;padding:6px 0">';
+
+    h += '<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;padding:8px 14px 4px">Comptes individuels</div>';
+    D.accounts.forEach(function(a) {
+      var liveCt = D.live.filter(function(t) { return t.accId === a.id }).length;
+      var active = D.activeAcc === a.id;
+      h += '<div onclick="selectTarget(\'' + a.id + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;font-size:12px;' + (active ? 'background:rgba(212,160,23,.08);' : '') + '" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'' + (active ? 'rgba(212,160,23,.08)' : '') + '\'">';
+      h += '<span style="color:var(--t1)">' + (typeIcon[a.type] || '') + ' ' + (a.name || 'Sans nom') + '</span>';
+      h += '<span style="font-size:10px;color:var(--t3);font-family:JetBrains Mono,monospace">Live ' + liveCt + '</span>';
+      h += '</div>';
+    });
+
+    if (groups.length > 0) {
+      h += '<div style="border-top:1px solid var(--border);margin:4px 0"></div>';
+      h += '<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;padding:8px 14px 4px">Groupes liés</div>';
+      groups.forEach(function(g) {
+        var active = D.activeAcc === g.id;
+        var typeLbl = g.type === 'MIRROR' ? 'mirror' : 'parallel';
+        h += '<div onclick="selectTarget(\'' + g.id + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;font-size:12px;' + (active ? 'background:rgba(212,160,23,.08);' : '') + '" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'' + (active ? 'rgba(212,160,23,.08)' : '') + '\'">';
+        h += '<span style="color:var(--t1)">👥 ' + g.name + '</span>';
+        h += '<span style="font-size:10px;color:var(--t3)">' + g.accountIds.length + ' comptes · ' + typeLbl + '</span>';
+        h += '</div>';
+      });
+    }
+
+    h += '<div style="border-top:1px solid var(--border);margin:4px 0"></div>';
+    h += '<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;padding:8px 14px 4px">Vues</div>';
+    var allActive = D.activeAcc === 'all';
+    h += '<div onclick="selectTarget(\'all\')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;font-size:12px;' + (allActive ? 'background:rgba(212,160,23,.08);' : '') + '" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'' + (allActive ? 'rgba(212,160,23,.08)' : '') + '\'">';
+    h += '<span style="color:var(--t1)">📊 Tous les comptes</span>';
+    h += '<span style="font-size:10px;color:var(--t3)">consultation seule</span>';
+    h += '</div>';
+
+    h += '<div style="border-top:1px solid var(--border);margin:4px 0"></div>';
+    h += '<div onclick="closeAccDropdown();go(\'groups\')" style="padding:8px 14px;cursor:pointer;font-size:12px;color:var(--gold)" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">';
+    h += '➕ Créer un groupe lié →';
+    h += '</div>';
+
+    h += '</div></div>';
+    el.innerHTML = h;
+  } catch(e) { console.error('[Aurum] rAccSelector:', e) }
+}
+
+function toggleAccDropdown() {
+  try {
+    var dd = document.getElementById('accDropdown');
+    if (!dd) return;
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+    if (dd.style.display === 'block') {
+      setTimeout(function() {
+        document.addEventListener('click', closeAccDropdownOnOutside);
+      }, 10);
+    }
+  } catch(e) {}
+}
+
+function closeAccDropdownOnOutside(e) {
+  try {
+    var dd = document.getElementById('accDropdown');
+    var btn = document.getElementById('accSelBtn');
+    if (!dd) return;
+    if (e.target !== btn && !btn.contains(e.target) && !dd.contains(e.target)) {
+      dd.style.display = 'none';
+      document.removeEventListener('click', closeAccDropdownOnOutside);
+    }
+  } catch(e2) {}
+}
+
+function closeAccDropdown() {
+  try {
+    var dd = document.getElementById('accDropdown');
+    if (dd) dd.style.display = 'none';
+    document.removeEventListener('click', closeAccDropdownOnOutside);
+  } catch(e) {}
+}
+
+function selectTarget(id) {
+  try {
+    closeAccDropdown();
+    _currentSession = null;
+    D.activeAcc = id;
+    try {
+      var raw = localStorage.getItem('enz_v4');
+      var data = raw ? JSON.parse(raw) : {};
+      data.lastTarget = id;
+      localStorage.setItem('enz_v4', JSON.stringify(data));
+    } catch(e2) {}
+    _s();
+    R();
+  } catch(e) { console.error('selectTarget:', e) }
 }
 
 // ─── SETTINGS (backward compatible) ───
