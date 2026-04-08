@@ -1387,6 +1387,57 @@ body::before {
 tbody tr { position:relative; transition:background .15s }
 tbody tr:hover { background:rgba(212,160,23,.04) !important }
 tbody tr:hover::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--gold); border-radius:0 3px 3px 0 }
+
+/* ─── WORLD-CLASS POLISH ─── */
+/* Skeleton loading */
+@keyframes skeletonPulse { 0%{opacity:.06} 50%{opacity:.12} 100%{opacity:.06} }
+.skeleton{background:var(--bg3);border-radius:6px;animation:skeletonPulse 1.5s ease-in-out infinite}
+.skeleton-text{height:12px;margin-bottom:8px}
+.skeleton-title{height:18px;width:60%;margin-bottom:12px}
+.skeleton-card{height:80px;border-radius:var(--radius);margin-bottom:8px}
+.skeleton-chart{height:200px;border-radius:var(--radius)}
+
+/* Smooth panel transitions */
+.panel.active{animation:panelFadeSlide .4s cubic-bezier(.16,1,.3,1)}
+@keyframes panelFadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Card hover premium */
+.card{transition:all .25s cubic-bezier(.4,0,.2,1)}
+.card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.35),0 0 0 1px rgba(212,160,23,.15);border-color:rgba(212,160,23,.3)}
+.card:active{transform:translateY(-1px);transition-duration:.1s}
+
+/* Button micro-interactions */
+.btn{transition:all .2s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.btn:active{transform:scale(.96);transition-duration:.08s}
+.btn-g{position:relative}
+.btn-g::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);opacity:0;transition:opacity .2s}
+.btn-g:hover::after{opacity:1}
+
+/* Box/section hover */
+.box,.crd-hover{transition:all .25s cubic-bezier(.4,0,.2,1);border:1px solid var(--border)}
+.box:hover,.crd-hover:hover{border-color:rgba(212,160,23,.2);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+
+/* Focus visible for accessibility */
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:0;border-color:var(--gold)!important}
+
+/* Tooltip micro */
+[title]{position:relative}
+
+/* Smooth scroll */
+*{scroll-behavior:smooth}
+
+/* Selection color */
+::selection{background:rgba(212,160,23,.25);color:var(--t1)}
+
+/* Link hover */
+a{transition:color .15s,opacity .15s}
+a:hover{opacity:.85}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;animation:emptyFadeIn .5s ease}
+@keyframes emptyFadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
 .panel canvas { border-radius:8px }
 .login-box input:focus { animation:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,160,23,.1),0 0 30px rgba(212,160,23,.06) }
 .ck-item { transition:all .2s cubic-bezier(.4,0,.2,1) }
@@ -2663,12 +2714,14 @@ function rCards() {
   if (n === 0) {
     document.getElementById('cards').innerHTML =
       '<div style="grid-column:1/-1;text-align:center;padding:30px 20px;background:linear-gradient(135deg,rgba(212,160,23,.04),rgba(167,139,250,.02));border:1px solid var(--border);border-radius:var(--radius);max-width:500px;margin:0 auto">' +
-      '<div style="font-size:28px;margin-bottom:8px">📊</div>' +
-      '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Aucun trade en ' + aT + '</div>' +
-      '<div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Ton flux : <b>Checklist</b> → <b>Calculateur</b> → <b>Nouveau trade</b></div>' +
-      '<button class="btn btn-g" onclick="go(\'check\')" style="margin-right:6px">✅ Checklist</button>' +
-      '<button class="btn btn-o" onclick="go(\'add\')">➕ Trade</button>' +
-      '</div>';
+      '<div style="font-size:48px;margin-bottom:16px;filter:grayscale(.3)">📊</div>' +
+      '<div style="font-size:18px;font-weight:800;color:var(--t1);margin-bottom:8px">Aucun trade en ' + aT + '</div>' +
+      '<div style="font-size:13px;color:var(--t2);line-height:1.8;margin-bottom:20px">Suis le flux : <b style="color:var(--gold)">Checklist</b> → <b style="color:var(--blue)">Calculateur</b> → <b style="color:var(--green)">Trade</b></div>' +
+      '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">' +
+      '<button class="btn btn-g" onclick="go(\'check\')" style="padding:10px 20px;font-size:13px">✅ Checklist</button>' +
+      '<button class="btn btn-o" onclick="go(\'calc\')" style="padding:10px 20px;font-size:13px">🧮 Calculateur</button>' +
+      '<button class="btn btn-o" onclick="go(\'add\')" style="padding:10px 20px;font-size:13px">➕ Trade</button>' +
+      '</div></div>';
     return;
   }
   const w = tr.filter(t => isLive ? t.pl>0 : t.rr>0).length;
@@ -8613,6 +8666,49 @@ function renderMonthlyChart(ym, dayPnl, daysInMonth) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   WORLD-CLASS POLISH — Helpers
+   ═══════════════════════════════════════════════════════ */
+
+function showSkeleton(el, type) {
+  try {
+    if (!el) return;
+    var h = '';
+    if (type === 'dashboard') {
+      h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">';
+      for (var i = 0; i < 8; i++) h += '<div class="skeleton skeleton-card"></div>';
+      h += '</div>';
+      h += '<div class="skeleton skeleton-chart" style="margin-bottom:16px"></div>';
+      h += '<div class="skeleton skeleton-chart" style="height:150px"></div>';
+    } else if (type === 'list') {
+      for (var j = 0; j < 5; j++) h += '<div class="skeleton skeleton-card" style="height:50px"></div>';
+    } else if (type === 'detail') {
+      h += '<div class="skeleton skeleton-title"></div>';
+      for (var k = 0; k < 4; k++) h += '<div class="skeleton skeleton-text" style="width:' + (60 + Math.random() * 30) + '%"></div>';
+      h += '<div class="skeleton skeleton-chart" style="margin-top:16px"></div>';
+    } else {
+      h += '<div class="skeleton skeleton-title"></div>';
+      h += '<div class="skeleton skeleton-text" style="width:80%"></div>';
+      h += '<div class="skeleton skeleton-text" style="width:65%"></div>';
+    }
+    el.innerHTML = h;
+  } catch(e) {}
+}
+
+function emptyState(icon, title, subtitle, cta) {
+  try {
+    var h = '<div class="empty-state">';
+    h += '<div style="font-size:48px;margin-bottom:16px;filter:grayscale(.3)">' + icon + '</div>';
+    h += '<div style="font-size:16px;font-weight:800;color:var(--t1);margin-bottom:6px">' + title + '</div>';
+    h += '<div style="font-size:12px;color:var(--t2);line-height:1.6;max-width:400px;margin:0 auto 16px">' + subtitle + '</div>';
+    if (cta) {
+      h += '<button class="btn btn-g" onclick="' + cta.action + '" style="padding:10px 24px;font-size:13px">' + cta.label + '</button>';
+    }
+    h += '</div>';
+    return h;
+  } catch(e) { return '' }
+}
+
+/* ═══════════════════════════════════════════════════════
    INSIGHTS — Analytics avancés
    ═══════════════════════════════════════════════════════ */
 
@@ -9424,8 +9520,9 @@ function rReplay() {
 
     var h = '';
     h += '<div style="text-align:center;margin-bottom:20px">';
-    h += '<div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:4px">🎯 Mode Replay</div>';
-    h += '<div style="font-size:12px;color:var(--t2)">Entraîne-toi sur des scénarios de marché simulés</div>';
+    h += '<div style="font-size:28px;margin-bottom:8px">🎯</div>';
+    h += '<div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:4px">Mode Replay</div>';
+    h += '<div style="font-size:13px;color:var(--t2);max-width:450px;margin:0 auto">Entraîne-toi sur des scénarios de marché simulés. Analyse, trade, et reçois un debrief détaillé.</div>';
     h += '</div>';
 
     var diffColors = { facile: 'var(--green)', moyen: 'var(--gold)', difficile: 'var(--red)' };

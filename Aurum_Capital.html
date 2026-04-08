@@ -118,6 +118,16 @@ tbody tr:hover{background:rgba(167,139,250,.04)!important}
 .crd:hover::after {
   opacity: .5;
 }
+.crd{transition:all .25s cubic-bezier(.4,0,.2,1)}
+.crd:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.crd:active{transform:translateY(0);transition-duration:.1s}
+.btn{transition:all .2s cubic-bezier(.4,0,.2,1)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.btn:active{transform:scale(.96);transition-duration:.08s}
+.pnl.on{animation:pnlFade .35s cubic-bezier(.16,1,.3,1)}
+@keyframes pnlFade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+::selection{background:rgba(212,160,23,.25);color:var(--t1)}
 .crd .lb {
   display: flex;
   align-items: center;
