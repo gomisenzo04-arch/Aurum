@@ -352,6 +352,8 @@ body {
 }
 .panel.active { display: block }
 @keyframes panelIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes sessPhaseIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+#sessionView > * { animation: sessPhaseIn .35s cubic-bezier(.4,0,.2,1) }
 .card {
   animation: cardIn .3s ease backwards;
   background: linear-gradient(145deg, var(--bg2) 0%, rgba(21,27,40,.8) 100%);
@@ -7064,10 +7066,17 @@ function rSessionOperating(el) {
     /* Rails */
     var rails = checklistScopeReader('GUARDRAIL');
     var railsHtml = '';
+    var railViolations = [];
     rails.forEach(function(r) {
       var icon = r.checked ? '🟢' : '🔴';
-      var badge = '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--bg4);color:var(--t3);margin-left:4px">' + (r.evaluationScope || '').toLowerCase() + '</span>';
-      railsHtml += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span>' + icon + '</span><span style="color:var(--t2)">' + r.label + '</span>' + badge + '</div>';
+      var rowBg = r.checked ? '' : 'background:rgba(255,71,87,.04);border-radius:6px;padding:6px 8px;margin:-2px -4px;';
+      var labelColor = r.checked ? 'var(--t2)' : 'var(--red)';
+      var badgeBg = r.evaluationScope === 'SESSION' ? 'rgba(167,139,250,.12)' : 'rgba(91,141,239,.12)';
+      var badgeColor = r.evaluationScope === 'SESSION' ? 'var(--purple)' : 'var(--blue)';
+      var badge = '<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:' + badgeBg + ';color:' + badgeColor + ';margin-left:4px;font-weight:600">' + (r.evaluationScope || '').toLowerCase() + '</span>';
+      if (r.accountScope) badge += '<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(212,160,23,.08);color:var(--gold);margin-left:2px">' + r.accountScope.toLowerCase().replace('_', '-') + '</span>';
+      railsHtml += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;' + rowBg + '"><span>' + icon + '</span><span style="color:' + labelColor + ';font-weight:' + (r.checked ? '400' : '600') + '">' + r.label + '</span>' + badge + '</div>';
+      if (!r.checked) railViolations.push(r.label);
     });
 
     /* Contexte jour */
@@ -7166,6 +7175,13 @@ function rSessionOperating(el) {
     }
 
     el.innerHTML = h;
+
+    /* Toast non bloquant pour rails violés */
+    if (railViolations.length > 0 && !window._lastRailToast) {
+      window._lastRailToast = true;
+      toast('⚠ Rail violé : ' + railViolations[0]);
+      setTimeout(function() { window._lastRailToast = false }, 30000);
+    }
   } catch(e) { console.error('rSessionOperating:', e) }
 }
 
