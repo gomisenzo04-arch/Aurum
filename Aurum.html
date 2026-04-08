@@ -6452,6 +6452,148 @@ function testPhase0Services() {
   return { pass: pass, fail: fail };
 }
 
+/* ═══════════════════════════════════════════════════════
+   TRADE SERVICES (Phase 0 Trade spec) — logique pure
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── tradeLotCalculator ─── */
+function tradeLotCalculator(balance, riskPercent, slPoints, commPerLot) {
+  try {
+    var b = parseFloat(balance) || 0;
+    var r = parseFloat(riskPercent) || 1;
+    var sl = parseFloat(slPoints) || 250;
+    var co = parseFloat(commPerLot) || 0;
+    if (b <= 0 || sl <= 0) return { lot: 0, riskAmount: 0, loss: 0, comm: 0, totalLoss: 0, usage: 0 };
+
+    var riskAmount = b * r / 100;
+    var lot = Math.floor(riskAmount / (sl + co) * 100) / 100;
+    var loss = lot * sl;
+    var comm = lot * co;
+    var totalLoss = loss + comm;
+    var usage = riskAmount > 0 ? Math.min(100, Math.round(totalLoss / riskAmount * 100)) : 0;
+
+    return { lot: lot, riskAmount: riskAmount, loss: loss, comm: comm, totalLoss: totalLoss, usage: usage };
+  } catch(e) { console.error('tradeLotCalculator:', e); return { lot: 0, riskAmount: 0, loss: 0, comm: 0, totalLoss: 0, usage: 0 } }
+}
+
+/* ─── tradePnlCalculator ─── */
+function tradePnlCalculator(pnlDollar, balance) {
+  try {
+    var pl = parseFloat(pnlDollar) || 0;
+    var bal = parseFloat(balance) || 1;
+    return { dollar: pl, percent: bal > 0 ? parseFloat((pl / bal * 100).toFixed(2)) : 0 };
+  } catch(e) { return { dollar: 0, percent: 0 } }
+}
+
+function tradePnlFromPercent(pnlPercent, balance) {
+  try {
+    var pct = parseFloat(pnlPercent) || 0;
+    var bal = parseFloat(balance) || 0;
+    return { dollar: parseFloat((bal * pct / 100).toFixed(2)), percent: pct };
+  } catch(e) { return { dollar: 0, percent: 0 } }
+}
+
+/* ─── tradeValidator ─── */
+function tradeValidator(trade) {
+  try {
+    var errors = [];
+    var warnings = [];
+
+    if (!trade.direction) errors.push('Direction requise');
+    if (!trade.setupType) errors.push('Type d\'entrée requis');
+    if (!trade.slPoints || trade.slPoints <= 0) errors.push('SL doit être > 0');
+    if (!trade.exitType) errors.push('Résultat requis');
+    if (trade.lotActual !== undefined && trade.lotActual < 0) errors.push('Lot ne peut pas être négatif');
+
+    /* Cohérence P&L vs résultat */
+    if (trade.exitType === 'tp' && trade.pnlDollar < 0) {
+      warnings.push('P&L négatif avec résultat TP — es-tu sûr ?');
+    }
+    if (trade.exitType === 'sl' && trade.pnlDollar > 0) {
+      warnings.push('P&L positif avec résultat SL — es-tu sûr ?');
+    }
+
+    /* SL dans les limites */
+    var config = strategyConfigReader();
+    var minSL = config.standardSLPoints.length ? config.standardSLPoints[0] : 100;
+    var maxSL = config.standardSLPoints.length ? config.standardSLPoints[config.standardSLPoints.length - 1] : 1500;
+    if (trade.slPoints < minSL) warnings.push('SL (' + trade.slPoints + ') en dessous du minimum standard (' + minSL + ')');
+    if (trade.slPoints > maxSL) warnings.push('SL (' + trade.slPoints + ') au-dessus du maximum standard (' + maxSL + ')');
+
+    return { valid: errors.length === 0, errors: errors, warnings: warnings };
+  } catch(e) { return { valid: false, errors: ['Erreur de validation'], warnings: [] } }
+}
+
+/* ─── Tests Phase 0 Trade ─── */
+function testTradeServices() {
+  var results = [];
+  function test(name, fn) {
+    try { fn(); results.push('✓ ' + name) } catch(e) { results.push('✗ ' + name + ': ' + e.message) }
+  }
+
+  /* tradeLotCalculator */
+  test('lotCalc: 6000$ 1% SL350 comm5 = 0.15', function() {
+    var r = tradeLotCalculator(6000, 1, 350, 5);
+    if (r.lot !== 0.16) throw new Error('lot=' + r.lot + ' expected 0.16');
+    if (r.riskAmount !== 60) throw new Error('risk=' + r.riskAmount);
+  });
+
+  test('lotCalc: 0 balance = lot 0', function() {
+    var r = tradeLotCalculator(0, 1, 350, 0);
+    if (r.lot !== 0) throw new Error('lot=' + r.lot);
+  });
+
+  test('lotCalc: SL 0 = lot 0', function() {
+    var r = tradeLotCalculator(6000, 1, 0, 0);
+    if (r.lot !== 0) throw new Error('lot=' + r.lot);
+  });
+
+  test('lotCalc: usage <= 100', function() {
+    var r = tradeLotCalculator(6000, 1, 350, 5);
+    if (r.usage > 100) throw new Error('usage=' + r.usage);
+  });
+
+  /* tradePnlCalculator */
+  test('pnlCalc: $92.50 on 6000 = 1.54%', function() {
+    var r = tradePnlCalculator(92.50, 6000);
+    if (Math.abs(r.percent - 1.54) > 0.01) throw new Error('pct=' + r.percent);
+  });
+
+  test('pnlFromPercent: 1.54% of 6000 = ~$92.40', function() {
+    var r = tradePnlFromPercent(1.54, 6000);
+    if (Math.abs(r.dollar - 92.40) > 0.1) throw new Error('dollar=' + r.dollar);
+  });
+
+  /* tradeValidator */
+  test('validator: empty trade = errors', function() {
+    var r = tradeValidator({});
+    if (r.valid) throw new Error('should be invalid');
+    if (r.errors.length < 3) throw new Error('expected 3+ errors, got ' + r.errors.length);
+  });
+
+  test('validator: valid trade = no errors', function() {
+    var r = tradeValidator({ direction: 'buy', setupType: 'qm', slPoints: 350, exitType: 'tp', pnlDollar: 50 });
+    if (!r.valid) throw new Error('should be valid: ' + r.errors.join(', '));
+  });
+
+  test('validator: TP with negative P&L = warning', function() {
+    var r = tradeValidator({ direction: 'buy', setupType: 'qm', slPoints: 350, exitType: 'tp', pnlDollar: -50 });
+    if (!r.warnings.length) throw new Error('expected warning');
+  });
+
+  test('validator: SL below min = warning', function() {
+    var r = tradeValidator({ direction: 'buy', setupType: 'qm', slPoints: 100, exitType: 'tp', pnlDollar: 50 });
+    if (!r.warnings.some(function(w) { return w.indexOf('minimum') >= 0 })) throw new Error('expected SL warning');
+  });
+
+  console.log('\n=== TRADE SERVICES TESTS ===');
+  results.forEach(function(r) { console.log(r) });
+  var pass = results.filter(function(r) { return r.startsWith('✓') }).length;
+  var fail = results.filter(function(r) { return r.startsWith('✗') }).length;
+  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  return { pass: pass, fail: fail };
+}
+
 /* ─── SESSIONS HISTORY ─── */
 function rSessHist() {
   try {
