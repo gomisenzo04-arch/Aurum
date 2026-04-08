@@ -7777,20 +7777,39 @@ function testPhase1() {
    ACCOUNT GROUPS — Phase 0.5
    ═══════════════════════════════════════════════════════ */
 
-var AG_KEY = 'aurum_account_groups';
-
-/* ─── Store CRUD ─── */
+/* ─── Store CRUD (stockage dans enz_v4.accountGroups) ─── */
 function loadAccountGroups() {
   try {
-    var raw = localStorage.getItem(AG_KEY);
-    return raw ? JSON.parse(raw) : [];
+    var raw = localStorage.getItem('enz_v4');
+    if (!raw) return [];
+    var data = JSON.parse(raw);
+    return data.accountGroups || [];
   } catch(e) { return [] }
 }
 
 function saveAccountGroups(groups) {
-  try { localStorage.setItem(AG_KEY, JSON.stringify(groups)) }
-  catch(e) { console.error('saveAccountGroups:', e) }
+  try {
+    var raw = localStorage.getItem('enz_v4');
+    var data = raw ? JSON.parse(raw) : {};
+    data.accountGroups = groups;
+    localStorage.setItem('enz_v4', JSON.stringify(data));
+  } catch(e) { console.error('saveAccountGroups:', e) }
 }
+
+/* Migration ancienne clé aurum_account_groups → enz_v4 */
+(function migrateAccountGroups() {
+  try {
+    var old = localStorage.getItem('aurum_account_groups');
+    if (!old) return;
+    var oldGroups = JSON.parse(old);
+    if (!oldGroups.length) { localStorage.removeItem('aurum_account_groups'); return; }
+    var current = loadAccountGroups();
+    if (current.length === 0) {
+      saveAccountGroups(oldGroups);
+    }
+    localStorage.removeItem('aurum_account_groups');
+  } catch(e) { console.error('migrateAccountGroups:', e) }
+})();
 
 function createAccountGroup(name, type, accountIds, mirrorPolicy) {
   try {
@@ -7983,6 +8002,17 @@ function testPhase05() {
     var r = accountTargetReader({ kind: 'ACCOUNT_GROUP', groupId: g.id, accountIds: ids });
     if (!r.bottleneckAccountId) throw new Error('no bottleneck');
     if (ids.indexOf(r.bottleneckAccountId) === -1) throw new Error('bottleneck not in group');
+    deleteAccountGroup(g.id);
+  });
+
+  test('loadAccountGroups lit depuis enz_v4', function() {
+    var g = createAccountGroup('MigTest', 'PARALLEL', [accId]);
+    var groups = loadAccountGroups();
+    var found = groups.some(function(x) { return x.name === 'MigTest' });
+    if (!found) throw new Error('not found in enz_v4');
+    /* Vérifier que c'est bien dans enz_v4 */
+    var raw = JSON.parse(localStorage.getItem('enz_v4'));
+    if (!raw.accountGroups) throw new Error('no accountGroups in enz_v4');
     deleteAccountGroup(g.id);
   });
 
