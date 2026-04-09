@@ -3355,7 +3355,7 @@ function rHist() {
     const accBadge = accName ? `<span style="font-size:9px;padding:2px 6px;border-radius:8px;background:var(--bg4);color:var(--t2);white-space:nowrap">${accName}</span>` : '';
 
     if (isLive) {
-      return `<tr>
+      return `<tr onclick="showTradeDetail(${oi})" style="cursor:pointer">
         <td style="color:var(--t3);font-size:11px">${oi+1}</td>
         <td style="${mono}">${t.date||''}${accBadge?'<br>'+accBadge:''}</td>
         <td style="${mono}">${t.time||''}</td>
@@ -3377,7 +3377,7 @@ function rHist() {
       </tr>`;
     } else {
       const rv = t.rr || 0;
-      return `<tr>
+      return `<tr onclick="showTradeDetail(${oi})" style="cursor:pointer">
         <td style="color:var(--t3);font-size:11px">${oi+1}</td>
         <td style="${mono}">${t.date||''}${accBadge?'<br>'+accBadge:''}</td>
         <td style="${mono}">${t.time||''}</td>
@@ -7305,7 +7305,7 @@ function tfmSetSL(val) {
 function openTFM() {
   try {
     _tfmStep = 1;
-    _tfmChecks = {};
+    _tfmChecks = { setup: _tfmChecks.setup || '', dir: _tfmChecks.dir || '' };
     _tfmSL = parseInt(document.getElementById('cSL').value) || 350;
     document.getElementById('tradeFlowModal').style.display = 'flex';
     renderTFMStep();
@@ -7400,6 +7400,8 @@ function renderTFMStep() {
       h2 += '<div style="text-align:center;padding:12px 0">';
       h2 += '<div id="tfmLotResult" style="font-size:56px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace;line-height:1">' + lot.toFixed(2) + '</div>';
       h2 += '<div style="font-size:13px;color:var(--t2);margin-top:4px">lots sur MT5</div>';
+      h2 += '<button class="btn btn-o" onclick="navigator.clipboard.writeText(\'' + lot.toFixed(2) + '\');toast(\'Lot copié : ' + lot.toFixed(2) + '\')" style="margin-top:8px;padding:6px 14px;font-size:11px">📋 Copier le lot</button>';
+      h2 += '<div style="font-size:10px;color:var(--t3);margin-top:6px">TP potentiel : <b style="color:var(--green)">+$' + (lot * currentSL).toFixed(2) + '</b></div>';
       h2 += '</div>';
 
       /* Details */
@@ -8666,6 +8668,84 @@ function renderMonthlyChart(ym, dayPnl, daysInMonth) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   TRADE DETAIL DRAWER
+   ═══════════════════════════════════════════════════════ */
+
+function showTradeDetail(idx) {
+  try {
+    var trade = D[aT][idx];
+    if (!trade) return;
+
+    var acc = D.accounts.find(function(a) { return a.id === trade.accId });
+    var pnlVal = parseFloat(trade.pl) || 0;
+    var pnlCol = pnlVal >= 0 ? 'var(--green)' : 'var(--red)';
+    var resIcon = { TP: '✅', SL: '📉', Trail: '🔄', '21h': '⏰' };
+    var isLive = aT === 'live';
+
+    var h = '<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:600;display:flex;align-items:center;justify-content:center;animation:modalFade .2s" onclick="if(event.target===this)this.remove()">';
+    h += '<div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;max-width:420px;width:90%;max-height:80vh;overflow-y:auto;padding:24px;animation:modalSlide .3s">';
+
+    /* Header */
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+    h += '<div>';
+    h += '<div style="font-size:18px;font-weight:800;color:var(--t1)">' + (trade.dir || '') + ' ' + (trade.type || '') + '</div>';
+    h += '<div style="font-size:11px;color:var(--t3)">' + trade.date + ' · ' + (trade.time || '') + (acc ? ' · ' + acc.name : '') + '</div>';
+    h += '</div>';
+    h += '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;padding:4px">×</button>';
+    h += '</div>';
+
+    /* P&L big */
+    h += '<div style="text-align:center;padding:16px;background:var(--bg2);border-radius:12px;margin-bottom:16px">';
+    if (isLive) {
+      h += '<div style="font-size:36px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + pnlCol + '">' + (pnlVal >= 0 ? '+' : '') + '$' + pnlVal.toFixed(2) + '</div>';
+      h += '<div style="font-size:12px;color:var(--t3);margin-top:4px">' + (resIcon[trade.res] || '') + ' ' + (trade.res || '') + ' · ' + (trade.pct || 0) + '%</div>';
+    } else {
+      var rv = trade.rr || 0;
+      h += '<div style="font-size:36px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + (rv >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (rv >= 0 ? '+' : '') + rv.toFixed(1) + 'R</div>';
+      h += '<div style="font-size:12px;color:var(--t3);margin-top:4px">' + (resIcon[trade.res] || '') + ' ' + (trade.res || '') + '</div>';
+    }
+    h += '</div>';
+
+    /* Détails grille */
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">';
+    var details = [
+      { l: 'SL', v: trade.sl ? trade.sl + ' pts' : '—' },
+      { l: 'Lot', v: trade.lot || '—' },
+      { l: 'Direction', v: trade.dir || '—' },
+      { l: 'Setup', v: trade.type || '—' },
+      { l: 'News', v: trade.news || '—' },
+      { l: 'R:R', v: trade.rr ? trade.rr.toFixed(1) + 'R' : '—' }
+    ];
+    details.forEach(function(d) {
+      h += '<div style="background:var(--bg2);border-radius:8px;padding:8px 10px"><div style="font-size:9px;color:var(--t3);text-transform:uppercase">' + d.l + '</div><div style="font-size:13px;font-weight:600;color:var(--t1);font-family:JetBrains Mono,monospace">' + d.v + '</div></div>';
+    });
+    h += '</div>';
+
+    /* Tags */
+    if (trade.tags && trade.tags.length) {
+      h += '<div style="margin-bottom:12px"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:6px">Tags</div>';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      trade.tags.forEach(function(tag) {
+        h += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(167,139,250,.1);color:var(--purple)">' + tag + '</span>';
+      });
+      h += '</div></div>';
+    }
+
+    /* Notes */
+    if (trade.notes) {
+      h += '<div style="margin-bottom:12px"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:6px">Notes</div>';
+      h += '<div style="font-size:12px;color:var(--t2);line-height:1.6;padding:10px;background:var(--bg2);border-radius:8px;font-style:italic">' + trade.notes.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div></div>';
+    }
+
+    h += '</div></div>';
+
+    var overlay = document.createElement('div');
+    overlay.innerHTML = h;
+    document.body.appendChild(overlay.firstChild);
+  } catch(e) { console.error('showTradeDetail:', e) }
+}
+
+/* ═══════════════════════════════════════════════════════
    WORLD-CLASS POLISH — Helpers
    ═══════════════════════════════════════════════════════ */
 
@@ -8892,6 +8972,37 @@ function rInsights() {
       h += '</div>';
     }
     h += '</div>';
+
+    /* ═══ 6. Stats par tag ═══ */
+    var tagStats = {};
+    trades.forEach(function(t) {
+      if (!t.tags || !t.tags.length) return;
+      t.tags.forEach(function(tag) {
+        if (!tagStats[tag]) tagStats[tag] = { total: 0, wins: 0, pnl: 0 };
+        tagStats[tag].total++;
+        if ((parseFloat(t.pl) || 0) > 0) tagStats[tag].wins++;
+        tagStats[tag].pnl += parseFloat(t.pl) || 0;
+      });
+    });
+    var tagKeys = Object.keys(tagStats);
+    if (tagKeys.length) {
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px">';
+      h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Performance par tag</div>';
+      h += '<div style="display:grid;gap:6px">';
+      tagKeys.sort(function(a, b) { return tagStats[b].total - tagStats[a].total }).forEach(function(tag) {
+        var ts2 = tagStats[tag];
+        var wr2 = (ts2.wins / ts2.total * 100).toFixed(0);
+        var wrCol2 = parseFloat(wr2) >= 50 ? 'var(--green)' : 'var(--red)';
+        var pnlCol2 = ts2.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+        h += '<div style="display:grid;grid-template-columns:100px 1fr 50px 70px;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:6px">';
+        h += '<span style="font-size:11px;color:var(--purple);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + tag + '</span>';
+        h += '<div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:' + wr2 + '%;background:' + wrCol2 + ';border-radius:3px"></div></div>';
+        h += '<span style="font-family:JetBrains Mono,monospace;font-size:11px;color:' + wrCol2 + ';text-align:center">' + wr2 + '%</span>';
+        h += '<span style="font-family:JetBrains Mono,monospace;font-size:11px;color:' + pnlCol2 + ';text-align:right">' + (ts2.pnl >= 0 ? '+' : '') + '$' + ts2.pnl.toFixed(0) + '</span>';
+        h += '</div>';
+      });
+      h += '</div></div>';
+    }
 
     el.innerHTML = h;
   } catch(e) { console.error('rInsights:', e) }

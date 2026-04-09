@@ -322,6 +322,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
     </a>
   </div>
 
+  <div id="sessActiveWidget" style="display:none;margin-bottom:12px"></div>
+
   <!-- 5. COACH -->
   <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;text-align:center">── Coach ──</div>
   <div id="coachInsights" style="display:grid;gap:8px;margin-bottom:20px"></div>
@@ -459,6 +461,27 @@ function loadHub(){
     renderAction();
     renderUniverses();
     renderCoach();
+    /* Widget session active */
+    try {
+      var sessRaw = localStorage.getItem('aurum_sessions');
+      if (sessRaw) {
+        var sessions = JSON.parse(sessRaw);
+        var today = new Date().toISOString().slice(0, 10);
+        var active = sessions.find(function(s) { return s.dayDate === today && (s.status === 'BRIEFING' || s.status === 'OPERATING') });
+        var sessWidget = document.getElementById('sessActiveWidget');
+        if (active && sessWidget) {
+          var statusLabel = active.status === 'BRIEFING' ? '📋 Briefing en cours' : '⚡ Session active';
+          var statusCol = active.status === 'BRIEFING' ? 'var(--gold)' : 'var(--green)';
+          sessWidget.style.display = 'block';
+          sessWidget.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(0,214,143,.04);border:1px solid rgba(0,214,143,.15);border-radius:var(--radius);cursor:pointer" onclick="window.location.href=\'Aurum.html\'">' +
+            '<div style="font-size:18px">⚡</div>' +
+            '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:' + statusCol + '">' + statusLabel + '</div>' +
+            '<div style="font-size:10px;color:var(--t3)">Session #' + active.sessionIndexInDay + ' · ' + (active.logicalTradeCount || 0) + ' trades</div></div>' +
+            '<span style="font-size:10px;color:var(--gold)">Ouvrir →</span></div>';
+        }
+      }
+    } catch(se) {}
+
     renderBackup();
 
     /* Notification navigateur si backup > 7 jours */
