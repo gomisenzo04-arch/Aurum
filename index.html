@@ -23,33 +23,33 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
     /* ============================================
        AURUM PWA SHELL — Variables & Reset
        ============================================ */
     :root {
-      --bg: #06090e;
-      --bg2: #0c1018;
-      --bg3: #141a26;
-      --bg4: #1b2232;
-      --border: #1d2840;
-      --border2: #293756;
-      --gold: #d4a017;
-      --gold2: #b8860b;
-      --gold3: #f5d060;
-      --green: #00d68f;
-      --red: #ff4757;
-      --blue: #5b8def;
-      --purple: #a78bfa;
-      --t1: #edf2f7;
-      --t2: #a8bdd4;
-      --t3: #8a9fc0;
-      --radius: 12px;
-      --transition: .25s cubic-bezier(.4, 0, .2, 1);
-      --nav-h: 64px;
-      --side-w: 72px;
+      --bg: #040608;
+      --bg2: #0a0d13;
+      --bg3: #111720;
+      --bg4: #19202e;
+      --border: #1a2338;
+      --border2: #253048;
+      --gold: #c9972e;
+      --gold2: #a67b1a;
+      --gold3: #e8c55a;
+      --green: #00c781;
+      --red: #e8444a;
+      --blue: #4d7de8;
+      --purple: #9678f0;
+      --t1: #e8edf4;
+      --t2: #8ea0b8;
+      --t3: #5e7086;
+      --radius: 10px;
+      --transition: .3s cubic-bezier(.22, 1, .36, 1);
+      --nav-h: 68px;
+      --side-w: 76px;
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,11 +57,23 @@
     html, body {
       height: 100%;
       overflow: hidden;
-      font-family: 'DM Sans', -apple-system, sans-serif;
+      font-family: 'Sora', -apple-system, sans-serif;
       background: var(--bg);
       color: var(--t1);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      letter-spacing: -0.01em;
+    }
+
+    /* Grain texture overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.015'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 99999;
+      opacity: .4;
     }
 
     /* ============================================
@@ -81,12 +93,12 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 52px;
-      padding: 0 16px;
-      background: linear-gradient(180deg, rgba(12,16,24,.95) 0%, rgba(12,16,24,.85) 100%);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
+      height: 48px;
+      padding: 0 20px;
+      background: rgba(4,6,8,.85);
+      backdrop-filter: blur(20px) saturate(1.2);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      border-bottom: 1px solid rgba(26,35,56,.4);
       flex-shrink: 0;
       z-index: 100;
     }
@@ -105,13 +117,15 @@
     }
 
     .top-bar .logo span {
-      font-weight: 800;
-      font-size: 18px;
-      background: linear-gradient(135deg, var(--gold3), var(--gold));
+      font-weight: 700;
+      font-size: 17px;
+      background: linear-gradient(135deg, var(--gold3) 0%, var(--gold) 50%, var(--gold2) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      letter-spacing: .5px;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      font-family: 'Sora', sans-serif;
     }
 
     .top-bar .page-title {
@@ -284,10 +298,10 @@
       align-items: center;
       justify-content: space-around;
       height: var(--nav-h);
-      background: rgba(12,16,24,.82);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-top: 1px solid rgba(212,160,23,.08);
+      background: rgba(4,6,8,.88);
+      backdrop-filter: blur(24px) saturate(1.3);
+      -webkit-backdrop-filter: blur(24px) saturate(1.3);
+      border-top: 1px solid rgba(201,151,46,.06);
       flex-shrink: 0;
       z-index: 100;
       padding-bottom: env(safe-area-inset-bottom, 0);
@@ -330,11 +344,13 @@
     }
 
     .nav-item .nav-label {
-      font-size: 10px;
-      font-weight: 600;
+      font-size: 9px;
+      font-weight: 500;
       color: var(--t3);
       transition: all var(--transition);
-      letter-spacing: .3px;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      font-family: 'Sora', sans-serif;
     }
 
     /* Active state */
@@ -353,9 +369,9 @@
       top: -1px;
       left: 50%;
       transform: translateX(-50%);
-      width: 24px;
-      height: 3px;
-      border-radius: 0 0 3px 3px;
+      width: 20px;
+      height: 2px;
+      border-radius: 0 0 2px 2px;
       background: var(--gold);
       box-shadow: 0 0 8px currentColor;
       animation: nav-indicator .3s ease;
@@ -448,12 +464,14 @@
       color: #000;
       border: none;
       border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
+      font-family: 'Sora', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
       transition: all var(--transition);
       white-space: nowrap;
+      letter-spacing: .3px;
+      text-transform: uppercase;
     }
 
     .install-btn:hover {
@@ -494,14 +512,14 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(ellipse at 50% 30%, rgba(212,160,23,.08) 0%, var(--bg) 60%);
+      background: radial-gradient(ellipse at 50% 35%, rgba(201,151,46,.04) 0%, var(--bg) 50%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 20px;
+      gap: 24px;
       z-index: 9999;
-      transition: opacity .5s ease, transform .5s ease;
+      transition: opacity .8s cubic-bezier(.22,1,.36,1), transform .8s cubic-bezier(.22,1,.36,1);
     }
 
     .splash.hide {
@@ -522,13 +540,16 @@
     }
 
     .splash-title {
-      font-size: 28px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--gold3), var(--gold), var(--gold2));
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold3) 0%, var(--gold) 40%, var(--gold2) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      animation: splash-text .6s ease .2s both;
+      animation: splash-text .8s cubic-bezier(.22,1,.36,1) .3s both;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-family: 'Sora', sans-serif;
     }
 
     @keyframes splash-text {
@@ -679,13 +700,15 @@
       }
 
       .nav-logo span {
-        font-size: 10px;
-        font-weight: 800;
+        font-size: 9px;
+        font-weight: 600;
         background: linear-gradient(135deg, var(--gold3), var(--gold));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        letter-spacing: .5px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        font-family: 'Sora', sans-serif;
       }
 
       .content-area {
@@ -724,14 +747,14 @@
     .login-screen {
       position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse at 50% 30%, rgba(212,160,23,.06) 0%, var(--bg) 60%);
+      background: radial-gradient(ellipse at 50% 30%, rgba(201,151,46,.03) 0%, var(--bg) 50%);
       z-index: 9998;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 16px;
-      animation: loginFade .5s ease;
+      gap: 20px;
+      animation: loginFade .6s cubic-bezier(.22,1,.36,1);
     }
     .login-screen.hide {
       opacity: 0;
@@ -742,12 +765,15 @@
     @keyframes loginFade { from{opacity:0} to{opacity:1} }
     .login-logo { margin-bottom: 8px; }
     .login-title {
-      font-size: 24px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--gold3), var(--gold));
+      font-size: 26px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold3) 0%, var(--gold) 50%, var(--gold2) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: 'Sora', sans-serif;
     }
     .login-sub {
       font-size: 12px;
@@ -755,19 +781,20 @@
       margin-bottom: 12px;
     }
     .login-input {
-      width: 180px;
-      padding: 14px;
-      background: var(--bg3);
-      border: 2px solid var(--border);
+      width: 200px;
+      padding: 16px;
+      background: rgba(17,23,32,.8);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       color: var(--t1);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 28px;
-      letter-spacing: 10px;
+      font-size: 32px;
+      letter-spacing: 12px;
       text-align: center;
       outline: none;
-      transition: border .3s;
-      animation: loginBreathe 3s ease-in-out infinite;
+      transition: all .4s cubic-bezier(.22,1,.36,1);
+      animation: loginBreathe 4s ease-in-out infinite;
+      box-shadow: 0 4px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.02);
     }
     .login-input:focus {
       border-color: var(--gold);
@@ -785,17 +812,19 @@
       font-weight: 600;
     }
     .login-btn {
-      padding: 12px 32px;
-      background: linear-gradient(135deg, var(--gold3), var(--gold), var(--gold2));
-      color: #000;
+      padding: 14px 36px;
+      background: linear-gradient(135deg, var(--gold3) 0%, var(--gold) 50%, var(--gold2) 100%);
+      color: #060608;
       border: none;
-      border-radius: var(--radius);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 14px;
+      border-radius: 8px;
+      font-family: 'Sora', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
       cursor: pointer;
-      transition: all var(--transition);
-      box-shadow: 0 4px 16px rgba(212,160,23,.25);
+      transition: all .3s cubic-bezier(.22,1,.36,1);
+      box-shadow: 0 4px 20px rgba(201,151,46,.2), 0 1px 0 rgba(255,255,255,.1) inset;
+      letter-spacing: .5px;
+      text-transform: uppercase;
     }
     .login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(212,160,23,.35); }
     .login-btn:active { transform: scale(.97); }
@@ -814,14 +843,14 @@
       bottom: calc(var(--nav-h) + 16px);
       left: 50%;
       transform: translateX(-50%) translateY(20px);
-      background: var(--bg3);
+      background: rgba(17,23,32,.9);
       border: 1px solid var(--border2);
       color: var(--t1);
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: 'Sora', sans-serif;
       z-index: 9999;
       opacity: 0;
       transition: opacity .3s, transform .3s;
