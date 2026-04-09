@@ -1415,6 +1415,99 @@ body::before {
 .sess-ck-trade{background:var(--bg2);border:1px solid rgba(212,160,23,.15);border-radius:10px;padding:14px;margin-bottom:8px}
 .sess-ck-trade-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
 .sess-ck-trade-item input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;cursor:pointer}
+/* ─── SESSION COCKPIT V2 ─── */
+.sess-kpis{display:flex;justify-content:space-around;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.sess-kpi{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:50px}
+.sess-kpi-label{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.sess-kpi-val{font-size:16px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.sess-gauges{display:flex;gap:12px;margin-bottom:6px;justify-content:center}
+.sess-gauge-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--t3)}
+.sess-gauge-bar{width:80px;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.sess-gauge-fill{height:100%;border-radius:3px;transition:width .3s}
+.sess-tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--bg2);padding:4px;border-radius:10px;border:1px solid var(--border)}
+.sess-tab{flex:1;padding:10px 6px;border:none;background:none;color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;border-radius:8px;transition:all .15s;min-height:44px;font-family:inherit}
+.sess-tab:hover{color:var(--t2);background:var(--bg3)}
+.sess-tab.active{background:rgba(212,160,23,.12);color:var(--gold)}
+.sess-content{min-height:200px}
+.sess-ck-phase{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;padding:8px 0 4px}
+.sess-ck-item{display:flex;align-items:center;gap:10px;padding:6px 4px;font-size:12px}
+.sess-ck-item input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;cursor:pointer;flex-shrink:0}
+/* ─── SESSION COCKPIT — Immersive Operating ─── */
+.sess-operating{display:grid;grid-template-columns:1fr 340px;gap:14px;margin-top:10px}
+.sess-col-left{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sess-col-right{position:sticky;top:180px;align-self:start;max-height:calc(100vh - 200px);overflow-y:auto;scrollbar-width:thin}
+.sess-hud{position:sticky;top:0;z-index:50;background:rgba(6,9,14,.97);backdrop-filter:blur(16px);border:1px solid rgba(212,160,23,.15);border-radius:14px;padding:14px 18px;margin-bottom:2px}
+.sess-hud-kpis{display:flex;justify-content:space-around;gap:6px;flex-wrap:wrap}
+.sess-hud-kpi{text-align:center;min-width:60px}
+.sess-hud-kpi-label{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.sess-hud-kpi-val{font-size:15px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--t1)}
+.sess-hud-gauges{display:flex;gap:12px;margin-top:8px;justify-content:center}
+.sess-hud-gauge{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--t3)}
+.sess-hud-gauge-bar{width:90px;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.sess-hud-gauge-fill{height:100%;border-radius:3px;transition:width .3s}
+/* Checklist phases — collapsible */
+.sess-phase{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:8px}
+.sess-phase-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s;min-height:44px;user-select:none}
+.sess-phase-header:hover{background:rgba(212,160,23,.04)}
+.sess-phase-num{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.sess-phase-title{font-size:13px;font-weight:700;color:var(--t1);flex:1}
+.sess-phase-badge{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--t3);padding:2px 8px;background:var(--bg4);border-radius:4px}
+.sess-phase-arrow{color:var(--t3);font-size:10px;transition:transform .2s}
+.sess-phase.open .sess-phase-arrow{transform:rotate(180deg)}
+.sess-phase-body{padding:0 14px 14px;display:none}
+.sess-phase.open .sess-phase-body{display:block}
+.sess-phase.complete .sess-phase-header{opacity:.6}
+.sess-phase.complete .sess-phase-num{background:rgba(0,214,143,.15);color:var(--green)}
+.sess-phase-item{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:12px;transition:background .1s}
+.sess-phase-item:last-child{border-bottom:none}
+.sess-phase-item:hover{background:rgba(212,160,23,.02)}
+.sess-phase-item input[type=checkbox]{accent-color:var(--gold);width:20px;height:20px;cursor:pointer;flex-shrink:0}
+.sess-phase-item.checked span{color:var(--t3);text-decoration:line-through;text-decoration-color:rgba(168,189,212,.3)}
+/* Calculator in session — gold glow trigger */
+.sess-calc-panel{background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;padding:18px;transition:border-color .3s,box-shadow .3s}
+.sess-calc-active{border-color:var(--gold) !important;box-shadow:0 0 25px rgba(212,160,23,.2),0 0 50px rgba(212,160,23,.08) !important;animation:sessCalcPulse 1.5s ease-in-out 3}
+@keyframes sessCalcPulse{0%,100%{box-shadow:0 0 25px rgba(212,160,23,.2)}50%{box-shadow:0 0 40px rgba(212,160,23,.35),0 0 80px rgba(212,160,23,.12)}}
+.sess-qm-arrow{display:none;text-align:center;padding:6px 0;font-size:12px;font-weight:700;color:var(--gold);animation:sessArrowBounce 1s ease-in-out infinite}
+.sess-calc-active~.sess-qm-arrow,.sess-qm-arrow.visible{display:block}
+@keyframes sessArrowBounce{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+/* Quick trade form */
+.sess-quick-trade{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px}
+.sess-qt-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.sess-qt-btn{min-width:44px;min-height:44px;padding:10px 16px;border-radius:8px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--t2);font-size:13px;font-weight:700;cursor:pointer;transition:all .12s;font-family:inherit;flex:1}
+.sess-qt-btn:hover{border-color:var(--gold);color:var(--gold)}
+.sess-qt-btn.active{border-color:var(--gold);background:rgba(212,160,23,.15);color:var(--gold)}
+.sess-qt-btn.buy.active{border-color:var(--green);background:rgba(0,214,143,.12);color:var(--green)}
+.sess-qt-btn.sell.active{border-color:var(--red);background:rgba(255,71,87,.12);color:var(--red)}
+.sess-qt-btn.tp.active{border-color:var(--green);background:rgba(0,214,143,.12);color:var(--green)}
+.sess-qt-btn.sl-res.active{border-color:var(--red);background:rgba(255,71,87,.12);color:var(--red)}
+/* Trade log in session */
+.sess-trade-log{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px}
+.sess-trade-log-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:6px;font-size:12px;transition:background .15s;margin-bottom:4px}
+.sess-trade-log-item:last-child{margin-bottom:0}
+.sess-trade-log-item:hover{background:var(--bg4)}
+/* Alerts strip */
+.sess-alerts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.sess-alert-item{padding:10px 16px;border-radius:10px;font-size:12px;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px}
+/* SL grid (4 columns) */
+.sess-sl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px}
+.sess-sl-grid-btn{padding:10px 0;border-radius:6px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--t2);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s;min-height:44px;text-align:center}
+.sess-sl-grid-btn:hover{border-color:var(--gold);color:var(--gold)}
+.sess-sl-grid-btn.active{border-color:var(--gold);background:rgba(212,160,23,.15);color:var(--gold)}
+/* Briefing gauges */
+.sess-gauge{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.sess-gauge label{font-size:11px;color:var(--t2);display:flex;justify-content:space-between;align-items:center}
+.sess-gauge-track{position:relative;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.sess-gauge-track-fill{height:100%;border-radius:4px;transition:width .2s}
+.sess-gauge input[type=range]{width:100%;accent-color:var(--gold);cursor:pointer;height:6px;margin-top:2px}
+.sess-gauge-score{text-align:center;padding:14px;background:var(--bg3);border-radius:12px;margin-bottom:14px}
+.sess-gauge-score-val{font-size:48px;font-weight:900;font-family:'JetBrains Mono',monospace;line-height:1}
+.sess-gauge-score-label{font-size:11px;color:var(--t3);margin-top:4px}
+/* Lot result in cockpit */
+.sess-lot-big{font-size:56px;font-weight:900;font-family:'JetBrains Mono',monospace;color:var(--gold);text-align:center;padding:10px 0;cursor:pointer;transition:color .2s,transform .15s;user-select:all;line-height:1}
+.sess-lot-big:hover{color:#e8b929;transform:scale(1.03)}
+.sess-lot-big.copied{color:var(--green);transform:scale(1.06)}
+.sess-lot-big.pulse{animation:sessLotPulse .6s ease-out}
+@keyframes sessLotPulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
 @media(max-width:768px){
   .sess-dashboard{grid-template-columns:1fr}
   .sess-calc{position:static}
@@ -1422,6 +1515,9 @@ body::before {
   .sess-strip-pnl{text-align:center}
   .sess-strip-time{align-items:center;margin-left:0}
   .sess-lot-result{font-size:40px}
+  .sess-operating{grid-template-columns:1fr}
+  .sess-col-right{position:static;max-height:none}
+  .sess-lot-big{font-size:40px}
 }
 .tfm-steps{display:flex;gap:4px;margin-bottom:16px}
 .tfm-step{flex:1;height:4px;border-radius:2px;background:var(--bg4);transition:background .3s}
@@ -1681,8 +1777,7 @@ a:hover{opacity:.85}
 <div class="logo"><a href="Aurum_Hub.html" title="Hub Aurum" style="display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 40 40" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="auGrad" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#f5d060"/><stop offset="50%" stop-color="#d4a017"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="40" height="40" rx="10" fill="url(#auGrad)"/><text x="20" y="26" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="800" font-size="18" fill="#1a1000">Au</text><path d="M8 30 L14 24 L20 27 L26 18 L32 14" stroke="rgba(26,16,0,.25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></a></div>
 <a href="Aurum_Hub.html" class="nav-link" style="text-decoration:none;color:var(--t3);margin-bottom:4px" title="Hub"><svg viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg><span class="tooltip">Hub Aurum</span></a>
 <div class="nav-item active" onclick="go('dash')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="tooltip">Dashboard</span></div>
-<div class="nav-item" onclick="go('check')"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="tooltip">Checklist</span></div>
-<div class="nav-item" onclick="go('calc')"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg><span class="tooltip">Calculateur</span></div>
+<div class="nav-item" onclick="go('session')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><span class="tooltip">Session</span></div>
 <div class="nav-sep"></div>
 <div class="nav-item" onclick="go('add')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span class="tooltip">Nouveau trade</span></div>
 <div class="nav-item" onclick="go('hist')"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="15" y2="18"/></svg><span class="tooltip">Historique</span></div>
@@ -2654,8 +2749,11 @@ function renderFilterSummary(containerId, all, filtered, isLive) {
 }
 
 // ─── NAVIGATION ───
-const PAGES = ['dash','check','calc','add','hist','time','review','rules','viab','config','backup','settings'];
+const PAGES = ['dash','session','add','hist','time','review','rules','viab','backup','config','settings'];
 function go(id) {
+  /* Redirect check/calc → session */
+  if (id === 'check' || id === 'calc') { go('session'); return; }
+
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const panel = document.getElementById(id);
@@ -2671,15 +2769,15 @@ function go(id) {
   if (id === 'dash') {
     setTimeout(() => { if(ch.eq) ch.eq.resize(); if(ch.pi) ch.pi.resize(); if(ch.ba) ch.ba.resize() }, 80);
   }
-  if (id === 'calc') {
-    // Use specific account settings (not combined "all" mode)
-    const s = D.activeAcc === 'all' ? (D.accounts[0] || S()) : S();
-    document.getElementById('cBal').value = s.bal;
-    document.getElementById('cRisk').value = s.risk;
-    document.getElementById('cCom').value = s.comm;
+  if (id === 'session') {
+    /* Sync calc panel values so cLot() works from session */
+    var _gs = D.activeAcc === 'all' ? (D.accounts[0] || S()) : S();
+    document.getElementById('cBal').value = _gs.bal;
+    document.getElementById('cRisk').value = _gs.risk;
+    document.getElementById('cCom').value = _gs.comm;
     if (lastSL) document.getElementById('cSL').value = lastSL;
-    const slider = document.getElementById('cSlider');
-    if (slider) slider.value = Math.min(800, Math.max(200, lastSL || 350));
+    var _gslider = document.getElementById('cSlider');
+    if (_gslider) _gslider.value = Math.min(800, Math.max(200, lastSL || 350));
     cLot();
   }
 }
@@ -6419,7 +6517,7 @@ function getJournalGroups() {
     return [
       {id:'dash', label:'Dashboard', pages:[]},
       {id:'trading', label:'Trading', pages:
-        aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
+        aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'add',l:'Trade'}]
       },
       {id:'performance', label:'Performance', pages:[
         {p:'hist',l:'Trades'},{p:'sessHist',l:'Sessions'},{p:'monthly',l:'Mensuel'},{p:'time',l:'Horaires'},{p:'insights',l:'Insights'},{p:'review',l:'Review'}
@@ -6460,7 +6558,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'n' || e.key === 'N') { e.preventDefault(); go('add') }
     if (e.key === 'd' || e.key === 'D') { e.preventDefault(); go('dash') }
     if (e.key === 'h' || e.key === 'H') { e.preventDefault(); go('hist') }
-    if (e.key === 'k' || e.key === 'K') { e.preventDefault(); go('calc') }
+    if (e.key === 'k' || e.key === 'K') { e.preventDefault(); go('session') }
   }
   if (e.key === 'Escape') closeEdit();
 });
@@ -7461,7 +7559,7 @@ function rSessionBriefing(el, target) {
     h += '<div style="font-size:12px;color:var(--t2)">' + headerSub + '</div></div></div>';
     h += headerAlert + '</div>';
 
-    /* Contexte + Mental en 2 colonnes */
+    /* Contexte + Jauges en 2 colonnes */
     h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">';
 
     /* Carte Contexte */
@@ -7479,26 +7577,50 @@ function rSessionBriefing(el, target) {
     h += '<div>Trades aujourd\'hui : <b>' + prevCount + '</b></div>';
     h += '</div></div>';
 
-    /* Carte État mental */
+    /* Carte Jauges visuelles */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
     h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">État mental</div>';
-    h += '<div style="display:grid;gap:10px">';
-    h += '<div><label style="font-size:11px;color:var(--t2);display:block;margin-bottom:4px">Énergie <span id="sessEnVal" style="font-family:JetBrains Mono,monospace;color:var(--gold)">5</span>/10</label><input type="range" id="sessEnergy" min="1" max="10" value="5" style="width:100%;accent-color:var(--gold)" oninput="document.getElementById(\'sessEnVal\').textContent=this.value"></div>';
-    h += '<div><label style="font-size:11px;color:var(--t2);display:block;margin-bottom:4px">Stress <span id="sessStVal" style="font-family:JetBrains Mono,monospace;color:var(--gold)">5</span>/10</label><input type="range" id="sessStress" min="1" max="10" value="5" style="width:100%;accent-color:var(--gold)" oninput="document.getElementById(\'sessStVal\').textContent=this.value"></div>';
-    h += '<div><label style="font-size:11px;color:var(--t2);display:block;margin-bottom:4px">Sommeil (h)</label><input type="number" id="sessSleep" min="0" max="14" step="0.5" placeholder="optionnel" style="width:80px;padding:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"></div>';
-    h += '</div>';
-    h += '<div id="sessMentalReco" style="margin-top:8px;font-size:11px;color:var(--gold)"></div>';
-    h += '</div>';
 
+    /* Confiance gauge */
+    h += '<div class="sess-gauge"><label>Confiance <span id="sessBrConfVal" style="font-family:JetBrains Mono,monospace;color:var(--gold)">5</span>/10</label>';
+    h += '<div class="sess-gauge-track"><div id="sessBrConfBar" class="sess-gauge-track-fill" style="width:50%;background:var(--gold)"></div></div>';
+    h += '<input type="range" id="sessBrConf" min="0" max="10" value="5" style="accent-color:var(--gold)" oninput="document.getElementById(\'sessBrConfVal\').textContent=this.value;document.getElementById(\'sessBrConfBar\').style.width=(this.value*10)+\'%\';sessBrUpdateScore()"></div>';
+
+    /* Énergie gauge */
+    h += '<div class="sess-gauge"><label>Énergie <span id="sessBrEnVal" style="font-family:JetBrains Mono,monospace;color:var(--green)">5</span>/10</label>';
+    h += '<div class="sess-gauge-track"><div id="sessBrEnBar" class="sess-gauge-track-fill" style="width:50%;background:var(--green)"></div></div>';
+    h += '<input type="range" id="sessBrEnergy" min="0" max="10" value="5" style="accent-color:var(--green)" oninput="document.getElementById(\'sessBrEnVal\').textContent=this.value;document.getElementById(\'sessBrEnBar\').style.width=(this.value*10)+\'%\';sessBrUpdateScore()"></div>';
+
+    /* Clarté mentale gauge */
+    h += '<div class="sess-gauge"><label>Clarté mentale <span id="sessBrClVal" style="font-family:JetBrains Mono,monospace;color:var(--blue)">5</span>/10</label>';
+    h += '<div class="sess-gauge-track"><div id="sessBrClBar" class="sess-gauge-track-fill" style="width:50%;background:var(--blue)"></div></div>';
+    h += '<input type="range" id="sessBrClarity" min="0" max="10" value="5" style="accent-color:var(--blue)" oninput="document.getElementById(\'sessBrClVal\').textContent=this.value;document.getElementById(\'sessBrClBar\').style.width=(this.value*10)+\'%\';sessBrUpdateScore()"></div>';
+
+    /* Stress gauge (inverted) */
+    h += '<div class="sess-gauge"><label>Stress <span style="font-size:9px;color:var(--t3)">(bas = mieux)</span> <span id="sessBrStVal" style="font-family:JetBrains Mono,monospace;color:var(--red)">5</span>/10</label>';
+    h += '<div class="sess-gauge-track"><div id="sessBrStBar" class="sess-gauge-track-fill" style="width:50%;background:var(--red)"></div></div>';
+    h += '<input type="range" id="sessBrStress" min="0" max="10" value="5" style="accent-color:var(--red)" oninput="document.getElementById(\'sessBrStVal\').textContent=this.value;document.getElementById(\'sessBrStBar\').style.width=(this.value*10)+\'%\';sessBrUpdateScore()"></div>';
+
+    /* Sommeil */
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-top:4px"><label style="font-size:11px;color:var(--t2)">Sommeil (h)</label><input type="number" id="sessSleep" min="0" max="14" step="0.5" placeholder="opt." style="width:70px;padding:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"></div>';
+
+    h += '</div>'; /* fin carte jauges */
     h += '</div>'; /* fin grid 2 col */
+
+    /* Score de préparation */
+    h += '<div class="sess-gauge-score" id="sessBrScoreBox">';
+    h += '<div class="sess-gauge-score-val" id="sessBrScoreVal" style="color:var(--gold)">50</div>';
+    h += '<div class="sess-gauge-score-label">Score de préparation</div>';
+    h += '<div id="sessBrScoreMsg" style="font-size:11px;color:var(--t2);margin-top:6px"></div>';
+    h += '</div>';
 
     /* Section Plan */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
     h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Plan de la session</div>';
     if (!timing.isReliable) {
-      h += '<div style="font-size:11px;color:var(--t3);margin-bottom:10px;padding:8px;background:var(--bg3);border-radius:6px">💡 Pas assez d\'historique pour personnaliser. Saisis manuellement — les suggestions arriveront après ~30 trades.</div>';
+      h += '<div style="font-size:11px;color:var(--t3);margin-bottom:10px;padding:8px;background:var(--bg3);border-radius:6px">Pas assez d\'historique pour personnaliser. Saisis manuellement.</div>';
     } else {
-      h += '<div style="font-size:11px;color:var(--gold);margin-bottom:10px;padding:8px;background:rgba(212,160,23,.04);border-radius:6px">💡 Suggéré depuis ton historique (' + timing.basedOnTradeCount + ' trades)</div>';
+      h += '<div style="font-size:11px;color:var(--gold);margin-bottom:10px;padding:8px;background:rgba(212,160,23,.04);border-radius:6px">Suggéré depuis ton historique (' + timing.basedOnTradeCount + ' trades)</div>';
     }
     var sugMax = timing.isReliable ? timing.suggestedMaxTrades : 4;
     var sugLoss = timing.isReliable ? Math.min(timing.suggestedMaxLossDollar, remDD) : '';
@@ -7514,20 +7636,57 @@ function rSessionBriefing(el, target) {
     /* CTA Ouvrir */
     var isFirst = todaySessions.length === 0;
     h += '<div style="text-align:center;padding:16px 0">';
-    h += '<button class="btn btn-g" onclick="openSessionFromBriefing()" style="padding:14px 32px;font-size:15px;font-weight:800;border-radius:12px">🔒 ' + (isFirst ? 'OUVRIR LA SESSION' : 'OUVRIR UNE NOUVELLE SESSION') + '</button>';
+    h += '<button class="btn btn-g" id="sessBrGoBtn" onclick="openSessionFromBriefing()" style="padding:16px 40px;font-size:16px;font-weight:900;border-radius:14px;min-height:60px;letter-spacing:1px">' + (isFirst ? 'OUVRIR LA SESSION' : 'OUVRIR SESSION #' + (todaySessions.length + 1)) + '</button>';
+    h += '<div id="sessBrForceDiv" style="display:none;margin-top:8px"><button class="btn btn-o" onclick="openSessionFromBriefing()" style="font-size:11px;padding:8px 14px;color:var(--gold)">Forcer le démarrage</button></div>';
     h += '<div style="font-size:10px;color:var(--t3);margin-top:6px">Le plan sera verrouillé et inviolable.</div>';
     h += '</div>';
 
     el.innerHTML = h;
 
-    /* Recommandations mental */
-    setTimeout(function() {
-      var en = document.getElementById('sessEnergy');
-      var st = document.getElementById('sessStress');
-      if (en) en.addEventListener('input', updateMentalReco);
-      if (st) st.addEventListener('input', updateMentalReco);
-    }, 100);
+    /* Compute initial score */
+    setTimeout(function() { sessBrUpdateScore() }, 50);
   } catch(e) { console.error('rSessionBriefing:', e) }
+}
+
+function sessBrUpdateScore() {
+  try {
+    var conf = parseInt(document.getElementById('sessBrConf').value) || 0;
+    var en = parseInt(document.getElementById('sessBrEnergy').value) || 0;
+    var cl = parseInt(document.getElementById('sessBrClarity').value) || 0;
+    var st = parseInt(document.getElementById('sessBrStress').value) || 0;
+    /* Score = average of (confiance + énergie + clarté + (10-stress)) * 10 / 4 → 0-100 */
+    var score = Math.round((conf + en + cl + (10 - st)) / 4 * 10);
+    var scoreEl = document.getElementById('sessBrScoreVal');
+    var msgEl = document.getElementById('sessBrScoreMsg');
+    var goBtn = document.getElementById('sessBrGoBtn');
+    var forceDiv = document.getElementById('sessBrForceDiv');
+    if (!scoreEl) return;
+    scoreEl.textContent = score;
+    var col = score >= 60 ? 'var(--green)' : score >= 40 ? 'var(--gold)' : 'var(--red)';
+    scoreEl.style.color = col;
+    var msg = '';
+    if (score >= 70) msg = 'Excellent — conditions optimales pour trader.';
+    else if (score >= 50) msg = 'Correct — reste vigilant.';
+    else if (score >= 30) msg = 'Attention — conditions dégradées. Replay recommandé.';
+    else msg = 'Déconseillé — risque d\'erreurs élevé.';
+    if (en < 4) msg += ' Énergie basse.';
+    if (st > 7) msg += ' Stress élevé — pause recommandée.';
+    msgEl.textContent = msg;
+    /* Disable GO button if score < 30 */
+    if (goBtn) {
+      if (score < 30) {
+        goBtn.disabled = true;
+        goBtn.style.opacity = '.4';
+        goBtn.style.cursor = 'not-allowed';
+        if (forceDiv) forceDiv.style.display = 'block';
+      } else {
+        goBtn.disabled = false;
+        goBtn.style.opacity = '1';
+        goBtn.style.cursor = 'pointer';
+        if (forceDiv) forceDiv.style.display = 'none';
+      }
+    }
+  } catch(e) {}
 }
 
 function updateMentalReco() {
@@ -7558,9 +7717,11 @@ function openSessionFromBriefing() {
     }
     var session = createSession(target, aT);
 
-    /* Sauver état mental */
-    session.briefing.mentalState.energy = parseInt(document.getElementById('sessEnergy').value) || 5;
-    session.briefing.mentalState.stress = parseInt(document.getElementById('sessStress').value) || 5;
+    /* Sauver état mental (4 jauges) */
+    session.briefing.mentalState.energy = parseInt(document.getElementById('sessBrEnergy').value) || 5;
+    session.briefing.mentalState.stress = parseInt(document.getElementById('sessBrStress').value) || 5;
+    session.briefing.mentalState.confidence = parseInt(document.getElementById('sessBrConf').value) || 5;
+    session.briefing.mentalState.clarity = parseInt(document.getElementById('sessBrClarity').value) || 5;
     var sleep = document.getElementById('sessSleep');
     if (sleep && sleep.value) session.briefing.mentalState.sleepHours = parseFloat(sleep.value);
 
@@ -7597,6 +7758,27 @@ var _sessShowTradeChecklist = false;
 var _sessTradeForm = { dir: '', type: '', res: '', pl: '', sl: 0, lot: 0 };
 var _sessTimerInterval = null;
 var _sessNotesOpen = false;
+var _sessSubTab = 'stats';
+var _sessPhaseOpen = { p1: true, p2: true, p3: true, p4: true };
+var _sessQTForm = { dir: '', res: '', pl: '', tags: '', notes: '' };
+var _sessCalcTriggered = false;
+
+function sessSubTab(id) {
+  try { _sessSubTab = id; rSession(); } catch(e) { console.error('sessSubTab:', e) }
+}
+
+function sessKPI(label, value, color) {
+  try {
+    return '<div class="sess-kpi"><div class="sess-kpi-label">' + label + '</div><div class="sess-kpi-val" style="color:' + (color || 'var(--t1)') + '">' + value + '</div></div>';
+  } catch(e) { return '' }
+}
+
+function sessGauge(label, current, max, color) {
+  try {
+    var pct = max > 0 ? Math.min(100, Math.round(Math.abs(current) / max * 100)) : 0;
+    return '<div class="sess-gauge-item"><span>' + label + '</span><div class="sess-gauge-bar"><div class="sess-gauge-fill" style="width:' + pct + '%;background:' + (color || 'var(--gold)') + '"></div></div></div>';
+  } catch(e) { return '' }
+}
 
 /* ─── Strip gauge helper ─── */
 function sessStripGauge(current, max, color) {
@@ -7861,7 +8043,7 @@ function rSessionTrade(s) {
   } catch(e) { console.error('rSessionTrade:', e); return '' }
 }
 
-/* ─── MAIN OPERATING RENDERER ─── */
+/* ─── MAIN OPERATING RENDERER — ALL-IN-ONE COCKPIT ─── */
 function rSessionOperating(el) {
   try {
     var s = _currentSession;
@@ -7878,108 +8060,438 @@ function rSessionOperating(el) {
     var result = sessCalcPnl(s);
     var sessTrades = result.trades;
     var sessPnl = result.pnl;
-
-    /* Durée */
     var durStr = sessCalcDuration(s);
-
-    /* Win Rate */
     var wr = sessCalcWR(sessTrades);
 
     /* Pause active ? */
     var isPaused = false;
     if (s.pauseEvents && s.pauseEvents.length) {
-      var last = s.pauseEvents[s.pauseEvents.length - 1];
-      isPaused = last.type === 'PAUSE';
+      var lastEv = s.pauseEvents[s.pauseEvents.length - 1];
+      isPaused = lastEv.type === 'PAUSE';
     }
 
-    /* Contexte jour */
     var ctx = dailyContextReader([s.target.accountId]);
+    var acc = S();
+    var config = strategyConfigReader();
+    var rails = checklistScopeReader('GUARDRAIL');
+    var railBroken = rails.some(function(r) { return !r.checked });
+
+    /* Limits check */
+    var maxReached = maxT !== '—' && s.logicalTradeCount >= maxT;
+    var lossReached = maxL > 0 && sessPnl <= -maxL;
+    var blocked = isPaused || maxReached || lossReached;
 
     var h = '';
 
-    /* ─── STICKY HEADER ─── */
-    h += '<div class="sess-header" style="background:rgba(212,160,23,.04);border:1px solid rgba(212,160,23,.15);border-radius:14px;padding:16px;margin-bottom:12px;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px)">';
-
+    /* ═══ STRIP HUD (sticky) ═══ */
+    h += '<div class="sess-hud">';
     /* Status line */
-    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
-    h += '<div style="font-size:14px;font-weight:800;color:var(--gold)">SESSION #' + s.sessionIndexInDay + ' · ' + (isPaused ? 'PAUSE' : 'OUVERTE') + ' ' + durStr + '</div>';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+    h += '<div style="font-size:13px;font-weight:800;color:var(--gold)">SESSION #' + s.sessionIndexInDay + ' · ' + (isPaused ? 'PAUSE' : 'ACTIVE') + '</div>';
     h += '<div style="display:flex;gap:6px">';
     if (isPaused) {
-      h += '<button class="btn btn-g" onclick="resumeCurrentSession()" style="padding:6px 14px;font-size:11px">Reprendre</button>';
+      h += '<button class="btn btn-g" onclick="resumeCurrentSession()" style="padding:6px 14px;font-size:11px;min-height:36px">Reprendre</button>';
     } else {
-      h += '<button class="btn btn-o" onclick="pauseCurrentSession()" style="padding:6px 14px;font-size:11px">Pause</button>';
+      h += '<button class="btn btn-o" onclick="pauseCurrentSession()" style="padding:6px 14px;font-size:11px;min-height:36px">Pause</button>';
     }
-    h += '<button class="btn btn-o" onclick="closeCurrentSession()" style="padding:6px 14px;font-size:11px;color:var(--red);border-color:var(--red)">Cloturer</button>';
+    h += '<button class="btn btn-o" onclick="closeCurrentSession()" style="padding:6px 14px;font-size:11px;min-height:36px;color:var(--red);border-color:var(--red)">Clôturer</button>';
     h += '</div></div>';
 
-    /* KPIs */
+    /* KPIs row */
     var pnlCol = sessPnl >= 0 ? 'var(--green)' : 'var(--red)';
-    h += '<div class="sess-kpis">';
-    h += sessKPI('P&L', (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(0), pnlCol);
-    h += sessKPI('Trades', s.logicalTradeCount + '/' + maxT, 'var(--t1)');
-    h += sessKPI('WR', wr, 'var(--t1)');
-    h += sessKPI('Duree', durStr, 'var(--t1)');
+    h += '<div class="sess-hud-kpis">';
+    h += '<div class="sess-hud-kpi"><div class="sess-hud-kpi-label">P&L</div><div class="sess-hud-kpi-val" style="color:' + pnlCol + ';font-size:20px">' + (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(0) + '</div></div>';
+    h += '<div class="sess-hud-kpi"><div class="sess-hud-kpi-label">Trades</div><div class="sess-hud-kpi-val">' + s.logicalTradeCount + '/' + maxT + '</div></div>';
+    h += '<div class="sess-hud-kpi"><div class="sess-hud-kpi-label">WR</div><div class="sess-hud-kpi-val">' + wr + '</div></div>';
+    h += '<div class="sess-hud-kpi"><div class="sess-hud-kpi-label">Durée</div><div class="sess-hud-kpi-val">' + durStr + '</div></div>';
     h += '</div>';
 
-    /* Gauges */
-    h += '<div class="sess-gauges">';
+    /* Gauges row */
+    h += '<div class="sess-hud-gauges">';
     if (maxL > 0) {
-      var lossGaugeCol = Math.abs(sessPnl) >= maxL * 0.8 ? 'var(--red)' : Math.abs(sessPnl) >= maxL * 0.5 ? 'var(--gold)' : 'var(--green)';
-      h += sessGauge('Perte max', sessPnl < 0 ? sessPnl : 0, maxL, lossGaugeCol);
+      var ddPct = Math.min(100, Math.round(Math.abs(sessPnl < 0 ? sessPnl : 0) / maxL * 100));
+      var ddCol = ddPct >= 80 ? 'var(--red)' : ddPct >= 50 ? 'var(--gold)' : 'var(--green)';
+      h += '<div class="sess-hud-gauge"><span>DD -$' + Math.abs(sessPnl < 0 ? sessPnl : 0).toFixed(0) + '/$' + maxL + '</span><div class="sess-hud-gauge-bar"><div class="sess-hud-gauge-fill" style="width:' + ddPct + '%;background:' + ddCol + '"></div></div></div>';
     }
-    h += sessGauge('Trades', s.logicalTradeCount, maxT, s.logicalTradeCount >= maxT ? 'var(--red)' : 'var(--gold)');
+    var capPct = maxT > 0 ? Math.min(100, Math.round(s.logicalTradeCount / maxT * 100)) : 0;
+    h += '<div class="sess-hud-gauge"><span>Cap ' + s.logicalTradeCount + '/' + maxT + '</span><div class="sess-hud-gauge-bar"><div class="sess-hud-gauge-fill" style="width:' + capPct + '%;background:' + (capPct >= 100 ? 'var(--red)' : 'var(--gold)') + '"></div></div></div>';
     h += '</div>';
 
     /* Day cumul */
-    h += '<div style="display:flex;justify-content:space-around;font-size:10px;color:var(--t3);padding-top:6px;border-top:1px solid var(--border)">';
+    h += '<div style="display:flex;justify-content:space-around;font-size:9px;color:var(--t3);padding-top:6px;border-top:1px solid var(--border);margin-top:6px">';
     h += '<span>Jour : ' + ctx.cumulativeTradesToday + ' trades</span>';
     h += '<span>P&L jour : <b style="color:' + (ctx.cumulativePnlToday >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (ctx.cumulativePnlToday >= 0 ? '+' : '') + '$' + ctx.cumulativePnlToday.toFixed(0) + '</b></span>';
     h += '</div>';
+    h += '</div>'; /* end HUD */
 
-    h += '</div>'; /* end sticky header */
-
-    /* ─── SUB-TABS ─── */
-    h += '<div class="sess-tabs">';
-    var tabs = [
-      { id: 'stats', label: 'Stats' },
-      { id: 'checklist', label: 'Checklist' },
-      { id: 'calc', label: 'Calculateur' },
-      { id: 'trade', label: '+ Trade' }
-    ];
-    tabs.forEach(function(tab) {
-      h += '<button class="sess-tab' + (_sessSubTab === tab.id ? ' active' : '') + '" onclick="sessSubTab(\'' + tab.id + '\')">' + tab.label + '</button>';
-    });
-    h += '</div>';
-
-    /* ─── SUB-TAB CONTENT ─── */
-    h += '<div class="sess-content" id="sessSubContent">';
-    if (_sessSubTab === 'stats') {
-      h += rSessionStats(s, sessTrades, sessPnl, isPaused);
-    } else if (_sessSubTab === 'checklist') {
-      h += rSessionChecklist(s);
-    } else if (_sessSubTab === 'calc') {
-      h += rSessionCalc(s);
-    } else if (_sessSubTab === 'trade') {
-      h += rSessionTrade(s);
+    /* ═══ ALERTS ═══ */
+    var alerts = [];
+    if (maxReached) alerts.push({ type: 'red', msg: 'Max trades atteint (' + s.logicalTradeCount + '/' + maxT + ')' });
+    if (lossReached) alerts.push({ type: 'red', msg: 'Perte max atteinte ($' + Math.abs(sessPnl).toFixed(0) + '/$' + maxL + ')' });
+    if (isPaused) alerts.push({ type: 'orange', msg: 'Session en pause' });
+    rails.forEach(function(r) { if (!r.checked) alerts.push({ type: 'red', msg: 'FILTRE : ' + r.label }) });
+    if (alerts.length > 0) {
+      h += '<div class="sess-alerts">';
+      alerts.forEach(function(a) {
+        h += '<div class="sess-alert-item sess-alert-' + a.type + '">' + a.msg + '</div>';
+      });
+      h += '</div>';
     }
-    h += '</div>';
+
+    /* ═══ TWO-COLUMN LAYOUT ═══ */
+    h += '<div class="sess-operating">';
+
+    /* ─── LEFT COLUMN ─── */
+    h += '<div class="sess-col-left">';
+
+    /* CHECKLIST — collapsible phases */
+    h += rSessCockpitChecklist(s);
+
+    /* QUICK TRADE FORM */
+    h += rSessCockpitQuickTrade(s, blocked, sessTrades, config);
+
+    /* TRADES LOG */
+    h += rSessCockpitTradeLog(sessTrades);
+
+    h += '</div>'; /* end left col */
+
+    /* ─── RIGHT COLUMN (sticky calculator) ─── */
+    h += '<div class="sess-col-right">';
+    h += rSessCockpitCalc(s, acc, config);
+    h += '</div>'; /* end right col */
+
+    h += '</div>'; /* end 2-col layout */
 
     /* ─── CLOSE SESSION (bottom) ─── */
     h += '<div style="text-align:center;padding:16px 0;border-top:1px solid var(--border);margin-top:16px">';
-    h += '<button class="btn btn-o" onclick="closeCurrentSession()" style="padding:10px 24px;font-size:12px;color:var(--red);border-color:var(--red)">Cloturer la session</button>';
+    h += '<button class="btn btn-o" onclick="closeCurrentSession()" style="padding:10px 24px;font-size:12px;color:var(--red);border-color:var(--red);min-height:44px">Clôturer la session</button>';
     h += '</div>';
 
     el.innerHTML = h;
 
+    /* QM trigger — check if calc should pulse */
+    if (_sessCalcTriggered) {
+      var calcPanel = document.getElementById('sessCalcPanel');
+      if (calcPanel) {
+        calcPanel.classList.add('sess-calc-active');
+        var lotEl = document.getElementById('sessLotBig');
+        if (lotEl) lotEl.classList.add('pulse');
+        setTimeout(function() { if (lotEl) lotEl.classList.remove('pulse') }, 600);
+      }
+      var arrowEl = document.getElementById('sessQmArrow');
+      if (arrowEl) arrowEl.classList.add('visible');
+    }
+
     /* Toast non bloquant pour rails violés */
-    var rails = checklistScopeReader('GUARDRAIL');
-    var railViolations = rails.filter(function(r) { return !r.checked });
-    if (railViolations.length > 0 && !window._lastRailToast) {
+    if (railBroken && !window._lastRailToast) {
       window._lastRailToast = true;
-      toast('Rail viole : ' + railViolations[0].label);
+      var firstBroken = rails.find(function(r) { return !r.checked });
+      toast('Filtre : ' + (firstBroken ? firstBroken.label : ''));
       setTimeout(function() { window._lastRailToast = false }, 30000);
     }
   } catch(e) { console.error('rSessionOperating:', e) }
+}
+
+/* ─── Cockpit: Checklist with collapsible phases ─── */
+function rSessCockpitChecklist(s) {
+  try {
+    var h = '';
+    var prepItems = checklistScopeReader('SESSION_PREP');
+    var entreeItems = checklistScopeReader('TRADE_PREP').filter(function(i) { return i.n <= 13 });
+    var gestionItems = checklistScopeReader('TRADE_PREP').filter(function(i) { return i.n >= 14 });
+    var filterItems = checklistScopeReader('GUARDRAIL');
+
+    var phases = [
+      { key: 'p1', num: '①', title: 'Préparation', items: prepItems, color: 'var(--gold)', once: true },
+      { key: 'p2', num: '②', title: 'Entrée', items: entreeItems, color: 'var(--blue)', once: false },
+      { key: 'p3', num: '③', title: 'Gestion', items: gestionItems, color: 'var(--green)', once: false },
+      { key: 'p4', num: '④', title: 'Filtres', items: filterItems, color: 'var(--red)', once: false, blocker: true }
+    ];
+
+    phases.forEach(function(phase) {
+      var done = phase.items.filter(function(i) { return i.checked }).length;
+      var total = phase.items.length;
+      var complete = done === total && total > 0;
+      var isOpen = _sessPhaseOpen[phase.key] !== false;
+      /* Auto-collapse Phase 1 if complete and not first time */
+      if (phase.once && complete && s.logicalTradeCount > 0) isOpen = false;
+
+      h += '<div class="sess-phase' + (isOpen ? ' open' : '') + (complete ? ' complete' : '') + '">';
+      h += '<div class="sess-phase-header" onclick="_sessPhaseOpen.' + phase.key + '=!_sessPhaseOpen.' + phase.key + ';rSession()">';
+      h += '<div class="sess-phase-num" style="background:rgba(' + (phase.color === 'var(--gold)' ? '212,160,23' : phase.color === 'var(--blue)' ? '91,141,239' : phase.color === 'var(--green)' ? '0,214,143' : '255,71,87') + ',.12);color:' + phase.color + '">' + (complete ? '✓' : phase.num) + '</div>';
+      h += '<div class="sess-phase-title">' + phase.title + (phase.blocker ? ' <span style="font-size:8px;color:var(--red);font-weight:700;vertical-align:middle">BLOQUANTS</span>' : '') + '</div>';
+      h += '<div class="sess-phase-badge">' + done + '/' + total + '</div>';
+      h += '<div class="sess-phase-arrow">▼</div>';
+      h += '</div>';
+
+      h += '<div class="sess-phase-body">';
+      phase.items.forEach(function(item) {
+        var isQM = item.n === 11;
+        h += '<div class="sess-phase-item' + (item.checked ? ' checked' : '') + '">';
+        h += '<input type="checkbox" ' + (item.checked ? 'checked' : '') + ' onchange="sessCockpitToggle(this,' + item.n + ',' + isQM + ')">';
+        h += '<span><strong style="color:' + (item.checked ? 'var(--t3)' : 'var(--t1)') + '">' + item.label + '</strong>';
+        if (item.description) h += ' <em style="font-size:11px;color:var(--t3)">' + item.description + '</em>';
+        h += '</span></div>';
+      });
+      h += '</div></div>';
+    });
+
+    /* QM arrow hint */
+    h += '<div class="sess-qm-arrow" id="sessQmArrow">Calcule ton lot →</div>';
+
+    return h;
+  } catch(e) { console.error('rSessCockpitChecklist:', e); return '' }
+}
+
+/* Toggle checklist from cockpit + QM trigger */
+function sessCockpitToggle(checkbox, n, isQM) {
+  try {
+    /* Sync with real checklist in #checkContent */
+    var real = document.querySelector('#checkContent .ck[data-n="' + n + '"] input[type=checkbox]');
+    if (real) {
+      real.checked = checkbox.checked;
+      real.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    /* QM trigger */
+    if (isQM && checkbox.checked) {
+      _sessCalcTriggered = true;
+      /* On mobile, scroll to calculator */
+      if (window.innerWidth < 768) {
+        setTimeout(function() {
+          var cp = document.getElementById('sessCalcPanel');
+          if (cp) cp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+    } else if (isQM && !checkbox.checked) {
+      _sessCalcTriggered = false;
+    }
+    /* Re-render */
+    rSession();
+  } catch(e) { console.error('sessCockpitToggle:', e) }
+}
+
+/* ─── Cockpit: Calculator (right column) ─── */
+function rSessCockpitCalc(s, acc, config) {
+  try {
+    var slPresets = config.standardSLPoints;
+    var currentSL = parseInt(document.getElementById('cSL').value) || 350;
+
+    var h = '';
+    h += '<div class="sess-calc-panel' + (_sessCalcTriggered ? ' sess-calc-active' : '') + '" id="sessCalcPanel">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;text-align:center">Calculateur</div>';
+    h += '<div style="font-size:11px;color:var(--t3);margin-bottom:10px;text-align:center">' + acc.name + ' · ' + acc.risk + '% · $' + acc.bal.toLocaleString('en-US') + '</div>';
+
+    /* SL GRID (4 columns) */
+    h += '<div class="sess-sl-grid">';
+    slPresets.forEach(function(sl) {
+      var active = sl === currentSL;
+      h += '<button class="sess-sl-grid-btn' + (active ? ' active' : '') + '" onclick="sessCockpitSetSL(' + sl + ')">' + sl + '</button>';
+    });
+    h += '</div>';
+
+    /* Fine tuning */
+    h += '<div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:12px">';
+    h += '<button class="btn btn-o" onclick="sessCockpitSetSL(Math.max(200,(parseInt(document.getElementById(\'cSL\').value)||350)-50))" style="padding:8px 14px;font-size:12px;min-height:44px">-50</button>';
+    h += '<input type="number" id="sessCockpitSL" value="' + currentSL + '" min="100" max="1500" step="50" oninput="sessCockpitSetSL(parseInt(this.value))" style="width:80px;text-align:center;font-size:18px;font-weight:700;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace">';
+    h += '<span style="font-size:12px;color:var(--t3)">pts</span>';
+    h += '<button class="btn btn-o" onclick="sessCockpitSetSL(Math.min(1500,(parseInt(document.getElementById(\'cSL\').value)||350)+50))" style="padding:8px 14px;font-size:12px;min-height:44px">+50</button>';
+    h += '</div>';
+
+    /* BIG LOT RESULT */
+    var ra = acc.bal * (acc.risk || 1) / 100;
+    var co = acc.comm || 0;
+    var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+    var loss = lot * currentSL;
+    var com = lot * co;
+
+    h += '<div style="text-align:center;padding:8px 0;cursor:pointer" onclick="sessCockpitCopyLot(\'' + lot.toFixed(2) + '\')" title="Cliquer pour copier">';
+    h += '<div class="sess-lot-big' + (_sessCalcTriggered ? ' pulse' : '') + '" id="sessLotBig">' + lot.toFixed(2) + '</div>';
+    h += '<div style="font-size:12px;color:var(--t2);margin-top:4px">lots sur MT5 <span style="font-size:10px;color:var(--t3)">(cliquer = copier)</span></div>';
+    h += '</div>';
+
+    /* TP potentiel */
+    h += '<div style="text-align:center;font-size:11px;color:var(--t3);margin-bottom:8px">TP : <b style="color:var(--green)">+$' + (lot * currentSL).toFixed(0) + '</b></div>';
+
+    /* Risk details */
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:10px;color:var(--t3);padding-top:8px;border-top:1px solid var(--border);text-align:center">';
+    h += '<span>Risque <b style="color:var(--t1)">$' + ra.toFixed(0) + '</b></span>';
+    h += '<span>Perte <b style="color:var(--red)">$' + (loss + com).toFixed(0) + '</b></span>';
+    h += '<span>Comm <b>$' + com.toFixed(2) + '</b></span>';
+    var usage = ra > 0 ? Math.min(100, Math.round((loss + com) / ra * 100)) : 0;
+    h += '<span>Usage <b style="color:' + (usage > 98 ? 'var(--red)' : 'var(--green)') + '">' + usage + '%</b></span>';
+    h += '</div>';
+
+    h += '</div>'; /* end calc panel */
+
+    return h;
+  } catch(e) { console.error('rSessCockpitCalc:', e); return '' }
+}
+
+function sessCockpitSetSL(val) {
+  try {
+    if (isNaN(val) || val < 100) return;
+    /* Sync with main calculator */
+    var mainSL = document.getElementById('cSL');
+    if (mainSL) { mainSL.value = val; setSL(val) }
+    /* Re-render session */
+    rSession();
+  } catch(e) { console.error('sessCockpitSetSL:', e) }
+}
+
+function sessCockpitCopyLot(lotStr) {
+  try {
+    navigator.clipboard.writeText(lotStr).then(function() {
+      toast('Lot ' + lotStr + ' copié');
+      var el = document.getElementById('sessLotBig');
+      if (el) { el.classList.add('copied'); setTimeout(function() { el.classList.remove('copied') }, 500) }
+    }).catch(function() {
+      var ta = document.createElement('textarea'); ta.value = lotStr; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      toast('Lot ' + lotStr + ' copié');
+    });
+    /* Auto-fill quick trade form SL */
+    _sessQTForm.sl = parseInt(document.getElementById('cSL').value) || 350;
+  } catch(e) { console.error('sessCockpitCopyLot:', e) }
+}
+
+/* ─── Cockpit: Quick Trade Form ─── */
+function rSessCockpitQuickTrade(s, blocked, sessTrades, config) {
+  try {
+    var h = '';
+    var currentSL = parseInt(document.getElementById('cSL').value) || 350;
+    var acc = S();
+    var ra = acc.bal * (acc.risk || 1) / 100;
+    var co = acc.comm || 0;
+    var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+
+    h += '<div class="sess-quick-trade">';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px">Trade rapide</div>';
+    h += '<div style="font-size:10px;color:var(--t3)">SL ' + currentSL + ' · Lot ' + lot.toFixed(2) + '</div>';
+    h += '</div>';
+
+    if (blocked) {
+      var reason = blocked === true ? 'Session bloquée' : '';
+      h += '<div style="text-align:center;padding:16px;color:var(--red);font-size:12px;font-weight:600">Nouveaux trades bloqués</div>';
+      h += '</div>';
+      return h;
+    }
+
+    /* Direction BUY/SELL */
+    h += '<div class="sess-qt-row">';
+    h += '<button class="sess-qt-btn buy' + (_sessQTForm.dir === 'buy' ? ' active' : '') + '" onclick="_sessQTForm.dir=\'buy\';rSession()">↑ BUY</button>';
+    h += '<button class="sess-qt-btn sell' + (_sessQTForm.dir === 'sell' ? ' active' : '') + '" onclick="_sessQTForm.dir=\'sell\';rSession()">↓ SELL</button>';
+    h += '</div>';
+
+    /* Résultat TP/SL/Trail/21h */
+    h += '<div class="sess-qt-row">';
+    config.exitTypes.forEach(function(ex) {
+      var cls = ex.id === 'tp' ? 'tp' : ex.id === 'sl' ? 'sl-res' : '';
+      h += '<button class="sess-qt-btn ' + cls + (_sessQTForm.res === ex.id ? ' active' : '') + '" onclick="_sessQTForm.res=\'' + ex.id + '\';rSession()">' + ex.icon + ' ' + ex.label + '</button>';
+    });
+    h += '</div>';
+
+    /* P&L input */
+    h += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">';
+    h += '<label style="font-size:11px;color:var(--t3);min-width:40px">P&L $</label>';
+    h += '<input type="number" id="sessQTPL" step="0.01" placeholder="ex: 92.50" value="' + (_sessQTForm.pl || '') + '" oninput="_sessQTForm.pl=this.value" style="flex:1;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:14px;min-height:44px">';
+    h += '</div>';
+
+    /* SAVE button */
+    h += '<button class="btn btn-g" onclick="sessCockpitSaveTrade()" style="width:100%;padding:14px;font-size:14px;font-weight:800;border-radius:10px;min-height:50px">ENREGISTRER LE TRADE</button>';
+
+    h += '</div>';
+    return h;
+  } catch(e) { console.error('rSessCockpitQuickTrade:', e); return '' }
+}
+
+function sessCockpitSaveTrade() {
+  try {
+    var dir = _sessQTForm.dir;
+    var res = _sessQTForm.res;
+    if (!dir) { toast('Sélectionne BUY ou SELL'); return }
+    if (!res) { toast('Sélectionne un résultat (TP/SL/Trail/21h)'); return }
+
+    var plInput = document.getElementById('sessQTPL');
+    var pl = parseFloat(plInput ? plInput.value : 0) || 0;
+    var currentSL = parseInt(document.getElementById('cSL').value) || 350;
+    var acc = S();
+    var ra = acc.bal * (acc.risk || 1) / 100;
+    var co = acc.comm || 0;
+    var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+
+    var dirMap = { buy: 'Buy', sell: 'Sell' };
+    var resMap = { tp: 'TP', sl: 'SL', trail: 'Trail', '21h': '21h' };
+
+    var now = new Date();
+    var pct = acc.bal > 0 ? (pl / acc.bal * 100).toFixed(2) : '0';
+
+    var trade = {
+      date: now.toISOString().slice(0, 10),
+      time: now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0'),
+      dir: dirMap[dir] || dir,
+      type: 'QM',
+      sl: currentSL,
+      lot: lot,
+      res: resMap[res] || res,
+      pl: pl,
+      pct: pct,
+      rr: 0,
+      news: 'Non',
+      s5: '', s1: '', sr: '',
+      notes: '',
+      tags: [],
+      ts: Date.now(),
+      accId: D.activeAcc
+    };
+
+    D.live.push(trade);
+    _s();
+
+    /* Incrémenter session */
+    if (_currentSession && _currentSession.status === 'OPERATING') {
+      recordSessionTrade(_currentSession.id, trade.ts.toString(), 'lg_' + trade.ts, false, null);
+    }
+
+    toast((pl >= 0 ? 'Trade gagnant' : 'Trade enregistré') + ' · ' + dirMap[dir] + ' · ' + (pl >= 0 ? '+' : '') + '$' + pl.toFixed(2));
+
+    /* Reset quick trade form */
+    _sessQTForm = { dir: '', res: '', pl: '', tags: '', notes: '' };
+    _sessCalcTriggered = false;
+
+    /* Reset Phase 2 (Entrée) and Phase 3 (Gestion) checkboxes */
+    var sections = document.querySelectorAll('#checkContent .ck-section');
+    if (sections[1]) sections[1].querySelectorAll('input[type=checkbox]').forEach(function(c) { c.checked = false });
+    if (sections[2]) sections[2].querySelectorAll('input[type=checkbox]').forEach(function(c) { c.checked = false });
+
+    rSession();
+  } catch(e) { console.error('sessCockpitSaveTrade:', e) }
+}
+
+/* ─── Cockpit: Trade Log ─── */
+function rSessCockpitTradeLog(sessTrades) {
+  try {
+    var h = '';
+    h += '<div class="sess-trade-log">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Trades de la session (' + sessTrades.length + ')</div>';
+    if (sessTrades.length === 0) {
+      h += '<div style="text-align:center;padding:12px;font-size:12px;color:var(--t3)">Aucun trade enregistré</div>';
+    } else {
+      sessTrades.forEach(function(t, i) {
+        var col = (parseFloat(t.pl) || 0) >= 0 ? 'var(--green)' : 'var(--red)';
+        h += '<div class="sess-trade-log-item">';
+        h += '<span style="color:var(--t3);font-family:JetBrains Mono,monospace;font-size:10px">#' + (i + 1) + '</span>';
+        h += '<span style="color:var(--t2);font-size:11px">' + (t.time || '') + '</span>';
+        h += '<span style="font-weight:600;color:var(--t1)">' + (t.dir || '') + '</span>';
+        h += '<span style="color:var(--t3);font-size:11px">SL ' + (t.sl || '') + '</span>';
+        h += '<span style="color:var(--t2);font-size:11px">' + (t.res || '') + '</span>';
+        h += '<span style="flex:1"></span>';
+        h += '<span style="font-weight:700;font-family:JetBrains Mono,monospace;color:' + col + '">' + ((parseFloat(t.pl) || 0) >= 0 ? '+' : '') + '$' + (parseFloat(t.pl) || 0).toFixed(2) + '</span>';
+        h += '</div>';
+      });
+    }
+    h += '</div>';
+    return h;
+  } catch(e) { console.error('rSessCockpitTradeLog:', e); return '' }
 }
 
 function pauseCurrentSession() {
