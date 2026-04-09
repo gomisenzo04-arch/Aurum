@@ -284,6 +284,47 @@ html{scroll-behavior:smooth}
 /* 6. Confetti canvas fond semi-transparent */
 #confetti{background:rgba(6,9,14,.3)}
 
+/* ─── LANDING PAGE ─── */
+.landing-wrap{max-width:680px;margin:0 auto;padding:32px 20px;animation:moduleIn .5s ease}
+.landing-hero{text-align:center;margin-bottom:32px}
+.landing-hero h1{font-size:28px;font-weight:800;color:var(--gold);margin-bottom:8px}
+.landing-hero p{font-size:14px;color:var(--t2);line-height:1.7;max-width:500px;margin:0 auto}
+.landing-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+@media(max-width:640px){.landing-parts{grid-template-columns:1fr}}
+.landing-part{background:var(--bg2);border:1px solid var(--brd);border-radius:14px;padding:20px 16px;position:relative;overflow:hidden;transition:border-color .2s}
+.landing-part:hover{border-color:var(--brd2)}
+.landing-part.unlocked{border-color:rgba(212,160,23,.25)}
+.landing-part .lp-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.landing-part .lp-title{font-size:16px;font-weight:800;color:var(--t1);margin-bottom:4px}
+.landing-part .lp-count{font-size:11px;color:var(--t3);margin-bottom:10px}
+.landing-part .lp-desc{font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px}
+.landing-part .lp-status{font-size:11px;font-weight:600;padding:5px 10px;border-radius:6px;display:inline-block}
+.landing-part .lp-bar{height:4px;background:var(--bg4);border-radius:2px;margin-top:10px;overflow:hidden}
+.landing-part .lp-bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
+.landing-cta{text-align:center;margin-bottom:24px}
+.landing-cta button{padding:14px 32px;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s;min-height:48px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#06090e}
+.landing-cta button:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(212,160,23,.3)}
+.landing-hints{display:flex;flex-direction:column;gap:6px;max-width:400px;margin:0 auto}
+.landing-hint{font-size:12px;color:var(--t3);display:flex;align-items:center;gap:8px}
+.landing-hint span{font-size:14px}
+
+/* ─── NAV PART HEADER ─── */
+.nav-part-hd{padding:8px 14px 4px;margin-top:8px}
+.nav-part-hd:first-child{margin-top:0}
+.nav-part-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.nav-part-bar{height:3px;background:var(--bg4);border-radius:2px;margin-top:4px;overflow:hidden}
+.nav-part-bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
+.nav-part-count{font-size:9px;font-weight:600;color:var(--t3)}
+
+/* ─── PART TRANSITION ─── */
+.part-transition{text-align:center;padding:40px 20px;max-width:500px;margin:0 auto}
+.part-transition h2{font-size:22px;font-weight:800;margin-bottom:8px}
+.part-transition p{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:20px}
+.part-transition .pt-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+.part-transition .pt-stat{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:14px;text-align:center}
+.part-transition .pt-stat-val{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.part-transition .pt-stat-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;margin-top:2px}
+
 /* ─── IFRAME MODE ─── */
 .in-iframe .topbar{display:none!important}
 .in-iframe .academy-progress{display:none!important}
@@ -302,7 +343,7 @@ html{scroll-behavior:smooth}
     <span>Aurum</span>
   </a>
   <div class="topbar-nav">
-    <a href="Aurum_Academy.html" class="topbar-link active">Academy</a>
+    <a href="#" class="topbar-link active" onclick="showLanding();return false">Academy</a>
     <a href="Aurum.html" class="topbar-link">Journal</a>
     <a href="Aurum_Capital.html" class="topbar-link">Capital</a>
   </div>
@@ -315,7 +356,7 @@ html{scroll-behavior:smooth}
   </button>
 </nav>
 <div class="mobile-menu" id="mobileMenu">
-  <a href="Aurum_Academy.html">Academy</a>
+  <a href="#" onclick="showLanding();toggleMobileMenu();return false">Academy</a>
   <a href="Aurum.html">Journal</a>
   <a href="Aurum_Capital.html">Capital</a>
 </div>
@@ -649,9 +690,10 @@ CAP_NAMES.forEach(function(m,i){ ALL_MODS.push({t:m.t, part:'capital', partLabel
 var TOTAL_MODS = ALL_MODS.length;
 
 /* ═══ STATE ═══ */
-var S = {c:0, d:[], a:{}, el:0, ev:'l', ea:{}, es:0};
+var S = {c:-1, d:[], a:{}, el:0, ev:'l', ea:{}, es:0};
+var _showLanding = false;
 function sv(){try{localStorage.setItem('aurum_formation_v1',JSON.stringify(S))}catch(e){}}
-function ld(){try{var r=JSON.parse(localStorage.getItem('aurum_formation_v1'));if(r){S.c=r.c||0;S.d=r.d||[];S.a=r.a||{}}}catch(e){}}
+function ld(){try{var r=JSON.parse(localStorage.getItem('aurum_formation_v1'));if(r){S.c=(typeof r.c==='number')?r.c:-1;S.d=r.d||[];S.a=r.a||{}}}catch(e){}}
 
 /* Scoring */
 function att(i){if(!S.a[i])S.a[i]=0;S.a[i]++;sv()}
@@ -664,7 +706,7 @@ function markDone(i){if(S.d.indexOf(i)===-1){S.d.push(i);sv();drawNav();drawProg
 /* ═══ NAVIGATION ═══ */
 function goMod(i){
   if(i>0 && S.d.indexOf(i-1)===-1){alert('Complète "'+ALL_MODS[i-1].t+'" d\'abord.');return}
-  S.c=i;S.el=0;S.ev='l';S.ea={};S.es=0;sv();render();drawNav();
+  _showLanding=false;S.c=i;S.el=0;S.ev='l';S.ea={};S.es=0;sv();render();drawNav();
   document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -672,36 +714,62 @@ function goMod(i){
 var MOD_TIME=[4,3,3,4,3,4,3,3,3,3,3,5,5,2,3,4,3,3,3,3,3,3,3,3,5,2,3,3,3,3,3,3,5];
 
 function resumeNext(){
+  try{
+  _showLanding=false;
   /* Find first non-completed module */
   for(var i=0;i<TOTAL_MODS;i++){
     if(S.d.indexOf(i)===-1){goMod(i);return}
   }
   /* All done */
   goMod(TOTAL_MODS-1);
+  }catch(e){console.error('resumeNext:',e)}
 }
 
 function drawNav(){
-  var h='',lastPart='';
-  ALL_MODS.forEach(function(m,i){
-    if(m.part!==lastPart){
-      var colors={strategy:'var(--blue)',app:'var(--green)',capital:'var(--purple)'};
-      h+='<div class="stit" style="color:'+colors[m.part]+'">'+m.partLabel+'</div>';
-      lastPart=m.part;
-    }
-    var isDone=S.d.indexOf(i)>=0;
-    var isUnlocked=(i===0)||(S.d.indexOf(i-1)>=0);
-    var ac=i===S.c?' ac':'',dn=isDone?' dn':'',lk=(!isUnlocked&&!isDone)?' lk':'';
-    var icon=isDone?'✓':(!isUnlocked&&!isDone)?'🔒':m.icon||String(i+1);
-    var st=isDone?'<span class="mi-s">'+"★".repeat(stars(i))+"☆".repeat(3-stars(i))+'</span>':'';
-    var time=MOD_TIME[i]||3;
-    h+='<div class="mi'+ac+dn+lk+'" onclick="goMod('+i+')"><div class="mn">'+icon+'</div><div style="flex:1"><div style="font-weight:600;font-size:10px">'+m.t+'</div><div style="font-size:8px;color:var(--t3)">~'+time+' min</div></div>'+st+'</div>';
-    /* Insert sandbox button after last Edge module */
-    if(i===EDGE_M.length-1 && S.d.indexOf(EDGE_M.length-1)>=0){
-      var sbAc=(S.c===EDGE_M.length && !(_sandboxState&&_sandboxState.active))?' ac':'';
-      h+='<div class="mi dn'+sbAc+'" onclick="S.c='+EDGE_M.length+';_sandboxState=null;render();drawNav()" style="border-left:2px solid var(--gold)"><div class="mn">🎯</div><div style="flex:1"><div style="font-weight:600;font-size:10px">Entraînement libre</div><div style="font-size:8px;color:var(--t3)">Pratique sandbox</div></div></div>';
+  try{
+  /* Landing link at top */
+  var h='<div class="mi" onclick="showLanding()" style="margin-bottom:4px;border-left:3px solid '+(S.c===-1||_showLanding?'var(--gold)':'transparent')+'"><div class="mn" style="background:var(--gold);border-color:var(--gold);color:#000;font-size:10px">A</div><div style="flex:1"><div style="font-weight:700;font-size:10px;color:'+(S.c===-1||_showLanding?'var(--gold)':'var(--t2)')+'">Accueil</div></div></div>';
+
+  /* Part definitions */
+  var partDefs=[
+    {key:'strategy',label:'Partie 1 · Stratégie',color:'var(--blue)',start:0,count:EDGE_M.length},
+    {key:'app',label:'Partie 2 · Application',color:'var(--green)',start:EDGE_M.length,count:APP_NAMES.length},
+    {key:'capital',label:'Partie 3 · Capital',color:'var(--purple)',start:EDGE_M.length+APP_NAMES.length,count:CAP_NAMES.length}
+  ];
+
+  partDefs.forEach(function(pd){
+    /* Count done in this part */
+    var done=0;
+    for(var j=pd.start;j<pd.start+pd.count;j++){if(S.d.indexOf(j)>=0)done++}
+    var pct=pd.count>0?Math.round(done/pd.count*100):0;
+
+    /* Part header with progress */
+    h+='<div class="nav-part-hd">';
+    h+='<div class="nav-part-label" style="color:'+pd.color+'">'+pd.label+' <span class="nav-part-count">'+done+'/'+pd.count+'</span></div>';
+    h+='<div class="nav-part-bar"><div class="nav-part-bar-fill" style="width:'+pct+'%;background:'+pd.color+'"></div></div>';
+    h+='</div>';
+
+    /* Modules in this part */
+    for(var j=pd.start;j<pd.start+pd.count;j++){
+      var m=ALL_MODS[j];
+      var isDone=S.d.indexOf(j)>=0;
+      var isUnlocked=(j===0)||(S.d.indexOf(j-1)>=0);
+      var ac=j===S.c&&!_showLanding?' ac':'',dn=isDone?' dn':'',lk=(!isUnlocked&&!isDone)?' lk':'';
+      var icon=isDone?'✓':(!isUnlocked&&!isDone)?'🔒':m.icon||String(j+1);
+      var st=isDone?'<span class="mi-s">'+'★'.repeat(stars(j))+'☆'.repeat(3-stars(j))+'</span>':'';
+      var time=MOD_TIME[j]||3;
+      h+='<div class="mi'+ac+dn+lk+'" onclick="goMod('+j+')"><div class="mn">'+icon+'</div><div style="flex:1"><div style="font-weight:600;font-size:10px">'+m.t+'</div><div style="font-size:8px;color:var(--t3)">~'+time+' min</div></div>'+st+'</div>';
+
+      /* Insert sandbox button after last Edge module */
+      if(j===EDGE_M.length-1 && S.d.indexOf(EDGE_M.length-1)>=0){
+        var sbAc=(S.c===EDGE_M.length && !(_sandboxState&&_sandboxState.active))?' ac':'';
+        h+='<div class="mi dn'+sbAc+'" onclick="S.c='+EDGE_M.length+';_sandboxState=null;render();drawNav()" style="border-left:2px solid var(--gold)"><div class="mn">🎯</div><div style="flex:1"><div style="font-weight:600;font-size:10px">Entraînement libre</div><div style="font-size:8px;color:var(--t3)">Pratique sandbox</div></div></div>';
+      }
     }
   });
+
   document.getElementById('nav').innerHTML=h;
+  }catch(e){console.error('drawNav:',e)}
 }
 
 function drawProg(){
@@ -711,8 +779,173 @@ function drawProg(){
   document.getElementById('sT').innerHTML='★ '+totalStars()+'/'+maxStars();
 }
 
+/* ═══ LANDING PAGE ═══ */
+function showLanding(){
+  try{
+    _showLanding=true;
+    render();
+    drawNav();
+  }catch(e){console.error('showLanding:',e)}
+}
+
+function renderLanding(){
+  try{
+    var ct=document.getElementById('ct');
+    if(!ct)return;
+
+    /* Calculate part progress */
+    var p1Total=EDGE_M.length, p2Total=APP_NAMES.length, p3Total=CAP_NAMES.length;
+    var p1Done=0, p2Done=0, p3Done=0;
+    var p1Stars=0, p2Stars=0, p3Stars=0;
+    for(var i=0;i<p1Total;i++){if(S.d.indexOf(i)>=0){p1Done++;p1Stars+=stars(i)}}
+    for(var i=0;i<p2Total;i++){if(S.d.indexOf(EDGE_M.length+i)>=0){p2Done++;p2Stars+=stars(EDGE_M.length+i)}}
+    for(var i=0;i<p3Total;i++){if(S.d.indexOf(EDGE_M.length+APP_NAMES.length+i)>=0){p3Done++;p3Stars+=stars(EDGE_M.length+APP_NAMES.length+i)}}
+    var totalDone=S.d.length;
+    var hasStarted=totalDone>0;
+
+    /* Estimate total time */
+    var totalTime=0;
+    MOD_TIME.forEach(function(t){totalTime+=t||3});
+
+    var h='<div class="landing-wrap">';
+
+    /* Hero */
+    h+='<div class="landing-hero">';
+    h+='<div style="font-size:42px;margin-bottom:12px">🎯</div>';
+    h+='<h1>Aurum Academy</h1>';
+    h+='<p>Tu vas apprendre à maîtriser un système de trading mécanique sur le XAUUSD. Pas de feeling, pas d\'intuition — des règles précises, applicables immédiatement.</p>';
+    h+='</div>';
+
+    /* Global progress if started */
+    if(hasStarted){
+      var pct=Math.round(totalDone/TOTAL_MODS*100);
+      h+='<div style="background:var(--bg2);border:1px solid var(--brd);border-radius:10px;padding:14px 16px;margin-bottom:20px;text-align:center">';
+      h+='<div style="font-size:10px;color:var(--t3);text-transform:uppercase;font-weight:600;margin-bottom:6px">Progression globale</div>';
+      h+='<div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:8px">';
+      h+='<span style="font-size:28px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace">'+totalDone+'/'+TOTAL_MODS+'</span>';
+      h+='<span style="font-size:13px;color:var(--t2)">modules complétés</span>';
+      h+='</div>';
+      h+='<div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--gold);border-radius:3px;transition:width .4s"></div></div>';
+      h+='<div style="font-size:11px;color:var(--t3);margin-top:6px">★ '+totalStars()+' / '+maxStars()+'</div>';
+      h+='</div>';
+    }
+
+    /* Section title */
+    h+='<div style="text-align:center;margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:2px">📊 3 parties</div></div>';
+
+    /* Parts */
+    var parts=[
+      {label:'PARTIE 1',title:'La Stratégie',count:p1Total,done:p1Done,starsVal:p1Stars,maxStars:p1Total*3,
+       desc:'Apprends les règles du système mécanique : bougies, S/R, pullbacks, liquidité, QM, gestion du trade.',
+       color:'var(--blue)',unlocked:true},
+      {label:'PARTIE 2',title:'L\'Application',count:p2Total,done:p2Done,starsVal:p2Stars,maxStars:p2Total*3,
+       desc:'Utilise Aurum Journal pour appliquer le système : trades, dashboard, calculateur, reviews.',
+       color:'var(--green)',unlocked:p1Done>=p1Total},
+      {label:'PARTIE 3',title:'Le Capital',count:p3Total,done:p3Done,starsVal:p3Stars,maxStars:p3Total*3,
+       desc:'Gère ton patrimoine et tes finances : comptes, prop firms, payouts, entités, fiscalité.',
+       color:'var(--purple)',unlocked:p1Done>=p1Total&&p2Done>=p2Total}
+    ];
+
+    h+='<div class="landing-parts">';
+    parts.forEach(function(p){
+      var pct=p.count>0?Math.round(p.done/p.count*100):0;
+      var statusHtml='';
+      if(p.done>=p.count && p.count>0){
+        statusHtml='<div class="lp-status" style="background:rgba(0,214,143,.08);color:var(--green)">✓ Terminé</div>';
+      } else if(p.unlocked && p.done>0){
+        statusHtml='<div class="lp-status" style="background:rgba(212,160,23,.08);color:var(--gold)">'+p.done+'/'+p.count+' en cours</div>';
+      } else if(p.unlocked){
+        statusHtml='<div class="lp-status" style="background:rgba(91,141,239,.08);color:var(--blue)">🔓 Disponible</div>';
+      } else {
+        statusHtml='<div class="lp-status" style="background:var(--bg3);color:var(--t3)">🔒 Verrouillé</div>';
+      }
+      h+='<div class="landing-part'+(p.unlocked?' unlocked':'')+'">';
+      h+='<div class="lp-num" style="color:'+p.color+'">'+p.label+'</div>';
+      h+='<div class="lp-title">'+p.title+'</div>';
+      h+='<div class="lp-count">'+p.count+' modules</div>';
+      h+='<div class="lp-desc">'+p.desc+'</div>';
+      h+=statusHtml;
+      if(p.done>0){
+        h+='<div class="lp-bar"><div class="lp-bar-fill" style="width:'+pct+'%;background:'+p.color+'"></div></div>';
+      }
+      h+='</div>';
+    });
+    h+='</div>';
+
+    /* CTA */
+    h+='<div class="landing-cta">';
+    if(hasStarted){
+      h+='<button onclick="_showLanding=false;resumeNext()">Reprendre la formation →</button>';
+    } else {
+      h+='<button onclick="_showLanding=false;goMod(0)">Commencer la formation →</button>';
+    }
+    h+='</div>';
+
+    /* Hints */
+    h+='<div class="landing-hints">';
+    h+='<div class="landing-hint"><span>⏱</span> Durée estimée : ~'+Math.round(totalTime/60)+'h au total</div>';
+    h+='<div class="landing-hint"><span>💡</span> Chaque module se termine par un quiz — '+PASS+'% pour valider</div>';
+    h+='<div class="landing-hint"><span>⭐</span> 1er essai = 3★, 2e = 2★, 3e+ = 1★</div>';
+    h+='</div>';
+
+    h+='</div>';
+    ct.innerHTML=h;
+  }catch(e){console.error('renderLanding:',e)}
+}
+
+/* ═══ PART TRANSITION: App → Capital ═══ */
+function renderAppComplete(){
+  try{
+    var ct=document.getElementById('ct');
+    if(!ct)return;
+    var h='<div class="part-transition">';
+    h+='<div style="font-size:48px;margin-bottom:16px">📊</div>';
+    h+='<h2 style="color:var(--green)">Application maîtrisée !</h2>';
+    h+='<p>Tu sais utiliser toutes les fonctionnalités d\'Aurum Journal : enregistrer un trade, analyser tes stats, gérer tes comptes et tes backups. Place au <b style="color:var(--purple)">Capital</b>.</p>';
+
+    /* Stats */
+    var appStars=0, maxSt=APP_NAMES.length*3;
+    for(var i=0;i<APP_NAMES.length;i++){
+      var gi=EDGE_M.length+i;
+      var att=S.a[gi]||1;
+      appStars+=att===1?3:att===2?2:1;
+    }
+    h+='<div class="pt-stats">';
+    h+='<div class="pt-stat"><div class="pt-stat-val" style="color:var(--green)">'+APP_NAMES.length+'/'+APP_NAMES.length+'</div><div class="pt-stat-lbl">Modules</div></div>';
+    h+='<div class="pt-stat"><div class="pt-stat-val" style="color:var(--gold)">'+appStars+'/'+maxSt+'</div><div class="pt-stat-lbl">Étoiles</div></div>';
+    h+='<div class="pt-stat"><div class="pt-stat-val" style="color:var(--purple)">'+Math.round(appStars/maxSt*100)+'%</div><div class="pt-stat-lbl">Excellence</div></div>';
+    h+='</div>';
+
+    h+='<div style="background:var(--bg2);border:1px solid var(--brd);border-radius:14px;padding:20px;margin-bottom:20px;text-align:left">';
+    h+='<div style="font-size:14px;font-weight:800;color:var(--purple);margin-bottom:8px">Partie 3 — Le Capital</div>';
+    h+='<div style="font-size:12px;color:var(--t2);line-height:1.7">Tu vas apprendre à gérer ton patrimoine : comptes trading, prop firms, payouts, entités juridiques, fiscalité, portfolio et budget. <b style="color:var(--t1)">8 modules</b> pour passer de trader à gestionnaire de patrimoine.</div>';
+    h+='</div>';
+
+    var nextIdx=EDGE_M.length+APP_NAMES.length;
+    h+='<button onclick="goMod('+nextIdx+')" style="padding:12px 28px;font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--purple),#8b6ff0);color:#fff;border:none;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s">Commencer Partie 3 →</button>';
+    h+='<div style="font-size:11px;color:var(--t3);margin-top:8px">8 modules · ~'+capTime()+' min</div>';
+    h+='</div>';
+    ct.innerHTML=h;
+  }catch(e){console.error('renderAppComplete:',e)}
+}
+
+function capTime(){
+  try{
+    var t=0;
+    for(var i=EDGE_M.length+APP_NAMES.length;i<TOTAL_MODS;i++){t+=(MOD_TIME[i]||3)}
+    return t;
+  }catch(e){return 24}
+}
+
 /* ═══ RENDER ROUTER ═══ */
 function render(){
+  try{
+  /* Landing page */
+  if (S.c === -1 || _showLanding) {
+    renderLanding();
+    return;
+  }
+
   /* Sandbox active — full takeover */
   if (_sandboxState && _sandboxState.active) {
     rSandboxChart(document.getElementById('ct'));
@@ -754,6 +987,14 @@ function render(){
     return;
   }
 
+  /* Intermediate screen: App complete, before Part 3 */
+  var appLastIdx = EDGE_M.length + APP_NAMES.length - 1;
+  if (S.c === EDGE_M.length + APP_NAMES.length && S.d.indexOf(appLastIdx) !== -1 && S.d.indexOf(EDGE_M.length + APP_NAMES.length) === -1) {
+    renderAppComplete();
+    drawNav();
+    return;
+  }
+
   if(mod.engine==='edge') renderEdge(mod.edgeIdx);
   else if(mod.engine==='academy') renderAcademy(mod.acadIdx);
   else if(mod.engine==='capital') renderCapital(mod.capIdx);
@@ -764,6 +1005,7 @@ function render(){
     if(t) t.textContent=mod.t||'';
     if(n) n.textContent='Module '+(S.c+1)+'/'+TOTAL_MODS;
   }catch(e){}
+  }catch(e){console.error('render:',e)}
 }
 
 
