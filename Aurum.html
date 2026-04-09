@@ -9329,8 +9329,11 @@ function renderCandleChart(canvasId, candles, options) {
     var minP = Math.min.apply(null, allPrices);
     var maxP = Math.max.apply(null, allPrices);
     var range = maxP - minP || 1;
-    minP -= range * 0.06;
-    maxP += range * 0.06;
+    var vz = opts.vZoom || 1;
+    var mid = (minP + maxP) / 2;
+    var halfRange = (range / 2) / vz;
+    minP = mid - halfRange - halfRange * 0.06;
+    maxP = mid + halfRange + halfRange * 0.06;
     range = maxP - minP;
 
     /* ─── Helpers ─── */
@@ -9346,6 +9349,16 @@ function renderCandleChart(canvasId, candles, options) {
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#0a0e14';
     ctx.fillRect(0, 0, W, H);
+
+    /* ─── Watermark ─── */
+    ctx.save();
+    ctx.fillStyle = 'rgba(42,54,84,.12)';
+    ctx.font = 'bold 48px DM Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('XAUUSD', W / 2 - marginRight / 2 + marginLeft / 2, H / 2 + 16);
+    ctx.font = '16px DM Sans, sans-serif';
+    ctx.fillText(opts.timeframe || '5m', W / 2 - marginRight / 2 + marginLeft / 2, H / 2 + 40);
+    ctx.restore();
 
     /* ─── Grille horizontale + labels prix à DROITE ─── */
     var priceStep = range / 6;
@@ -9485,7 +9498,8 @@ function renderCandleChart(canvasId, candles, options) {
     var labelEvery = Math.max(1, Math.floor(visibleCandles.length / 8));
     visibleCandles.forEach(function(c, i) {
       if (i % labelEvery !== 0) return;
-      ctx.fillText(String(i + startIdx + 1), candleX(i), H - 4);
+      var timeLabel = c.time || String(i + startIdx + 1);
+      ctx.fillText(timeLabel, candleX(i), H - 4);
     });
 
     /* ─── Retourner les infos pour interaction ─── */
@@ -9527,6 +9541,34 @@ function renderCandleChart(canvasId, candles, options) {
         ctx.font = '10px JetBrains Mono, monospace';
         ctx.textAlign = 'left';
         ctx.fillText(price.toFixed(2), W - marginRight + 3, mouseY + 4);
+        /* OHLC de la bougie sous le curseur */
+        var hoverIdx = Math.round((mouseX - marginLeft - spacing / 2) / spacing);
+        if (hoverIdx >= 0 && hoverIdx < visibleCandles.length) {
+          var hc = visibleCandles[hoverIdx];
+          var ohlcY = marginTop + 4;
+          ctx.font = '10px JetBrains Mono, monospace';
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#5b6a85';
+          ctx.fillText('O', marginLeft + 4, ohlcY + 10);
+          ctx.fillStyle = hc.close >= hc.open ? '#26a69a' : '#ef5350';
+          ctx.fillText(hc.open.toFixed(2), marginLeft + 16, ohlcY + 10);
+          ctx.fillStyle = '#5b6a85';
+          ctx.fillText('H', marginLeft + 80, ohlcY + 10);
+          ctx.fillStyle = '#26a69a';
+          ctx.fillText(hc.high.toFixed(2), marginLeft + 92, ohlcY + 10);
+          ctx.fillStyle = '#5b6a85';
+          ctx.fillText('L', marginLeft + 156, ohlcY + 10);
+          ctx.fillStyle = '#ef5350';
+          ctx.fillText(hc.low.toFixed(2), marginLeft + 166, ohlcY + 10);
+          ctx.fillStyle = '#5b6a85';
+          ctx.fillText('C', marginLeft + 230, ohlcY + 10);
+          ctx.fillStyle = hc.close >= hc.open ? '#26a69a' : '#ef5350';
+          ctx.fillText(hc.close.toFixed(2), marginLeft + 242, ohlcY + 10);
+          if (hc.time) {
+            ctx.fillStyle = '#5b6a85';
+            ctx.fillText(hc.time, marginLeft + 310, ohlcY + 10);
+          }
+        }
         /* Index bougie en bas */
         var candleIdx = Math.round((mouseX - marginLeft - spacing / 2) / spacing);
         if (candleIdx >= 0 && candleIdx < visibleCandles.length) {
@@ -9592,11 +9634,21 @@ function setupChartInteractions(canvasId) {
       }
     });
 
-    /* Zoom — wheel */
+    /* Zoom — wheel (horizontal zoom normal, shift+wheel = vertical zoom on price axis) */
     canvas.addEventListener('wheel', function(e) {
       e.preventDefault();
       var delta = e.deltaY > 0 ? 1 : -1;
-      _chartZoom.zoom = Math.max(0.3, Math.min(3, _chartZoom.zoom + delta * 0.15));
+      var rect = canvas.getBoundingClientRect();
+      var mouseX = e.clientX - rect.left;
+
+      /* Si curseur sur l'axe prix (côté droit) → zoom vertical */
+      if (mouseX > rect.width - 65) {
+        if (!_chartZoom.vZoom) _chartZoom.vZoom = 1;
+        _chartZoom.vZoom = Math.max(0.5, Math.min(3, _chartZoom.vZoom + delta * 0.15));
+      } else {
+        /* Zoom horizontal normal */
+        _chartZoom.zoom = Math.max(0.3, Math.min(3, _chartZoom.zoom + delta * 0.15));
+      }
       replayRedraw();
     }, { passive: false });
   } catch(e) {}
@@ -9605,6 +9657,7 @@ function setupChartInteractions(canvasId) {
 function replayRedraw() {
   try {
     if (!_replayState) return;
+    if (!_chartZoom) _chartZoom = { offset: 0, zoom: 1 };
     var st = _replayState;
     var totalVisible = Math.round(st.visibleCount / _chartZoom.zoom);
     totalVisible = Math.max(10, Math.min(st.visibleCount, totalVisible));
@@ -9633,7 +9686,9 @@ function replayRedraw() {
       endIdx: endIdx,
       height: Math.max(300, containerH),
       levels: levels,
-      selectedCandle: st.answers ? st.answers._selectedCandle : undefined
+      selectedCandle: st.answers ? st.answers._selectedCandle : undefined,
+      timeframe: st._timeframe === '1min' ? '1m' : '5m',
+      vZoom: _chartZoom ? (_chartZoom.vZoom || 1) : 1
     });
   } catch(e) {}
 }
@@ -9893,16 +9948,73 @@ function startReplayScenario(id) {
   try {
     var sc = REPLAY_SCENARIOS.find(function(s) { return s.id === id });
     if (!sc) return;
-    var result = generateCandles(sc.phases, sc.startPrice);
+
+    /* Générer en 1min d'abord (chaque phase.candles = nombre de bougies 5min, ×5 pour 1min) */
+    var phases1min = sc.phases.map(function(p) {
+      return Object.assign({}, p, { candles: (p.candles || 5) * 5, volatility: (p.volatility || 4) * 0.45 });
+    });
+    var result1min = generateCandles(phases1min, sc.startPrice);
+
+    /* Agréger en 5min */
+    var candles5min = [];
+    var candles1min = result1min.candles;
+    for (var i = 0; i < candles1min.length; i += 5) {
+      var group = candles1min.slice(i, Math.min(i + 5, candles1min.length));
+      if (!group.length) break;
+      candles5min.push({
+        open: group[0].open,
+        high: Math.max.apply(null, group.map(function(c) { return c.high })),
+        low: Math.min.apply(null, group.map(function(c) { return c.low })),
+        close: group[group.length - 1].close,
+        time: group[0].time
+      });
+    }
+
+    /* Recalculer metadata sur les bougies 5min */
+    var metadata5 = { supports: [], resistances: [], liquidities: [], entryLevel: result1min.metadata.entryLevel, slLevel: result1min.metadata.slLevel, qmLevel: null };
+    /* Mapper les indices metadata de 1min vers 5min */
+    if (result1min.metadata.supports) {
+      result1min.metadata.supports.forEach(function(s) {
+        metadata5.supports.push({ index: Math.floor(s.index / 5), level: s.level });
+      });
+    }
+    if (result1min.metadata.resistances) {
+      result1min.metadata.resistances.forEach(function(r) {
+        metadata5.resistances.push({ index: Math.floor(r.index / 5), level: r.level });
+      });
+    }
+    if (result1min.metadata.liquidities) {
+      result1min.metadata.liquidities.forEach(function(l) {
+        metadata5.liquidities.push({ index: Math.floor(l.index / 5), level: l.level, type: l.type });
+      });
+    }
+
+    /* Ajouter des timestamps simulés (départ 8h00) */
+    var startHour = 8;
+    candles1min.forEach(function(c, idx) {
+      var totalMin = startHour * 60 + idx;
+      c.time = String(Math.floor(totalMin / 60)).padStart(2, '0') + ':' + String(totalMin % 60).padStart(2, '0');
+    });
+    candles5min.forEach(function(c, idx) {
+      var totalMin = startHour * 60 + idx * 5;
+      c.time = String(Math.floor(totalMin / 60)).padStart(2, '0') + ':' + String(totalMin % 60).padStart(2, '0');
+    });
+
     _replayState = {
       scenario: sc,
-      candles: result.candles,
-      metadata: result.metadata,
-      visibleCount: Math.min(5, sc.analysisCandles || 25),
+      candles: candles5min,
+      _candles5min: candles5min,
+      _candles1min: candles1min,
+      _metadata5min: metadata5,
+      _metadata1min: result1min.metadata,
+      metadata: metadata5,
+      visibleCount: Math.min(10, sc.analysisCandles || 25),
       phase: 'analysis',
       step: 0,
-      answers: {}
+      answers: {},
+      _timeframe: '5min'
     };
+    _chartZoom = null;
     rReplay();
   } catch(e) { console.error('startReplayScenario:', e) }
 }
@@ -10293,35 +10405,18 @@ function replaySetSpeed(s) {
 function replaySetTF(tf) {
   try {
     if (!_replayState) return;
+    if (tf === _replayState._timeframe) return;
     _replayState._timeframe = tf;
-    /* En 1min : on montre 5× plus de bougies (simulation) */
-    if (tf === '1min' && !_replayState._candles1min) {
-      /* Générer les bougies 1min à partir des bougies 5min */
-      var candles5 = _replayState.candles;
-      var candles1 = [];
-      candles5.forEach(function(c5) {
-        /* Chaque bougie 5min = 5 bougies 1min */
-        var prices = [c5.open];
-        for (var i = 1; i < 4; i++) {
-          prices.push(c5.open + (c5.close - c5.open) * (i / 4) + (Math.random() - 0.5) * Math.abs(c5.high - c5.low) * 0.3);
-        }
-        prices.push(c5.close);
-        for (var j = 0; j < 5; j++) {
-          var o = prices[j];
-          var cl = prices[j + 1] || c5.close;
-          var hi = Math.max(o, cl) + Math.random() * Math.abs(c5.high - Math.max(c5.open, c5.close)) * 0.4;
-          var lo = Math.min(o, cl) - Math.random() * Math.abs(Math.min(c5.open, c5.close) - c5.low) * 0.4;
-          candles1.push({ open: Math.round(o * 100) / 100, high: Math.round(hi * 100) / 100, low: Math.round(lo * 100) / 100, close: Math.round(cl * 100) / 100 });
-        }
-      });
-      _replayState._candles1min = candles1;
-      _replayState._candles5min = candles5;
-    }
-    if (tf === '1min' && _replayState._candles1min) {
+
+    if (tf === '1min') {
       _replayState.candles = _replayState._candles1min;
-      _replayState.visibleCount = Math.min(_replayState.visibleCount * 5, _replayState.candles.length);
-    } else if (tf === '5min' && _replayState._candles5min) {
+      _replayState.metadata = _replayState._metadata1min || _replayState.metadata;
+      _replayState.visibleCount = Math.min(_replayState._visibleCount1min || (_replayState.visibleCount * 5), _replayState.candles.length);
+    } else {
+      /* Sauver la position 1min */
+      _replayState._visibleCount1min = _replayState.visibleCount;
       _replayState.candles = _replayState._candles5min;
+      _replayState.metadata = _replayState._metadata5min || _replayState.metadata;
       _replayState.visibleCount = Math.min(Math.ceil(_replayState.visibleCount / 5), _replayState.candles.length);
     }
     _chartZoom = { offset: 0, zoom: 1 };
