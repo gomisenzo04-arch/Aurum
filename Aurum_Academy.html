@@ -10,26 +10,83 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.svg">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ═══ AURUM ACADEMY — UNIFIED FORMATION ═══ */
-:root{--bg:#06090e;--bg2:#0c1018;--bg3:#141a26;--bg4:#1b2232;--gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--green:#00d68f;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--t1:#edf2f7;--t2:#a8bdd4;--t3:#8a9fc0;--brd:#1d2840;--brd2:#293756}
+:root{
+  /* Palette */
+  --bg:#050809;--bg2:#0a0f14;--bg3:#111820;--bg4:#1a222e;
+  --brd:#1d2840;--brd2:#293756;
+  --gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--gold-glow:rgba(212,160,23,.12);
+  --green:#00d68f;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;
+  --t1:#f0f4f8;--t2:#a8bdd4;--t3:#6b7f99;
+  /* Radius */
+  --radius-sm:6px;--radius:10px;--radius-lg:14px;
+  /* Shadows */
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 12px rgba(0,0,0,.4);--shadow-lg:0 8px 24px rgba(0,0,0,.5);
+  /* Transitions */
+  --transition:.2s cubic-bezier(.4,0,.2,1)
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 ::selection{background:rgba(212,160,23,.3)}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:3px}
 
-/* ─── HEADER ─── */
-.hdr{position:sticky;top:0;z-index:100;background:rgba(6,9,14,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--brd);padding:0 20px;display:flex;align-items:center;height:52px;gap:10px}
-.logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--gold);white-space:nowrap;text-decoration:none}
-.pbar{flex:1;max-width:300px;margin:0 auto}.pbar-t{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}.pbar-f{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold3));border-radius:3px;transition:width .5s}.pbar-l{font-size:9px;color:var(--t3);text-align:center;margin-top:2px;font-weight:600}
-.stars-hd{font-size:11px;color:var(--gold);font-weight:700;white-space:nowrap}
-.hdr-links{display:flex;gap:4px}
-.hdr-links a{color:var(--t3);font-size:10px;font-weight:600;text-decoration:none;padding:4px 10px;border:1px solid var(--brd);border-radius:5px;transition:all .15s}
-.hdr-links a:hover{border-color:var(--gold);color:var(--gold)}
+/* ─── TOP BAR ─── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--bg2); border-bottom: 1px solid var(--brd);
+  display: flex; align-items: center; padding: 0 20px; z-index: 1000; gap: 16px;
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+  color: var(--gold); font-weight: 800; font-size: 18px; letter-spacing: -.02em;
+}
+.topbar-logo svg { flex-shrink: 0 }
+.topbar-nav { display: flex; gap: 4px; margin-left: auto; margin-right: auto }
+.topbar-link {
+  color: var(--t3); text-decoration: none; font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border-radius: var(--radius-sm); transition: var(--transition);
+}
+.topbar-link:hover { color: var(--t1); background: var(--bg3) }
+.topbar-link.active { color: var(--gold); background: rgba(212,160,23,.08) }
+.topbar-actions { display: flex; gap: 8px; align-items: center }
+.topbar-btn {
+  background: none; border: 1px solid var(--brd); color: var(--t2);
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: var(--transition); font-size: 14px;
+}
+.topbar-btn:hover { border-color: var(--gold); color: var(--gold) }
+.topbar-burger {
+  display: none; background: none; border: none; cursor: pointer;
+  padding: 8px; flex-direction: column; gap: 5px;
+}
+.topbar-burger span {
+  display: block; width: 22px; height: 2px; background: var(--t2);
+  border-radius: 2px; transition: var(--transition);
+}
+.topbar-burger.open span:nth-child(1) { transform: rotate(45deg) translateY(7px) }
+.topbar-burger.open span:nth-child(2) { opacity: 0 }
+.topbar-burger.open span:nth-child(3) { transform: rotate(-45deg) translateY(-7px) }
+.mobile-menu {
+  display: none; position: fixed; top: 56px; left: 0; right: 0; bottom: 0;
+  background: var(--bg); z-index: 999; padding: 20px; flex-direction: column; gap: 4px;
+}
+.mobile-menu.open { display: flex }
+.mobile-menu a, .mobile-menu button {
+  color: var(--t1); text-decoration: none; font-size: 16px; font-weight: 600;
+  padding: 14px 16px; border-radius: var(--radius); background: none; border: none;
+  text-align: left; cursor: pointer; transition: var(--transition);
+  font-family: 'Inter', sans-serif;
+}
+.mobile-menu a:hover, .mobile-menu button:hover { background: var(--bg2) }
+/* Academy progress bar (under topbar) */
+.academy-progress { position: fixed; top: 56px; left: 0; right: 0; height: 3px; background: var(--bg4); z-index: 999 }
+.academy-progress-label { position: fixed; top: 59px; right: 20px; font-size: 9px; color: var(--t3); font-weight: 600; z-index: 999 }
 
 /* ─── LAYOUT ─── */
-.lay{display:flex;min-height:calc(100vh - 52px)}
-.side{width:220px;background:var(--bg2);border-right:1px solid var(--brd);padding:10px 0;flex-shrink:0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto}
+.lay{display:flex;min-height:calc(100vh - 59px);margin-top:59px}
+.side{width:220px;background:var(--bg2);border-right:1px solid var(--brd);padding:10px 0;flex-shrink:0;position:sticky;top:59px;height:calc(100vh - 59px);overflow-y:auto}
 .stit{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);font-weight:700;padding:8px 14px 4px;margin-top:6px}
 .stit:first-child{margin-top:0}
 .mi{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;transition:all .12s;border-left:3px solid transparent;font-size:11px;color:var(--t3)}
@@ -99,7 +156,7 @@ p.tx{font-size:13px;line-height:1.7;color:var(--t2);margin-bottom:9px}p.tx stron
 .sim-hd{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
 .sim-desc{font-size:11px;color:var(--t2);margin-bottom:10px;line-height:1.6;padding:8px 10px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--gold)}
 .sim-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
-.btn{padding:8px 14px;border-radius:7px;border:2px solid var(--brd2);background:var(--bg3);color:var(--t2);font-family:'DM Sans',sans-serif;font-weight:700;cursor:pointer;transition:all .12s;font-size:12px}
+.btn{padding:8px 14px;border-radius:7px;border:2px solid var(--brd2);background:var(--bg3);color:var(--t2);font-family:'Inter',sans-serif;font-weight:700;cursor:pointer;transition:all .12s;font-size:12px}
 .btn:hover{border-color:var(--t3);color:var(--t1)}.btn.ok{border-color:var(--green);background:rgba(0,214,143,.08);color:var(--green)}.btn.gd{border-color:var(--gold);background:rgba(212,160,23,.08);color:var(--gold)}.btn.er{border-color:var(--red);animation:shk .4s}
 @keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .btn.lk{opacity:.25;pointer-events:none}
@@ -159,10 +216,17 @@ p.tx{font-size:13px;line-height:1.7;color:var(--t2);margin-bottom:9px}p.tx stron
 
 .pgb{display:flex;gap:3px;margin-bottom:10px}.pgb .dot{flex:1;height:4px;border-radius:2px;background:var(--bg3);transition:background .3s}.pgb .dot.on{background:var(--gold)}
 
-@media(max-width:768px){.side{display:none}.main{padding:14px 14px 80px}.mt{font-size:18px}.strip{flex-wrap:wrap;gap:3px}.strip .sep{display:none}.hdr{padding:0 12px;gap:6px}.hdr-links{display:none}
-.mob-nav{display:flex!important}
+@media(max-width:768px){
+  .side{display:none}
+  .main{padding:14px 14px 80px}
+  .mt{font-size:18px}
+  .strip{flex-wrap:wrap;gap:3px}.strip .sep{display:none}
+  .topbar-nav, .topbar-actions { display: none }
+  .topbar-burger { display: flex }
+  .mob-nav{display:flex!important}
+  .academy-progress-label { right: 12px }
 }
-.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(6,9,14,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--brd);padding:8px 16px;gap:8px;align-items:center;justify-content:space-between}
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(5,8,9,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--brd);padding:8px 16px;gap:8px;align-items:center;justify-content:space-between}
 .mob-nav button{padding:10px 16px;border-radius:8px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;min-height:44px}
 .mob-nav .mn-prev{background:var(--bg3);border:1px solid var(--brd2);color:var(--t2);flex:1}
 .mob-nav .mn-prev:hover{border-color:var(--gold)}
@@ -190,8 +254,7 @@ html{scroll-behavior:smooth}
 .mi.dn{position:relative}
 .mi.dn::after{content:'✓';position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:var(--green);color:#fff;font-size:8px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 2px 6px rgba(0,214,143,.4)}
 
-/* 2. Progress bar glow quand presque fini */
-.pbar-f{position:relative}
+/* 2. Progress bar glow (applied via academy-progress) */
 @keyframes progressGlow{
   0%,100%{box-shadow:0 0 8px rgba(212,160,23,.3)}
   50%{box-shadow:0 0 16px rgba(212,160,23,.5)}
@@ -222,27 +285,45 @@ html{scroll-behavior:smooth}
 #confetti{background:rgba(6,9,14,.3)}
 
 /* ─── IFRAME MODE ─── */
-.in-iframe .hdr .logo{display:none!important}
-.in-iframe .hdr .hdr-links{display:none!important}
-.in-iframe .hdr button[onclick*="Reset"]{display:none!important}
+.in-iframe .topbar{display:none!important}
+.in-iframe .academy-progress{display:none!important}
+.in-iframe .academy-progress-label{display:none!important}
+.in-iframe .mobile-menu{display:none!important}
 .in-iframe .side{display:none!important}
-.in-iframe .lay{min-height:100vh}
+.in-iframe .lay{min-height:100vh;margin-top:0}
 .in-iframe .main{margin:0 auto;padding-top:8px}
 </style>
 </head>
 <body>
-<div class="hdr">
- <a href="Aurum_Hub.html" class="logo"><svg viewBox="0 0 26 26" width="26" height="26" fill="none"><defs><linearGradient id="ag" x1="0" y1="0" x2="26" y2="26"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="26" height="26" rx="6" fill="url(#ag)"/><text x="13" y="17" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="11" fill="#1a1000">Au</text></svg>Academy</a>
- <div class="pbar"><div class="pbar-t"><div class="pbar-f" id="pF"></div></div><div class="pbar-l" id="pL"></div></div>
- <div class="stars-hd" id="sT"></div>
- <button id="resumeBtn" style="padding:5px 14px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap" onclick="resumeNext()">▶ Reprendre</button>
- <div class="hdr-links">
-   <a href="Aurum_Hub.html">Hub</a>
-   <a href="Aurum.html">Journal</a>
-   <a href="Aurum_Capital.html">Capital</a>
- </div>
- <button style="background:none;border:1px solid var(--brd2);color:var(--t3);padding:4px 10px;border-radius:5px;font-family:inherit;font-size:10px;cursor:pointer" onclick="if(confirm('Recommencer toute la formation ?')){localStorage.removeItem('aurum_formation_v1');location.reload()}">Reset</button>
+<!-- ═══ TOP BAR ═══ -->
+<nav class="topbar">
+  <a href="Aurum_Hub.html" class="topbar-logo">
+    <svg width="28" height="28" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#d4a017" stroke-width="6"/><text x="50" y="58" text-anchor="middle" fill="#d4a017" font-size="36" font-weight="800" font-family="Inter,sans-serif">A</text></svg>
+    <span>Aurum</span>
+  </a>
+  <div class="topbar-nav">
+    <a href="Aurum_Academy.html" class="topbar-link active">Academy</a>
+    <a href="Aurum.html" class="topbar-link">Journal</a>
+    <a href="Aurum_Capital.html" class="topbar-link">Capital</a>
+  </div>
+  <div class="topbar-actions">
+    <span id="sT" style="font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:13px;font-weight:700"></span>
+    <button class="topbar-btn" onclick="resumeNext()" title="Reprendre">▶</button>
+  </div>
+  <button class="topbar-burger" id="burgerBtn" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="Aurum_Academy.html">Academy</a>
+  <a href="Aurum.html">Journal</a>
+  <a href="Aurum_Capital.html">Capital</a>
 </div>
+<!-- Progress bar under topbar -->
+<div class="academy-progress">
+  <div id="pF" style="height:100%;background:var(--gold);transition:width .4s ease;width:0"></div>
+</div>
+<div class="academy-progress-label" id="pL"></div>
 <div class="lay">
  <nav class="side" id="nav"></nav>
  <div class="main" id="ct"></div>
@@ -255,6 +336,17 @@ html{scroll-behavior:smooth}
 </div>
 <canvas class="confetti-cv" id="confetti"></canvas>
 <script>
+/* ═══ MOBILE MENU TOGGLE ═══ */
+function toggleMobileMenu() {
+  try {
+    var menu = document.getElementById('mobileMenu');
+    var btn = document.getElementById('burgerBtn');
+    if (!menu) return;
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+  } catch(e) { console.error('toggleMobileMenu:', e) }
+}
+
 function gC(x,wh,cl,op,wl,w){w=w||20;return`<line x1="${x}" y1="${wh}" x2="${x}" y2="${cl}" stroke="#22c55e" stroke-width="1.6"/><rect x="${x-w/2}" y="${cl}" width="${w}" height="${op-cl}" rx="2" fill="#22c55e" opacity=".8"/><line x1="${x}" y1="${op}" x2="${x}" y2="${wl}" stroke="#22c55e" stroke-width="1.6"/>`;}
 function rC(x,wh,op,cl,wl,w){w=w||20;return`<line x1="${x}" y1="${wh}" x2="${x}" y2="${op}" stroke="#ef4444" stroke-width="1.6"/><rect x="${x-w/2}" y="${op}" width="${w}" height="${cl-op}" rx="2" fill="#ef4444" opacity=".8"/><line x1="${x}" y1="${cl}" x2="${x}" y2="${wl}" stroke="#ef4444" stroke-width="1.6"/>`;}
 var PASS=90;
