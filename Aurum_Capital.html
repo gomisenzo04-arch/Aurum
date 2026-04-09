@@ -6,38 +6,100 @@
 <title>Aurum Capital — Wealth Command Center</title>
 <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#a78bfa">
+<meta name="theme-color" content="#d4a017">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.svg">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════════ AURUM CAPITAL v2 ═══════════════════════════════════════════════ */
-:root{--bg:#06090e;--bg2:#0c1018;--bg3:#141a26;--bg4:#1b2232;--border:#1d2840;--border2:#293756;--gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--green:#00d68f;--green2:#00b377;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--purple2:#8b5cf6;--t1:#edf2f7;--t2:#a8bdd4;--t3:#8a9fc0;--radius:12px;--radius-sm:6px;--transition:.25s cubic-bezier(.4,0,.2,1)}
+:root{
+  /* Palette */
+  --bg:#050809;--bg2:#0a0f14;--bg3:#111820;--bg4:#1a222e;
+  --border:#1d2840;--border2:#293756;
+  --gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--gold-glow:rgba(212,160,23,.12);
+  --green:#00d68f;--green2:#00b377;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--purple2:#8b5cf6;
+  --t1:#f0f4f8;--t2:#a8bdd4;--t3:#6b7f99;
+  /* Radius */
+  --radius-sm:6px;--radius:10px;--radius-lg:14px;--radius-xl:20px;
+  /* Shadows */
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 12px rgba(0,0,0,.4);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.5);--shadow-gold:0 0 20px rgba(212,160,23,.08);
+  /* Transitions */
+  --transition:.2s cubic-bezier(.4,0,.2,1);--transition-slow:.4s cubic-bezier(.4,0,.2,1)
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
 ::selection{background:rgba(167,139,250,.3)}::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 canvas{display:block;max-width:100%}
-/* ─── SIDEBAR ─── */
-.side{width:64px;background:rgba(13,17,23,.92);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:1px;flex-shrink:0;z-index:50;overflow-y:auto;overflow-x:hidden;backdrop-filter:blur(12px)}
-.side .logo{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;cursor:pointer;flex-shrink:0}
-.side .slbl{font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin:6px 0 2px;flex-shrink:0}
-.ni{width:42px;height:42px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t3);transition:all var(--transition);position:relative;flex-shrink:0}
-.ni:hover{color:var(--t2);background:var(--bg3)}.ni.on{color:var(--purple);background:rgba(167,139,250,.08)}
-.ni svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.ni .tt{position:absolute;left:56px;background:var(--bg4);color:var(--t1);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;border:1px solid var(--border);z-index:100}
-.ni:hover .tt{opacity:1}
-.ssep{width:28px;height:1px;background:var(--border);margin:4px 0;flex-shrink:0}
-.ssp{flex:1;min-height:8px}
-.sl{width:42px;height:42px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--t3);text-decoration:none;transition:all var(--transition);position:relative;flex-shrink:0}
-.sl:hover{color:var(--gold);background:var(--bg3)}
-.sl svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.sl .tt{position:absolute;left:56px;background:var(--bg4);color:var(--t1);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;border:1px solid var(--border);z-index:100}
-.sl:hover .tt{opacity:1}
+/* ═══ TOP BAR ═══ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; z-index: 1000; gap: 16px;
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+  color: var(--gold); font-weight: 800; font-size: 18px; letter-spacing: -.02em;
+}
+.topbar-logo svg { flex-shrink: 0 }
+.topbar-nav { display: flex; gap: 4px; margin-left: auto; margin-right: auto }
+.topbar-link {
+  color: var(--t3); text-decoration: none; font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border-radius: var(--radius-sm); transition: var(--transition);
+}
+.topbar-link:hover { color: var(--t1); background: var(--bg3) }
+.topbar-link.active { color: var(--gold); background: rgba(212,160,23,.08) }
+.topbar-actions { display: flex; gap: 8px }
+.topbar-btn {
+  background: none; border: 1px solid var(--border); color: var(--t2);
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: var(--transition);
+}
+.topbar-btn:hover { border-color: var(--gold); color: var(--gold) }
+.topbar-burger {
+  display: none; background: none; border: none; cursor: pointer;
+  padding: 8px; flex-direction: column; gap: 5px;
+}
+.topbar-burger span {
+  display: block; width: 22px; height: 2px; background: var(--t2);
+  border-radius: 2px; transition: var(--transition);
+}
+.mobile-menu {
+  display: none; position: fixed; top: 56px; left: 0; right: 0; bottom: 0;
+  background: var(--bg); z-index: 999; padding: 20px; flex-direction: column; gap: 4px;
+}
+.mobile-menu.open { display: flex }
+.mobile-menu a, .mobile-menu button {
+  color: var(--t1); text-decoration: none; font-size: 16px; font-weight: 600;
+  padding: 14px 16px; border-radius: var(--radius); background: none; border: none;
+  text-align: left; cursor: pointer; transition: var(--transition);
+  font-family: 'Inter', sans-serif;
+}
+.mobile-menu a:hover, .mobile-menu button:hover { background: var(--bg2) }
+
+/* ═══ HORIZONTAL SUBTABS ═══ */
+.subtabs {
+  position: fixed; top: 56px; left: 0; right: 0; height: 44px;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 16px; gap: 2px;
+  z-index: 998; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.subtabs::-webkit-scrollbar { display: none }
+.subtab-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; flex-shrink: 0 }
+.subtab {
+  background: none; border: none; color: var(--t3); font-size: 12px; font-weight: 600;
+  padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;
+  transition: var(--transition); white-space: nowrap; font-family: 'Inter', sans-serif;
+  min-height: 32px;
+}
+.subtab:hover { color: var(--t1); background: var(--bg3) }
+.subtab.active { color: var(--gold); background: rgba(212,160,23,.08) }
 /* ─── MAIN ─── */
-.mw{flex:1;overflow-y:auto}
-.th{padding:14px 24px 10px;border-bottom:1px solid var(--border);background:rgba(6,9,14,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mw{padding-top:100px;min-height:100vh}
+.th{padding:14px 24px 10px;border-bottom:1px solid var(--border);background:rgba(6,9,14,.85);backdrop-filter:blur(8px);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .th h1{font-size:16px;font-weight:700;flex:1}.th .hb{padding:6px 14px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--gold);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;transition:all var(--transition);display:flex;align-items:center;gap:4px}
 .th .hb:hover{border-color:var(--gold);background:rgba(212,160,23,.06)}
 .pnl{display:none;padding:20px 24px 40px;max-width:1200px;margin:0 auto;animation:fi .25s ease}.pnl.on{display:block}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
@@ -55,9 +117,9 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .fr{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .fd{flex:1;min-width:140px}
 .fd label{display:block;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
-.fd input,.fd select{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 10px;color:var(--t1);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;transition:border var(--transition)}
+.fd input,.fd select{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 10px;color:var(--t1);font-family:'Inter',sans-serif;font-size:12px;outline:none;transition:border var(--transition)}
 .fd input:focus,.fd select:focus{border-color:var(--purple)}.fd input[type="number"]{font-family:'JetBrains Mono',monospace}
-.btn{padding:8px 16px;border-radius:var(--radius-sm);border:none;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all var(--transition)}
+.btn{padding:8px 16px;border-radius:var(--radius-sm);border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all var(--transition)}
 .btn:hover{transform:translateY(-1px)}.bp{background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff}.bg{background:linear-gradient(135deg,var(--gold3),var(--gold));color:#0a0800}.bo{background:transparent;border:1.5px solid var(--border2);color:var(--t2)}.bo:hover{border-color:var(--t3)}.br{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--red)}.bs{padding:5px 10px;font-size:10px}
 .cb{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px}
 .ct{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
@@ -76,7 +138,13 @@ tr:hover td{background:rgba(167,139,250,.02)}
 /* ─── CHART GRID ─── */
 .cb canvas{display:block;max-width:100%;max-height:100%}
 .chg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:768px){.side{width:50px;padding:8px 0}.ni{width:36px;height:36px}.pnl{padding:14px 12px 30px}.sg{grid-template-columns:repeat(2,1fr);gap:6px}.fr{flex-direction:column}.fd{min-width:100%}.th{padding:10px 12px 8px}.crd .vl{font-size:16px}.chg{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .topbar-nav, .topbar-actions { display: none }
+  .topbar-burger { display: flex }
+  .pnl{padding:14px 12px 30px}.sg{grid-template-columns:repeat(2,1fr);gap:6px}
+  .fr{flex-direction:column}.fd{min-width:100%}.th{padding:10px 12px 8px}
+  .crd .vl{font-size:16px}.chg{grid-template-columns:1fr}
+}
 @media(max-width:480px){.cb{padding:10px}.chg{gap:8px}.sg{grid-template-columns:1fr!important}.crd .vl{font-size:14px}.btn{font-size:11px;padding:8px 12px}}
 /* ─── POLISH CSS PREMIUM ─── */
 .crd{transition:all .2s cubic-bezier(.4,0,.2,1)}
@@ -87,8 +155,8 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .btn.bp:hover{box-shadow:0 4px 16px rgba(167,139,250,.3)}
 .pnl.on{animation:pnlIn .3s cubic-bezier(.4,0,.2,1)}
 @keyframes pnlIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.ni{transition:all .2s cubic-bezier(.4,0,.2,1)}
-.ni:hover{transform:scale(1.08)}
+.subtab{transition:all .2s cubic-bezier(.4,0,.2,1)}
+.subtab:hover{transform:scale(1.02)}
 tbody tr{transition:background .15s}
 tbody tr:hover{background:rgba(167,139,250,.04)!important}
 .tip{transition:border-color .3s}
@@ -134,7 +202,10 @@ tbody tr:hover{background:rgba(167,139,250,.04)!important}
   gap: 4px;
 }
 /* ─── IFRAME MODE ─── */
-.in-iframe .side{display:none!important}
+.in-iframe .topbar{display:none!important}
+.in-iframe .subtabs{display:none!important}
+.in-iframe .mobile-menu{display:none!important}
+.in-iframe .mw{padding-top:0}
 .in-iframe .th .hb{display:none!important}
 /* ─── Navigation tiers ─── */
 .itabs{display:flex;align-items:center;gap:4px;padding:8px 14px;background:rgba(6,9,14,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;scrollbar-width:none;position:sticky;top:0;z-index:200;transition:all .2s}
@@ -150,36 +221,56 @@ tbody tr:hover{background:rgba(167,139,250,.04)!important}
 </style>
 </head>
 <body>
-<!-- SIDEBAR -->
-<nav class="side">
-<a href="Aurum_Hub.html" class="logo" title="Hub"><svg viewBox="0 0 42 42" width="42" height="42" fill="none"><defs><linearGradient id="lg" x1="0" y1="0" x2="42" y2="42"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="42" height="42" rx="12" fill="url(#lg)"/><text x="21" y="27" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="17" fill="#1a1000">Au</text></svg></a>
-<div class="slbl">Pilotage</div>
-<div class="ni on" data-p="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="tt">Dashboard</span></div>
-<div class="ni" data-p="coach"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span class="tt">Coaching</span></div>
-<div class="ni" data-p="health"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="tt">Santé</span></div>
-<div class="ssep"></div>
-<div class="slbl">Trading</div>
-<div class="ni" data-p="acc"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg><span class="tt">Comptes</span></div>
-<div class="ni" data-p="pf"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span class="tt">Prop Firms</span></div>
-<div class="ni" data-p="po"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><polyline points="17 6 12 1 7 6"/></svg><span class="tt">Payouts</span></div>
-<div class="ssep"></div>
-<div class="slbl">Business</div>
-<div class="ni" data-p="ent"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="tt">Entités</span></div>
-<div class="ni" data-p="fis"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="tt">Fiscal</span></div>
-<div class="ssep"></div>
-<div class="slbl">Patrimoine</div>
-<div class="ni" data-p="inv"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><span class="tt">Portfolio</span></div>
-<div class="ni" data-p="bud"><svg viewBox="0 0 24 24"><path d="M21 4H3a2 2 0 00-2 2v12a2 2 0 002 2h18a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span class="tt">Budget</span></div>
-<div class="ni" data-p="pas"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg><span class="tt">Passifs</span></div>
-<div class="ssep"></div>
-<div class="ni" data-p="bak"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="tt">Backup</span></div>
-<div class="ssp"></div>
-<a href="Aurum.html" class="sl"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="tt">Journal</span></a>
-<a href="Aurum_Academy.html" class="sl"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg><span class="tt">Formation</span></a>
+<!-- TOP BAR -->
+<nav class="topbar">
+  <a href="Aurum_Hub.html" class="topbar-logo">
+    <svg width="28" height="28" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#d4a017" stroke-width="6"/><text x="50" y="58" text-anchor="middle" fill="#d4a017" font-size="36" font-weight="800" font-family="Inter,sans-serif">A</text></svg>
+    <span>Aurum</span>
+  </a>
+  <div class="topbar-nav">
+    <a href="Aurum_Academy.html" class="topbar-link">Academy</a>
+    <a href="Aurum.html" class="topbar-link">Journal</a>
+    <a href="Aurum_Capital.html" class="topbar-link active">Capital</a>
+  </div>
+  <div class="topbar-actions">
+    <button class="topbar-btn" onclick="goCapital('bak')" title="Backup">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+  </div>
+  <button class="topbar-burger" id="burgerBtn" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="Aurum_Academy.html">Academy</a>
+  <a href="Aurum.html">Journal</a>
+  <a href="Aurum_Capital.html">Capital</a>
+</div>
+
+<!-- HORIZONTAL TABS -->
+<div class="subtabs" id="capitalTabs">
+  <button class="subtab active" data-p="dash">Dashboard</button>
+  <span class="subtab-sep"></span>
+  <button class="subtab" data-p="po">Payouts</button>
+  <button class="subtab" data-p="pf">Prop Firms</button>
+  <span class="subtab-sep"></span>
+  <button class="subtab" data-p="inv">Portfolio</button>
+  <button class="subtab" data-p="pas">Dettes</button>
+  <span class="subtab-sep"></span>
+  <button class="subtab" data-p="bud">Budget</button>
+  <button class="subtab" data-p="fis">Fiscal</button>
+  <span class="subtab-sep"></span>
+  <button class="subtab" data-p="ent">Entités</button>
+  <span class="subtab-sep"></span>
+  <button class="subtab" data-p="coach">Coaching</button>
+  <button class="subtab" data-p="health">Santé</button>
+  <span class="subtab-sep"></span>
+  <button class="subtab" data-p="acc">Comptes</button>
+</div>
+
 <!-- MAIN -->
 <div class="mw">
-<div class="th"><h1>💎 Aurum Capital</h1><a href="Aurum_Hub.html" class="hb">← Hub</a></div>
+<div class="th"><h1>💎 Aurum Capital</h1></div>
 <!-- PANELS - IDs match data-p attributes -->
 <div class="pnl on" id="p-dash"><div id="dEmpty" style="display:none"></div><div id="dH" style="text-align:center;margin-bottom:16px"></div><div class="sg" id="dK"></div><div id="dW"></div><div class="chg"><div class="cb"><div class="ct">Allocation</div><div style="position:relative;width:100%;height:240px;max-height:240px;overflow:hidden"><canvas id="cA"></canvas></div></div><div class="cb"><div class="ct">Évolution</div><div style="position:relative;width:100%;height:240px;max-height:240px;overflow:hidden"><canvas id="cE"></canvas></div></div></div><div class="cb"><div class="ct">Revenus vs Dépenses</div><div style="position:relative;width:100%;height:220px;max-height:220px;overflow:hidden"><canvas id="cR"></canvas></div></div><div class="cb"><div class="ct">Échéances fiscales</div><div id="dF"></div></div><div class="cb"><div class="ct">Activité récente</div><div id="dA" style="font-size:12px;color:var(--t3)"></div></div><div class="cb"><div class="ct">Projection</div><div id="dP" style="font-size:12px;color:var(--t2)"></div></div></div>
 <div class="pnl" id="p-coach"><div class="st">Coaching patrimonial</div><div id="coC"></div></div>
@@ -346,8 +437,41 @@ function cNW(){try{var pV=D.portfolio.reduce(function(s,p){return s+(p.current||
 /* ─── NAV ─── */
 var PG=['dash','coach','health','acc','pf','po','ent','fis','inv','bud','pas','bak'];
 var cP='dash';
-function go(p){try{cP=p;PG.forEach(function(x){var e=document.getElementById('p-'+x);if(e)e.classList.toggle('on',x===p)});document.querySelectorAll('.ni').forEach(function(n){n.classList.toggle('on',n.dataset.p===p)});rP(p)}catch(e){console.error(e)}}
-document.querySelectorAll('.ni').forEach(function(n){n.addEventListener('click',function(){go(n.dataset.p)})});
+/* ─── MOBILE MENU TOGGLE ─── */
+function toggleMobileMenu() {
+  try {
+    var menu = document.getElementById('mobileMenu');
+    var btn = document.getElementById('burgerBtn');
+    if (!menu) return;
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+  } catch(e) { console.error('toggleMobileMenu:', e) }
+}
+
+/* ─── NAV: goCapital ─── */
+function goCapital(p) {
+  try {
+    cP = p;
+    /* Toggle panels */
+    PG.forEach(function(x) {
+      var e = document.getElementById('p-' + x);
+      if (e) e.classList.toggle('on', x === p);
+    });
+    /* Update active subtab */
+    document.querySelectorAll('.subtab[data-p]').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.p === p);
+    });
+    /* Render panel content */
+    rP(p);
+  } catch(e) { console.error('goCapital:', e) }
+}
+/* Keep go() as alias for backward compat (iframe nav uses it) */
+function go(p) { try { goCapital(p) } catch(e) { console.error(e) } }
+
+/* Subtab click handlers */
+document.querySelectorAll('.subtab[data-p]').forEach(function(btn) {
+  btn.addEventListener('click', function() { goCapital(btn.dataset.p) });
+});
 function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA();else if(p==='goals')rGoals();else if(p==='yir')rYIR()}catch(e){console.error(e)}}
 /* ─── KPI helper ─── */
 function kp(l,v,c,icon){
@@ -395,7 +519,7 @@ var j=rJ();hasData=hasData||j.t.length;
 var emEl=document.getElementById('dEmpty');
 if(!hasData){
 emEl.style.display='block';
-emEl.innerHTML='<div style="text-align:center;padding:30px 0 20px"><svg viewBox="0 0 60 60" width="60" height="60" fill="none" style="margin-bottom:12px;filter:drop-shadow(0 4px 16px rgba(212,160,23,.3))"><defs><linearGradient id="elg" x1="0" y1="0" x2="60" y2="60"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="60" height="60" rx="15" fill="url(#elg)"/><text x="30" y="39" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="24" fill="#1a1000">Au</text></svg><div style="font-size:18px;font-weight:800;margin-bottom:4px">Bienvenue dans Capital</div><div style="font-size:12px;color:var(--t3);margin-bottom:20px">Ton cockpit patrimoine est vide. Voici par où commencer.</div></div>'+
+emEl.innerHTML='<div style="text-align:center;padding:30px 0 20px"><svg viewBox="0 0 60 60" width="60" height="60" fill="none" style="margin-bottom:12px;filter:drop-shadow(0 4px 16px rgba(212,160,23,.3))"><defs><linearGradient id="elg" x1="0" y1="0" x2="60" y2="60"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="60" height="60" rx="15" fill="url(#elg)"/><text x="30" y="39" text-anchor="middle" font-family="Inter" font-weight="800" font-size="24" fill="#1a1000">Au</text></svg><div style="font-size:18px;font-weight:800;margin-bottom:4px">Bienvenue dans Capital</div><div style="font-size:12px;color:var(--t3);margin-bottom:20px">Ton cockpit patrimoine est vide. Voici par où commencer.</div></div>'+
 '<div style="display:grid;gap:8px;max-width:500px;margin:0 auto">'+
 '<div class="crd" style="cursor:pointer;border-left:3px solid var(--gold)" onclick="go(\'po\')"><div style="font-size:12px;font-weight:700;color:var(--gold)">1. Ajoute ton premier payout</div><div style="font-size:11px;color:var(--t3)">Un salaire, un payout prop firm, n\u0027importe quel revenu.</div></div>'+
 '<div class="crd" style="cursor:pointer;border-left:3px solid var(--blue)" onclick="go(\'pf\')"><div style="font-size:12px;font-weight:700;color:var(--blue)">2. Enregistre tes challenges prop firm</div><div style="font-size:11px;color:var(--t3)">Suis ton ROI : combien dépensé vs combien reçu.</div></div>'+
@@ -431,9 +555,9 @@ var rec=(D.history||[]).slice(0,10);document.getElementById('dA').innerHTML=rec.
 var ms2=Object.keys(mp).sort();
 if(ms2.length>=2){var tg2=0;for(var i=1;i<ms2.length;i++)tg2+=mp[ms2[i]].pnl;var avg=tg2/(ms2.length-1);var nm=ML.find(function(m){return m.t>nw});if(nm&&avg>0){var mt=Math.ceil((nm.t-nw)/avg);document.getElementById('dP').innerHTML='Rythme <b style="color:var(--green)">'+fm(avg)+'/mois</b> → <b style="color:var(--purple)">'+nm.l+'</b> dans ~<b style="color:var(--gold)">'+mt+' mois</b>.'}else{document.getElementById('dP').innerHTML='Pas assez de données.'}}else{document.getElementById('dP').innerHTML='Ajoute trades/payouts pour la projection.'}
 }catch(e){console.error('rD:',e)}}
-function rAC(){try{var ct={};D.portfolio.forEach(function(p){ct[p.cat]=(ct[p.cat]||0)+(p.current||0)});var j=rJ();j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel')ct['Trading perso']=(ct['Trading perso']||0)+(a.balance||0)});var lb=Object.keys(ct),vl=lb.map(function(k){return ct[k]});var cl=['#a78bfa','#5b8def','#00d68f','#f5d060','#ff4757','#d4a017','#6b7ea0','#8b5cf6'];if(cA)cA.destroy();var cvA=document.getElementById('cA');cvA.width=cvA.parentElement.clientWidth;cvA.height=cvA.parentElement.clientHeight;if(!lb.length){var ctx=cvA.getContext('2d');ctx.clearRect(0,0,cvA.width,cvA.height);ctx.fillStyle='#6b7ea0';ctx.font='12px DM Sans';ctx.textAlign='center';ctx.fillText('Ajoutez des actifs pour voir l\u2019allocation',cvA.width/2,cvA.height/2);return}var tot=vl.reduce(function(a,b){return a+b},0);cA=new Chart(cvA,{type:'doughnut',data:{labels:lb,datasets:[{data:vl,backgroundColor:cl.slice(0,lb.length),borderWidth:2,borderColor:'#0c1018',hoverBorderColor:'#a78bfa',hoverBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#9bafd4',font:{family:'DM Sans',size:10},padding:10,usePointStyle:true,pointStyle:'circle'}},tooltip:{callbacks:{label:function(c){var v=c.parsed||0;var pct=tot?((v/tot)*100).toFixed(1):'0';return' '+c.label+' : $'+v.toLocaleString('en-US')+' ('+pct+'%)'}}}}}});}catch(e){console.error('rAC:',e)}}
-function rEC(){try{var mp2=mPnL(),pm={};D.payouts.forEach(function(p){var m=p.date.slice(0,7);pm[m]=(pm[m]||0)+(p.net||0)});var am={};Object.keys(mp2).forEach(function(m){am[m]=true});Object.keys(pm).forEach(function(m){am[m]=true});var s=Object.keys(am).sort(),cu=[],r=0;s.forEach(function(m){r+=(mp2[m]?mp2[m].pnl:0)+(pm[m]||0);cu.push(r)});if(cE)cE.destroy();var cvE=document.getElementById('cE');cvE.width=cvE.parentElement.clientWidth;cvE.height=cvE.parentElement.clientHeight;if(!s.length){var ctx=cvE.getContext('2d');ctx.clearRect(0,0,cvE.width,cvE.height);ctx.fillStyle='#6b7ea0';ctx.font='12px DM Sans';ctx.textAlign='center';ctx.fillText('Pas encore de donn\u00e9es d\u2019\u00e9volution',cvE.width/2,cvE.height/2);return}cE=new Chart(cvE,{type:'line',data:{labels:s,datasets:[{data:cu,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.1)',fill:true,tension:.4,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#a78bfa',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,scales:{x:{ticks:{color:'#6b7ea0',font:{size:9}},grid:{color:'rgba(29,40,64,.5)'}},y:{beginAtZero:true,ticks:{color:'#6b7ea0',font:{family:'JetBrains Mono',size:9},callback:function(v){return'$'+v.toLocaleString('en-US')}},grid:{color:'rgba(29,40,64,.5)'}}},plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:function(c){var i=c.dataIndex;if(i===0)return'\u25b3 premier mois';var prev=cu[i-1];var diff=cu[i]-prev;var sign=diff>=0?'+':'';var arrow=diff>=0?'\u25b3':'\u25bd';return arrow+' '+sign+'$'+diff.toLocaleString('en-US')}}}}}})}catch(e){console.error('rEC:',e)}}
-function rRC(){try{var mp2=mPnL(),em={},pm={};D.expenses.forEach(function(e){em[e.month]=(em[e.month]||0)+(e.amount||0)});D.payouts.forEach(function(p){var m=p.date.slice(0,7);pm[m]=(pm[m]||0)+(p.net||0)});var am={};Object.keys(mp2).forEach(function(m){am[m]=true});Object.keys(em).forEach(function(m){am[m]=true});Object.keys(pm).forEach(function(m){am[m]=true});var s=Object.keys(am).sort();var rv=s.map(function(m){return(mp2[m]?mp2[m].pnl:0)+(pm[m]||0)});var ex=s.map(function(m){return-(em[m]||0)});if(cR)cR.destroy();var cvR=document.getElementById('cR');cvR.width=cvR.parentElement.clientWidth;cvR.height=cvR.parentElement.clientHeight;if(!s.length){var ctx=cvR.getContext('2d');ctx.clearRect(0,0,cvR.width,cvR.height);ctx.fillStyle='#6b7ea0';ctx.font='12px DM Sans';ctx.textAlign='center';ctx.fillText('Aucun revenu ou d\u00e9pense enregistr\u00e9',cvR.width/2,cvR.height/2);return}cR=new Chart(cvR,{type:'bar',data:{labels:s,datasets:[{label:'Revenus',data:rv,backgroundColor:'rgba(0,214,143,.7)',borderRadius:4},{label:'D\u00e9penses',data:ex,backgroundColor:'rgba(255,71,87,.7)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,scales:{x:{ticks:{color:'#6b7ea0',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#6b7ea0',font:{family:'JetBrains Mono',size:9}},grid:{color:'rgba(29,40,64,.5)'}}},plugins:{legend:{labels:{color:'#9bafd4',font:{size:10}}},tooltip:{callbacks:{footer:function(items){var rev=0,dep=0;items.forEach(function(it){if(it.dataset.label==='Revenus')rev=it.parsed.y;else dep=it.parsed.y});var marge=rev+dep;return'Marge : $'+marge.toLocaleString('en-US')}}}}}})}catch(e){console.error('rRC:',e)}}
+function rAC(){try{var ct={};D.portfolio.forEach(function(p){ct[p.cat]=(ct[p.cat]||0)+(p.current||0)});var j=rJ();j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel')ct['Trading perso']=(ct['Trading perso']||0)+(a.balance||0)});var lb=Object.keys(ct),vl=lb.map(function(k){return ct[k]});var cl=['#a78bfa','#5b8def','#00d68f','#f5d060','#ff4757','#d4a017','#6b7ea0','#8b5cf6'];if(cA)cA.destroy();var cvA=document.getElementById('cA');cvA.width=cvA.parentElement.clientWidth;cvA.height=cvA.parentElement.clientHeight;if(!lb.length){var ctx=cvA.getContext('2d');ctx.clearRect(0,0,cvA.width,cvA.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Ajoutez des actifs pour voir l\u2019allocation',cvA.width/2,cvA.height/2);return}var tot=vl.reduce(function(a,b){return a+b},0);cA=new Chart(cvA,{type:'doughnut',data:{labels:lb,datasets:[{data:vl,backgroundColor:cl.slice(0,lb.length),borderWidth:2,borderColor:'#0c1018',hoverBorderColor:'#a78bfa',hoverBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#9bafd4',font:{family:'Inter',size:10},padding:10,usePointStyle:true,pointStyle:'circle'}},tooltip:{callbacks:{label:function(c){var v=c.parsed||0;var pct=tot?((v/tot)*100).toFixed(1):'0';return' '+c.label+' : $'+v.toLocaleString('en-US')+' ('+pct+'%)'}}}}}});}catch(e){console.error('rAC:',e)}}
+function rEC(){try{var mp2=mPnL(),pm={};D.payouts.forEach(function(p){var m=p.date.slice(0,7);pm[m]=(pm[m]||0)+(p.net||0)});var am={};Object.keys(mp2).forEach(function(m){am[m]=true});Object.keys(pm).forEach(function(m){am[m]=true});var s=Object.keys(am).sort(),cu=[],r=0;s.forEach(function(m){r+=(mp2[m]?mp2[m].pnl:0)+(pm[m]||0);cu.push(r)});if(cE)cE.destroy();var cvE=document.getElementById('cE');cvE.width=cvE.parentElement.clientWidth;cvE.height=cvE.parentElement.clientHeight;if(!s.length){var ctx=cvE.getContext('2d');ctx.clearRect(0,0,cvE.width,cvE.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Pas encore de donn\u00e9es d\u2019\u00e9volution',cvE.width/2,cvE.height/2);return}cE=new Chart(cvE,{type:'line',data:{labels:s,datasets:[{data:cu,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.1)',fill:true,tension:.4,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#a78bfa',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,scales:{x:{ticks:{color:'#6b7ea0',font:{size:9}},grid:{color:'rgba(29,40,64,.5)'}},y:{beginAtZero:true,ticks:{color:'#6b7ea0',font:{family:'JetBrains Mono',size:9},callback:function(v){return'$'+v.toLocaleString('en-US')}},grid:{color:'rgba(29,40,64,.5)'}}},plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:function(c){var i=c.dataIndex;if(i===0)return'\u25b3 premier mois';var prev=cu[i-1];var diff=cu[i]-prev;var sign=diff>=0?'+':'';var arrow=diff>=0?'\u25b3':'\u25bd';return arrow+' '+sign+'$'+diff.toLocaleString('en-US')}}}}}})}catch(e){console.error('rEC:',e)}}
+function rRC(){try{var mp2=mPnL(),em={},pm={};D.expenses.forEach(function(e){em[e.month]=(em[e.month]||0)+(e.amount||0)});D.payouts.forEach(function(p){var m=p.date.slice(0,7);pm[m]=(pm[m]||0)+(p.net||0)});var am={};Object.keys(mp2).forEach(function(m){am[m]=true});Object.keys(em).forEach(function(m){am[m]=true});Object.keys(pm).forEach(function(m){am[m]=true});var s=Object.keys(am).sort();var rv=s.map(function(m){return(mp2[m]?mp2[m].pnl:0)+(pm[m]||0)});var ex=s.map(function(m){return-(em[m]||0)});if(cR)cR.destroy();var cvR=document.getElementById('cR');cvR.width=cvR.parentElement.clientWidth;cvR.height=cvR.parentElement.clientHeight;if(!s.length){var ctx=cvR.getContext('2d');ctx.clearRect(0,0,cvR.width,cvR.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Aucun revenu ou d\u00e9pense enregistr\u00e9',cvR.width/2,cvR.height/2);return}cR=new Chart(cvR,{type:'bar',data:{labels:s,datasets:[{label:'Revenus',data:rv,backgroundColor:'rgba(0,214,143,.7)',borderRadius:4},{label:'D\u00e9penses',data:ex,backgroundColor:'rgba(255,71,87,.7)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,scales:{x:{ticks:{color:'#6b7ea0',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#6b7ea0',font:{family:'JetBrains Mono',size:9}},grid:{color:'rgba(29,40,64,.5)'}}},plugins:{legend:{labels:{color:'#9bafd4',font:{size:10}}},tooltip:{callbacks:{footer:function(items){var rev=0,dep=0;items.forEach(function(it){if(it.dataset.label==='Revenus')rev=it.parsed.y;else dep=it.parsed.y});var marge=rev+dep;return'Marge : $'+marge.toLocaleString('en-US')}}}}}})}catch(e){console.error('rRC:',e)}}
 function rDF(){try{var c=gFC();document.getElementById('dF').innerHTML=c.slice(0,5).map(function(x){var cl=x.d<=14?'cu':x.d<=30?'cs':'co';return'<div class="ci"><div class="cd '+cl+'"></div><div style="flex:1"><b style="color:var(--t1)">'+x.n+'</b></div><div style="font-size:11px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+(x.d<=14?'var(--red)':x.d<=30?'var(--gold)':'var(--green)')+'">'+x.d+'j</div></div>'}).join('')}catch(e){console.error(e)}}
 /* ─── HEALTH ─── */
 function cH(){try{var sc=0,nw=cNW();var now=new Date(),cm=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');var eM=D.expenses.filter(function(e){return e.month===cm}).reduce(function(s,e){return s+(e.amount||0)},0)+D.abonnements.reduce(function(s,a){return s+(a.cost||0)},0);var pN=D.payouts.reduce(function(s,p){return s+(p.net||0)},0);var db=D.passifs.reduce(function(s,p){return s+(p.remaining||0)},0);if(eM>0){var mo=pN/eM;sc+=mo>=6?25:mo>=3?18:mo>=1?10:0}else sc+=15;var mp2=mPnL(),cpnl=mp2[cm]?mp2[cm].pnl:0,tRev=cpnl+pN/Math.max(1,Object.keys(mp2).length);if(tRev>0){var rt=((tRev-eM)/tRev)*100;sc+=rt>=40?25:rt>=20?18:rt>=10?10:0}else sc+=5;if(nw>0){var dr=db/nw;sc+=dr<=0?25:dr<=.3?18:dr<=.5?10:0}else sc+=db===0?25:0;var ct={},pV=0;D.portfolio.forEach(function(p){ct[p.cat]=(ct[p.cat]||0)+(p.current||0);pV+=(p.current||0)});var cn=Object.keys(ct).length,mx=0;Object.values(ct).forEach(function(v){var pc=pV>0?(v/pV)*100:0;if(pc>mx)mx=pc});sc+=cn>=4?25:cn>=2?15:cn>=1?8:0;if(mx>60)sc-=10;return Math.max(0,Math.min(100,sc))}catch(e){return 50}}
@@ -562,9 +686,9 @@ h+='<div style="text-align:right"><div style="font-size:12px;color:var(--t2);fon
 h+='<div style="font-size:14px;font-weight:700;color:var(--gold)">'+pl+' → '+cur.l+'</div></div></div>';
 /* ── Actions concrètes par palier ── */
 var ACT={};
-ACT[5000]='<button onclick="go(\'bud\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:DM Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Calculer mes dépenses</button> <button onclick="go(\'pf\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:DM Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Voir challenges</button>';
+ACT[5000]='<button onclick="go(\'bud\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:Inter,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Calculer mes dépenses</button> <button onclick="go(\'pf\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:Inter,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Voir challenges</button>';
 ACT[10000]='<span style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-size:11px;font-weight:600">→ Ouvrir un PEA</span> <span style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-size:11px;font-weight:600">→ Commencer DCA ETF</span>';
-ACT[25000]='<button onclick="go(\'fis\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:DM Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Simuler la fiscalité</button> <button onclick="go(\'ent\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:DM Sans,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Créer une entité</button>';
+ACT[25000]='<button onclick="go(\'fis\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:Inter,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Simuler la fiscalité</button> <button onclick="go(\'ent\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:Inter,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Créer une entité</button>';
 ACT[50000]=ACT[25000];
 ACT[100000]=ACT[25000];
 ACT[250000]=ACT[25000];
@@ -1069,7 +1193,7 @@ function renderYIRDoughnut(portfolio, tradingPerso, payouts, tresoEntites) {
     if (!rawData.length) {
       var ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#6b7ea0'; ctx.font = '12px DM Sans'; ctx.textAlign = 'center';
+      ctx.fillStyle = '#6b7ea0'; ctx.font = '12px Inter'; ctx.textAlign = 'center';
       ctx.fillText('Aucun actif', canvas.width / 2, canvas.height / 2);
       return;
     }
