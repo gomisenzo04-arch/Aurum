@@ -1609,6 +1609,11 @@ a:hover{opacity:.85}
 <div id="sessHistView"></div>
 </div>
 
+<!-- SANDBOX (mode Insights) -->
+<div class="panel" id="sandbox">
+<div id="sandboxView"></div>
+</div>
+
 <!-- INSIGHTS -->
 <div class="panel" id="insights">
 <div id="insightsView"></div>
@@ -1617,6 +1622,11 @@ a:hover{opacity:.85}
 <!-- COMPARAISON COMPTES -->
 <div class="panel" id="compare">
 <div id="compareView"></div>
+</div>
+
+<!-- PLAYBOOK -->
+<div class="panel" id="playbook">
+<div id="playbookView"></div>
 </div>
 
 <!-- REPLAY MODE -->
@@ -2503,6 +2513,8 @@ function R() {
   else if (pg === 'monthly') { rMonthly() }
   else if (pg === 'compare') { rCompare() }
   else if (pg === 'insights') { rInsights() }
+  else if (pg === 'sandbox') { rSandbox() }
+  else if (pg === 'playbook') { rPlaybook() }
   else if (pg === 'replay') { rReplay() }
 
 }
@@ -4062,7 +4074,7 @@ function adaptForm() {
     if (window.self !== window.top && typeof groups !== 'undefined') {
       var traderGroup = groups.find(function(g) { return g.id === 'trader' });
       if (traderGroup) {
-        traderGroup.pages = aT === 'replay' ? [{p:'replay',l:'Replay'}] : aT === 'insights' ? [{p:'insights',l:'Analytics'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}];
+        traderGroup.pages = aT === 'replay' ? [{p:'replay',l:'Replay'}] : aT === 'insights' ? [{p:'sandbox',l:'Entraînement'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}];
         if (activeGroup === 'trader') renderSubTabs('trader');
       }
     }
@@ -8789,6 +8801,292 @@ function emptyState(icon, title, subtitle, cta) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   PLAYBOOK — Documentation des setups
+   ═══════════════════════════════════════════════════════ */
+
+function rPlaybook() {
+  try {
+    var el = document.getElementById('playbookView');
+    if (!el) return;
+
+    var trades = D.live.filter(function(t) { return D.activeAcc === 'all' || t.accId === D.activeAcc });
+
+    /* Stats par setup */
+    var setups = {};
+    trades.forEach(function(t) {
+      var type = t.type || 'Autre';
+      if (!setups[type]) setups[type] = { total: 0, wins: 0, pnl: 0, trades: [] };
+      setups[type].total++;
+      if ((parseFloat(t.pl) || 0) > 0) setups[type].wins++;
+      setups[type].pnl += parseFloat(t.pl) || 0;
+      setups[type].trades.push(t);
+    });
+
+    var h = '';
+    h += '<div style="font-size:18px;font-weight:800;color:var(--t1);margin-bottom:4px">📘 Playbook</div>';
+    h += '<div style="font-size:12px;color:var(--t3);margin-bottom:20px">Documentation de tes setups avec stats réelles.</div>';
+
+    var setupKeys = Object.keys(setups);
+    if (!setupKeys.length) {
+      h += emptyState('📘', 'Playbook vide', 'Tes setups apparaîtront ici quand tu auras des trades.', null);
+      el.innerHTML = h;
+      return;
+    }
+
+    setupKeys.forEach(function(name) {
+      var s = setups[name];
+      var wr = s.total ? (s.wins / s.total * 100).toFixed(1) : '0';
+      var avgWin = s.wins ? s.trades.filter(function(t) { return t.pl > 0 }).reduce(function(a, t) { return a + t.pl }, 0) / s.wins : 0;
+      var avgLoss = (s.total - s.wins) ? Math.abs(s.trades.filter(function(t) { return t.pl <= 0 }).reduce(function(a, t) { return a + t.pl }, 0) / (s.total - s.wins)) : 0;
+      var pf = avgLoss > 0 ? (avgWin / avgLoss).toFixed(2) : '—';
+      var wrCol = parseFloat(wr) >= 50 ? 'var(--green)' : 'var(--red)';
+      var pnlCol = s.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px">';
+
+      /* Header setup */
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">';
+      h += '<div style="font-size:16px;font-weight:800;color:var(--t1)">' + name + '</div>';
+      h += '<div style="display:flex;gap:12px;font-size:12px">';
+      h += '<span style="color:var(--t3)">' + s.total + ' trades</span>';
+      h += '<span style="font-weight:700;color:' + wrCol + '">' + wr + '% WR</span>';
+      h += '<span style="font-weight:700;color:' + pnlCol + '">' + (s.pnl >= 0 ? '+' : '') + '$' + s.pnl.toFixed(0) + '</span>';
+      h += '</div></div>';
+
+      /* Stats grille */
+      h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">';
+      h += '<div style="background:var(--bg3);padding:10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase">Win Rate</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + wrCol + '">' + wr + '%</div></div>';
+      h += '<div style="background:var(--bg3);padding:10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase">Profit Factor</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + (parseFloat(pf) >= 1.5 ? 'var(--green)' : 'var(--gold)') + '">' + pf + '</div></div>';
+      h += '<div style="background:var(--bg3);padding:10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase">Gain moyen</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--green)">+$' + avgWin.toFixed(0) + '</div></div>';
+      h += '<div style="background:var(--bg3);padding:10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase">Perte moy.</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--red)">-$' + avgLoss.toFixed(0) + '</div></div>';
+      h += '</div>';
+
+      /* Règles du setup */
+      if (name === 'QM') {
+        h += '<div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">';
+        h += '<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;margin-bottom:8px">Règles QM</div>';
+        h += '<div style="font-size:11px;color:var(--t2);line-height:1.8">';
+        h += '• <b>QM Buy (W)</b> : Support → Résistance → Casse support (nouveau bas) → Casse résistance → BUY<br>';
+        h += '• <b>QM Sell (M)</b> : Résistance → Support → Casse résistance (nouveau haut) → Casse support → SELL<br>';
+        h += '• SL : mèche extrême du QM + 50 pts (min 250, max 1200)<br>';
+        h += '• TP : 2× SL (ratio 1:2 fixe)';
+        h += '</div></div>';
+      } else if (name === 'Gaps') {
+        h += '<div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">';
+        h += '<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;margin-bottom:8px">Règles Gaps</div>';
+        h += '<div style="font-size:11px;color:var(--t2);line-height:1.8">';
+        h += '• Écart R/S > 1200 pts → variante gaps<br>';
+        h += '• 2 gaps consécutifs → casse le 1er → casse le 2ème → entrée<br>';
+        h += '• Gap = 2 bougies consécutives même couleur, clôturées<br>';
+        h += '• Niveau = clôture de la 1ère bougie';
+        h += '</div></div>';
+      }
+
+      /* 5 derniers trades */
+      var recent = s.trades.slice(-5).reverse();
+      h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">Derniers trades</div>';
+      h += '<div style="display:grid;gap:3px">';
+      recent.forEach(function(t) {
+        var tc = (parseFloat(t.pl) || 0) >= 0 ? 'var(--green)' : 'var(--red)';
+        h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg3);border-radius:6px;font-size:11px">';
+        h += '<span style="color:var(--t3);font-family:JetBrains Mono,monospace;font-size:10px">' + (t.date || '') + '</span>';
+        h += '<span style="color:var(--t2)">' + (t.dir || '') + '</span>';
+        h += '<span style="color:var(--t3)">SL ' + (t.sl || '') + '</span>';
+        h += '<span style="flex:1"></span>';
+        h += '<span style="font-weight:700;font-family:JetBrains Mono,monospace;color:' + tc + '">' + ((parseFloat(t.pl) || 0) >= 0 ? '+' : '') + '$' + (parseFloat(t.pl) || 0).toFixed(2) + '</span>';
+        h += '</div>';
+      });
+      h += '</div></div>';
+    });
+
+    el.innerHTML = h;
+  } catch(e) { console.error('rPlaybook:', e) }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SANDBOX — Entraînement libre (mode Insights)
+   ═══════════════════════════════════════════════════════ */
+
+var _sandboxState = null;
+
+function rSandbox() {
+  try {
+    var el = document.getElementById('sandboxView');
+    if (!el) return;
+
+    if (_sandboxState && _sandboxState.active) {
+      rSandboxChart(el);
+      return;
+    }
+
+    var h = '';
+    h += '<div style="text-align:center;padding:30px 20px;max-width:500px;margin:0 auto">';
+    h += '<div style="font-size:40px;margin-bottom:12px">🎯</div>';
+    h += '<div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:8px">Entraînement libre</div>';
+    h += '<div style="font-size:13px;color:var(--t2);line-height:1.8;margin-bottom:24px">Déroule des bougies, identifie les setups, entre des trades. Pas de scoring, pas de pression — juste de la pratique pour internaliser la stratégie.</div>';
+
+    h += '<div style="display:grid;gap:10px;max-width:350px;margin:0 auto">';
+    h += '<button class="btn btn-g" onclick="startSandbox(80)" style="padding:14px;font-size:14px;font-weight:700">▶ Session courte (80 bougies)</button>';
+    h += '<button class="btn btn-o" onclick="startSandbox(200)" style="padding:14px;font-size:14px">▶ Session longue (200 bougies)</button>';
+    h += '<button class="btn btn-o" onclick="startSandbox(400)" style="padding:14px;font-size:14px">▶ Marathon (400 bougies)</button>';
+    h += '</div>';
+
+    h += '<div style="margin-top:20px;font-size:11px;color:var(--t3)">Les trades entrés ici ne sont pas comptés dans tes stats Live.</div>';
+    h += '</div>';
+
+    el.innerHTML = h;
+  } catch(e) { console.error('rSandbox:', e) }
+}
+
+function startSandbox(candleCount) {
+  try {
+    /* Générer des bougies aléatoires avec des patterns variés */
+    var phases = [];
+    var remaining = candleCount;
+    var directions = ['up', 'down'];
+    var types = ['trend', 'range', 'pullback', 'support', 'resistance', 'breakout', 'liquidity', 'continuation'];
+
+    while (remaining > 0) {
+      var phaseLen = Math.min(remaining, 5 + Math.floor(Math.random() * 15));
+      var dir = directions[Math.floor(Math.random() * 2)];
+      var type = types[Math.floor(Math.random() * types.length)];
+      var vol = 2 + Math.random() * 6;
+
+      if (type === 'liquidity') {
+        phases.push({ type: 'liquidity', position: Math.random() > 0.5 ? 'high' : 'low', candles: 3, volatility: vol });
+        remaining -= 3;
+      } else if (type === 'support' || type === 'resistance') {
+        phases.push({ type: type, candles: 2, volatility: vol });
+        remaining -= 2;
+      } else {
+        phases.push({ type: type, direction: dir, candles: phaseLen, volatility: vol });
+        remaining -= phaseLen;
+      }
+    }
+
+    var result = generateCandles(phases, 2300 + Math.floor(Math.random() * 200));
+
+    /* Ajouter timestamps */
+    var startHour = 8;
+    result.candles.forEach(function(c, i) {
+      var totalMin = startHour * 60 + i;
+      c.time = String(Math.floor(totalMin / 60)).padStart(2, '0') + ':' + String(totalMin % 60).padStart(2, '0');
+    });
+
+    _sandboxState = {
+      active: true,
+      candles: result.candles,
+      metadata: result.metadata,
+      visibleCount: 20,
+      trades: [],
+      _timeframe: '5min'
+    };
+    _chartZoom = null;
+    rSandbox();
+  } catch(e) { console.error('startSandbox:', e) }
+}
+
+function rSandboxChart(el) {
+  try {
+    var st = _sandboxState;
+    var h = '';
+
+    /* Layout plein écran */
+    h += '<div style="display:flex;flex-direction:column;height:calc(100vh - 120px);min-height:500px">';
+
+    /* Toolbar */
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px 10px 0 0;flex-shrink:0">';
+    h += '<div style="display:flex;align-items:center;gap:10px">';
+    h += '<button class="btn btn-o" onclick="_sandboxState=null;rSandbox()" style="font-size:10px;padding:4px 10px">← Retour</button>';
+    h += '<span style="font-size:13px;font-weight:700;color:var(--t1)">Entraînement libre</span>';
+    h += '</div>';
+    h += '<div style="display:flex;align-items:center;gap:6px">';
+    h += '<span style="font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace">XAUUSD · Trades : ' + st.trades.length + '</span>';
+    h += '</div></div>';
+
+    /* Canvas */
+    h += '<div style="flex:1;background:#0a0e14;position:relative;min-height:0;overflow:hidden;border-left:1px solid var(--border);border-right:1px solid var(--border)">';
+    h += '<canvas id="sandboxCanvas" style="width:100%;height:100%;cursor:crosshair"></canvas>';
+    h += '</div>';
+
+    /* Barre de contrôle */
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 10px 10px;flex-shrink:0">';
+    h += '<div style="display:flex;align-items:center;gap:6px">';
+    h += '<button class="btn btn-o" onclick="sandboxPrev()" style="padding:5px 10px;font-size:11px">◀</button>';
+    h += '<button class="btn btn-g" onclick="sandboxNext()" style="padding:5px 10px;font-size:11px">▶ Suivante</button>';
+    h += '<button class="btn btn-o" onclick="sandboxNext5()" style="padding:5px 10px;font-size:11px">▶▶ ×5</button>';
+    h += '</div>';
+    h += '<span style="font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace">' + st.visibleCount + ' / ' + st.candles.length + '</span>';
+    var lastC = st.candles[st.visibleCount - 1];
+    if (lastC) {
+      var prCol = lastC.close >= lastC.open ? 'var(--green)' : 'var(--red)';
+      h += '<span style="font-size:13px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + prCol + '">' + lastC.close.toFixed(2) + '</span>';
+    }
+    h += '</div>';
+
+    h += '</div>';
+    el.innerHTML = h;
+
+    /* Render */
+    if (!_chartZoom) _chartZoom = { offset: 0, zoom: 1 };
+    sandboxRedraw();
+    setupChartInteractions('sandboxCanvas');
+  } catch(e) { console.error('rSandboxChart:', e) }
+}
+
+function sandboxRedraw() {
+  try {
+    if (!_sandboxState) return;
+    var st = _sandboxState;
+    var totalVisible = Math.round(st.visibleCount / (_chartZoom ? _chartZoom.zoom : 1));
+    totalVisible = Math.max(10, Math.min(st.visibleCount, totalVisible));
+    var offset = _chartZoom ? _chartZoom.offset : 0;
+    var startIdx = Math.max(0, st.visibleCount - totalVisible - offset);
+    var endIdx = Math.min(st.visibleCount, startIdx + totalVisible);
+
+    var levels = [];
+    /* Afficher les trades pris */
+    st.trades.forEach(function(t) {
+      if (t.entryCandle < endIdx) {
+        levels.push({ price: t.entry, label: (t.dir === 'buy' ? '↑' : '↓') + ' ' + t.entry.toFixed(0), color: 'rgba(201,151,46,.6)', dash: [4, 3] });
+      }
+    });
+
+    _chartInfo = renderCandleChart('sandboxCanvas', st.candles, {
+      startIdx: startIdx,
+      endIdx: endIdx,
+      height: document.getElementById('sandboxCanvas') ? document.getElementById('sandboxCanvas').parentElement.offsetHeight : 400,
+      levels: levels,
+      timeframe: '5m'
+    });
+  } catch(e) {}
+}
+
+function sandboxNext() {
+  try {
+    if (!_sandboxState || _sandboxState.visibleCount >= _sandboxState.candles.length) return;
+    _sandboxState.visibleCount++;
+    sandboxRedraw();
+  } catch(e) {}
+}
+
+function sandboxNext5() {
+  try {
+    if (!_sandboxState) return;
+    _sandboxState.visibleCount = Math.min(_sandboxState.candles.length, _sandboxState.visibleCount + 5);
+    sandboxRedraw();
+  } catch(e) {}
+}
+
+function sandboxPrev() {
+  try {
+    if (!_sandboxState || _sandboxState.visibleCount <= 10) return;
+    _sandboxState.visibleCount--;
+    sandboxRedraw();
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════════════
    INSIGHTS — Analytics avancés
    ═══════════════════════════════════════════════════════ */
 
@@ -10750,13 +11048,13 @@ try{if(window.self!==window.top){
   var groups = [
     {id:'dash', label:'📊 Dashboard', pages:[]},
     {id:'trader', label:'Trader', pages:
-      aT==='replay' ? [{p:'replay',l:'Replay'}] : aT==='insights' ? [{p:'insights',l:'Analytics'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
+      aT==='replay' ? [{p:'replay',l:'Replay'}] : aT==='insights' ? [{p:'sandbox',l:'Entraînement'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
     },
     {id:'analyser', label:'Analyser', pages:[
-      {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'compare',l:'Comptes'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
+      {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'insights',l:'Analytics'},{p:'compare',l:'Comptes'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
     ]},
     {id:'systeme', label:'Système', pages:[
-      {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'}
+      {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'},{p:'playbook',l:'Playbook'}
     ]},
     {id:'comptes', label:'Comptes', pages:[
       {p:'settings',l:'Mes comptes'},{p:'groups',l:'Groupes liés'}
