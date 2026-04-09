@@ -365,7 +365,70 @@ Chaque fois que tu retires de l'argent (d'une prop firm, d'un salaire, etc.), c'
 <div id="enHoldAdv" style="font-size:11px;color:var(--t2);line-height:1.9"></div>
 </div>
 </div>
-<div class="pnl" id="p-fis"><div class="st">Fiscalité</div><div class="crd" style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:8px">Simulateur fiscal</div><div class="fr"><div class="fd"><label>Revenu annuel (€)</label><input type="number" id="fx-r" placeholder="50000"></div><div class="fd"><label>Régime</label><select id="fx-g"><option value="micro">Micro-BNC</option><option value="is">IS</option><option value="flat">Flat Tax 30%</option><option value="ir">IR barème</option></select></div><div class="fd"><label>Charges (€)</label><input type="number" id="fx-c" value="0"></div></div><button class="btn bp bs" onclick="sFi()">Simuler</button><div id="fxR" style="margin-top:10px;font-size:12px;color:var(--t2)"></div></div><div class="cb"><div class="ct">Enveloppes fiscales</div><div style="font-size:11px;color:var(--t2);line-height:1.8"><b>PEA</b> : Plafond 150K€. Allégé après 5 ans (17.2% PS).<br><b>Assurance-vie</b> : Allégé après 8 ans. Abattement 4 600€/an.<br><b>PER</b> : Déductible du revenu. Bloqué retraite (sauf RP).</div></div><div class="cb"><div class="ct">Calendrier fiscal FR</div><div id="fiC"></div></div></div>
+<div class="pnl" id="p-fis"><div class="st">Fiscalité</div><div class="crd" style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:8px">Simulateur fiscal</div><div class="fr"><div class="fd"><label>Revenu annuel (€)</label><input type="number" id="fx-r" placeholder="50000"></div><div class="fd"><label>Régime</label><select id="fx-g"><option value="micro">Micro-BNC</option><option value="is">IS</option><option value="flat">Flat Tax 30%</option><option value="ir">IR barème</option></select></div><div class="fd"><label>Charges (€)</label><input type="number" id="fx-c" value="0"></div></div><button class="btn bp bs" onclick="sFi()">Simuler</button><div id="fxR" style="margin-top:10px;font-size:12px;color:var(--t2)"></div></div><div class="cb"><div class="ct">Enveloppes fiscales</div>
+<div style="display:grid;gap:10px;margin-top:8px">
+<!-- PEA -->
+<div style="padding:14px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);border-left:4px solid var(--green)">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<span style="font-size:20px">📊</span>
+<div><b style="color:var(--green);font-size:13px">PEA — Plan d'Épargne en Actions</b>
+<div style="font-size:10px;color:var(--t3);margin-top:1px">Enveloppe actions européennes défiscalisée</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+<div style="padding:8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.6">
+<b style="color:var(--green)">Avantage fiscal</b><br>
+Exonéré d'IR après 5 ans.<br>Seuls les prélèvements sociaux (17,2%) s'appliquent.</div>
+<div style="padding:8px;background:rgba(91,141,239,.05);border-radius:6px;font-size:10px;line-height:1.6">
+<b style="color:var(--blue)">Plafond</b><br>
+150 000€ de versements<br>(pas de plafond sur les gains)</div>
+</div>
+<div style="font-size:10px;color:var(--t2);line-height:1.6;padding:6px 8px;background:rgba(167,139,250,.04);border-radius:6px">
+<b style="color:var(--purple)">Idéal pour :</b> ETF MSCI World en DCA mensuel (CW8, EWLD). Investissement long terme, le pilier de ton patrimoine.<br>
+<b style="color:var(--red)">Attention :</b> retrait avant 5 ans = clôture du PEA et perte de l'avantage fiscal. Pas d'actions US/hors UE en direct.
+</div>
+</div>
+<!-- Assurance-Vie -->
+<div style="padding:14px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);border-left:4px solid var(--purple)">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<span style="font-size:20px">🛡</span>
+<div><b style="color:var(--purple);font-size:13px">Assurance-Vie</b>
+<div style="font-size:10px;color:var(--t3);margin-top:1px">Enveloppe multi-supports avec avantages successoraux</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+<div style="padding:8px;background:rgba(167,139,250,.05);border-radius:6px;font-size:10px;line-height:1.6">
+<b style="color:var(--purple)">Avantage fiscal</b><br>
+Abattement 4 600€/an après 8 ans<br>(9 200€ pour un couple). Taux réduit 7,5% au-delà.</div>
+<div style="padding:8px;background:rgba(91,141,239,.05);border-radius:6px;font-size:10px;line-height:1.6">
+<b style="color:var(--blue)">Plafond</b><br>
+Illimité en versements.<br>152 500€/bénéficiaire exonérés en succession.</div>
+</div>
+<div style="font-size:10px;color:var(--t2);line-height:1.6;padding:6px 8px;background:rgba(167,139,250,.04);border-radius:6px">
+<b style="color:var(--purple)">Idéal pour :</b> Fonds euros (capital garanti) + UC diversifiées. Prend date le plus tôt possible (compteur 8 ans).<br>
+<b style="color:var(--red)">Attention :</b> frais de gestion 0,5-1%/an selon le contrat. Privilégie Linxea Spirit 2, Lucya Cardif (frais bas).
+</div>
+</div>
+<!-- PER -->
+<div style="padding:14px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);border-left:4px solid var(--gold)">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<span style="font-size:20px">🏦</span>
+<div><b style="color:var(--gold);font-size:13px">PER — Plan d'Épargne Retraite</b>
+<div style="font-size:10px;color:var(--t3);margin-top:1px">Épargne retraite avec déduction fiscale immédiate</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+<div style="padding:8px;background:rgba(212,160,23,.05);border-radius:6px;font-size:10px;line-height:1.6">
+<b style="color:var(--gold)">Avantage fiscal</b><br>
+Versements déductibles du revenu imposable.<br>Effet levier si TMI ≥ 30%.</div>
+<div style="padding:8px;background:rgba(91,141,239,.05);border-radius:6px;font-size:10px;line-height:1.6">
+<b style="color:var(--blue)">Plafond</b><br>
+10% des revenus nets (min 4 399€).<br>Cumulable sur 3 ans non utilisés.</div>
+</div>
+<div style="font-size:10px;color:var(--t2);line-height:1.6;padding:6px 8px;background:rgba(167,139,250,.04);border-radius:6px">
+<b style="color:var(--purple)">Idéal pour :</b> TMI ≥ 30%. Chaque euro versé réduit ton IR immédiatement. Puissant pour les hauts revenus.<br>
+<b style="color:var(--red)">Attention :</b> bloqué jusqu'à la retraite (sauf achat résidence principale). À la sortie, le capital est imposé à l'IR.
+</div>
+</div>
+</div>
+</div><div class="cb"><div class="ct">Calendrier fiscal FR</div><div id="fiC"></div></div></div>
 <div class="pnl" id="p-inv"><div class="st">Portfolio <button class="btn bp bs" onclick="tg('ivF')">+ Investissement</button></div><div id="ivF" class="crd" style="display:none;margin-bottom:14px"><div class="fr"><div class="fd"><label>Nom</label><input id="iv-n" placeholder="ETF World"></div><div class="fd"><label>Catégorie</label><select id="iv-c"><option>ETF</option><option>Actions</option><option>Crypto</option><option>Immobilier</option><option>Épargne</option><option>PEA</option><option>AV</option><option>Trading</option><option>Autre</option></select></div><div class="fd"><label>Investi ($)</label><input type="number" id="iv-i" step="0.01"></div><div class="fd"><label>Valeur ($)</label><input type="number" id="iv-v" step="0.01"></div></div><div style="display:flex;gap:6px"><button class="btn bp bs" onclick="aIV()">OK</button><button class="btn bo bs" onclick="tg('ivF')">×</button></div></div><div class="crd" style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px">Allocation cible vs réelle</div><div id="alCo"></div></div><div class="tw"><table><thead><tr><th>Nom</th><th>Cat</th><th>Investi</th><th>Valeur</th><th>P&L</th><th>%</th><th></th></tr></thead><tbody id="ivT"></tbody></table></div></div>
 <div class="pnl" id="p-bud"><div class="st">Budget & Dépenses <button class="btn bp bs" onclick="tg('exF')">+ Dépense</button></div><div class="crd" style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:var(--purple)">Catégories perso</span><div style="display:flex;gap:4px"><input id="nC" placeholder="Nouvelle catégorie" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--t1);font-size:11px;font-family:inherit;width:150px"><button class="btn bo bs" onclick="aC()">+</button></div></div><div id="cL" style="display:flex;flex-wrap:wrap;gap:4px;font-size:10px"></div></div><div id="exF" class="crd" style="display:none;margin-bottom:14px"><div class="fr"><div class="fd"><label>Mois</label><input type="month" id="ex-m"></div><div class="fd"><label>Catégorie</label><select id="ex-c"></select></div><div class="fd"><label>Montant ($)</label><input type="number" id="ex-a" step="0.01"></div><div class="fd"><label>Note</label><input id="ex-n" placeholder="Optionnel"></div></div><div style="display:flex;gap:6px"><button class="btn bp bs" onclick="aEX()">OK</button><button class="btn bo bs" onclick="tg('exF')">×</button></div></div><div class="crd" style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:var(--gold)">Abonnements</span><button class="btn bo bs" onclick="tg('abF')">+ Abo</button></div><div id="abF" style="display:none;margin-bottom:8px"><div class="fr"><div class="fd"><label>Nom</label><input id="ab-n" placeholder="TradingView"></div><div class="fd"><label>$/mois</label><input type="number" id="ab-c" step="0.01"></div></div><button class="btn bp bs" onclick="aAB()">+</button></div><div id="abL"></div></div><div class="tw"><table><thead><tr><th>Mois</th><th>Catégorie</th><th>Montant</th><th>Note</th><th></th></tr></thead><tbody id="exT"></tbody><tfoot><tr><td colspan="2" style="font-weight:700;color:var(--t1)">Total</td><td class="mn ng" id="exTot">$0</td><td colspan="2"></td></tr></tfoot></table></div></div>
 <div class="pnl" id="p-pas"><div class="st">Passifs (dettes) <button class="btn bp bs" onclick="tg('psF')">+ Passif</button></div>
@@ -563,7 +626,12 @@ function rDF(){try{var c=gFC();document.getElementById('dF').innerHTML=c.slice(0
 function cH(){try{var sc=0,nw=cNW();var now=new Date(),cm=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');var eM=D.expenses.filter(function(e){return e.month===cm}).reduce(function(s,e){return s+(e.amount||0)},0)+D.abonnements.reduce(function(s,a){return s+(a.cost||0)},0);var pN=D.payouts.reduce(function(s,p){return s+(p.net||0)},0);var db=D.passifs.reduce(function(s,p){return s+(p.remaining||0)},0);if(eM>0){var mo=pN/eM;sc+=mo>=6?25:mo>=3?18:mo>=1?10:0}else sc+=15;var mp2=mPnL(),cpnl=mp2[cm]?mp2[cm].pnl:0,tRev=cpnl+pN/Math.max(1,Object.keys(mp2).length);if(tRev>0){var rt=((tRev-eM)/tRev)*100;sc+=rt>=40?25:rt>=20?18:rt>=10?10:0}else sc+=5;if(nw>0){var dr=db/nw;sc+=dr<=0?25:dr<=.3?18:dr<=.5?10:0}else sc+=db===0?25:0;var ct={},pV=0;D.portfolio.forEach(function(p){ct[p.cat]=(ct[p.cat]||0)+(p.current||0);pV+=(p.current||0)});var cn=Object.keys(ct).length,mx=0;Object.values(ct).forEach(function(v){var pc=pV>0?(v/pV)*100:0;if(pc>mx)mx=pc});sc+=cn>=4?25:cn>=2?15:cn>=1?8:0;if(mx>60)sc-=10;return Math.max(0,Math.min(100,sc))}catch(e){return 50}}
 function rHe(){try{var hs=cH(),nw=cNW(),hc=hs>=75?'var(--green)':hs>=50?'var(--gold)':'var(--red)';var hcRaw=hs>=75?'#00d68f':hs>=50?'#d4a017':'#ff4757';var hLabel=hs>=75?'Bonne santé':hs>=50?'Attention':'Critique';var now=new Date(),cm=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');var eM=D.expenses.filter(function(e){return e.month===cm}).reduce(function(s,e){return s+(e.amount||0)},0)+D.abonnements.reduce(function(s,a){return s+(a.cost||0)},0);var pN=D.payouts.reduce(function(s,p){return s+(p.net||0)},0);var db=D.passifs.reduce(function(s,p){return s+(p.remaining||0)},0);var rw=eM>0?Math.floor(pN/eM):null;var dratio=db/Math.max(1,nw);var rs=new Set();D.payouts.forEach(function(p){rs.add(p.source)});if(Object.keys(mPnL()).length)rs.add('Trading');/* SVG gauge animée 200px */var r=88,circ=2*Math.PI*r,off=circ-(hs/100)*circ;var h='<div style="text-align:center;margin-bottom:24px"><svg width="200" height="200" viewBox="0 0 200 200" style="display:block;margin:0 auto"><circle cx="100" cy="100" r="'+r+'" fill="none" stroke="var(--bg3)" stroke-width="14" /><circle cx="100" cy="100" r="'+r+'" fill="none" stroke="'+hcRaw+'" stroke-width="14" stroke-linecap="round" stroke-dasharray="'+circ.toFixed(2)+'" stroke-dashoffset="'+circ.toFixed(2)+'" transform="rotate(-90 100 100)" style="transition:stroke-dashoffset 1s ease-out"><animate attributeName="stroke-dashoffset" from="'+circ.toFixed(2)+'" to="'+off.toFixed(2)+'" dur="1s" fill="freeze" /></circle><text x="100" y="96" text-anchor="middle" fill="'+hcRaw+'" font-size="48" font-weight="800" font-family="JetBrains Mono,monospace">'+hs+'</text><text x="100" y="118" text-anchor="middle" fill="var(--t3)" font-size="13" font-weight="700">/ 100</text><text x="100" y="142" text-anchor="middle" fill="'+hcRaw+'" font-size="12" font-weight="700">'+hLabel+'</text></svg></div>';/* KPI strip */h+='<div class="sg">'+kp('Runway',rw===null?'—':(rw+' mois'),rw===null?'var(--t3)':rw>=6?'var(--green)':rw>=3?'var(--gold)':'var(--red)')+kp('Dettes/actifs',nw>0?Math.round(dratio*100)+'%':'0%',dratio<=.3?'var(--green)':'var(--red)')+kp('Sources revenus',rs.size,rs.size>=3?'var(--green)':'var(--red)')+kp('Dépenses fixes',fm(eM),'var(--t2)')+'</div>';/* Alertes hiérarchisées */var al=[];if(rw!==null&&rw<3)al.push({level:'crit',icon:'🔴',tag:'CRITIQUE',msg:'Runway < 3 mois — fonds d\'urgence prioritaire.',btn:'Voir Budget',act:'bud'});else if(rw!==null&&rw>=3&&rw<6)al.push({level:'warn',icon:'⚠️',tag:'ATTENTION',msg:'Runway entre 3 et 6 mois — renforce ton épargne.',btn:'Voir Budget',act:'bud'});if(dratio>.5)al.push({level:'crit',icon:'🔴',tag:'CRITIQUE',msg:'Ratio dettes > 50% — priorise le remboursement.',btn:'Voir Passifs',act:'pas'});else if(dratio>.3)al.push({level:'warn',icon:'⚠️',tag:'ATTENTION',msg:'Ratio dettes entre 30-50% — surveille l\'endettement.',btn:'Voir Passifs',act:'pas'});if(rs.size<2)al.push({level:'opp',icon:'💡',tag:'OPPORTUNITÉ',msg:'Diversifie tes sources de revenus.',btn:'Voir Payouts',act:'po'});if(rs.size>=2&&D.portfolio.length<2)al.push({level:'opp',icon:'💡',tag:'OPPORTUNITÉ',msg:'Diversifie tes investissements.',btn:'Voir Portfolio',act:'inv'});var alCols={crit:{bg:'rgba(255,71,87,.06)',border:'#ff4757'},warn:{bg:'rgba(212,160,23,.06)',border:'#d4a017'},opp:{bg:'rgba(0,214,143,.06)',border:'#00d68f'}};if(al.length){h+=al.map(function(a){var c=alCols[a.level];return'<div style="background:'+c.bg+';border:1px solid '+c.border+'22;border-left:4px solid '+c.border+';border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:180px"><div style="font-size:10px;font-weight:700;color:'+c.border+';text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+a.icon+' '+a.tag+'</div><div style="font-size:12px;color:var(--t2);line-height:1.6">'+a.msg+'</div></div><button class="btn bo" style="white-space:nowrap;font-size:11px;padding:6px 14px;border-color:'+c.border+';color:'+c.border+'" onclick="go(\''+a.act+'\')">'+a.btn+'</button></div>'}).join('')}else{h+='<div style="background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.15);border-left:4px solid var(--green);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">✅ BONNE SANTÉ</div><div style="font-size:12px;color:var(--t2);line-height:1.6">Aucune alerte majeure. Continue comme ça !</div></div>'}/* Glossaire explicatif */h+='<div style="margin-top:20px"><div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">📖 Glossaire</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">';var gl=[{t:'Runway',d:'Combien de mois tu peux vivre sans revenu, grâce à tes payouts cumulés.',g:'≥ 6 mois',r:'< 3 mois'},{t:'Dettes / Actifs',d:'Pourcentage de ton patrimoine composé de dettes.',g:'≤ 30%',r:'> 50%'},{t:'Sources Revenus',d:'Nombre de façons différentes dont tu gagnes de l\'argent.',g:'≥ 3 sources',r:'< 2 sources'}];h+=gl.map(function(g){return'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px"><div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:6px">'+g.t+'</div><div style="font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:8px">'+g.d+'</div><div style="display:flex;gap:8px;font-size:10px;font-weight:600"><span style="color:var(--green)">✓ '+g.g+'</span><span style="color:var(--red)">✗ '+g.r+'</span></div></div>'}).join('')+'</div></div>';document.getElementById('heC').innerHTML=h}catch(e){console.error(e)}}
 /* ─── COACHING ─── */
-var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois de dépenses.</b><br><br>'+
+var ML=[{t:5000,l:'$5K',e:'🌱',expert:[
+'Constituer un fonds d\'urgence de 3 mois de dépenses minimum',
+'Ne pas investir tant que le fonds d\'urgence n\'est pas complet',
+'Livret A ou LDDS pour le fonds d\'urgence (liquidité immédiate, 0 risque)',
+'Budget : calcule tes dépenses fixes avec l\'onglet Budget d\'Aurum Capital'
+],tip:'<b>Objectif : fonds d\'urgence de 3 mois de dépenses.</b><br><br>'+
 '<b>Pourquoi ?</b> Tu ne peux pas trader sereinement si tu n\'as pas de matelas de sécurité. Si tu perds ton capital trading, tu dois pouvoir vivre 3 mois sans revenu.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. Calcule tes dépenses mensuelles (loyer + nourriture + factures + abos)<br>'+
@@ -572,7 +640,12 @@ var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois d
 '4. N\'investis RIEN tant que ce fonds n\'est pas rempli<br><br>'+
 '<b>Trading :</b> Continue les challenges prop firm. Ne risque que l\'argent des challenges, jamais tes économies.<br><br>'+
 '<b>Erreur classique :</b> Mettre toutes ses économies sur un broker "pour trader plus gros". NON. Fonds d\'urgence d\'abord.'
-},{t:10000,l:'$10K',e:'🥉',tip:'<b>Objectif : commencer à investir long terme.</b><br><br>'+
+},{t:10000,l:'$10K',e:'🥉',expert:[
+'Ouvrir un PEA chez un courtier en ligne (Boursorama, Fortuneo, Trade Republic)',
+'Premier ETF MSCI World en DCA mensuel ($100-200/mois)',
+'Ne pas toucher au PEA pendant 5 ans minimum (avantage fiscal)',
+'Augmenter la taille des challenges prop firm ($10K-25K)'
+],tip:'<b>Objectif : commencer à investir long terme.</b><br><br>'+
 '<b>Tu as $10K</b> = fonds d\'urgence OK + premiers profits. C\'est le moment de faire travailler ton argent.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. <b>Ouvre un PEA</b> (Plan d\'Épargne en Actions) chez Boursorama, Fortuneo ou Trade Republic<br>'+
@@ -582,7 +655,13 @@ var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois d
 '<b>C\'est quoi un PEA ?</b> Un compte actions défiscalisé après 5 ans. Tu ne paies que 17.2% au lieu de 30%.<br><br>'+
 '<b>C\'est quoi le DCA ?</b> Tu investis un montant fixe chaque mois, peu importe le prix. Tu achètes plus quand c\'est bas, moins quand c\'est haut. Stratégie la plus simple et efficace sur le long terme.<br><br>'+
 '<b>C\'est quoi un ETF World ?</b> Un fonds qui contient les 1500 plus grosses entreprises mondiales (Apple, Google, LVMH...). Tu investis dans le monde entier en un seul clic.'
-},{t:25000,l:'$25K',e:'🥈',tip:'<b>Objectif : diversifier et optimiser fiscalement.</b><br><br>'+
+},{t:25000,l:'$25K',e:'🥈',expert:[
+'Ouvrir une assurance-vie (Linxea Spirit 2, Lucya Cardif) — prendre date pour les 8 ans',
+'ETF MSCI World en DCA sur PEA ($300-500/mois)',
+'Assurance-vie fonds euros pour la partie sécurisée',
+'Créer la micro-entreprise si revenus prop firm réguliers',
+'Commencer à tracker chaque dépense dans Capital Budget'
+],tip:'<b>Objectif : diversifier et optimiser fiscalement.</b><br><br>'+
 '<b>Tu as $25K</b> = tu génères des revenus réguliers. C\'est le moment de prendre date sur les enveloppes fiscales.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. <b>Ouvre une assurance-vie</b> (Linxea Spirit 2, Lucya Cardif) → prend date pour l\'avantage fiscal dans 8 ans<br>'+
@@ -592,7 +671,13 @@ var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois d
 '<b>Pourquoi l\'assurance-vie maintenant ?</b> L\'avantage fiscal démarre à 8 ans d\'ancienneté. Plus tu ouvres tôt, plus tu profiteras de l\'abattement.<br><br>'+
 '<b>Pourquoi la micro-entreprise ?</b> Si tes payouts prop firm sont réguliers (>$500/mois), tu DOIS les déclarer. La micro est le plus simple : 22% de cotisations + abattement 34% sur l\'IR.<br><br>'+
 '<b>Erreur classique :</b> Ne pas déclarer ses revenus prop firm. L\'URSSAF peut te redresser sur 3 ans + majorations.'
-},{t:50000,l:'$50K',e:'🥇',tip:'<b>Objectif : structure juridique et optimisation.</b><br><br>'+
+},{t:50000,l:'$50K',e:'🥇',expert:[
+'Étudier le passage en société (SASU) — utilise le simulateur fiscal Capital',
+'Consulter un expert-comptable spécialisé trading (budget 1 000-2 000€/an)',
+'Comparer micro vs SASU avec le simulateur : au-delà de ~35K€ la SASU gagne',
+'Ouvrir un PER si TMI ≥ 30% (déduction immédiate du revenu imposable)',
+'Étudier le LMNP pour un premier investissement immobilier'
+],tip:'<b>Objectif : structure juridique et optimisation.</b><br><br>'+
 '<b>Tu as $50K</b> = tes revenus trading sont significatifs. Il est TEMPS de structurer.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. <b>Prends RDV avec un expert-comptable</b> spécialisé en trading (budget : 1000-2000€/an)<br>'+
@@ -604,7 +689,13 @@ var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois d
 '• <b>SASU</b> : IS 15% jusqu\'à 42.5K€, flat tax 30% sur dividendes. Idéal si CA > 40K€ ou si tu veux optimiser (salaire + dividendes).<br>'+
 '→ Utilise le simulateur fiscal d\'Aurum Capital pour comparer !<br><br>'+
 '<b>Pourquoi un expert-comptable ?</b> À $50K+ de revenus, une erreur fiscale peut coûter des milliers d\'euros. L\'expert-comptable se paye en économies d\'impôts.'
-},{t:100000,l:'$100K',e:'💎',tip:'<b>Objectif : société et immobilier.</b><br><br>'+
+},{t:100000,l:'$100K',e:'💎',expert:[
+'Création SASU si pas déjà fait — quasi obligatoire à ce niveau',
+'Stratégie rémunération : salaire minimum + dividendes flat tax 30%',
+'Premier investissement immobilier (SCI ou LMNP)',
+'Remplir le PEA vers le plafond de 150K€',
+'Allocation cible : 60% trading, 20% ETF, 10% immo, 10% cash'
+],tip:'<b>Objectif : société et immobilier.</b><br><br>'+
 '<b>Tu as $100K</b> = tu es dans le top 5% des traders rentables. Ta structure doit suivre.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. <b>Crée ta SASU</b> si pas déjà fait — c\'est quasi obligatoire à ce niveau<br>'+
@@ -617,7 +708,13 @@ var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois d
 '• Le reste en dividendes (flat tax 30%, pas de cotisations sociales)<br>'+
 '• Résultat : tu payes ~25-30% d\'impôt au total au lieu de 45%+<br><br>'+
 '<b>SCI : pour qui ?</b> Si tu veux acheter de l\'immobilier via ta société. Permet d\'amortir le bien (réduire l\'impôt) et de séparer patrimoine perso/pro.'
-},{t:250000,l:'$250K',e:'👑',tip:'<b>Objectif : holding et diversification géographique.</b><br><br>'+
+},{t:250000,l:'$250K',e:'👑',expert:[
+'Création holding SAS au-dessus de la SASU opérationnelle',
+'Mise en place du régime mère-fille (95% exonération dividendes)',
+'Convention de trésorerie entre holding et filiales',
+'Diversification géographique : ETF internationaux, SCPI européennes',
+'Engager un gestionnaire de patrimoine (1 000-2 000€/an)'
+],tip:'<b>Objectif : holding et diversification géographique.</b><br><br>'+
 '<b>Tu as $250K</b> = tu construis un vrai patrimoine. C\'est le moment de la holding.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. <b>Crée une holding</b> au-dessus de ta SASU (holding + filiale opérationnelle)<br>'+
@@ -631,7 +728,13 @@ var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois d
 '• Tu peux avoir plusieurs filiales (trading, immo, conseil...)<br>'+
 '• Optimisation fiscale massive sur le long terme<br><br>'+
 '<b>Quand la holding devient rentable ?</b> Dès que tu as 2 sources de revenus >50K€ chacune, ou un résultat >100K€.'
-},{t:500000,l:'$500K',e:'🏰',tip:'<b>Objectif : multi-structures et international.</b><br><br>'+
+},{t:500000,l:'$500K',e:'🏰',expert:[
+'Holding opérationnelle avec cash pooling entre entités',
+'Lancer un 2ème business (formation, conseil, copytrading) via une filiale',
+'Étudier la fiscalité internationale avec un avocat fiscaliste',
+'Assurance homme-clé pour protéger ta famille',
+'Private equity : investir 5-10% dans des startups ou FCPR'
+],tip:'<b>Objectif : multi-structures et international.</b><br><br>'+
 '<b>Tu as $500K</b> = tu es un entrepreneur patrimonial. Chaque décision fiscale a un impact de dizaines de milliers d\'euros.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. <b>Holding opérationnelle</b> avec convention de trésorerie (cash pooling entre entités)<br>'+
@@ -642,7 +745,13 @@ var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois d
 '<b>Cash pooling :</b> Ta holding prête de l\'argent à tes filiales (et inversement). C\'est un outil puissant pour optimiser la trésorerie du groupe.<br><br>'+
 '<b>2ème business :</b> Tu as un edge en trading → monétise-le. Formation, signaux, coaching. Revenu passif qui ne dépend pas du marché.<br><br>'+
 '<b>Attention international :</b> Ne déménage JAMAIS ta résidence fiscale sans un avocat fiscaliste. Exit tax, conventions fiscales, ruling... les pièges sont partout.'
-},{t:1000000,l:'$1M',e:'🏆',tip:'<b>Objectif : family office et protection du patrimoine.</b><br><br>'+
+},{t:1000000,l:'$1M',e:'🏆',expert:[
+'Family office ou multi-family office pour la gestion déléguée',
+'Assurance-vie luxembourgeoise (triangle de sécurité, pas de plafond)',
+'Planifier la transmission : donation 100K€/enfant tous les 15 ans',
+'Diversification maximale : actions, obligations, immo, PE, or physique',
+'Convention de trésorerie formalisée entre toutes les entités'
+],tip:'<b>Objectif : family office et protection du patrimoine.</b><br><br>'+
 '<b>Tu es millionnaire.</b> Le jeu change : il ne s\'agit plus de gagner mais de PROTÉGER et faire croître.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. <b>Family office</b> : engage un gestionnaire dédié (ou multi-family office)<br>'+
@@ -653,7 +762,13 @@ var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois d
 '<b>Assurance vie luxembourgeoise :</b> Le "super coffre-fort" des riches. Triangle de sécurité (tes actifs sont séparés de l\'assureur), pas de plafond, multi-devises, multi-supports.<br><br>'+
 '<b>Pourquoi un family office ?</b> À $1M+, tu as 5-10 entités, 3 types d\'investissements, 2 pays. Gérer seul = erreurs. Un gestionnaire dédié surveille tout et t\'alerte.<br><br>'+
 '<b>Transmission :</b> Tu peux donner 100K€ par enfant tous les 15 ans en franchise d\'impôt. Commence tôt = optimisation massive.'
-},{t:5000000,l:'$5M',e:'🚀',tip:'<b>Objectif : gestion déléguée et impact.</b><br><br>'+
+},{t:5000000,l:'$5M',e:'🚀',expert:[
+'Banque privée (UBS, Lombard Odier, Pictet) pour produits exclusifs',
+'Philanthropie stratégique : fondation ou fonds de dotation (réduction IR 66%, IS 60%)',
+'Club deals : co-investissement immobilier ou PE avec d\'autres UHNW',
+'Audit fiscal complet de toute la structure chaque année',
+'Management packages dans tes sociétés (BSPCE, AGA)'
+],tip:'<b>Objectif : gestion déléguée et impact.</b><br><br>'+
 '<b>Tu as $5M.</b> Le trading représente probablement <30% de ton patrimoine. Ta stratégie est maintenant patrimoniale.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. <b>Multi-family office</b> ou banque privée (UBS, Lombard Odier, Pictet)<br>'+
@@ -663,7 +778,13 @@ var ML=[{t:5000,l:'$5K',e:'🌱',tip:'<b>Objectif : fonds d\'urgence de 3 mois d
 '5. <b>Audit fiscal complet</b> de toute ta structure chaque année<br><br>'+
 '<b>Banque privée :</b> À $5M+, tu accèdes à des produits exclusifs (fonds fermés, private equity, structured products). Le coût (~1%/an) est compensé par l\'accès.<br><br>'+
 '<b>Philanthropie stratégique :</b> Créer une fondation te permet de réduire tes impôts tout en ayant un impact social. Win-win.'
-},{t:10000000,l:'$10M',e:'🌍',tip:'<b>Objectif : wealth planning multi-juridictionnel.</b><br><br>'+
+},{t:10000000,l:'$10M',e:'🌍',expert:[
+'Structures multi-juridictionnelles (2-3 pays) avec avocat international',
+'Trust ou fondation de droit étranger pour la protection des actifs',
+'Wealth planning sur 30 ans : transmission, donation-partage, démembrement',
+'Actifs tangibles non corrélés : art, vin, métaux précieux, forêts',
+'Équipe dédiée : avocat, comptable, banquier, assureur, notaire'
+],tip:'<b>Objectif : wealth planning multi-juridictionnel.</b><br><br>'+
 '<b>Tu as $10M+.</b> Tu fais partie du top 0.1%. Chaque structure doit être mondiale.<br><br>'+
 '<b>Actions concrètes :</b><br>'+
 '1. <b>Multi-juridictionnel</b> : structures dans 2-3 pays optimisés (avec avocat international)<br>'+
@@ -711,6 +832,13 @@ card+='<div style="font-size:11px;color:var(--green);margin-top:5px;font-weight:
 card+='<div style="font-size:11px;margin-top:5px"><span style="color:var(--gold);font-weight:700">Reste : '+fm(m.t-nw)+'</span></div>';
 }
 card+='<div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.6">'+m.tip+'</div>';
+/* Expert tips */
+if(m.expert&&m.expert.length){
+card+='<div style="margin-top:10px;padding:10px 12px;background:linear-gradient(135deg,rgba(212,160,23,.06),rgba(167,139,250,.04));border:1px solid rgba(212,160,23,.15);border-radius:8px">';
+card+='<div style="font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Conseils experts</div>';
+card+=m.expert.map(function(tip){return'<div style="font-size:10px;color:var(--t2);line-height:1.5;padding:3px 0;display:flex;gap:6px"><span style="color:var(--gold);flex-shrink:0">\u2192</span><span>'+tip+'</span></div>'}).join('');
+card+='</div>';
+}
 if(!ok&&ACT[m.t]){
 card+='<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">'+ACT[m.t]+'</div>';
 }
@@ -781,7 +909,7 @@ var sel=document.getElementById('en-p');var hl=D.entities.filter(function(e){ret
 var act=D.entities.filter(function(e){return e.status==='Active'||e.status==='En cr\u00e9ation'});var tCA=0,tR=0,tT=0,tD=0,tRm=0;act.forEach(function(e){tCA+=e.ca||0;tR+=e.resultat||0;tT+=e.tresorerie||0;tD+=e.dividendes||0;tRm+=e.remuneration||0});
 document.getElementById('enKPI').innerHTML=kp('Entit\u00e9s',act.length,'var(--purple)')+kp('CA total',fm(tCA),'var(--green)')+kp('R\u00e9sultat',fm(tR),tR>=0?'var(--green)':'var(--red)')+kp('Tr\u00e9sorerie',fm(tT),'var(--blue)')+kp('Dividendes',fm(tD),'var(--gold)')+kp('R\u00e9mun.',fm(tRm),'var(--purple)');
 /* Alerts */
-var al=[];D.entities.forEach(function(e){if(e.status!=='Active')return;if((e.forme==='Micro-entreprise')&&e.ca>0){var p=(e.ca/77700)*100;if(p>=80)al.push('\u26a0 <b>'+e.name+'</b> : CA \u00e0 '+Math.round(p)+'% du plafond micro. Anticipe SASU/EURL.')}if(e.resultat<0)al.push('\ud83d\udd34 <b>'+e.name+'</b> : r\u00e9sultat n\u00e9gatif.');if(e.tresorerie<1000&&e.ca>10000)al.push('\ud83d\udcb0 <b>'+e.name+'</b> : tr\u00e9sorerie faible.')});
+var al=[];D.entities.forEach(function(e){if(e.status!=='Active')return;if((e.forme==='Micro-entreprise')&&e.ca>0){var p=(e.ca/77700)*100;if(p>=90)al.push('\ud83d\udea8 <b>'+e.name+'</b> : CA \u00e0 '+Math.round(p)+'% du plafond micro-BNC (77\u202f700\u20ac). <b>Passage en soci\u00e9t\u00e9 urgent !</b>');else if(p>=80)al.push('\u26a0 <b>'+e.name+'</b> : CA \u00e0 '+Math.round(p)+'% du plafond micro-BNC (77\u202f700\u20ac). Anticipe le passage en SASU/EURL.')}if(e.resultat<0)al.push('\ud83d\udd34 <b>'+e.name+'</b> : r\u00e9sultat n\u00e9gatif.');if(e.tresorerie<1000&&e.ca>10000)al.push('\ud83d\udcb0 <b>'+e.name+'</b> : tr\u00e9sorerie faible.')});
 var eCA=D.entities.filter(function(e){return e.status==='Active'&&e.ca>50000});var hH=D.entities.some(function(e){return e.forme==='Holding'&&e.status==='Active'});
 if(eCA.length>=2&&!hH)al.push('\ud83c\udfdb '+eCA.length+' entit\u00e9s CA>50K. <b>Holding recommand\u00e9e</b>.');
 if(tR>100000&&!hH)al.push('\ud83c\udfdb R\u00e9sultat >100K. <b>Holding pour r\u00e9gime m\u00e8re-fille</b>.');
@@ -793,55 +921,101 @@ document.getElementById('enC').innerHTML=h;
 /* Comparison */
 if(D.entities.length>=2){var cH2='<table><thead><tr><th>Entit\u00e9</th><th>Forme</th><th>CA</th><th>R\u00e9sultat</th><th>Marge</th><th>Tr\u00e9so</th></tr></thead><tbody>';D.entities.filter(function(e){return e.status==='Active'}).forEach(function(e){var mg=e.ca>0?Math.round((e.resultat/e.ca)*100):0;cH2+='<tr><td style="font-weight:600;color:var(--t1)">'+e.name+'</td><td>'+e.forme+'</td><td class="mn ps">'+fm(e.ca)+'</td><td class="mn '+(e.resultat>=0?'ps':'ng')+'">'+fm(e.resultat)+'</td><td class="mn">'+ mg+'%</td><td class="mn" style="color:var(--blue)">'+fm(e.tresorerie)+'</td></tr>'});cH2+='</tbody></table>';document.getElementById('enComp').innerHTML=cH2}else{document.getElementById('enComp').innerHTML='<div style="font-size:11px;color:var(--t3);padding:8px">2+ entit\u00e9s pour comparer.</div>'}
 /* Guide */
-document.getElementById('stCo').innerHTML='<div style="display:grid;gap:10px">'
-    +'<div class="crd" style="padding:14px;border-left:4px solid var(--green)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:var(--green);font-size:13px">\ud83d\udfe2 Micro-entreprise</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(0,214,143,.1);color:var(--green);font-weight:700">SIMPLE</span></div>'
-      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">Abattement forfaitaire 34%. Pas de TVA sous 36\u202f800\u20ac. Cotisations ~22%.</div>'
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Z\u00e9ro compta \u2022 Cr\u00e9ation gratuite \u2022 CFE r\u00e9duite</div>'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>Plafond 77\u202f600\u20ac \u2022 Pas de d\u00e9duction charges \u2022 Cotis. sur CA</div>'
+/* ── Comparateur de statuts enrichi ── */
+document.getElementById('stCo').innerHTML='<div style="display:grid;gap:12px">'
+    /* ── Micro-entreprise ── */
+    +'<div class="crd" style="padding:16px;border-left:4px solid var(--green)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--green);font-size:13px">\ud83d\udfe2 Micro-entreprise</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(0,214,143,.1);color:var(--green);font-weight:700">SIMPLE</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>Fiscalit\u00e9 :</b> Micro-BNC abattement forfaitaire 34%, puis IR au bar\u00e8me progressif.<br><b>Cotisations :</b> 22% du CA (URSSAF) — pas de bulletin de paie, pas de charges patronales.<br><b>Plafond :</b> 77\u202f700\u20ac/an (BNC & BIC services) \u2022 188\u202f700\u20ac (BIC vente).</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+        +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Simplicit\u00e9 maximale, pas de bilan comptable<br>\u2022 Cr\u00e9ation gratuite en ligne (URSSAF)<br>\u2022 CFE ~500-1\u202f500\u20ac/an<br>\u2022 Franchise TVA si CA &lt; 36\u202f800\u20ac<br>\u2022 Pas de comptable obligatoire</div>'
+        +'<div style="padding:8px 10px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--red)">\u2717 Limites</b><br>\u2022 Pas de d\u00e9duction de charges r\u00e9elles<br>\u2022 Plafond CA (77\u202f700\u20ac)<br>\u2022 Pas de dividendes possibles<br>\u2022 Cotisations calcul\u00e9es sur le CA (pas le b\u00e9n\u00e9fice)<br>\u2022 Pas de holding possible</div>'
       +'</div>'
-      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si CA &lt; 77\u202f600\u20ac et d\u00e9marrage</div>'
+      +'<div style="font-size:10px;padding:6px 10px;background:rgba(167,139,250,.06);border-radius:6px;color:var(--purple);font-weight:600">\ud83c\udfaf Id\u00e9al : d\u00e9but d\u2019activit\u00e9, CA &lt; 50K\u20ac/an, peu de charges d\u00e9ductibles</div>'
     +'</div>'
-    +'<div class="crd" style="padding:14px;border-left:4px solid var(--purple)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:var(--purple);font-size:13px">\ud83d\udfe1 SASU / SAS</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:700">MOYEN</span></div>'
-      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">IS 15% (jusqu\u2019\u00e0 42\u202f500\u20ac) puis 25%. Flat tax 30% sur dividendes. Z\u00e9ro cotis. sur dividendes.</div>'
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Optimisation fiscale \u2022 D\u00e9duction charges \u2022 Cr\u00e9dibilit\u00e9</div>'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>Comptabilit\u00e9 obligatoire \u2022 Co\u00fbt cr\u00e9ation ~500\u20ac \u2022 Formalisme</div>'
+    /* ── SASU ── */
+    +'<div class="crd" style="padding:16px;border-left:4px solid var(--purple)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--purple);font-size:13px">\ud83d\udfe3 SASU / SAS</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(167,139,250,.1);color:var(--purple);font-weight:700">RECOMMAND\u00c9</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>Fiscalit\u00e9 :</b> IS 15% \u2264 42\u202f500\u20ac, puis 25%. Dividendes flat tax 30% (PFU).<br><b>Cotisations :</b> ~65% sur r\u00e9mun\u00e9ration du pr\u00e9sident. <b>0\u20ac si pas de salaire</b> (dividendes uniquement).<br><b>Avantage cl\u00e9 :</b> optimisation salaire/dividendes pour minimiser l\u2019imposition totale.</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+        +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Responsabilit\u00e9 limit\u00e9e au capital<br>\u2022 D\u00e9duction de toutes les charges r\u00e9elles<br>\u2022 Optimisation salaire + dividendes<br>\u2022 Compatible holding (r\u00e9gime m\u00e8re-fille)<br>\u2022 Z\u00e9ro cotisations sur dividendes</div>'
+        +'<div style="padding:8px 10px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--red)">\u2717 Limites</b><br>\u2022 Comptabilit\u00e9 obligatoire (1\u202f500-3\u202f000\u20ac/an)<br>\u2022 Charges sociales \u00e9lev\u00e9es sur le salaire (~65%)<br>\u2022 Co\u00fbt de cr\u00e9ation ~500\u20ac<br>\u2022 Formalisme juridique (AG, PV, d\u00e9p\u00f4t des comptes)<br>\u2022 CFE + CVAE si CA important</div>'
       +'</div>'
-      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si CA &gt; 77K\u20ac ou optimisation dividendes</div>'
+      +'<div style="font-size:10px;padding:6px 10px;background:rgba(167,139,250,.06);border-radius:6px;color:var(--purple);font-weight:600">\ud83c\udfaf Id\u00e9al : CA 50K-250K\u20ac/an, trader r\u00e9gulier, optimisation fiscale</div>'
     +'</div>'
-    +'<div class="crd" style="padding:14px;border-left:4px solid var(--blue)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:var(--blue);font-size:13px">\ud83d\udfe1 SARL / EURL</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:700">MOYEN</span></div>'
-      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">TNS ~45% cotis. Cotisations sur dividendes &gt; 10% du capital. Protection patrimoine.</div>'
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Moins cher si petite r\u00e9mun. \u2022 Bonne retraite TNS \u2022 Souple</div>'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>Cotis. \u00e9lev\u00e9es \u2022 Dividendes co\u00fbteux \u2022 Moins flexible</div>'
+    /* ── EURL ── */
+    +'<div class="crd" style="padding:16px;border-left:4px solid var(--blue)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--blue);font-size:13px">\ud83d\udfe1 EURL / SARL</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(91,141,239,.1);color:var(--blue);font-weight:700">ALTERNATIF</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>Fiscalit\u00e9 :</b> IS ou IR au choix (IR possible 5 premi\u00e8res ann\u00e9es).<br><b>Cotisations :</b> TNS ~45% (moins cher que salari\u00e9, mais protection moindre).<br><b>Attention :</b> dividendes &gt; 10% du capital = soumis aux cotisations TNS.</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+        +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Responsabilit\u00e9 limit\u00e9e<br>\u2022 Cotisations TNS moins ch\u00e8res (~45% vs ~65%)<br>\u2022 Meilleure protection retraite TNS<br>\u2022 Choix IR ou IS<br>\u2022 Souplesse de gestion</div>'
+        +'<div style="padding:8px 10px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--red)">\u2717 Limites</b><br>\u2022 Cotisations minimales ~1\u202f100\u20ac/an m\u00eame sans revenu<br>\u2022 Dividendes &gt; 10% capital = cotisations TNS<br>\u2022 Moins flexible qu\u2019une SASU<br>\u2022 Comptabilit\u00e9 obligatoire<br>\u2022 Statut TNS = pas de ch\u00f4mage</div>'
       +'</div>'
-      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si petite r\u00e9mun\u00e9ration + couverture sociale</div>'
+      +'<div style="font-size:10px;padding:6px 10px;background:rgba(167,139,250,.06);border-radius:6px;color:var(--purple);font-weight:600">\ud83c\udfaf Id\u00e9al : revenus r\u00e9guliers, besoin de couverture sociale solide, faible distribution de dividendes</div>'
     +'</div>'
-    +'<div class="crd" style="padding:14px;border-left:4px solid #f5d060">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:#f5d060;font-size:13px">\ud83d\udfe0 Holding</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(255,71,87,.1);color:var(--red);font-weight:700">COMPLEXE</span></div>'
-      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">R\u00e9gime m\u00e8re-fille : 95% exon\u00e9ration. Convention de tr\u00e9sorerie. Cash pooling.</div>'
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Optimisation groupe \u2022 R\u00e9investissement \u2022 Transmission</div>'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>Co\u00fbt 2-3K\u20ac + 1.5K\u20ac/an \u2022 Complexe \u2022 Expert-comptable</div>'
+    /* ── Holding ── */
+    +'<div class="crd" style="padding:16px;border-left:4px solid var(--gold)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--gold);font-size:13px">\ud83c\udfdb Holding SAS</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(255,71,87,.1);color:var(--red);font-weight:700">AVANC\u00c9</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>R\u00e9gime m\u00e8re-fille :</b> 95% des dividendes remontent exon\u00e9r\u00e9s d\u2019imp\u00f4t. Imp\u00f4t effectif : ~1,25%.<br><b>Convention de tr\u00e9sorerie :</b> pr\u00eats intra-groupe (cash pooling).<br><b>Transmission :</b> d\u00e9membrement de parts, pacte Dutreil, donation progressive.</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+        +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Optimisation fiscale du groupe<br>\u2022 R\u00e9investissement sans imp\u00f4t perso<br>\u2022 Protection des actifs<br>\u2022 Multi-filiales (trading, immo, conseil)<br>\u2022 Transmission optimis\u00e9e</div>'
+        +'<div style="padding:8px 10px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--red)">\u2717 Limites</b><br>\u2022 Cr\u00e9ation ~2\u202f000\u20ac<br>\u2022 Comptabilit\u00e9 2\u202f000-3\u202f000\u20ac/an<br>\u2022 Expert-comptable indispensable<br>\u2022 Complexit\u00e9 administrative<br>\u2022 Pas rentable si dividendes &lt; 20K\u20ac/an</div>'
       +'</div>'
-      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si 2+ entit\u00e9s ou dividendes &gt; 20K\u20ac/an</div>'
+      +'<div style="font-size:10px;padding:6px 10px;background:rgba(167,139,250,.06);border-radius:6px;color:var(--purple);font-weight:600">\ud83c\udfaf Id\u00e9al : 2+ entit\u00e9s, r\u00e9sultat &gt; 50-80K\u20ac, r\u00e9investissement, strat\u00e9gie patrimoniale</div>'
     +'</div>'
-    +'<div class="crd" style="padding:14px;border-left:4px solid var(--green)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><b style="color:var(--green);font-size:13px">\ud83d\udfe0 SCI</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:700">MOYEN</span></div>'
-      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">Immobilier. IR ou IS au choix. Amortissement si IS. Transmission de parts.</div>'
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px"><b style="color:var(--green)">\u2713 Avantages</b><br>Gestion patrimoine immo \u2022 Transmission facile \u2022 Flexible</div>'
-        +'<div style="flex:1;min-width:120px;padding:6px 8px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px"><b style="color:var(--red)">\u2717 Limites</b><br>R\u00e9serv\u00e9e immobilier \u2022 Compta si IS \u2022 Formalisme</div>'
+    /* ── SCI ── */
+    +'<div class="crd" style="padding:16px;border-left:4px solid var(--green)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--green);font-size:13px">\ud83c\udfe0 SCI</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:700">IMMOBILIER</span></div>'
+      +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>Fiscalit\u00e9 :</b> IR ou IS au choix. L\u2019IS permet d\u2019amortir le bien (r\u00e9duit l\u2019imp\u00f4t).<br><b>Transmission :</b> donation de parts avec d\u00e9cote (~15-20%). D\u00e9membrement possible.<br><b>Gestion :</b> s\u00e9paration patrimoine perso/professionnel. Multi-associ\u00e9s.</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+        +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Gestion patrimoine immobilier<br>\u2022 Transmission facilit\u00e9e<br>\u2022 Amortissement si IS<br>\u2022 S\u00e9paration des patrimoines<br>\u2022 Multi-biens dans une structure</div>'
+        +'<div style="padding:8px 10px;background:rgba(255,71,87,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--red)">\u2717 Limites</b><br>\u2022 R\u00e9serv\u00e9e \u00e0 l\u2019immobilier<br>\u2022 Comptabilit\u00e9 obligatoire si IS<br>\u2022 Plus-value IS = amortissements repris<br>\u2022 Pas de d\u00e9duction d\u00e9ficit sur IR (si IS)<br>\u2022 2 associ\u00e9s minimum</div>'
       +'</div>'
-      +'<div style="margin-top:6px;font-size:10px;padding:4px 8px;background:rgba(167,139,250,.06);border-radius:4px;color:var(--purple);font-weight:600">\ud83c\udfaf Recommand\u00e9 si investissement immobilier</div>'
+      +'<div style="font-size:10px;padding:6px 10px;background:rgba(167,139,250,.06);border-radius:6px;color:var(--purple);font-weight:600">\ud83c\udfaf Id\u00e9al : investissement immobilier locatif, transmission, multi-biens</div>'
     +'</div>'
   +'</div>';
 /* Holding advisor */
-var adv='';if(hH){var he=D.entities.find(function(e){return e.forme==='Holding'&&e.status==='Active'});var fi=D.entities.filter(function(e){return e.parent===(he&&he.id)});adv='<b style="color:var(--green)">\u2713 Holding active : '+(he?he.name:'')+'</b> ('+fi.length+' filiales)<br><br><b>Optimisations :</b><br>\u2192 Convention tr\u00e9sorerie (pr\u00eats intra-groupe)<br>\u2192 Management fees<br>\u2192 Int\u00e9gration fiscale si \u2265 95%<br>\u2192 Cash pooling'}else if(D.entities.length){adv='<b>Signaux :</b> 2+ entit\u00e9s, r\u00e9sultat &gt; 100K\u20ac, r\u00e9investissement, transmission.<br><b>Co\u00fbt :</b> ~2-3K\u20ac cr\u00e9ation + ~1.5K\u20ac/an compta.<br><b>Rentable :</b> \u00e0 partir ~20K\u20ac/an dividendes.'}else{adv='Cr\u00e9e une entit\u00e9 pour d\u00e9bloquer.'}document.getElementById('enHoldAdv').innerHTML=adv;
+/* ── Guide holding enrichi ── */
+var adv='';
+if(hH){
+  var he=D.entities.find(function(e){return e.forme==='Holding'&&e.status==='Active'});
+  var fi=D.entities.filter(function(e){return e.parent===(he&&he.id)});
+  adv='<div style="padding:12px;background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.15);border-radius:8px;margin-bottom:12px">'
+    +'<b style="color:var(--green);font-size:12px">\u2713 Holding active : '+(he?he.name:'')+'</b> <span style="color:var(--t3)">('+fi.length+' filiale'+(fi.length>1?'s':'')+')</span></div>'
+    +'<div style="font-size:11px;line-height:1.8"><b style="color:var(--gold)">Optimisations disponibles :</b><br>'
+    +'\u2192 <b>Convention de tr\u00e9sorerie</b> : pr\u00eats intra-groupe (cash pooling entre entit\u00e9s)<br>'
+    +'\u2192 <b>Management fees</b> : facturation de services de la holding aux filiales (d\u00e9ductible)<br>'
+    +'\u2192 <b>Int\u00e9gration fiscale</b> : si d\u00e9tention \u2265 95%, les r\u00e9sultats se compensent entre entit\u00e9s<br>'
+    +'\u2192 <b>R\u00e9investissement</b> : les dividendes restent dans la holding (imp\u00f4t effectif ~1,25%)<br>'
+    +'\u2192 <b>Transmission</b> : d\u00e9membrement des parts de la holding (donation nue-propri\u00e9t\u00e9)</div>';
+}else if(D.entities.length){
+  adv='<div style="display:grid;gap:10px">'
+    /* Le principe */
+    +'<div style="padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--gold)">'
+    +'<b style="color:var(--gold);font-size:11px">\ud83c\udfdb LE PRINCIPE</b>'
+    +'<div style="font-size:10px;color:var(--t2);line-height:1.7;margin-top:4px">La holding d\u00e9tient les parts de tes soci\u00e9t\u00e9s op\u00e9rationnelles. Les dividendes remontent avec le <b>r\u00e9gime m\u00e8re-fille</b> : <b>95% d\u2019exon\u00e9ration</b> (imp\u00f4t effectif = 1,25% au lieu de 30%).<br>La holding peut ensuite r\u00e9investir ces sommes sans que tu aies \u00e0 les sortir en perso.</div></div>'
+    /* Quand c'est pertinent */
+    +'<div style="padding:12px;background:rgba(0,214,143,.04);border-radius:8px;border-left:3px solid var(--green)">'
+    +'<b style="color:var(--green);font-size:11px">\u2713 QUAND C\u2019EST PERTINENT</b>'
+    +'<div style="font-size:10px;color:var(--t2);line-height:1.7;margin-top:4px">\u2022 R\u00e9sultat de ta soci\u00e9t\u00e9 &gt; 50-80K\u20ac/an<br>\u2022 Tu veux r\u00e9investir (immobilier, ETF, 2\u00e8me business)<br>\u2022 Tu as ou pr\u00e9vois 2+ entit\u00e9s<br>\u2022 Strat\u00e9gie de protection des actifs et de transmission</div></div>'
+    /* Quand c'est prématuré */
+    +'<div style="padding:12px;background:rgba(255,71,87,.04);border-radius:8px;border-left:3px solid var(--red)">'
+    +'<b style="color:var(--red);font-size:11px">\u2717 QUAND C\u2019EST PR\u00c9MATUR\u00c9</b>'
+    +'<div style="font-size:10px;color:var(--t2);line-height:1.7;margin-top:4px">\u2022 CA &lt; 50K\u20ac/an<br>\u2022 Tu as besoin de tout en r\u00e9mun\u00e9ration personnelle<br>\u2022 Le co\u00fbt (~2\u202f000\u20ac cr\u00e9ation + 2\u202f000-3\u202f000\u20ac/an compta) d\u00e9passe l\u2019\u00e9conomie<br>\u2022 Tu n\u2019as qu\u2019une seule activit\u00e9 et pas de projet de diversification</div></div>'
+    /* Structure type */
+    +'<div style="padding:12px;background:rgba(167,139,250,.04);border-radius:8px;border-left:3px solid var(--purple)">'
+    +'<b style="color:var(--purple);font-size:11px">\ud83c\udfaf STRUCTURE TYPE TRADER</b>'
+    +'<div style="font-size:10px;color:var(--t2);line-height:1.7;margin-top:4px">'
+    +'<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="padding:4px 8px;background:rgba(212,160,23,.1);border-radius:4px;color:var(--gold);font-weight:700;font-size:10px">\ud83c\udfdb Holding SAS</span><span style="color:var(--t3)">\u2190 d\u00e9tient les parts</span></div>'
+    +'<div style="margin-left:20px;border-left:2px solid var(--border);padding-left:12px;display:grid;gap:4px">'
+    +'<div style="display:flex;align-items:center;gap:6px"><span style="padding:3px 7px;background:rgba(167,139,250,.1);border-radius:4px;color:var(--purple);font-weight:600;font-size:9px">\ud83c\udfe2 SASU op\u00e9rationnelle</span><span style="color:var(--t3);font-size:9px">trading + conseil</span></div>'
+    +'<div style="display:flex;align-items:center;gap:6px"><span style="padding:3px 7px;background:rgba(91,141,239,.1);border-radius:4px;color:var(--blue);font-weight:600;font-size:9px">\ud83c\udfe0 SCI (optionnelle)</span><span style="color:var(--t3);font-size:9px">immobilier locatif</span></div>'
+    +'</div></div></div>'
+    +'</div>';
+}else{
+  adv='<div style="padding:12px;background:var(--bg3);border-radius:8px;font-size:11px;color:var(--t3);text-align:center">Cr\u00e9e une entit\u00e9 pour d\u00e9bloquer le guide holding.</div>';
+}
+document.getElementById('enHoldAdv').innerHTML=adv;
 }catch(e){console.error('rEN:',e)}}
 function rEC2(e){var ih=e.forme==='Holding'||e.forme==='SA';var ico=ih?'\ud83c\udfdb':e.forme==='SCI'?'\ud83c\udfe0':'\ud83c\udfe2';var stC=e.status==='Active'?'rgba(0,214,143,.1);color:var(--green)':e.status==='En cr\u00e9ation'?'rgba(212,160,23,.1);color:var(--gold)':'rgba(255,71,87,.1);color:var(--red)';var mg=e.ca>0?Math.round((e.resultat/e.ca)*100):0;
 return'<div class="ec"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-size:16px">'+ico+'</span><b style="color:var(--t1);font-size:14px">'+e.name+'</b></div><div style="display:flex;flex-wrap:wrap;gap:4px;font-size:10px"><span style="padding:2px 7px;border-radius:4px;background:rgba(167,139,250,.1);color:var(--purple)">'+e.forme+'</span><span style="padding:2px 7px;border-radius:4px;background:rgba(91,141,239,.1);color:var(--blue)">'+e.regime+'</span><span style="padding:2px 7px;border-radius:4px;background:'+stC+'">'+e.status+'</span>'+(e.detention<100?'<span style="padding:2px 7px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold)">'+e.detention+'%</span>':'')+'</div>'+(e.siret?'<div style="font-size:9px;color:var(--t3);margin-top:2px">SIRET '+e.siret+'</div>':'')+(e.activite?'<div style="font-size:9px;color:var(--t3)">'+e.activite+'</div>':'')+(e.gerant?'<div style="font-size:9px;color:var(--t3)">G\u00e9rant: '+e.gerant+'</div>':'')+'</div><div style="display:flex;gap:4px"><button class="btn bo bs" onclick="eENotes(\''+e.id+'\')">\ud83d\udcdd</button><button class="btn br bs" onclick="dEN(\''+e.id+'\')">\u00d7</button></div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px"><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'ca\',\'CA\')"><div style="color:var(--t3)">CA</div><b class="mn" style="color:var(--green);font-size:11px">'+fm(e.ca)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'charges\',\'Charges\')"><div style="color:var(--t3)">Charges</div><b class="mn" style="color:var(--red);font-size:11px">'+fm(e.charges)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'chargesSociales\',\'Ch.sociales\')"><div style="color:var(--t3)">Ch.soc</div><b class="mn" style="color:var(--red);font-size:11px">'+fm(e.chargesSociales||0)+'</b></div><div style="padding:5px;background:var(--bg3);border-radius:5px;text-align:center"><div style="color:var(--t3)">R\u00e9sultat</div><b class="mn" style="color:'+(e.resultat>=0?'var(--green)':'var(--red)')+';font-size:11px">'+fm(e.resultat)+'</b><div style="font-size:8px;color:var(--t3)">'+mg+'%</div></div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px;margin-top:5px"><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'tresorerie\',\'Tr\u00e9so\')"><div style="color:var(--t3)">Tr\u00e9so</div><b class="mn" style="color:var(--blue);font-size:11px">'+fm(e.tresorerie)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'dividendes\',\'Dividendes\')"><div style="color:var(--t3)">Dividendes</div><b class="mn" style="color:var(--gold);font-size:11px">'+fm(e.dividendes)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'remuneration\',\'R\u00e9mun\')"><div style="color:var(--t3)">R\u00e9mun</div><b class="mn" style="color:var(--purple);font-size:11px">'+fm(e.remuneration)+'</b></div><div style="padding:5px;background:var(--bg3);border-radius:5px;text-align:center"><div style="color:var(--t3)">Capital</div><b class="mn" style="color:var(--t2);font-size:11px">'+fm(e.capitalSocial||0)+'</b></div></div>'+(e.notes?'<div style="margin-top:5px;font-size:9px;color:var(--t3);font-style:italic;padding:4px 6px;background:var(--bg3);border-radius:4px;cursor:pointer" onclick="eENotes(\''+e.id+'\')">\ud83d\udcdd '+e.notes+'</div>':'')+'</div>'}
@@ -863,7 +1037,9 @@ function sFi(){try{
       +'<tr><td>IR</td><td class="mn" style="text-align:right;color:var(--red)">'+fE(ir)+'</td></tr>'
       +'<tr><td>URSSAF (~22%)</td><td class="mn" style="text-align:right;color:var(--red)">'+fE(urs)+'</td></tr>'
       +'<tr style="border-top:2px solid var(--border2)"><td style="font-weight:700;color:var(--t1)">Net</td><td class="mn" style="text-align:right;font-weight:700;color:var(--green);font-size:14px">'+fE(net)+'</td></tr>';
-    if(rv>60000)alerte='<div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.2);border-left:3px solid var(--red);font-size:11px;color:var(--t2);line-height:1.6">\u26a0\ufe0f <b style="color:var(--red)">Attention !</b> Tu approches du plafond micro-BNC (77\u202f600\u20ac). Pense \u00e0 passer en <b>SASU + IS</b> pour optimiser ta fiscalit\u00e9.</div>';
+    /* Seuils micro-BNC 2025 : 77 700€ — alerte 80% = 62 160€, alerte rouge 90% = 69 930€ */
+    if(rv>=69930)alerte='<div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.25);border-left:3px solid var(--red);font-size:11px;color:var(--t2);line-height:1.6">\u26a0\ufe0f <b style="color:var(--red)">ALERTE : '+Math.round(rv/77700*100)+'% du plafond micro-BNC (77\u202f700\u20ac) !</b><br>Tu dois anticiper le passage en <b>SASU + IS</b> avant de d\u00e9passer le seuil. Prends RDV avec un expert-comptable.</div>';
+    else if(rv>=62160)alerte='<div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.2);border-left:3px solid var(--gold);font-size:11px;color:var(--t2);line-height:1.6">\u26a0\ufe0f <b style="color:var(--gold)">Attention :</b> tu es \u00e0 '+Math.round(rv/77700*100)+'% du plafond micro-BNC (77\u202f700\u20ac). Commence \u00e0 \u00e9tudier le passage en <b>SASU + IS</b>.</div>';
   }else if(rg==='is'){
     var bn=rv-ch,is2=bn<=42500?bn*.15:42500*.15+(bn-42500)*.25;impot=Math.round(is2);net=Math.round(bn-is2);var netDiv=Math.round((bn-is2)*.7);
     label='IS (Soci\u00e9t\u00e9)';
@@ -895,9 +1071,80 @@ function sFi(){try{
     +'<div style="text-align:center;margin-bottom:14px;padding:12px;background:rgba(0,214,143,.05);border-radius:8px;border:1px solid rgba(0,214,143,.15)"><div style="font-size:28px;font-weight:800;color:var(--green);font-family:JetBrains Mono,monospace">'+pctGarde+'%</div><div style="font-size:12px;color:var(--t2);margin-top:2px">de ton revenu dans ta poche</div></div>'
     +'<table style="width:100%;font-size:12px"><tbody>'+detail+'</tbody></table>'
     +alerte+'</div>';
+  /* Ajout comparaison automatique IS vs IR */
+  h += renderFiscalComparison(rv, ch);
   document.getElementById('fxR').innerHTML=h;
 }catch(e){console.error('sFi:',e)}}
-function cIR(r){try{if(r<=11294)return 0;var i=0;if(r>11294)i+=(Math.min(r,28797)-11294)*.11;if(r>28797)i+=(Math.min(r,82341)-28797)*.30;if(r>82341)i+=(Math.min(r,177106)-82341)*.41;if(r>177106)i+=(r-177106)*.45;return i}catch(e){return 0}}
+/* Barème IR 2025 (revenus 2024) — tranches mises à jour */
+function cIR(revenu) {
+  try {
+    var tranches = [
+      { limit: 11497, rate: 0 },
+      { limit: 29315, rate: 0.11 },
+      { limit: 83823, rate: 0.30 },
+      { limit: 180294, rate: 0.41 },
+      { limit: Infinity, rate: 0.45 }
+    ];
+    var impot = 0, prev = 0;
+    for (var i = 0; i < tranches.length; i++) {
+      var t = tranches[i];
+      var taxable = Math.min(revenu, t.limit) - prev;
+      if (taxable <= 0) break;
+      impot += taxable * t.rate;
+      prev = t.limit;
+    }
+    return Math.round(impot);
+  } catch(e) { return 0 }
+}
+/* Comparaison automatique IS vs IR */
+function renderFiscalComparison(revenu, charges) {
+  try {
+    if (revenu <= 0) return '';
+    var fE = function(v) { return Math.round(v).toLocaleString('fr-FR') + '\u2009\u20ac' };
+    /* Calcul IR */
+    var base_ir = revenu - charges;
+    var ir_amount = cIR(base_ir);
+    var urs_ir = Math.round(revenu * 0.22); /* cotisations micro */
+    var net_ir_micro = Math.round(revenu - cIR(Math.round(revenu * 0.66)) - urs_ir);
+    var net_ir_reel = Math.round(base_ir - ir_amount);
+    /* Calcul IS + Flat Tax */
+    var net_is_base = revenu - charges;
+    var is_amount = net_is_base <= 42500 ? net_is_base * 0.15 : 42500 * 0.15 + (net_is_base - 42500) * 0.25;
+    var after_is = net_is_base - is_amount;
+    var flat_tax = after_is * 0.30;
+    var net_is_final = Math.round(after_is - flat_tax);
+    /* Comparaison */
+    var winner = net_ir_reel > net_is_final ? 'IR bar\u00e8me' : 'IS + Flat Tax';
+    var diff = Math.abs(Math.round(net_ir_reel - net_is_final));
+    var h = '<div style="margin-top:14px;background:linear-gradient(135deg,rgba(167,139,250,.06),rgba(212,160,23,.04));border:1px solid rgba(167,139,250,.15);border-radius:10px;padding:16px">';
+    h += '<div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Comparaison automatique</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+    /* Micro */
+    h += '<div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;border:1px solid var(--border)">';
+    h += '<div style="font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px">Micro-BNC</div>';
+    h += '<div style="font-size:9px;color:var(--t3);margin-bottom:6px">Abattement 34% + URSSAF</div>';
+    h += '<div style="font-size:18px;font-weight:800;color:var(--green);font-family:JetBrains Mono,monospace">' + fE(net_ir_micro) + '</div>';
+    h += '<div style="font-size:9px;color:var(--t3);margin-top:2px">Net en poche</div></div>';
+    /* IR reel */
+    h += '<div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;border:1px solid ' + (winner === 'IR bar\u00e8me' ? 'var(--green)' : 'var(--border)') + '">';
+    h += '<div style="font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px">IR bar\u00e8me</div>';
+    h += '<div style="font-size:9px;color:var(--t3);margin-bottom:6px">Charges d\u00e9duites au r\u00e9el</div>';
+    h += '<div style="font-size:18px;font-weight:800;color:' + (winner === 'IR bar\u00e8me' ? 'var(--green)' : 'var(--t2)') + ';font-family:JetBrains Mono,monospace">' + fE(net_ir_reel) + '</div>';
+    h += '<div style="font-size:9px;color:var(--t3);margin-top:2px">Net en poche</div></div>';
+    /* IS + Flat */
+    h += '<div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;border:1px solid ' + (winner !== 'IR bar\u00e8me' ? 'var(--green)' : 'var(--border)') + '">';
+    h += '<div style="font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px">IS + Flat Tax</div>';
+    h += '<div style="font-size:9px;color:var(--t3);margin-bottom:6px">IS 15/25% + dividendes 30%</div>';
+    h += '<div style="font-size:18px;font-weight:800;color:' + (winner !== 'IR bar\u00e8me' ? 'var(--green)' : 'var(--t2)') + ';font-family:JetBrains Mono,monospace">' + fE(net_is_final) + '</div>';
+    h += '<div style="font-size:9px;color:var(--t3);margin-top:2px">Net en poche</div></div>';
+    h += '</div>';
+    /* Verdict */
+    h += '<div style="margin-top:10px;padding:8px 12px;border-radius:6px;background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.15);font-size:11px;text-align:center">';
+    h += '<b style="color:var(--green)">' + winner + '</b> est plus avantageux de <b style="color:var(--gold);font-family:JetBrains Mono,monospace">' + fE(diff) + '</b>';
+    h += '</div></div>';
+    return h;
+  } catch(e) { return '' }
+}
 function gFC(){try{var n=new Date(),y=n.getFullYear(),it=[];var ev=[{m:1,d:15,n:'Acompte IS'},{m:3,d:31,n:'Décl. résultats'},{m:4,d:15,n:'Acompte IS T1'},{m:5,d:15,n:'Déclaration IR'},{m:6,d:15,n:'Acompte IS T2'},{m:9,d:15,n:'Acompte IR'},{m:10,d:15,n:'Acompte IS T3'},{m:12,d:15,n:'CFE'},{m:4,d:30,n:'TVA T1'},{m:7,d:31,n:'TVA T2'},{m:10,d:31,n:'TVA T3'}];ev.forEach(function(e){var dt=new Date(y,e.m-1,e.d);if(dt<n)dt=new Date(y+1,e.m-1,e.d);it.push({n:e.n,date:dt.toISOString().slice(0,10),d:Math.ceil((dt-n)/(864e5))})});it.sort(function(a,b){return a.d-b.d});return it}catch(e){return[]}}
 function rFi(){try{var c=gFC();document.getElementById('fiC').innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">'+c.map(function(x){
   var urgCol=x.d<=30?'var(--red)':x.d<=60?'var(--gold)':'var(--t3)';
