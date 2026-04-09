@@ -297,7 +297,7 @@ html{scroll-behavior:smooth}
 <body>
 <!-- ═══ TOP BAR ═══ -->
 <nav class="topbar">
-  <a href="Aurum_Hub.html" class="topbar-logo">
+  <a href="Aurum_Hub.html" class="topbar-logo" title="Retour au Hub">
     <svg width="28" height="28" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#d4a017" stroke-width="6"/><text x="50" y="58" text-anchor="middle" fill="#d4a017" font-size="36" font-weight="800" font-family="Inter,sans-serif">A</text></svg>
     <span>Aurum</span>
   </a>
@@ -517,7 +517,7 @@ var EDGE_M=[
 
 // ========== M7: GESTION ==========
 {id:"m7",t:"Gestion du trade",s:"SL, TP, Trailing",ic:"🛡",ls:[{id:"m7l1",t:"Règles de gestion",b:[
-{t:"kp",v:"SL STANDARD : mèche extrême du QM + 50 points\nSL MINIMUM : 250 points\nSL RÉDUIT (si SL standard > 1200 pts) : mèche bougie de cassure + 50 pts\n\nTP = 2× distance du SL (ratio 1:2 fixe)\n\nTRAILING STOP (1 min) : retracement valide (2 bougies consécutives opposées) cassé → SL derrière mèche extrême + 40 pts\n\nAucun break even. Aucun partiel. Aucune fermeture manuelle sauf 21h."}
+{t:"kp",v:"SL STANDARD : mèche extrême du QM + 50 points\nSL MINIMUM : 250 points\nSL MAXIMUM : 1200 points\nSL RÉDUIT (si SL standard > 1000 pts) : mèche bougie de cassure + 50 pts\n\nTP = 2× distance du SL (ratio 1:2 fixe)\n\nTRAILING STOP (1 min) : retracement valide (2 bougies consécutives opposées) cassé → SL derrière mèche extrême + 40 pts\n\nAucun break even. Aucun partiel. Aucune fermeture manuelle sauf 21h."}
 ]}],q:[
 {q:"SL standard = mèche extrême + ...",o:["25 pts","40 pts","50 pts"],a:2},
 {q:"SL minimum :",o:["100","200","250","500"],a:2},
@@ -526,15 +526,16 @@ var EDGE_M=[
 {q:"Marge trailing :",o:["50 pts","40 pts","30 pts"],a:1},
 {q:"Break even :",o:["À 1R","À 50%","Jamais"],a:2},
 {q:"Partiels :",o:["50% à 1R","Jamais","25% tous les 200 pts"],a:1},
-{q:"SL réduit quand SL standard > ...",o:["800","1000","1200"],a:2},
+{q:"SL réduit quand SL standard > ...",o:["800","1000","1200"],a:1},
 {q:"Fermeture manuelle autorisée :",o:["Oui","Non sauf 21h","Oui à BE"],a:1},
-{q:"SL = 280 pts. Autorisé ?",o:["Oui (> 250 minimum)","Non (doit être 300 minimum)"],a:0}
+{q:"SL = 280 pts. Autorisé ?",o:["Oui (> 250 minimum)","Non (doit être 300 minimum)"],a:0},
+{q:"SL calculé = 1350 pts. Action ?",o:["On entre avec ce SL","SL max 1200 pts → setup trop étiré, on skip","On réduit le SL manuellement"],a:1}
 ]},
 
 // ========== M8: CHECKLIST ==========
 {id:"m8",t:"La Checklist",s:"Séquence complète",ic:"✅",ls:[{id:"m8l1",t:"Tout assembler",b:[
 {t:"kp",v:"CHECKLIST SELL :\n1. Direction baissière confirmée (5 min)\n2. Liquidité baissière identifiée (5 min)\n3. Prix touche la liquidité → passage immédiat en 1 min\n4. Vérifier : direction 5 min toujours baissière\n5. QM baissier sur 1 min (ou variante gaps si > 1200 pts)\n6. Entrée sell à la clôture de la dernière cassure\n7. SL + TP placés\n8. Trailing stop actif\n\nBUY = miroir exact."},
-{t:"kp",v:"FILTRES :\n• Pas de trade 5 min avant/après news rouges USD\n• Perte -4% jour → fin de journée\n• Gain +8% jour → fin de journée\n• Tout fermé 21h max\n• Jamais overnight ni week-end\n• 1 seul trade à la fois"}
+{t:"kp",v:"FILTRES :\n• Pas de trade 5 min avant/après news rouges USD\n• Perte -4% jour → fin de journée\n• Gain +8% jour → fin de journée\n• Tout fermé 21h max\n• Jamais overnight ni week-end\n• 1 seul trade à la fois, max 4 par jour"}
 ]}],q:[
 {q:"1ère étape :",o:["Liquidité","Direction (5 min)","QM","News"],a:1},
 {q:"Passage en 1 min quand :",o:["Direction trouvée","Liquidité prise","QM formé"],a:1},
