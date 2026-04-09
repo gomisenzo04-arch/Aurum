@@ -694,6 +694,11 @@ function drawNav(){
     var st=isDone?'<span class="mi-s">'+"★".repeat(stars(i))+"☆".repeat(3-stars(i))+'</span>':'';
     var time=MOD_TIME[i]||3;
     h+='<div class="mi'+ac+dn+lk+'" onclick="goMod('+i+')"><div class="mn">'+icon+'</div><div style="flex:1"><div style="font-weight:600;font-size:10px">'+m.t+'</div><div style="font-size:8px;color:var(--t3)">~'+time+' min</div></div>'+st+'</div>';
+    /* Insert sandbox button after last Edge module */
+    if(i===EDGE_M.length-1 && S.d.indexOf(EDGE_M.length-1)>=0){
+      var sbAc=(S.c===EDGE_M.length && !(_sandboxState&&_sandboxState.active))?' ac':'';
+      h+='<div class="mi dn'+sbAc+'" onclick="S.c='+EDGE_M.length+';_sandboxState=null;render();drawNav()" style="border-left:2px solid var(--gold)"><div class="mn">🎯</div><div style="flex:1"><div style="font-weight:600;font-size:10px">Entraînement libre</div><div style="font-size:8px;color:var(--t3)">Pratique sandbox</div></div></div>';
+    }
   });
   document.getElementById('nav').innerHTML=h;
 }
@@ -707,6 +712,12 @@ function drawProg(){
 
 /* ═══ RENDER ROUTER ═══ */
 function render(){
+  /* Sandbox active — full takeover */
+  if (_sandboxState && _sandboxState.active) {
+    rSandboxChart(document.getElementById('ct'));
+    return;
+  }
+
   var mod=ALL_MODS[S.c];
   if(!mod) return;
 
@@ -726,9 +737,19 @@ function render(){
         '</div>'+
         '<div style="font-size:13px;color:var(--t2);margin-bottom:20px;line-height:1.6">La prochaine étape : <b style="color:var(--t1)">ouvre le Journal</b> et enregistre ton premier trade avec la checklist.</div>'+
         '<a href="Aurum.html" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;transition:all .2s">Ouvrir le Journal →</a>'+
-        '<div style="margin-top:16px"><button onclick="goMod(0)" style="background:none;border:1px solid var(--brd2);color:var(--t3);padding:8px 16px;border-radius:8px;font-family:inherit;font-size:11px;cursor:pointer">Revoir les modules</button></div>'+
+        '<div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+
+        '<button onclick="goMod(0)" style="background:none;border:1px solid var(--brd2);color:var(--t3);padding:8px 16px;border-radius:8px;font-family:inherit;font-size:11px;cursor:pointer">Revoir les modules</button>'+
+        '<button onclick="S.c='+EDGE_M.length+';render();drawNav()" style="background:none;border:1px solid var(--brd2);color:var(--t3);padding:8px 16px;border-radius:8px;font-family:inherit;font-size:11px;cursor:pointer">🎯 Entraînement libre</button>'+
+        '</div>'+
         '</div>';
     }
+    return;
+  }
+
+  /* Intermediate screen: Edge complete, before Part 2 */
+  if (S.c === EDGE_M.length && S.d.indexOf(EDGE_M.length - 1) !== -1) {
+    renderEdgeComplete();
+    drawNav();
     return;
   }
 
@@ -1114,6 +1135,678 @@ function renderCapital(ci){
 
   h += '</div>';
   document.getElementById('ct').innerHTML = h;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SANDBOX — Entraînement libre (dans Academy)
+   ═══════════════════════════════════════════════════════ */
+
+var _sandboxState = null;
+var _chartZoom = { offset: 0, zoom: 1 };
+var _chartDrag = { dragging: false, startX: 0, startOffset: 0 };
+var _chartInfo = null;
+
+/* ─── Générateur de bruit gaussien ─── */
+function gaussRand() {
+  try {
+    var u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  } catch(e) { return 0 }
+}
+
+/* ─── Génération d'une bougie réaliste ─── */
+function makeCandle(prevClose, drift, volatility) {
+  try {
+    var vol = volatility || 4;
+    var open = prevClose;
+    var bodySize = Math.abs(gaussRand() * vol * 0.7 + drift);
+    var direction = (Math.random() + drift * 0.3) > 0.5 ? 1 : -1;
+    if (drift > 0.3) direction = Math.random() > 0.25 ? 1 : -1;
+    if (drift < -0.3) direction = Math.random() > 0.25 ? -1 : 1;
+    var close = open + direction * bodySize;
+    var wickUp = Math.abs(gaussRand() * vol * 0.5);
+    var wickDown = Math.abs(gaussRand() * vol * 0.5);
+    var high = Math.max(open, close) + wickUp;
+    var low = Math.min(open, close) - wickDown;
+    return { open: Math.round(open * 100) / 100, high: Math.round(high * 100) / 100, low: Math.round(low * 100) / 100, close: Math.round(close * 100) / 100 };
+  } catch(e) { return { open: prevClose, high: prevClose + 1, low: prevClose - 1, close: prevClose } }
+}
+
+/* ─── Génération de bougies par phases ─── */
+function generateCandles(phases, startPrice) {
+  try {
+    var candles = [];
+    var price = startPrice || 2340;
+    var metadata = { supports: [], resistances: [], liquidities: [], qmLevel: null, entryLevel: null, slLevel: null };
+
+    phases.forEach(function(phase) {
+      var n = phase.candles || 5;
+      var vol = phase.volatility || 4;
+
+      if (phase.type === 'trend') {
+        var dir = phase.direction === 'up' ? 1 : -1;
+        for (var i = 0; i < n; i++) {
+          var drift = dir * (0.4 + Math.random() * 0.3);
+          var c = makeCandle(price, drift, vol);
+          candles.push(c);
+          price = c.close;
+        }
+      } else if (phase.type === 'support') {
+        var bear = makeCandle(price, -0.5, vol);
+        candles.push(bear);
+        price = bear.close;
+        metadata.supports.push({ index: candles.length - 1, level: bear.close });
+        var bull = makeCandle(price, 0.6, vol);
+        candles.push(bull);
+        price = bull.close;
+        for (var si = 2; si < n; si++) {
+          var sc = makeCandle(price, 0.2, vol * 0.7);
+          candles.push(sc);
+          price = sc.close;
+        }
+      } else if (phase.type === 'resistance') {
+        var bullR = makeCandle(price, 0.5, vol);
+        candles.push(bullR);
+        price = bullR.close;
+        metadata.resistances.push({ index: candles.length - 1, level: bullR.close });
+        var bearR = makeCandle(price, -0.6, vol);
+        candles.push(bearR);
+        price = bearR.close;
+        for (var ri = 2; ri < n; ri++) {
+          var rc = makeCandle(price, -0.2, vol * 0.7);
+          candles.push(rc);
+          price = rc.close;
+        }
+      } else if (phase.type === 'pullback') {
+        var pbDir = phase.direction === 'up' ? 1 : -1;
+        for (var pi = 0; pi < n; pi++) {
+          var pbDrift = pbDir * (0.3 + Math.random() * 0.2);
+          var pbc = makeCandle(price, pbDrift, vol * 0.8);
+          candles.push(pbc);
+          price = pbc.close;
+        }
+      } else if (phase.type === 'breakout') {
+        var boDir = phase.direction === 'up' ? 1 : -1;
+        for (var bi = 0; bi < n; bi++) {
+          var boDrift = boDir * (0.6 + Math.random() * 0.4);
+          var boc = makeCandle(price, boDrift, vol * 1.2);
+          candles.push(boc);
+          price = boc.close;
+        }
+        if (phase.direction === 'down' && metadata.supports.length) {
+          metadata.entryLevel = metadata.supports[metadata.supports.length - 1].level;
+        } else if (phase.direction === 'up' && metadata.resistances.length) {
+          metadata.entryLevel = metadata.resistances[metadata.resistances.length - 1].level;
+        }
+      } else if (phase.type === 'liquidity') {
+        var liq1 = makeCandle(price, 0, vol * 0.6);
+        candles.push(liq1);
+        price = liq1.close;
+        var liq2 = makeCandle(price, 0, vol);
+        if (phase.position === 'high') {
+          liq2.high = Math.max(liq1.high, price) + vol * 1.5;
+          metadata.liquidities.push({ index: candles.length, level: liq2.high, type: 'bearish' });
+        } else {
+          liq2.low = Math.min(liq1.low, price) - vol * 1.5;
+          metadata.liquidities.push({ index: candles.length, level: liq2.low, type: 'bullish' });
+        }
+        candles.push(liq2);
+        price = liq2.close;
+        var liq3 = makeCandle(price, 0, vol * 0.6);
+        if (phase.position === 'high' && liq3.high >= liq2.high) liq3.high = liq2.high - vol * 0.5;
+        if (phase.position === 'low' && liq3.low <= liq2.low) liq3.low = liq2.low + vol * 0.5;
+        candles.push(liq3);
+        price = liq3.close;
+      } else if (phase.type === 'continuation') {
+        var coDir = phase.direction === 'up' ? 1 : -1;
+        for (var ci = 0; ci < n; ci++) {
+          var coDrift = coDir * (0.2 + Math.random() * 0.3);
+          var coc = makeCandle(price, coDrift, vol);
+          candles.push(coc);
+          price = coc.close;
+        }
+      } else if (phase.type === 'range') {
+        var center = price;
+        for (var rgi = 0; rgi < n; rgi++) {
+          var rgDrift = (center - price) * 0.1;
+          var rgc = makeCandle(price, rgDrift, vol * 0.6);
+          candles.push(rgc);
+          price = rgc.close;
+        }
+      } else if (phase.type === 'gap') {
+        var gapDir = phase.direction === 'up' ? 1 : -1;
+        var gap1 = makeCandle(price, gapDir * 0.5, vol);
+        candles.push(gap1);
+        price = gap1.close;
+        var gap2 = makeCandle(price, gapDir * 0.5, vol);
+        candles.push(gap2);
+        price = gap2.close;
+      }
+    });
+
+    if (metadata.entryLevel) {
+      var allHighs = candles.map(function(c) { return c.high });
+      var allLows = candles.map(function(c) { return c.low });
+      var extremeHigh = Math.max.apply(null, allHighs.slice(-10));
+      var extremeLow = Math.min.apply(null, allLows.slice(-10));
+      if (metadata.entryLevel > price) {
+        metadata.slLevel = extremeHigh + 50;
+      } else {
+        metadata.slLevel = extremeLow - 50;
+      }
+    }
+
+    return { candles: candles, metadata: metadata };
+  } catch(e) { console.error('generateCandles:', e); return { candles: [], metadata: {} } }
+}
+
+/* ─── Rendu canvas des bougies ─── */
+function renderCandleChart(canvasId, candles, options) {
+  try {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas || !candles.length) return null;
+    var ctx = canvas.getContext('2d');
+    var opts = options || {};
+    var startIdx = opts.startIdx || 0;
+    var endIdx = opts.endIdx || candles.length;
+    var visibleCandles = candles.slice(startIdx, endIdx);
+    if (!visibleCandles.length) return null;
+
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.parentElement.getBoundingClientRect();
+    var W = rect.width;
+    var H = opts.height || rect.height || 400;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+
+    var marginLeft = 8;
+    var marginRight = 65;
+    var marginTop = 8;
+    var marginBottom = 22;
+    var chartW = W - marginLeft - marginRight;
+    var chartH = H - marginTop - marginBottom;
+
+    var allPrices = [];
+    visibleCandles.forEach(function(c) { allPrices.push(c.high, c.low) });
+    var minP = Math.min.apply(null, allPrices);
+    var maxP = Math.max.apply(null, allPrices);
+    var range = maxP - minP || 1;
+    var vz = opts.vZoom || 1;
+    var mid = (minP + maxP) / 2;
+    var halfRange = (range / 2) / vz;
+    minP = mid - halfRange - halfRange * 0.06;
+    maxP = mid + halfRange + halfRange * 0.06;
+    range = maxP - minP;
+
+    function priceY(p) { return marginTop + chartH - ((p - minP) / range * chartH) }
+    var rightPad = chartW * 0.08;
+    var totalSpace = chartW - rightPad;
+    var candleW = Math.max(2, Math.min(14, totalSpace / visibleCandles.length * 0.7));
+    var spacing = totalSpace / visibleCandles.length;
+
+    function candleX(i) { return marginLeft + spacing * i + spacing / 2 }
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0a0e14';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(42,54,84,.12)';
+    ctx.font = 'bold 48px DM Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('XAUUSD', W / 2 - marginRight / 2 + marginLeft / 2, H / 2 + 16);
+    ctx.font = '16px DM Sans, sans-serif';
+    ctx.fillText(opts.timeframe || '5m', W / 2 - marginRight / 2 + marginLeft / 2, H / 2 + 40);
+    ctx.restore();
+
+    var priceStep = range / 6;
+    var roundTo = priceStep > 10 ? 10 : priceStep > 1 ? 1 : 0.5;
+    var firstGrid = Math.ceil(minP / roundTo) * roundTo;
+    ctx.textAlign = 'left';
+    for (var gp = firstGrid; gp <= maxP; gp += roundTo) {
+      var gy = priceY(gp);
+      if (gy < marginTop || gy > H - marginBottom) continue;
+      ctx.strokeStyle = 'rgba(42,54,84,.3)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(marginLeft, gy);
+      ctx.lineTo(W - marginRight, gy);
+      ctx.stroke();
+      ctx.fillStyle = '#5b6a85';
+      ctx.font = '10px JetBrains Mono, monospace';
+      ctx.fillText(gp.toFixed(gp >= 100 ? 0 : 2), W - marginRight + 6, gy + 3);
+    }
+
+    ctx.strokeStyle = 'rgba(42,54,84,.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W - marginRight, marginTop);
+    ctx.lineTo(W - marginRight, H - marginBottom);
+    ctx.stroke();
+
+    visibleCandles.forEach(function(c, i) {
+      var cx = candleX(i);
+      var isGreen = c.close >= c.open;
+      var bodyTop = priceY(Math.max(c.open, c.close));
+      var bodyBot = priceY(Math.min(c.open, c.close));
+      var bodyH = Math.max(1, bodyBot - bodyTop);
+
+      var bullColor = '#26a69a';
+      var bearColor = '#ef5350';
+      var color = isGreen ? bullColor : bearColor;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx, priceY(c.high));
+      ctx.lineTo(cx, priceY(c.low));
+      ctx.stroke();
+
+      var halfW = candleW / 2;
+      if (isGreen) {
+        ctx.fillStyle = 'rgba(38,166,154,.15)';
+        ctx.fillRect(cx - halfW, bodyTop, candleW, bodyH);
+        ctx.strokeStyle = bullColor;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - halfW, bodyTop, candleW, bodyH);
+      } else {
+        ctx.fillStyle = bearColor;
+        ctx.fillRect(cx - halfW, bodyTop, candleW, bodyH);
+      }
+    });
+
+    if (opts.levels) {
+      opts.levels.forEach(function(lv) {
+        var ly = priceY(lv.price);
+        if (ly < marginTop || ly > H - marginBottom) return;
+        ctx.strokeStyle = lv.color || 'rgba(212,160,23,.6)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash(lv.dash || [4, 3]);
+        ctx.beginPath();
+        ctx.moveTo(marginLeft, ly);
+        ctx.lineTo(W - marginRight, ly);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (lv.label) {
+          ctx.fillStyle = lv.color || '#d4a017';
+          ctx.font = 'bold 9px DM Sans, sans-serif';
+          ctx.textAlign = 'left';
+          var labelBg = lv.color || '#d4a017';
+          ctx.fillStyle = labelBg;
+          ctx.globalAlpha = 0.9;
+          ctx.fillRect(W - marginRight, ly - 8, marginRight, 16);
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = '#0a0e14';
+          ctx.fillText(lv.label + ' ' + lv.price.toFixed(0), W - marginRight + 3, ly + 3);
+        }
+      });
+    }
+
+    if (opts.selectedCandle !== undefined && opts.selectedCandle >= startIdx && opts.selectedCandle < endIdx) {
+      var selI = opts.selectedCandle - startIdx;
+      var selX = candleX(selI);
+      ctx.strokeStyle = 'rgba(212,160,23,.4)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(selX, marginTop);
+      ctx.lineTo(selX, H - marginBottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    var lastC = visibleCandles[visibleCandles.length - 1];
+    if (lastC) {
+      var lastY = priceY(lastC.close);
+      var lastCol = lastC.close >= lastC.open ? '#26a69a' : '#ef5350';
+      ctx.strokeStyle = lastCol;
+      ctx.lineWidth = 0.5;
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath();
+      ctx.moveTo(marginLeft, lastY);
+      ctx.lineTo(W - marginRight, lastY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = lastCol;
+      ctx.fillRect(W - marginRight, lastY - 9, marginRight, 18);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px JetBrains Mono, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(lastC.close.toFixed(2), W - marginRight + 3, lastY + 4);
+    }
+
+    ctx.fillStyle = '#5b6a85';
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    var labelEvery = Math.max(1, Math.floor(visibleCandles.length / 8));
+    visibleCandles.forEach(function(c, i) {
+      if (i % labelEvery !== 0) return;
+      var timeLabel = c.time || String(i + startIdx + 1);
+      ctx.fillText(timeLabel, candleX(i), H - 4);
+    });
+
+    return {
+      candleWidth: candleW, spacing: spacing, marginLeft: marginLeft, marginRight: marginRight,
+      marginTop: marginTop, chartW: chartW, chartH: chartH, minP: minP, maxP: maxP, range: range,
+      priceY: priceY, candleX: candleX, W: W, H: H,
+      candleAtX: function(mouseX) {
+        var idx = Math.round((mouseX - marginLeft - spacing / 2) / spacing);
+        return idx >= 0 && idx < visibleCandles.length ? idx + startIdx : -1;
+      },
+      priceAtY: function(mouseY) {
+        var relY = mouseY - marginTop;
+        return maxP - (relY / chartH) * range;
+      },
+      drawCrosshair: function(mouseX, mouseY) {
+        if (mouseX < marginLeft || mouseX > W - marginRight || mouseY < marginTop || mouseY > H - marginBottom) return;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(138,159,192,.3)';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(mouseX, marginTop);
+        ctx.lineTo(mouseX, H - marginBottom);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(marginLeft, mouseY);
+        ctx.lineTo(W - marginRight, mouseY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        var price = maxP - ((mouseY - marginTop) / chartH) * range;
+        ctx.fillStyle = '#2a3654';
+        ctx.fillRect(W - marginRight, mouseY - 9, marginRight, 18);
+        ctx.fillStyle = '#c8d6e5';
+        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(price.toFixed(2), W - marginRight + 3, mouseY + 4);
+        var hoverIdx = Math.round((mouseX - marginLeft - spacing / 2) / spacing);
+        if (hoverIdx >= 0 && hoverIdx < visibleCandles.length) {
+          var hc = visibleCandles[hoverIdx];
+          var ohlcY = marginTop + 4;
+          ctx.font = '10px JetBrains Mono, monospace';
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#5b6a85';
+          ctx.fillText('O', marginLeft + 4, ohlcY + 10);
+          ctx.fillStyle = hc.close >= hc.open ? '#26a69a' : '#ef5350';
+          ctx.fillText(hc.open.toFixed(2), marginLeft + 16, ohlcY + 10);
+          ctx.fillStyle = '#5b6a85';
+          ctx.fillText('H', marginLeft + 80, ohlcY + 10);
+          ctx.fillStyle = '#26a69a';
+          ctx.fillText(hc.high.toFixed(2), marginLeft + 92, ohlcY + 10);
+          ctx.fillStyle = '#5b6a85';
+          ctx.fillText('L', marginLeft + 156, ohlcY + 10);
+          ctx.fillStyle = '#ef5350';
+          ctx.fillText(hc.low.toFixed(2), marginLeft + 166, ohlcY + 10);
+          ctx.fillStyle = '#5b6a85';
+          ctx.fillText('C', marginLeft + 230, ohlcY + 10);
+          ctx.fillStyle = hc.close >= hc.open ? '#26a69a' : '#ef5350';
+          ctx.fillText(hc.close.toFixed(2), marginLeft + 242, ohlcY + 10);
+          if (hc.time) {
+            ctx.fillStyle = '#5b6a85';
+            ctx.fillText(hc.time, marginLeft + 310, ohlcY + 10);
+          }
+        }
+        var candleIdx = Math.round((mouseX - marginLeft - spacing / 2) / spacing);
+        if (candleIdx >= 0 && candleIdx < visibleCandles.length) {
+          ctx.fillStyle = '#2a3654';
+          ctx.fillRect(mouseX - 12, H - marginBottom, 24, marginBottom);
+          ctx.fillStyle = '#c8d6e5';
+          ctx.font = '9px JetBrains Mono, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(String(candleIdx + startIdx + 1), mouseX, H - 4);
+        }
+        ctx.restore();
+      }
+    };
+  } catch(e) { console.error('renderCandleChart:', e); return null }
+}
+
+/* ─── Zoom/Pan/Crosshair pour le canvas sandbox ─── */
+function setupChartInteractions(canvasId) {
+  try {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (canvas._interactionsSetup) return;
+    canvas._interactionsSetup = true;
+
+    canvas.addEventListener('mousemove', function(e) {
+      if (_chartDrag.dragging) {
+        var dx = e.clientX - _chartDrag.startX;
+        var candlesMoved = Math.round(dx / (_chartInfo ? _chartInfo.spacing : 10));
+        _chartZoom.offset = Math.max(0, _chartDrag.startOffset - candlesMoved);
+        sandboxRedraw();
+        return;
+      }
+      if (!_chartInfo) return;
+      sandboxRedraw();
+      var rect = canvas.getBoundingClientRect();
+      _chartInfo.drawCrosshair(e.clientX - rect.left, e.clientY - rect.top);
+    });
+
+    canvas.addEventListener('mouseleave', function() {
+      if (!_chartDrag.dragging) sandboxRedraw();
+    });
+
+    canvas.addEventListener('mousedown', function(e) {
+      if (e.button === 0 && !e.ctrlKey) {
+        _chartDrag.dragging = true;
+        _chartDrag.startX = e.clientX;
+        _chartDrag.startOffset = _chartZoom.offset;
+        canvas.style.cursor = 'grabbing';
+      }
+    });
+
+    window.addEventListener('mouseup', function() {
+      if (_chartDrag.dragging) {
+        _chartDrag.dragging = false;
+        var c = document.getElementById(canvasId);
+        if (c) c.style.cursor = 'crosshair';
+      }
+    });
+
+    canvas.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      var delta = e.deltaY > 0 ? 1 : -1;
+      var rect = canvas.getBoundingClientRect();
+      var mouseX = e.clientX - rect.left;
+
+      if (mouseX > rect.width - 65) {
+        if (!_chartZoom.vZoom) _chartZoom.vZoom = 1;
+        _chartZoom.vZoom = Math.max(0.5, Math.min(3, _chartZoom.vZoom + delta * 0.15));
+      } else {
+        _chartZoom.zoom = Math.max(0.3, Math.min(3, _chartZoom.zoom + delta * 0.15));
+      }
+      sandboxRedraw();
+    }, { passive: false });
+  } catch(e) {}
+}
+
+/* ─── Sandbox functions ─── */
+function startSandbox(candleCount) {
+  try {
+    var phases = [];
+    var remaining = candleCount;
+    var directions = ['up', 'down'];
+    var types = ['trend', 'range', 'pullback', 'support', 'resistance', 'breakout', 'liquidity', 'continuation'];
+
+    while (remaining > 0) {
+      var phaseLen = Math.min(remaining, 5 + Math.floor(Math.random() * 15));
+      var dir = directions[Math.floor(Math.random() * 2)];
+      var type = types[Math.floor(Math.random() * types.length)];
+      var vol = 2 + Math.random() * 6;
+
+      if (type === 'liquidity') {
+        phases.push({ type: 'liquidity', position: Math.random() > 0.5 ? 'high' : 'low', candles: 3, volatility: vol });
+        remaining -= 3;
+      } else if (type === 'support' || type === 'resistance') {
+        phases.push({ type: type, candles: 2, volatility: vol });
+        remaining -= 2;
+      } else {
+        phases.push({ type: type, direction: dir, candles: phaseLen, volatility: vol });
+        remaining -= phaseLen;
+      }
+    }
+
+    var result = generateCandles(phases, 2300 + Math.floor(Math.random() * 200));
+
+    result.candles.forEach(function(c, i) {
+      var totalMin = 8 * 60 + i;
+      c.time = String(Math.floor(totalMin / 60)).padStart(2, '0') + ':' + String(totalMin % 60).padStart(2, '0');
+    });
+
+    _sandboxState = {
+      active: true,
+      candles: result.candles,
+      metadata: result.metadata,
+      visibleCount: 20,
+      trades: [],
+      _timeframe: '5min'
+    };
+    _chartZoom = { offset: 0, zoom: 1 };
+    render();
+  } catch(e) { console.error('startSandbox:', e) }
+}
+
+function rSandboxChart(el) {
+  try {
+    var st = _sandboxState;
+    var h = '';
+
+    h += '<div style="display:flex;flex-direction:column;height:calc(100vh - 120px);min-height:500px">';
+
+    /* Toolbar */
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg2);border:1px solid var(--brd);border-radius:10px 10px 0 0;flex-shrink:0">';
+    h += '<div style="display:flex;align-items:center;gap:10px">';
+    h += '<button onclick="_sandboxState=null;render()" style="font-size:10px;padding:4px 10px;background:var(--bg3);color:var(--t2);border:1px solid var(--brd);border-radius:6px;cursor:pointer;font-family:inherit">← Retour</button>';
+    h += '<span style="font-size:13px;font-weight:700;color:var(--t1)">Entraînement libre</span>';
+    h += '</div>';
+    h += '<div style="display:flex;align-items:center;gap:6px">';
+    h += '<span style="font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace">XAUUSD · Trades : ' + st.trades.length + '</span>';
+    h += '</div></div>';
+
+    /* Canvas */
+    h += '<div style="flex:1;background:#0a0e14;position:relative;min-height:0;overflow:hidden;border-left:1px solid var(--brd);border-right:1px solid var(--brd)">';
+    h += '<canvas id="sandboxCanvas" style="width:100%;height:100%;cursor:crosshair"></canvas>';
+    h += '</div>';
+
+    /* Control bar */
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg2);border:1px solid var(--brd);border-radius:0 0 10px 10px;flex-shrink:0">';
+    h += '<div style="display:flex;align-items:center;gap:6px">';
+    h += '<button onclick="sandboxPrev()" style="padding:5px 10px;font-size:11px;background:var(--bg3);color:var(--t1);border:1px solid var(--brd);border-radius:6px;cursor:pointer;font-family:inherit">◀</button>';
+    h += '<button onclick="sandboxNext()" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--gold);color:#000;border:none;border-radius:6px;cursor:pointer;font-family:inherit">▶ Suivante</button>';
+    h += '<button onclick="sandboxNext5()" style="padding:5px 10px;font-size:11px;background:var(--bg3);color:var(--t1);border:1px solid var(--brd);border-radius:6px;cursor:pointer;font-family:inherit">▶▶ ×5</button>';
+    h += '</div>';
+    h += '<span style="font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace">' + st.visibleCount + ' / ' + st.candles.length + '</span>';
+    var lastC = st.candles[st.visibleCount - 1];
+    if (lastC) {
+      var prCol = lastC.close >= lastC.open ? 'var(--green)' : 'var(--red)';
+      h += '<span style="font-size:13px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + prCol + '">' + lastC.close.toFixed(2) + '</span>';
+    }
+    h += '</div>';
+
+    h += '</div>';
+    el.innerHTML = h;
+
+    if (!_chartZoom) _chartZoom = { offset: 0, zoom: 1 };
+    sandboxRedraw();
+    setupChartInteractions('sandboxCanvas');
+  } catch(e) { console.error('rSandboxChart:', e) }
+}
+
+function sandboxRedraw() {
+  try {
+    if (!_sandboxState) return;
+    var st = _sandboxState;
+    var totalVisible = Math.round(st.visibleCount / (_chartZoom ? _chartZoom.zoom : 1));
+    totalVisible = Math.max(10, Math.min(st.visibleCount, totalVisible));
+    var offset = _chartZoom ? _chartZoom.offset : 0;
+    var startIdx = Math.max(0, st.visibleCount - totalVisible - offset);
+    var endIdx = Math.min(st.visibleCount, startIdx + totalVisible);
+
+    var levels = [];
+    st.trades.forEach(function(t) {
+      if (t.entryCandle < endIdx) {
+        levels.push({ price: t.entry, label: (t.dir === 'buy' ? '↑' : '↓') + ' ' + t.entry.toFixed(0), color: 'rgba(201,151,46,.6)', dash: [4, 3] });
+      }
+    });
+
+    _chartInfo = renderCandleChart('sandboxCanvas', st.candles, {
+      startIdx: startIdx,
+      endIdx: endIdx,
+      height: document.getElementById('sandboxCanvas') ? document.getElementById('sandboxCanvas').parentElement.offsetHeight : 400,
+      levels: levels,
+      timeframe: '5m'
+    });
+  } catch(e) {}
+}
+
+function sandboxNext() {
+  try {
+    if (!_sandboxState || _sandboxState.visibleCount >= _sandboxState.candles.length) return;
+    _sandboxState.visibleCount++;
+    sandboxRedraw();
+  } catch(e) {}
+}
+
+function sandboxNext5() {
+  try {
+    if (!_sandboxState) return;
+    _sandboxState.visibleCount = Math.min(_sandboxState.candles.length, _sandboxState.visibleCount + 5);
+    sandboxRedraw();
+  } catch(e) {}
+}
+
+function sandboxPrev() {
+  try {
+    if (!_sandboxState || _sandboxState.visibleCount <= 10) return;
+    _sandboxState.visibleCount--;
+    sandboxRedraw();
+  } catch(e) {}
+}
+
+/* ─── Edge Complete intermediate screen ─── */
+function renderEdgeComplete() {
+  try {
+    var ct = document.getElementById('ct');
+    if (!ct) return;
+    var h = '';
+    h += '<div style="text-align:center;padding:40px 20px;max-width:560px;margin:0 auto">';
+    h += '<div style="font-size:48px;margin-bottom:16px">🎯</div>';
+    h += '<div style="font-size:24px;font-weight:800;color:var(--gold);margin-bottom:8px">Stratégie maîtrisée !</div>';
+    h += '<div style="font-size:14px;color:var(--t2);line-height:1.8;margin-bottom:28px">Tu connais maintenant toutes les règles du système. Avant de passer à l\'application concrète, entraîne-toi à identifier les setups sur des bougies générées aléatoirement.</div>';
+
+    var edgeStars = 0, maxSt = EDGE_M.length * 3;
+    for (var i = 0; i < EDGE_M.length; i++) {
+      var att = S.a[i] || 1;
+      edgeStars += att === 1 ? 3 : att === 2 ? 2 : 1;
+    }
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:28px">';
+    h += '<div style="background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:16px;text-align:center"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Modules</div><div style="font-size:24px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace">' + EDGE_M.length + '/' + EDGE_M.length + '</div></div>';
+    h += '<div style="background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:16px;text-align:center"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Étoiles</div><div style="font-size:24px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace">' + edgeStars + '/' + maxSt + '</div></div>';
+    h += '<div style="background:var(--bg2);border:1px solid var(--brd);border-radius:12px;padding:16px;text-align:center"><div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:4px">Excellence</div><div style="font-size:24px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace">' + Math.round(edgeStars / maxSt * 100) + '%</div></div>';
+    h += '</div>';
+
+    h += '<div style="background:var(--bg2);border:1px solid var(--brd);border-radius:16px;padding:24px;margin-bottom:20px">';
+    h += '<div style="font-size:16px;font-weight:800;color:var(--t1);margin-bottom:6px">Entraînement libre</div>';
+    h += '<div style="font-size:12px;color:var(--t3);margin-bottom:16px">Déroule des bougies, identifie les setups. Pas de scoring — juste de la pratique.</div>';
+    h += '<div style="display:grid;gap:8px">';
+    h += '<button onclick="startSandbox(80)" style="padding:12px;font-size:13px;font-weight:700;background:var(--gold);color:#000;border:none;border-radius:8px;cursor:pointer;font-family:inherit">▶ Session courte (80 bougies)</button>';
+    h += '<button onclick="startSandbox(200)" style="padding:12px;font-size:13px;background:var(--bg3);color:var(--t1);border:1px solid var(--brd);border-radius:8px;cursor:pointer;font-family:inherit">▶ Session longue (200 bougies)</button>';
+    h += '<button onclick="startSandbox(400)" style="padding:12px;font-size:13px;background:var(--bg3);color:var(--t1);border:1px solid var(--brd);border-radius:8px;cursor:pointer;font-family:inherit">▶ Marathon (400 bougies)</button>';
+    h += '</div>';
+    h += '</div>';
+
+    h += '<button onclick="goMod(' + EDGE_M.length + ')" style="padding:10px 24px;font-size:13px;background:var(--bg3);color:var(--t1);border:1px solid var(--brd);border-radius:8px;cursor:pointer;font-family:inherit">Continuer vers l\'Application →</button>';
+    h += '<div style="font-size:11px;color:var(--t3);margin-top:8px">L\'entraînement restera accessible à tout moment.</div>';
+    h += '</div>';
+
+    ct.innerHTML = h;
+  } catch(e) { console.error('renderEdgeComplete:', e) }
 }
 
 /* ═══ CONFETTI ═══ */
