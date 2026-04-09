@@ -1368,6 +1368,27 @@ body::before {
 .tfm-title{font-size:16px;font-weight:800;color:var(--t1)}
 .tfm-close{width:32px;height:32px;border-radius:8px;border:none;background:var(--bg3);color:var(--t3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .tfm-close:hover{background:var(--bg4);color:var(--t1)}
+/* ─── SESSION IMMERSIVE (Task 8) ─── */
+.sess-header{position:sticky;top:0;background:var(--bg);z-index:10;padding:12px 0;border-bottom:1px solid var(--border)}
+.sess-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.sess-kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center}
+.sess-kpi-label{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.sess-kpi-val{font-size:16px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--t1)}
+.sess-gauges{display:flex;gap:8px;margin-bottom:10px}
+.sess-gauge{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+.sess-gauge-label{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sess-gauge-bar{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.sess-gauge-fill{height:100%;border-radius:3px;transition:width .3s}
+.sess-gauge-info{font-size:10px;color:var(--t2);margin-top:4px;font-family:'JetBrains Mono',monospace}
+.sess-tabs{display:flex;gap:2px;padding:4px;background:var(--bg2);border-radius:var(--radius-sm);margin-bottom:12px}
+.sess-tab{background:none;border:none;color:var(--t3);font-size:12px;font-weight:600;padding:8px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;font-family:inherit}
+.sess-tab:hover{color:var(--t1)}
+.sess-tab.active{color:var(--gold);background:rgba(212,160,23,.1)}
+.sess-content{padding:8px 0;min-height:300px}
+.sess-ck-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;transition:background .15s}
+.sess-ck-item:hover{background:rgba(212,160,23,.04)}
+.sess-ck-item input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;cursor:pointer}
+.sess-ck-phase{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;padding:12px 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px}
 .tfm-steps{display:flex;gap:4px;margin-bottom:16px}
 .tfm-step{flex:1;height:4px;border-radius:2px;background:var(--bg4);transition:background .3s}
 .tfm-step.done{background:var(--green)}
@@ -7297,123 +7318,117 @@ function openSessionFromBriefing() {
   } catch(e) { console.error('openSessionFromBriefing:', e) }
 }
 
-/* Stubs pour OPERATING et DEBRIEF (Phase 4+6) */
-function rSessionOperating(el) {
-  try {
-    var s = _currentSession;
-    /* Relire depuis storage pour avoir les données à jour */
-    var sessions = loadSessions();
-    var fresh = sessions.find(function(x) { return x.id === s.id });
-    if (fresh) { _currentSession = fresh; s = fresh }
+/* ═══════════════════════════════════════════════════════
+   SESSION IMMERSIVE — OPERATING (Task 8)
+   Sub-tabs: Stats / Checklist / Calculateur / + Trade
+   ═══════════════════════════════════════════════════════ */
+var _sessSubTab = 'stats';
 
+function sessSubTab(tab) {
+  try {
+    _sessSubTab = tab;
+    var el = document.getElementById('sessionView');
+    if (el) rSessionOperating(el);
+  } catch(e) { console.error('sessSubTab:', e) }
+}
+
+/* ─── KPI helper ─── */
+function sessKPI(label, value, color) {
+  try {
+    return '<div class="sess-kpi">' +
+      '<div class="sess-kpi-label">' + label + '</div>' +
+      '<div class="sess-kpi-val" style="color:' + (color || 'var(--t1)') + '">' + value + '</div>' +
+      '</div>';
+  } catch(e) { return '' }
+}
+
+/* ─── Gauge helper ─── */
+function sessGauge(label, current, max, color) {
+  try {
+    var pct = max > 0 ? Math.min(100, Math.round(Math.abs(current) / max * 100)) : 0;
+    return '<div class="sess-gauge">' +
+      '<div class="sess-gauge-label">' + label + '</div>' +
+      '<div class="sess-gauge-bar"><div class="sess-gauge-fill" style="width:' + pct + '%;background:' + (color || 'var(--gold)') + '"></div></div>' +
+      '<div class="sess-gauge-info">' + Math.abs(current).toFixed(0) + ' / ' + max + ' (' + pct + '%)</div>' +
+      '</div>';
+  } catch(e) { return '' }
+}
+
+/* ─── Calculation helpers ─── */
+function sessCalcPnl(s) {
+  try {
+    var trades = D.live.filter(function(t) { return s.tradeIds.indexOf(t.ts ? t.ts.toString() : '') >= 0 });
+    if (!trades.length && s.tradeIds.length === 0) {
+      var openTime = new Date(s.openedAt).getTime();
+      trades = D.live.filter(function(t) { return t.date === s.dayDate && t.accId === s.target.accountId && (t.ts || 0) >= openTime });
+    }
+    return { trades: trades, pnl: trades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0) };
+  } catch(e) { return { trades: [], pnl: 0 } }
+}
+
+function sessCalcWR(trades) {
+  try {
+    if (!trades || !trades.length) return '—';
+    var wins = trades.filter(function(t) { return (parseFloat(t.pl) || 0) > 0 }).length;
+    return Math.round(wins / trades.length * 100) + '%';
+  } catch(e) { return '—' }
+}
+
+function sessCalcDuration(s) {
+  try {
+    var dur = Math.floor((Date.now() - new Date(s.openedAt).getTime()) / 60000);
+    return dur < 60 ? dur + 'min' : Math.floor(dur / 60) + 'h' + (dur % 60 > 0 ? String(dur % 60).padStart(2, '0') : '');
+  } catch(e) { return '—' }
+}
+
+/* ─── Sub-view: Stats (default) ─── */
+function rSessionStats(s, sessTrades, sessPnl, isPaused) {
+  try {
     var plan = s.briefing.plan.aggregated || {};
     var maxT = plan.maxTrades || '—';
     var maxL = plan.maxLossDollar || 0;
-    var tgt = plan.targetDollar || 0;
-
-    /* Calcul P&L session en temps réel */
-    var sessPnl = 0;
-    var sessTrades = D.live.filter(function(t) { return s.tradeIds.indexOf(t.ts ? t.ts.toString() : '') >= 0 });
-    /* Fallback : trades du jour après ouverture */
-    if (!sessTrades.length && s.tradeIds.length === 0) {
-      var openTime = new Date(s.openedAt).getTime();
-      sessTrades = D.live.filter(function(t) { return t.date === s.dayDate && t.accId === s.target.accountId && (t.ts || 0) >= openTime });
-    }
-    sessPnl = sessTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
-
-    /* Durée */
-    var dur = Math.floor((Date.now() - new Date(s.openedAt).getTime()) / 60000);
-    var durStr = dur < 60 ? dur + 'min' : Math.floor(dur / 60) + 'h' + (dur % 60 > 0 ? String(dur % 60).padStart(2, '0') : '');
-
-    /* Pause active ? */
-    var isPaused = false;
-    if (s.pauseEvents && s.pauseEvents.length) {
-      var last = s.pauseEvents[s.pauseEvents.length - 1];
-      isPaused = last.type === 'PAUSE';
-    }
 
     /* Rails */
     var rails = checklistScopeReader('GUARDRAIL');
     var railsHtml = '';
-    var railViolations = [];
     rails.forEach(function(r) {
       var icon = r.checked ? '🟢' : '🔴';
       var rowBg = r.checked ? '' : 'background:rgba(255,71,87,.04);border-radius:6px;padding:6px 8px;margin:-2px -4px;';
       var labelColor = r.checked ? 'var(--t2)' : 'var(--red)';
-      var badgeBg = r.evaluationScope === 'SESSION' ? 'rgba(167,139,250,.12)' : 'rgba(91,141,239,.12)';
-      var badgeColor = r.evaluationScope === 'SESSION' ? 'var(--purple)' : 'var(--blue)';
-      var badge = '<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:' + badgeBg + ';color:' + badgeColor + ';margin-left:4px;font-weight:600">' + (r.evaluationScope || '').toLowerCase() + '</span>';
-      if (r.accountScope) badge += '<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(212,160,23,.08);color:var(--gold);margin-left:2px">' + r.accountScope.toLowerCase().replace('_', '-') + '</span>';
-      railsHtml += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;' + rowBg + '"><span>' + icon + '</span><span style="color:' + labelColor + ';font-weight:' + (r.checked ? '400' : '600') + '">' + r.label + '</span>' + badge + '</div>';
-      if (!r.checked) railViolations.push(r.label);
+      railsHtml += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;' + rowBg + '"><span>' + icon + '</span><span style="color:' + labelColor + ';font-weight:' + (r.checked ? '400' : '600') + '">' + r.label + '</span></div>';
     });
 
-    /* Contexte jour */
-    var ctx = dailyContextReader([s.target.accountId]);
-    var dayPnl = ctx.cumulativePnlToday;
-    var dayTrades = ctx.cumulativeTradesToday;
-
-    var h = '';
-
-    /* Hub sticky */
-    h += '<div style="background:rgba(212,160,23,.04);border:1px solid rgba(212,160,23,.15);border-radius:14px;padding:16px;margin-bottom:16px;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px)">';
-
-    /* Ligne 1 : status */
-    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
-    h += '<div style="font-size:14px;font-weight:800;color:var(--gold)">⚡ SESSION #' + s.sessionIndexInDay + ' · ' + (isPaused ? '⏸ PAUSE' : 'OUVERTE') + ' ' + durStr + '</div>';
-    h += '<div style="display:flex;gap:6px">';
-    if (isPaused) {
-      h += '<button class="btn btn-g" onclick="resumeCurrentSession()" style="padding:6px 14px;font-size:11px">▶ Reprendre</button>';
-    } else {
-      h += '<button class="btn btn-o" onclick="pauseCurrentSession()" style="padding:6px 14px;font-size:11px">⏸ Pause</button>';
-    }
-    h += '<button class="btn btn-o" onclick="closeCurrentSession()" style="padding:6px 14px;font-size:11px;color:var(--red);border-color:var(--red)">⊗ Clôturer</button>';
-    h += '</div></div>';
-
-    /* Ligne 2 : métriques */
-    var tradesPct = maxT !== '—' ? Math.round(s.logicalTradeCount / maxT * 100) : 0;
-    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;text-align:center">';
-    h += '<div><div style="color:var(--t3)">Trades</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t1)">' + s.logicalTradeCount + '/' + maxT + '</div></div>';
-    h += '<div><div style="color:var(--t3)">P&L</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:' + (sessPnl >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(0) + '</div></div>';
-    h += '<div><div style="color:var(--t3)">Target</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t2)">$' + (tgt || '—') + '</div></div>';
-    h += '<div><div style="color:var(--t3)">Perte max</div><div style="font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t2)">$' + (maxL || '—') + '</div></div>';
-    h += '</div>';
-
-    /* Ligne 3 : cumul jour */
-    h += '<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:8px;display:flex;justify-content:space-around;font-size:10px;color:var(--t3)">';
-    h += '<span>Jour : ' + dayTrades + ' trades</span>';
-    h += '<span>P&L jour : <b style="color:' + (dayPnl >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (dayPnl >= 0 ? '+' : '') + '$' + dayPnl.toFixed(0) + '</b></span>';
-    h += '</div>';
-    h += '</div>';
-
-    /* Section Rails */
-    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">';
-    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Rails actifs</div>';
-    h += railsHtml;
-    h += '</div>';
-
-    /* CTA Prochain trade */
+    /* CTA */
     var maxReached = maxT !== '—' && s.logicalTradeCount >= maxT;
     var lossReached = maxL > 0 && sessPnl <= -maxL;
     var railBroken = rails.some(function(r) { return !r.checked });
     var blocked = isPaused || maxReached || lossReached;
 
+    var h = '';
+
+    /* CTA Prochain trade */
     h += '<div style="text-align:center;margin-bottom:16px">';
     if (blocked) {
       var reason = isPaused ? 'Session en pause' : maxReached ? 'Max trades atteint' : 'Perte max atteinte';
-      h += '<button class="btn btn-o" disabled style="padding:14px 28px;font-size:14px;opacity:.5;cursor:not-allowed">➕ Prochain trade</button>';
+      h += '<button class="btn btn-o" disabled style="padding:14px 28px;font-size:14px;opacity:.5;cursor:not-allowed">Prochain trade</button>';
       h += '<div style="font-size:11px;color:var(--red);margin-top:4px">' + reason + '</div>';
     } else {
-      h += '<button class="btn btn-g" onclick="openTFM()" style="padding:14px 28px;font-size:14px;font-weight:800;border-radius:12px">➕ Prochain trade</button>';
-      if (railBroken) h += '<div style="font-size:11px;color:var(--gold);margin-top:4px">⚠ Certains rails non validés</div>';
+      h += '<button class="btn btn-g" onclick="openTFM()" style="padding:14px 28px;font-size:14px;font-weight:800;border-radius:12px">Prochain trade</button>';
+      if (railBroken) h += '<div style="font-size:11px;color:var(--gold);margin-top:4px">Certains rails non valides</div>';
     }
     h += '</div>';
 
-    /* Section Trades de la session */
+    /* Rails */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Rails actifs</div>';
+    h += railsHtml;
+    h += '</div>';
+
+    /* Trades de la session */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">';
     h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Trades de la session (' + s.logicalTradeCount + ')</div>';
     if (sessTrades.length === 0) {
-      h += '<div style="text-align:center;padding:16px;font-size:12px;color:var(--t3)">Aucun trade encore. Clique "Prochain trade".</div>';
+      h += '<div style="text-align:center;padding:16px;font-size:12px;color:var(--t3)">Aucun trade encore.</div>';
     } else {
       h += '<div style="display:grid;gap:4px">';
       sessTrades.forEach(function(t, i) {
@@ -7432,7 +7447,7 @@ function rSessionOperating(el) {
     }
     h += '</div>';
 
-    /* Section Événements */
+    /* Événements */
     if (s.pauseEvents && s.pauseEvents.length) {
       h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px">';
       h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Événements</div>';
@@ -7444,12 +7459,272 @@ function rSessionOperating(el) {
       h += '</div>';
     }
 
+    return h;
+  } catch(e) { console.error('rSessionStats:', e); return '' }
+}
+
+/* ─── Sub-view: Checklist inline ─── */
+function rSessionChecklist(s) {
+  try {
+    var h = '';
+    var phases = [
+      { title: 'Preparation', scope: 'SESSION_PREP' },
+      { title: 'Entree + Gestion', scope: 'TRADE_PREP' },
+      { title: 'Filtres (bloquants)', scope: 'GUARDRAIL' }
+    ];
+
+    phases.forEach(function(phase) {
+      h += '<div class="sess-ck-phase">' + phase.title + '</div>';
+      var items = checklistScopeReader(phase.scope);
+      if (items.length === 0) {
+        h += '<div style="font-size:12px;color:var(--t3);padding:8px">Aucun item</div>';
+      } else {
+        items.forEach(function(item) {
+          h += '<div class="sess-ck-item">';
+          h += '<input type="checkbox" ' + (item.checked ? 'checked' : '') + ' onchange="sessToggleCheck(this,' + item.n + ')">';
+          h += '<div><strong style="font-size:12px;color:var(--t1)">' + item.label + '</strong>';
+          if (item.description) h += ' <em style="font-size:11px;color:var(--t3)">' + item.description + '</em>';
+          h += '</div></div>';
+        });
+      }
+    });
+
+    /* Progress */
+    var all = checklistScopeReader('SESSION_PREP').concat(checklistScopeReader('TRADE_PREP')).concat(checklistScopeReader('GUARDRAIL'));
+    var done = all.filter(function(i) { return i.checked }).length;
+    var total = all.length;
+    var pct = total > 0 ? Math.round(done / total * 100) : 0;
+    var col = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--gold)' : 'var(--red)';
+
+    h = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px">Checklist</div>' +
+      '<div style="font-size:12px;font-weight:700;color:' + col + ';font-family:JetBrains Mono,monospace">' + done + '/' + total + ' (' + pct + '%)</div>' +
+      '</div>' +
+      '<div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:' + pct + '%;background:' + col + ';border-radius:2px;transition:width .3s"></div></div>' +
+      h + '</div>';
+
+    return h;
+  } catch(e) { console.error('rSessionChecklist:', e); return '' }
+}
+
+/* Toggle a checklist item from session view */
+function sessToggleCheck(checkbox, n) {
+  try {
+    /* Find and toggle the real checklist item in #checkContent */
+    var real = document.querySelector('#checkContent .ck[data-n="' + n + '"] input[type=checkbox]');
+    if (real) {
+      real.checked = checkbox.checked;
+      real.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    /* Don't re-render fully, just keep the state in sync */
+  } catch(e) { console.error('sessToggleCheck:', e) }
+}
+
+/* ─── Sub-view: Calculator inline ─── */
+function rSessionCalc(s) {
+  try {
+    var acc = S();
+    var config = strategyConfigReader();
+    var slPresets = config.standardSLPoints;
+    var currentSL = parseInt(document.getElementById('cSL').value) || 350;
+
+    var h = '';
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    h += '<div style="font-size:12px;color:var(--t3);margin-bottom:12px;text-align:center">Compte : <b style="color:var(--t1)">' + acc.name + '</b> · Risque ' + acc.risk + '% · $' + acc.bal.toLocaleString('en-US') + '</div>';
+
+    /* SL quick buttons */
+    h += '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;justify-content:center">';
+    slPresets.forEach(function(sl) {
+      var active = sl === currentSL;
+      h += '<button onclick="sessSetSL(' + sl + ')" style="padding:6px 10px;border-radius:6px;border:1.5px solid ' + (active ? 'var(--gold)' : 'var(--border2)') + ';background:' + (active ? 'rgba(212,160,23,.15)' : 'var(--bg3)') + ';color:' + (active ? 'var(--gold)' : 'var(--t2)') + ';font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;cursor:pointer">' + sl + '</button>';
+    });
+    h += '</div>';
+
+    /* Slider */
+    h += '<div style="margin-bottom:8px"><input type="range" id="sessSlider" min="200" max="1200" step="10" value="' + currentSL + '" oninput="sessSetSL(parseInt(this.value))" style="width:100%;accent-color:var(--gold);cursor:pointer;height:6px"></div>';
+
+    /* Fine input */
+    h += '<div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:14px">';
+    h += '<button class="btn btn-o" onclick="sessSetSL(Math.max(200,(parseInt(document.getElementById(\'sessSLInput\').value)||350)-50))" style="padding:6px 12px;font-size:12px">-50</button>';
+    h += '<input type="number" id="sessSLInput" value="' + currentSL + '" min="100" max="1500" step="10" oninput="sessSetSL(parseInt(this.value))" style="width:80px;text-align:center;font-size:18px;font-weight:700;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace">';
+    h += '<span style="font-size:12px;color:var(--t3)">pts</span>';
+    h += '<button class="btn btn-o" onclick="sessSetSL(Math.min(1500,(parseInt(document.getElementById(\'sessSLInput\').value)||350)+50))" style="padding:6px 12px;font-size:12px">+50</button>';
+    h += '</div>';
+
+    /* Big lot result */
+    var ra = acc.bal * (acc.risk || 1) / 100;
+    var co = acc.comm || 0;
+    var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+    var loss = lot * currentSL;
+    var com = lot * co;
+
+    h += '<div style="text-align:center;padding:12px 0">';
+    h += '<div style="font-size:56px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace;line-height:1">' + lot.toFixed(2) + '</div>';
+    h += '<div style="font-size:13px;color:var(--t2);margin-top:4px">lots sur MT5</div>';
+    h += '<button class="btn btn-o" onclick="navigator.clipboard.writeText(\'' + lot.toFixed(2) + '\');toast(\'Lot copie : ' + lot.toFixed(2) + '\')" style="margin-top:8px;padding:6px 14px;font-size:11px">Copier le lot</button>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-top:6px">TP potentiel : <b style="color:var(--green)">+$' + (lot * currentSL).toFixed(2) + '</b></div>';
+    h += '</div>';
+
+    /* Details */
+    h += '<div style="display:flex;justify-content:center;gap:16px;font-size:11px;color:var(--t3);padding-top:8px;border-top:1px solid var(--border)">';
+    h += '<span>Risque <b style="color:var(--t1)">$' + ra.toFixed(0) + '</b></span>';
+    h += '<span>Perte <b style="color:var(--red)">$' + (loss + com).toFixed(2) + '</b></span>';
+    h += '<span>Comm <b>$' + com.toFixed(2) + '</b></span>';
+    h += '</div>';
+
+    h += '</div>';
+    return h;
+  } catch(e) { console.error('rSessionCalc:', e); return '' }
+}
+
+/* Set SL from session calculator */
+function sessSetSL(val) {
+  try {
+    if (isNaN(val) || val < 100) return;
+    /* Sync with the main calculator */
+    var mainSL = document.getElementById('cSL');
+    if (mainSL) { mainSL.value = val; setSL(val) }
+    /* Re-render only calc sub-tab */
+    var el = document.getElementById('sessSubContent');
+    if (el && _sessSubTab === 'calc') {
+      el.innerHTML = rSessionCalc(_currentSession);
+    }
+  } catch(e) { console.error('sessSetSL:', e) }
+}
+
+/* ─── Sub-view: Trade form inline ─── */
+function rSessionTrade(s) {
+  try {
+    var h = '';
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    h += '<div style="text-align:center;padding:20px">';
+    h += '<div style="font-size:36px;margin-bottom:12px">+</div>';
+    h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Enregistrer un trade</div>';
+    h += '<div style="font-size:12px;color:var(--t3);margin-bottom:16px">Le flux complet : Checklist, Calculateur, puis Formulaire.</div>';
+    h += '<button class="btn btn-g" onclick="openTFM()" style="padding:14px 28px;font-size:14px;font-weight:800;border-radius:12px">Ouvrir le flux trade</button>';
+    h += '</div>';
+    h += '</div>';
+    return h;
+  } catch(e) { console.error('rSessionTrade:', e); return '' }
+}
+
+/* ─── MAIN OPERATING RENDERER ─── */
+function rSessionOperating(el) {
+  try {
+    var s = _currentSession;
+    /* Relire depuis storage pour avoir les données à jour */
+    var sessions = loadSessions();
+    var fresh = sessions.find(function(x) { return x.id === s.id });
+    if (fresh) { _currentSession = fresh; s = fresh }
+
+    var plan = s.briefing.plan.aggregated || {};
+    var maxT = plan.maxTrades || 4;
+    var maxL = plan.maxLossDollar || 0;
+
+    /* Calcul P&L session en temps réel */
+    var result = sessCalcPnl(s);
+    var sessTrades = result.trades;
+    var sessPnl = result.pnl;
+
+    /* Durée */
+    var durStr = sessCalcDuration(s);
+
+    /* Win Rate */
+    var wr = sessCalcWR(sessTrades);
+
+    /* Pause active ? */
+    var isPaused = false;
+    if (s.pauseEvents && s.pauseEvents.length) {
+      var last = s.pauseEvents[s.pauseEvents.length - 1];
+      isPaused = last.type === 'PAUSE';
+    }
+
+    /* Contexte jour */
+    var ctx = dailyContextReader([s.target.accountId]);
+
+    var h = '';
+
+    /* ─── STICKY HEADER ─── */
+    h += '<div class="sess-header" style="background:rgba(212,160,23,.04);border:1px solid rgba(212,160,23,.15);border-radius:14px;padding:16px;margin-bottom:12px;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px)">';
+
+    /* Status line */
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+    h += '<div style="font-size:14px;font-weight:800;color:var(--gold)">SESSION #' + s.sessionIndexInDay + ' · ' + (isPaused ? 'PAUSE' : 'OUVERTE') + ' ' + durStr + '</div>';
+    h += '<div style="display:flex;gap:6px">';
+    if (isPaused) {
+      h += '<button class="btn btn-g" onclick="resumeCurrentSession()" style="padding:6px 14px;font-size:11px">Reprendre</button>';
+    } else {
+      h += '<button class="btn btn-o" onclick="pauseCurrentSession()" style="padding:6px 14px;font-size:11px">Pause</button>';
+    }
+    h += '<button class="btn btn-o" onclick="closeCurrentSession()" style="padding:6px 14px;font-size:11px;color:var(--red);border-color:var(--red)">Cloturer</button>';
+    h += '</div></div>';
+
+    /* KPIs */
+    var pnlCol = sessPnl >= 0 ? 'var(--green)' : 'var(--red)';
+    h += '<div class="sess-kpis">';
+    h += sessKPI('P&L', (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(0), pnlCol);
+    h += sessKPI('Trades', s.logicalTradeCount + '/' + maxT, 'var(--t1)');
+    h += sessKPI('WR', wr, 'var(--t1)');
+    h += sessKPI('Duree', durStr, 'var(--t1)');
+    h += '</div>';
+
+    /* Gauges */
+    h += '<div class="sess-gauges">';
+    if (maxL > 0) {
+      var lossGaugeCol = Math.abs(sessPnl) >= maxL * 0.8 ? 'var(--red)' : Math.abs(sessPnl) >= maxL * 0.5 ? 'var(--gold)' : 'var(--green)';
+      h += sessGauge('Perte max', sessPnl < 0 ? sessPnl : 0, maxL, lossGaugeCol);
+    }
+    h += sessGauge('Trades', s.logicalTradeCount, maxT, s.logicalTradeCount >= maxT ? 'var(--red)' : 'var(--gold)');
+    h += '</div>';
+
+    /* Day cumul */
+    h += '<div style="display:flex;justify-content:space-around;font-size:10px;color:var(--t3);padding-top:6px;border-top:1px solid var(--border)">';
+    h += '<span>Jour : ' + ctx.cumulativeTradesToday + ' trades</span>';
+    h += '<span>P&L jour : <b style="color:' + (ctx.cumulativePnlToday >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (ctx.cumulativePnlToday >= 0 ? '+' : '') + '$' + ctx.cumulativePnlToday.toFixed(0) + '</b></span>';
+    h += '</div>';
+
+    h += '</div>'; /* end sticky header */
+
+    /* ─── SUB-TABS ─── */
+    h += '<div class="sess-tabs">';
+    var tabs = [
+      { id: 'stats', label: 'Stats' },
+      { id: 'checklist', label: 'Checklist' },
+      { id: 'calc', label: 'Calculateur' },
+      { id: 'trade', label: '+ Trade' }
+    ];
+    tabs.forEach(function(tab) {
+      h += '<button class="sess-tab' + (_sessSubTab === tab.id ? ' active' : '') + '" onclick="sessSubTab(\'' + tab.id + '\')">' + tab.label + '</button>';
+    });
+    h += '</div>';
+
+    /* ─── SUB-TAB CONTENT ─── */
+    h += '<div class="sess-content" id="sessSubContent">';
+    if (_sessSubTab === 'stats') {
+      h += rSessionStats(s, sessTrades, sessPnl, isPaused);
+    } else if (_sessSubTab === 'checklist') {
+      h += rSessionChecklist(s);
+    } else if (_sessSubTab === 'calc') {
+      h += rSessionCalc(s);
+    } else if (_sessSubTab === 'trade') {
+      h += rSessionTrade(s);
+    }
+    h += '</div>';
+
+    /* ─── CLOSE SESSION (bottom) ─── */
+    h += '<div style="text-align:center;padding:16px 0;border-top:1px solid var(--border);margin-top:16px">';
+    h += '<button class="btn btn-o" onclick="closeCurrentSession()" style="padding:10px 24px;font-size:12px;color:var(--red);border-color:var(--red)">Cloturer la session</button>';
+    h += '</div>';
+
     el.innerHTML = h;
 
     /* Toast non bloquant pour rails violés */
+    var rails = checklistScopeReader('GUARDRAIL');
+    var railViolations = rails.filter(function(r) { return !r.checked });
     if (railViolations.length > 0 && !window._lastRailToast) {
       window._lastRailToast = true;
-      toast('⚠ Rail violé : ' + railViolations[0]);
+      toast('Rail viole : ' + railViolations[0].label);
       setTimeout(function() { window._lastRailToast = false }, 30000);
     }
   } catch(e) { console.error('rSessionOperating:', e) }
@@ -7730,6 +8005,129 @@ function submitTFM() {
   } catch(e) { console.error('submitTFM:', e) }
 }
 
+/* ═══════════════════════════════════════════════════════
+   SESSION DEBRIEF ENRICHI (Task 9)
+   Summary, historical comparison, strengths/weaknesses,
+   discipline score, archive button
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Historical comparison helper ─── */
+function comparisonCell(label, avg, current) {
+  try {
+    var diff = current - avg;
+    var col = diff >= 0 ? 'var(--green)' : 'var(--red)';
+    var arrow = diff >= 0 ? '↑' : '↓';
+    return '<div style="text-align:center">' +
+      '<div style="font-size:9px;color:var(--t3);text-transform:uppercase">' + label + '</div>' +
+      '<div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:' + col + '">' + arrow + ' ' + Math.abs(diff).toFixed(1) + '</div>' +
+      '</div>';
+  } catch(e) { return '' }
+}
+
+/* ─── Compute historical averages from past LOCKED sessions ─── */
+function sessHistoricalAvg() {
+  try {
+    var sessions = loadSessions();
+    var locked = sessions.filter(function(s) { return s.status === 'LOCKED' });
+    if (locked.length === 0) return null;
+
+    var totalPnl = 0, totalTrades = 0, totalDur = 0, totalDisc = 0, totalWR = 0;
+    var count = locked.length;
+
+    locked.forEach(function(s) {
+      /* P&L */
+      var trades = D.live.filter(function(t) {
+        var openTime = new Date(s.openedAt).getTime();
+        return t.date === s.dayDate && t.accId === s.target.accountId && (t.ts || 0) >= openTime;
+      });
+      var pnl = trades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+      totalPnl += pnl;
+
+      /* Trades */
+      totalTrades += s.logicalTradeCount || 0;
+
+      /* Duration */
+      if (s.closedAt && s.openedAt) {
+        totalDur += Math.floor((new Date(s.closedAt) - new Date(s.openedAt)) / 60000);
+      }
+
+      /* Discipline */
+      if (s.debrief && typeof s.debrief.selfDisciplineScore === 'number') {
+        totalDisc += s.debrief.selfDisciplineScore;
+      }
+
+      /* WR */
+      var wins = trades.filter(function(t) { return (parseFloat(t.pl) || 0) > 0 }).length;
+      totalWR += trades.length > 0 ? (wins / trades.length * 100) : 0;
+    });
+
+    return {
+      count: count,
+      avgPnl: totalPnl / count,
+      avgTrades: totalTrades / count,
+      avgDur: totalDur / count,
+      avgDisc: totalDisc / count,
+      avgWR: totalWR / count
+    };
+  } catch(e) { console.error('sessHistoricalAvg:', e); return null }
+}
+
+/* ─── Auto-detect strengths and weaknesses ─── */
+function sessStrengthsWeaknesses(s, sessPnl, sessTrades, discScore, dur, hist) {
+  try {
+    var plan = s.briefing.plan.aggregated || {};
+    var strengths = [];
+    var weaknesses = [];
+
+    /* P&L analysis */
+    if (sessPnl > 0) strengths.push('Session rentable (+$' + sessPnl.toFixed(0) + ')');
+    else if (sessPnl < 0) weaknesses.push('Session en perte (-$' + Math.abs(sessPnl).toFixed(0) + ')');
+
+    /* Trade count vs plan */
+    if (plan.maxTrades && s.logicalTradeCount <= plan.maxTrades) {
+      strengths.push('Limite de trades respectee (' + s.logicalTradeCount + '/' + plan.maxTrades + ')');
+    } else if (plan.maxTrades && s.logicalTradeCount > plan.maxTrades) {
+      weaknesses.push('Trop de trades (' + s.logicalTradeCount + '/' + plan.maxTrades + ')');
+    }
+
+    /* Max loss */
+    if (plan.maxLossDollar && sessPnl < 0) {
+      if (Math.abs(sessPnl) <= plan.maxLossDollar) {
+        strengths.push('Perte max respectee');
+      } else {
+        weaknesses.push('Perte max depassee ($' + Math.abs(sessPnl).toFixed(0) + ' > $' + plan.maxLossDollar + ')');
+      }
+    }
+
+    /* Target */
+    if (plan.targetDollar && sessPnl >= plan.targetDollar) {
+      strengths.push('Target atteint ($' + sessPnl.toFixed(0) + ' >= $' + plan.targetDollar + ')');
+    }
+
+    /* Discipline */
+    if (discScore >= 80) strengths.push('Bonne discipline (' + discScore + '/100)');
+    else if (discScore < 50) weaknesses.push('Discipline faible (' + discScore + '/100)');
+
+    /* Duration */
+    if (dur > 180) weaknesses.push('Session longue (' + Math.floor(dur / 60) + 'h+), fatigue possible');
+    if (dur < 30 && sessTrades.length > 0) weaknesses.push('Session tres courte (' + dur + 'min), precipitation ?');
+
+    /* WR */
+    var wins = sessTrades.filter(function(t) { return (parseFloat(t.pl) || 0) > 0 }).length;
+    var wr = sessTrades.length > 0 ? Math.round(wins / sessTrades.length * 100) : 0;
+    if (wr >= 60 && sessTrades.length >= 2) strengths.push('Bon WR (' + wr + '%)');
+    if (wr < 30 && sessTrades.length >= 2) weaknesses.push('WR faible (' + wr + '%)');
+
+    /* Historical comparison */
+    if (hist) {
+      if (sessPnl > hist.avgPnl * 1.2) strengths.push('P&L au-dessus de la moyenne historique');
+      if (sessPnl < hist.avgPnl * 0.5 && hist.avgPnl > 0) weaknesses.push('P&L en-dessous de la moyenne historique');
+    }
+
+    return { strengths: strengths, weaknesses: weaknesses };
+  } catch(e) { console.error('sessStrengthsWeaknesses:', e); return { strengths: [], weaknesses: [] } }
+}
+
 function rSessionDebrief(el) {
   try {
     var s = _currentSession;
@@ -7748,19 +8146,31 @@ function rSessionDebrief(el) {
     var sessTrades = D.live.filter(function(t) { return t.date === s.dayDate && t.accId === s.target.accountId && (t.ts || 0) >= openTime });
     var sessPnl = sessTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
 
+    /* WR */
+    var wins = sessTrades.filter(function(t) { return (parseFloat(t.pl) || 0) > 0 }).length;
+    var wr = sessTrades.length > 0 ? Math.round(wins / sessTrades.length * 100) : 0;
+
     var h = '';
 
-    /* Header */
+    /* ─── Header with summary ─── */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">';
-    h += '<div style="font-size:18px;font-weight:800;color:var(--t1)">🌒 DEBRIEF — SESSION #' + s.sessionIndexInDay + '</div>';
-    h += '<div style="font-size:12px;color:var(--t2);margin-top:4px">Clôturée à ' + closeTime + ' · Durée ' + durStr + ' · ' + s.logicalTradeCount + ' trades · <b style="color:' + (sessPnl >= 0 ? 'var(--green)' : 'var(--red)') + ';font-family:JetBrains Mono,monospace">' + (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(2) + '</b></div>';
+    h += '<div style="font-size:18px;font-weight:800;color:var(--t1)">DEBRIEF — SESSION #' + s.sessionIndexInDay + '</div>';
+    h += '<div style="font-size:12px;color:var(--t2);margin-top:4px">Cloturee a ' + closeTime + ' · Duree ' + durStr + '</div>';
+
+    /* Session summary KPIs */
+    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px;font-size:11px;text-align:center">';
+    h += '<div style="background:var(--bg3);padding:10px 6px;border-radius:8px"><div style="color:var(--t3);font-size:9px;text-transform:uppercase;margin-bottom:2px">P&L</div><div style="font-size:16px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + (sessPnl >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(0) + '</div></div>';
+    h += '<div style="background:var(--bg3);padding:10px 6px;border-radius:8px"><div style="color:var(--t3);font-size:9px;text-transform:uppercase;margin-bottom:2px">Trades</div><div style="font-size:16px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--t1)">' + s.logicalTradeCount + '</div></div>';
+    h += '<div style="background:var(--bg3);padding:10px 6px;border-radius:8px"><div style="color:var(--t3);font-size:9px;text-transform:uppercase;margin-bottom:2px">WR</div><div style="font-size:16px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--t1)">' + wr + '%</div></div>';
+    h += '<div style="background:var(--bg3);padding:10px 6px;border-radius:8px"><div style="color:var(--t3);font-size:9px;text-transform:uppercase;margin-bottom:2px">Duree</div><div style="font-size:16px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--t1)">' + durStr + '</div></div>';
+    h += '</div>';
     h += '</div>';
 
-    /* Plan vs Réalité */
+    /* ─── Plan vs Realite ─── */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
-    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Plan vs Réalité</div>';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Plan vs Realite</div>';
     h += '<table style="width:100%;font-size:12px;border-collapse:collapse">';
-    h += '<thead><tr style="color:var(--t3);font-size:10px;text-transform:uppercase"><th style="text-align:left;padding:6px">Critère</th><th style="text-align:center;padding:6px">Plan</th><th style="text-align:center;padding:6px">Réalité</th><th style="text-align:center;padding:6px">Écart</th></tr></thead><tbody>';
+    h += '<thead><tr style="color:var(--t3);font-size:10px;text-transform:uppercase"><th style="text-align:left;padding:6px">Critere</th><th style="text-align:center;padding:6px">Plan</th><th style="text-align:center;padding:6px">Realite</th><th style="text-align:center;padding:6px">Ecart</th></tr></thead><tbody>';
 
     var rows = [
       { label: 'Trades', plan: plan.maxTrades || '—', real: s.logicalTradeCount },
@@ -7768,17 +8178,37 @@ function rSessionDebrief(el) {
       { label: 'Perte max', plan: plan.maxLossDollar ? '$' + plan.maxLossDollar : '—', real: sessPnl < 0 ? '$' + Math.abs(sessPnl).toFixed(0) : '$0' }
     ];
     rows.forEach(function(r) {
-      var planVal = typeof r.plan === 'number' ? r.plan : r.plan;
-      var realVal = typeof r.real === 'number' ? r.real : r.real;
       var ok = true;
       if (r.label === 'Trades' && typeof r.plan === 'number') ok = r.real <= r.plan;
       if (r.label === 'Perte max' && plan.maxLossDollar && sessPnl < 0) ok = Math.abs(sessPnl) <= plan.maxLossDollar;
-      var icon = ok ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>';
-      h += '<tr style="border-top:1px solid var(--border)"><td style="padding:8px;color:var(--t2)">' + r.label + '</td><td style="padding:8px;text-align:center;font-family:JetBrains Mono,monospace;color:var(--t3)">' + planVal + '</td><td style="padding:8px;text-align:center;font-family:JetBrains Mono,monospace;color:var(--t1)">' + realVal + '</td><td style="padding:8px;text-align:center">' + icon + '</td></tr>';
+      var icon = ok ? '<span style="color:var(--green)">OK</span>' : '<span style="color:var(--red)">NON</span>';
+      h += '<tr style="border-top:1px solid var(--border)"><td style="padding:8px;color:var(--t2)">' + r.label + '</td><td style="padding:8px;text-align:center;font-family:JetBrains Mono,monospace;color:var(--t3)">' + r.plan + '</td><td style="padding:8px;text-align:center;font-family:JetBrains Mono,monospace;color:var(--t1)">' + r.real + '</td><td style="padding:8px;text-align:center">' + icon + '</td></tr>';
     });
     h += '</tbody></table></div>';
 
-    /* Discipline */
+    /* ─── Historical comparison (Task 9) ─── */
+    var hist = sessHistoricalAvg();
+    if (hist && hist.count >= 1) {
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+      h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Comparaison historique <span style="font-weight:400">(' + hist.count + ' sessions)</span></div>';
+      h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">';
+      h += comparisonCell('P&L vs moy', hist.avgPnl, sessPnl);
+      h += comparisonCell('Trades vs moy', hist.avgTrades, s.logicalTradeCount);
+      h += comparisonCell('WR vs moy', hist.avgWR, wr);
+      h += comparisonCell('Duree vs moy', hist.avgDur, dur);
+      h += '</div>';
+
+      /* Average values reference */
+      h += '<div style="display:flex;justify-content:space-around;font-size:10px;color:var(--t3);margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">';
+      h += '<span>Moy P&L: $' + hist.avgPnl.toFixed(0) + '</span>';
+      h += '<span>Moy trades: ' + hist.avgTrades.toFixed(1) + '</span>';
+      h += '<span>Moy WR: ' + hist.avgWR.toFixed(0) + '%</span>';
+      h += '<span>Moy duree: ' + Math.round(hist.avgDur) + 'min</span>';
+      h += '</div>';
+      h += '</div>';
+    }
+
+    /* ─── Discipline ─── */
     var totalChecks = 0, doneChecks = 0;
     var allItems = checklistScopeReader('SESSION_PREP').concat(checklistScopeReader('TRADE_PREP'));
     totalChecks = allItems.length * Math.max(1, s.logicalTradeCount);
@@ -7790,31 +8220,67 @@ function rSessionDebrief(el) {
     h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Discipline de la session</div>';
     h += '<div style="font-size:48px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + discCol + '">' + discScore + '</div>';
     h += '<div style="font-size:12px;color:var(--t3)">/100</div>';
+    h += '<div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:10px;max-width:200px;margin-left:auto;margin-right:auto"><div style="height:100%;width:' + discScore + '%;background:' + discCol + ';border-radius:3px;transition:width .3s"></div></div>';
     h += '</div>';
 
-    /* Insights auto */
+    /* ─── Strengths / Weaknesses (Task 9) ─── */
+    var analysis = sessStrengthsWeaknesses(s, sessPnl, sessTrades, discScore, dur, hist);
+
+    if (analysis.strengths.length > 0 || analysis.weaknesses.length > 0) {
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
+
+      /* Strengths */
+      h += '<div style="background:rgba(46,213,115,.06);border:1px solid rgba(46,213,115,.2);border-radius:12px;padding:14px">';
+      h += '<div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Points forts</div>';
+      if (analysis.strengths.length === 0) {
+        h += '<div style="font-size:12px;color:var(--t3)">Aucun detecte</div>';
+      } else {
+        analysis.strengths.forEach(function(str) {
+          h += '<div style="font-size:12px;color:var(--t2);padding:3px 0;display:flex;align-items:start;gap:6px"><span style="color:var(--green);font-weight:700;flex-shrink:0">+</span>' + str + '</div>';
+        });
+      }
+      h += '</div>';
+
+      /* Weaknesses */
+      h += '<div style="background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.2);border-radius:12px;padding:14px">';
+      h += '<div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Points a ameliorer</div>';
+      if (analysis.weaknesses.length === 0) {
+        h += '<div style="font-size:12px;color:var(--t3)">Aucun detecte</div>';
+      } else {
+        analysis.weaknesses.forEach(function(w) {
+          h += '<div style="font-size:12px;color:var(--t2);padding:3px 0;display:flex;align-items:start;gap:6px"><span style="color:var(--red);font-weight:700;flex-shrink:0">-</span>' + w + '</div>';
+        });
+      }
+      h += '</div>';
+
+      h += '</div>';
+    }
+
+    /* ─── Insights auto ─── */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
     h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Insights</div>';
     var insights = [];
-    if (sessPnl > 0 && s.logicalTradeCount <= (plan.maxTrades || 99)) insights.push('💡 Session rentable et disciplinée.');
-    if (sessPnl < 0 && s.logicalTradeCount >= (plan.maxTrades || 99)) insights.push('⚠ Perte atteinte au max trades — bonne discipline de s\'être arrêté.');
-    if (sessPnl > (plan.targetDollar || 9999)) insights.push('📈 Target dépassé — excellent.');
-    if (discScore < 50) insights.push('🔻 Discipline faible — revois ta préparation.');
-    if (dur > 180) insights.push('⏱ Session longue (>' + Math.floor(dur / 60) + 'h) — fatigue possible.');
-    if (!insights.length) insights.push('💡 Session standard. Continue ta routine.');
+    if (sessPnl > 0 && s.logicalTradeCount <= (plan.maxTrades || 99)) insights.push('Session rentable et disciplinee.');
+    if (sessPnl < 0 && s.logicalTradeCount >= (plan.maxTrades || 99)) insights.push('Perte atteinte au max trades — bonne discipline.');
+    if (sessPnl > (plan.targetDollar || 9999)) insights.push('Target depasse — excellent.');
+    if (discScore < 50) insights.push('Discipline faible — revois ta preparation.');
+    if (dur > 180) insights.push('Session longue (>' + Math.floor(dur / 60) + 'h) — fatigue possible.');
+    if (hist && sessPnl > hist.avgPnl * 1.5) insights.push('Performance bien au-dessus de ta moyenne !');
+    if (hist && wr > hist.avgWR + 10) insights.push('WR en progression par rapport a la moyenne.');
+    if (!insights.length) insights.push('Session standard. Continue ta routine.');
     h += insights.map(function(i) { return '<div style="font-size:12px;color:var(--t2);padding:4px 0">' + i + '</div>' }).join('');
     h += '</div>';
 
-    /* Note personnelle */
+    /* ─── Note personnelle ─── */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
     h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Note personnelle</div>';
-    h += '<textarea id="sessDebriefNote" rows="4" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-family:inherit;font-size:12px;resize:vertical" placeholder="Comment s\'est passée cette session ? Qu\'as-tu appris ?">' + (s.debrief && s.debrief.journalNote || '') + '</textarea>';
+    h += '<textarea id="sessDebriefNote" rows="4" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-family:inherit;font-size:12px;resize:vertical" placeholder="Comment s\'est passee cette session ? Qu\'as-tu appris ?">' + (s.debrief && s.debrief.journalNote || '') + '</textarea>';
     h += '</div>';
 
-    /* CTA Verrouiller */
+    /* ─── CTA Verrouiller ─── */
     h += '<div style="text-align:center;padding:16px 0">';
-    h += '<button class="btn btn-g" onclick="lockCurrentSession()" style="padding:14px 28px;font-size:15px;font-weight:800;border-radius:12px">🔒 VERROUILLER LA SESSION</button>';
-    h += '<div style="font-size:10px;color:var(--t3);margin-top:6px">Action irréversible. Données figées.</div>';
+    h += '<button class="btn btn-g" onclick="lockCurrentSession()" style="padding:14px 28px;font-size:15px;font-weight:800;border-radius:12px">VERROUILLER LA SESSION</button>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-top:6px">Action irreversible. Donnees figees.</div>';
     h += '</div>';
 
     el.innerHTML = h;
@@ -7823,6 +8289,9 @@ function rSessionDebrief(el) {
     if (s.debrief) {
       s.debrief.selfDisciplineScore = discScore;
       s.debrief.autoInsights = insights;
+      s.debrief.strengths = analysis.strengths;
+      s.debrief.weaknesses = analysis.weaknesses;
+      if (hist) s.debrief.historicalComparison = { avgPnl: hist.avgPnl, avgTrades: hist.avgTrades, avgWR: hist.avgWR, sessCount: hist.count };
       var allSess = loadSessions();
       var idx = allSess.findIndex(function(x) { return x.id === s.id });
       if (idx >= 0) { allSess[idx].debrief = s.debrief; saveSessions(allSess) }
