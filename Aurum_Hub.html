@@ -59,133 +59,51 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 /* ═══ MAIN HUB ═══ */
 .hub{display:none;max-width:800px;margin:0 auto;padding:72px 16px 60px;min-height:100vh}
 .hub.on{display:block;animation:slideUp .5s ease}
+.hub { animation: hubIn .5s cubic-bezier(.4,0,.2,1) }
+@keyframes hubIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@media(max-width:500px){.hub{padding:72px 12px 40px}.ob-title{font-size:22px}}
 
-/* Header */
-.hub-hdr{display:flex;align-items:center;gap:12px;margin-bottom:20px}
-.hub-hdr .logo-sm{width:36px;height:36px;flex-shrink:0}
-.hub-hdr .greeting{flex:1}
-.hub-hdr .greeting .g1{font-size:11px;color:var(--t3);font-weight:600}
-.hub-hdr .greeting .g2{font-size:18px;font-weight:800}
-.hub-hdr .streak{text-align:right}
-.hub-hdr .streak .s-num{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--gold)}
-.hub-hdr .streak .s-lbl{font-size:9px;color:var(--t3);font-weight:600}
+/* ═══ HERO ═══ */
+.hero{display:flex;align-items:flex-start;justify-content:space-between;padding:32px 0 24px;gap:20px}
+.hero-greeting{font-size:28px;font-weight:800;color:var(--t1);letter-spacing:-.02em}
+.hero-date{font-size:13px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:4px}
+.hero-quote{font-size:14px;color:var(--t2);margin-top:12px;font-style:italic;max-width:500px;line-height:1.6}
+.streak-badge{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;text-align:center;min-width:100px}
 
-/* Today widget */
-.today{background:linear-gradient(135deg,rgba(212,160,23,.06),rgba(167,139,250,.04));border:1px solid rgba(212,160,23,.15);border-radius:var(--radius);padding:16px;margin-bottom:16px}
-.today .today-title{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
-.today .today-tip{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:4px}
-.today .today-tip b{color:var(--t1)}
-.today .today-btn{display:inline-block;margin-top:8px;padding:8px 20px;border-radius:8px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-size:12px;font-weight:700;text-decoration:none;transition:all var(--transition)}
-.today .today-btn:hover{transform:translateY(-1px)}
+/* ═══ KPI STRIP ═══ */
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;transition:var(--transition)}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.kpi-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.kpi-value{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--t1)}
 
-/* App cards */
-.apps{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
-.app-card{display:flex;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:inherit;transition:all var(--transition);position:relative;overflow:hidden}
-.app-card:hover{border-color:var(--border2);transform:translateX(4px);box-shadow:0 4px 20px rgba(0,0,0,.3)}
-.app-card:hover .app-glow{opacity:.12 !important;width:120px !important;height:120px !important;transition:all .4s ease}
-.app-card .app-glow{position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.04;pointer-events:none}
-.app-card .app-ic{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.app-card .app-info{flex:1;min-width:0}
-.app-card .app-name{font-size:14px;font-weight:700}
-.app-card .app-desc{font-size:10px;color:var(--t3);margin-top:1px}
-.app-card .app-stat{text-align:right;flex-shrink:0}
-.app-card .app-val{font-size:16px;font-weight:800;font-family:'JetBrains Mono',monospace}
-.app-card .app-lbl{font-size:8px;color:var(--t3);font-weight:600;text-transform:uppercase}
-.app-card .app-arrow{color:var(--t3);font-size:16px;flex-shrink:0;transition:transform var(--transition)}
-.app-card:hover .app-arrow{transform:translateX(3px);color:var(--t2)}
+/* ═══ APPS GRID ═══ */
+.apps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.app-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;text-decoration:none;color:var(--t1);transition:var(--transition);display:flex;flex-direction:column;gap:8px}
+.app-card:hover{border-color:var(--gold);box-shadow:var(--shadow-gold);transform:translateY(-2px)}
+.app-icon{font-size:28px}
+.app-name{font-size:16px;font-weight:800;letter-spacing:-.01em}
+.app-stat{font-size:24px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.app-sub{font-size:12px;color:var(--t3)}
+.app-progress{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:4px}
+.app-progress-bar{height:100%;background:var(--gold);border-radius:2px;transition:width .4s ease}
+.app-cta{font-size:12px;font-weight:700;color:var(--gold);margin-top:8px}
+.app-academy:hover{border-color:var(--blue)}
+.app-academy .app-cta{color:var(--blue)}
+.app-journal:hover{border-color:var(--gold)}
+.app-capital:hover{border-color:var(--purple)}
+.app-capital .app-cta{color:var(--purple)}
 
-/* Backup & Security */
-.sec-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
-.sec-title{font-size:11px;font-weight:700;color:var(--t1);margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.backup-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px}
-.backup-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.backup-ok{background:var(--green)}.backup-warn{background:var(--gold)}.backup-bad{background:var(--red)}
-.backup-btns{display:flex;gap:8px;margin-top:12px}
+/* ═══ BACKUP FOOTER ═══ */
+.backup-footer{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid var(--border);margin-top:24px;font-size:11px;color:var(--t3)}
+
+/* ═══ BUTTONS ═══ */
 .bb{padding:10px 18px;border-radius:8px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all var(--transition);flex:1;text-align:center}
-.bb:hover{transform:translateY(-1px)}
+.bb:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.bb:active{transform:scale(.96)}
 .bb-gold{background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000}
 .bb-outline{background:var(--bg3);border:1.5px solid var(--border2);color:var(--t2)}
 .bb-outline:hover{border-color:var(--t3)}
-
-/* Security guide */
-.guide-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t2);line-height:1.6}
-.guide-item:last-child{border-bottom:none}
-.guide-num{width:22px;height:22px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--gold);flex-shrink:0}
-.guide-item b{color:var(--t1)}
-
-/* Citation */
-.hub-citation{font-style:italic;font-size:13px;color:var(--t3);border-left:2px solid var(--gold);padding-left:12px;margin-bottom:16px;line-height:1.6}
-
-/* Footer */
-.hub-footer{text-align:center;font-size:10px;color:var(--t3);margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
-
-.app-sub { font-size:10px;color:var(--t3);margin-top:2px }
-.hub { animation: hubIn .5s cubic-bezier(.4,0,.2,1) }
-@keyframes hubIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-.hub-clock{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--t3);margin-left:4px}
-.today-progress{display:inline-block;width:100%;max-width:180px;height:6px;border-radius:3px;background:var(--bg4);margin-top:4px;vertical-align:middle}
-.today-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .4s ease}
-@media(max-width:500px){.hub{padding:72px 12px 40px}.ob-title{font-size:22px}.hub-hdr .greeting .g2{font-size:16px}}
-
-/* ═══ ANIMATED GRADIENT BORDER — APP CARDS ═══ */
-.app-card {
-  position: relative;
-  background: linear-gradient(135deg, var(--bg2) 0%, rgba(20,26,38,.8) 100%);
-}
-.app-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius);
-  padding: 1px;
-  background: linear-gradient(135deg, transparent 40%, rgba(212,160,23,.2) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .3s;
-}
-.app-card:hover::before {
-  opacity: 1;
-}
-
-/* ═══ STREAK COUNTER PULSE ═══ */
-.streak .s-num {
-  text-shadow: 0 0 20px rgba(212,160,23,.3);
-}
-
-/* ═══ TODAY WIDGET PREMIUM BORDER ═══ */
-.today {
-  position: relative;
-  overflow: hidden;
-}
-.today::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 3px;
-  height: 100%;
-  background: linear-gradient(180deg, var(--gold), var(--purple));
-  border-radius: 3px 0 0 3px;
-}
-
-/* ═══ SECTION SEPARATORS GRADIENT ═══ */
-.sec-box {
-  border: 1px solid transparent;
-  background-image: linear-gradient(var(--bg2), var(--bg2)), linear-gradient(135deg, var(--border) 0%, rgba(212,160,23,.15) 100%);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-}
-
-/* ═══ RESPONSIVE UNIVERSES ═══ */
-@media(max-width:600px){
-  .universes-grid{grid-template-columns:1fr!important}
-  .hub{padding:72px 12px 40px}
-  #scoreCard{padding:16px}
-  #scoreCard [style*="font-size:64px"]{font-size:48px!important}
-}
 
 /* ═══ ANIMATIONS MOUNT ═══ */
 .hub-fade{opacity:0;transform:translateY(12px);animation:hubMount .4s cubic-bezier(.4,0,.2,1) forwards}
@@ -196,25 +114,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
 .hub-fade:nth-child(4){animation-delay:.2s}
 .hub-fade:nth-child(5){animation-delay:.25s}
 .hub-fade:nth-child(6){animation-delay:.3s}
-
-/* ═══ SCORE CARD HOVER ═══ */
-#scoreCard{transition:border-color .3s,box-shadow .3s}
-#scoreCard:hover{border-color:var(--gold);box-shadow:0 4px 24px rgba(212,160,23,.08)}
-
-/* ═══ DRAWER ANIMATION ═══ */
-@keyframes drawerSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.hub-fade:nth-child(7){animation-delay:.35s}
 
 /* ═══ BANDEAU ALERTE CRITIQUE ═══ */
 .hub-alert-banner{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:12px;font-weight:600;color:var(--red);text-align:center;animation:hubMount .3s ease}
 
-/* ─── WORLD-CLASS POLISH ─── */
-.bb{transition:all .2s cubic-bezier(.4,0,.2,1)}
-.bb:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
-.bb:active{transform:scale(.96)}
-.uni-card{transition:all .3s cubic-bezier(.4,0,.2,1)}
-.uni-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.3);border-color:rgba(212,160,23,.2)}
+/* ═══ FOCUS & SELECTION ═══ */
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
 ::selection{background:rgba(212,160,23,.25)}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:768px){
+  .kpi-strip{grid-template-columns:repeat(2,1fr)}
+  .kpi-strip .kpi-card:last-child{grid-column:span 2}
+  .apps-grid{grid-template-columns:1fr}
+  .hero{flex-direction:column}
+}
 
 /* ═══ TOP BAR ═══ */
 .topbar {
@@ -360,78 +275,90 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
   </div>
 </div>
 
-<!-- ═══ MAIN HUB ═══ -->
+<!-- ═══ MAIN HUB — COCKPIT MOTIVATIONNEL ═══ -->
 <div class="hub" id="hub">
-  <!-- 1. HEADER -->
-  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:24px">
-    <div id="greetMsg" style="font-size:22px;font-weight:800;color:var(--t1)"></div>
-    <div id="greetDate" style="font-size:13px;color:var(--t3);font-family:'JetBrains Mono',monospace"></div>
-  </div>
 
-  <!-- 2. SCORE SANTÉ -->
-  <div id="scoreCard" style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px;cursor:pointer" onclick="toggleDrawer()">
-    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-      <div>
-        <div id="scoreValue" style="font-size:64px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1">—</div>
-        <div style="font-size:13px;color:var(--t3);margin-top:2px">/ 100 · <span id="scoreLabel">—</span></div>
-      </div>
-      <div style="flex:1;min-width:150px">
-        <div id="scoreDots" style="display:flex;gap:6px;margin-bottom:8px"></div>
-        <div style="font-size:12px;color:var(--t3)">Cliquer pour voir le détail →</div>
-      </div>
+  <!-- HERO SECTION -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-greeting" id="greetMsg"></div>
+      <div class="hero-date" id="greetDate"></div>
+      <div class="hero-quote" id="dailyQuote"></div>
+    </div>
+    <div class="hero-right">
+      <div class="streak-badge" id="streakBadge"></div>
     </div>
   </div>
-  <div id="scoreDrawer" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
-    <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Détail du score</div>
-    <div id="scoreBreakdown"></div>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi-card" id="kpiPnlDay">
+      <div class="kpi-label">P&amp;L Jour</div>
+      <div class="kpi-value">—</div>
+    </div>
+    <div class="kpi-card" id="kpiPnlWeek">
+      <div class="kpi-label">P&amp;L Semaine</div>
+      <div class="kpi-value">—</div>
+    </div>
+    <div class="kpi-card" id="kpiFormation">
+      <div class="kpi-label">Formation</div>
+      <div class="kpi-value">—</div>
+    </div>
+    <div class="kpi-card" id="kpiPatrimoine">
+      <div class="kpi-label">Patrimoine</div>
+      <div class="kpi-value">—</div>
+    </div>
+    <div class="kpi-card" id="kpiScore">
+      <div class="kpi-label">Score Sant&eacute;</div>
+      <div class="kpi-value">—</div>
+    </div>
   </div>
 
-  <!-- 3. ACTION PRIORITAIRE -->
-  <div id="actionBlock" style="margin-bottom:20px"></div>
+  <!-- SESSION ACTIVE -->
+  <div id="sessActiveWidget" style="display:none"></div>
 
-  <!-- 4. TES 3 UNIVERS -->
-  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;text-align:center">── Tes 3 univers ──</div>
-  <div class="universes-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
-    <a href="Aurum_Academy.html" class="app-card" style="flex-direction:column;align-items:stretch;padding:18px;text-align:center;gap:8px">
-      <div style="font-size:24px">📚</div>
-      <div style="font-size:14px;font-weight:700;color:var(--t1)">Academy</div>
-      <div id="uniAcademy" style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--blue)">—</div>
-      <div id="uniAcademySub" style="font-size:10px;color:var(--t3)"></div>
-      <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:4px"><div id="uniAcademyBar" style="height:100%;width:0%;background:var(--blue);border-radius:2px;transition:width .4s"></div></div>
-      <div style="font-size:11px;font-weight:600;color:var(--blue);margin-top:4px">Reprendre →</div>
+  <!-- ACTION PRIORITAIRE -->
+  <div id="actionBlock"></div>
+
+  <!-- 3 APPS -->
+  <div class="apps-grid">
+    <a href="Aurum_Academy.html" class="app-card app-academy" id="uniAcademy">
+      <div class="app-icon">📚</div>
+      <div class="app-name">Academy</div>
+      <div class="app-stat"></div>
+      <div class="app-sub"></div>
+      <div class="app-progress"><div class="app-progress-bar"></div></div>
+      <div class="app-cta">Continuer →</div>
     </a>
-    <a href="Aurum.html" class="app-card" style="flex-direction:column;align-items:stretch;padding:18px;text-align:center;gap:8px">
-      <div style="font-size:24px">📊</div>
-      <div style="font-size:14px;font-weight:700;color:var(--t1)">Journal</div>
-      <div id="uniJournal" style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--gold)">—</div>
-      <div id="uniJournalSub" style="font-size:10px;color:var(--t3)"></div>
-      <div style="font-size:11px;font-weight:600;color:var(--gold);margin-top:4px">Voir Journal →</div>
+    <a href="Aurum.html" class="app-card app-journal" id="uniJournal">
+      <div class="app-icon">📈</div>
+      <div class="app-name">Journal</div>
+      <div class="app-stat"></div>
+      <div class="app-sub"></div>
+      <div class="app-cta">Ouvrir →</div>
     </a>
-    <a href="Aurum_Capital.html" class="app-card" style="flex-direction:column;align-items:stretch;padding:18px;text-align:center;gap:8px">
-      <div style="font-size:24px">💎</div>
-      <div style="font-size:14px;font-weight:700;color:var(--t1)">Capital</div>
-      <div id="uniCapital" style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--purple)">—</div>
-      <div id="uniCapitalSub" style="font-size:10px;color:var(--t3)"></div>
-      <div style="font-size:11px;font-weight:600;color:var(--purple);margin-top:4px">Voir Capital →</div>
+    <a href="Aurum_Capital.html" class="app-card app-capital" id="uniCapital">
+      <div class="app-icon">🏛️</div>
+      <div class="app-name">Capital</div>
+      <div class="app-stat"></div>
+      <div class="app-sub"></div>
+      <div class="app-cta">Gérer →</div>
     </a>
   </div>
 
-  <div id="sessActiveWidget" style="display:none;margin-bottom:12px"></div>
-
-  <!-- 5. COACH -->
-  <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;text-align:center">── Coach ──</div>
+  <!-- COACH -->
   <div id="coachInsights" style="display:grid;gap:8px;margin-bottom:20px"></div>
 
-  <!-- 6. FOOTER -->
-  <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px">
-    <div style="font-size:14px">💾</div>
-    <div style="flex:1;font-size:12px" id="backupStatus"></div>
-    <button class="bb bb-gold" onclick="exportAll()" style="flex:none;padding:8px 14px;font-size:11px">Exporter</button>
-    <label class="bb bb-outline" style="flex:none;padding:8px 14px;font-size:11px;cursor:pointer">Importer<input type="file" accept=".json" multiple style="display:none" onchange="importAll(event)"></label>
+  <!-- BACKUP FOOTER -->
+  <div class="backup-footer">
+    <span id="backupStatus"></span>
+    <span style="display:flex;align-items:center;gap:8px">
+      <span id="dataSize"></span>
+      <button class="bb bb-gold" onclick="exportAll()" style="flex:none;padding:6px 12px;font-size:10px">Exporter</button>
+      <label class="bb bb-outline" style="flex:none;padding:6px 12px;font-size:10px;cursor:pointer">Importer<input type="file" accept=".json" multiple style="display:none" onchange="importAll(event)"></label>
+    </span>
   </div>
-  <div style="text-align:center;font-size:10px;color:var(--t3);padding:8px 0">
-    Aurum Écosystème · <span id="dataSize"></span>
-  </div>
+
 </div>
 
 <script>
@@ -557,12 +484,31 @@ function getStreak(){
   try{var s=JSON.parse(localStorage.getItem('aurum_streak')||'{}');return s.count||0}catch(e){return 0}
 }
 
+/* ─── QUOTES MOTIVANTES ─── */
+var QUOTES = [
+  "La discipline est le pont entre les objectifs et l'accomplissement.",
+  "Un trader rentable est un trader ennuyeux.",
+  "Le marché récompense la patience, pas l'action.",
+  "Protège ton capital. Les opportunités reviendront.",
+  "Le processus avant le résultat.",
+  "Chaque trade est une exécution du plan, pas un pari.",
+  "La constance bat le talent quand le talent n'est pas constant."
+];
+
+function getDailyQuote() {
+  try {
+    var today = new Date();
+    var dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+    return QUOTES[dayOfYear % QUOTES.length];
+  } catch(e) { return QUOTES[0]; }
+}
+
 /* ─── LOAD HUB ─── */
 function loadHub(){
   try{
     updateStreak();
     renderGreeting();
-    renderScore();
+    renderKPI();
     renderAction();
     renderUniverses();
     renderCoach();
@@ -622,13 +568,13 @@ function loadHub(){
 
     /* Refresh silencieux toutes les 60s */
     setInterval(function(){
-      try{renderGreeting();renderScore();renderUniverses();renderBackup()}catch(e){}
+      try{renderGreeting();renderKPI();renderUniverses();renderBackup()}catch(e){}
     },60000);
 
     /* Bandeau alerte si score critique ou backup jamais fait */
     try{
-      var scoreEl=document.getElementById('scoreValue');
-      var sc=parseInt(scoreEl?scoreEl.textContent:0)||0;
+      var kpiScoreEl=document.querySelector('#kpiScore .kpi-value');
+      var sc=parseInt(kpiScoreEl?kpiScoreEl.textContent:0)||0;
       var bkJ=localStorage.getItem('aurum_backup_journal');
       var existing=document.getElementById('hubAlertBanner');
       if(existing)existing.remove();
@@ -753,11 +699,19 @@ function renderGreeting(){
     var msg=h>=5&&h<12?'Bonjour ✦':h>=12&&h<18?'Bon après-midi ✦':h>=18&&h<23?'Bonsoir ✦':'Tu veilles ✦';
     document.getElementById('greetMsg').textContent=msg;
     document.getElementById('greetDate').textContent=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()]+', '+h.toString().padStart(2,'0')+':'+m.toString().padStart(2,'0');
-  }catch(e){}
-}
 
-function renderStreak(){
-  try{document.getElementById('streakNum').textContent=getStreak()}catch(e){}
+    /* Daily quote */
+    var quoteEl=document.getElementById('dailyQuote');
+    if(quoteEl) quoteEl.textContent='« '+getDailyQuote()+' »';
+
+    /* Streak badge */
+    var streakEl=document.getElementById('streakBadge');
+    if(streakEl){
+      var streak=getStreak();
+      var emoji=streak>=30?'🔥':streak>=7?'⚡':streak>=1?'✦':'—';
+      streakEl.innerHTML='<div style="font-size:24px;font-weight:800;font-family:\'JetBrains Mono\',monospace;color:var(--gold)">'+streak+'</div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">'+emoji+' Streak</div>';
+    }
+  }catch(e){}
 }
 
 function renderToday(){
@@ -1075,38 +1029,105 @@ function renderWidgets(){
   }catch(e){console.error('renderWidgets:',e)}
 }
 
-function toggleDrawer(){
+/* ─── KPI STRIP ─── */
+function renderKPI(){
   try{
-    var d=document.getElementById('scoreDrawer');
-    if(d.style.display==='none'||!d.style.display){
-      d.style.display='block';
-      d.style.animation='none';
-      d.offsetHeight; /* force reflow */
-      d.style.animation='drawerSlide .3s ease forwards';
-    }else{
-      d.style.display='none';
-    }
-  }catch(e){}
-}
-
-function renderScore(){
-  try{
-    /* Calcul score santé pondéré */
-    var sc=0;
-    var signals=[];
     var j=readJournal();
     var capRaw=localStorage.getItem('aurum_capital_v1');
     var cap=capRaw?JSON.parse(capRaw):{};
+    var today=new Date().toISOString().slice(0,10);
+
+    /* --- P&L Jour --- */
+    try{
+      var dayPnl=0;
+      j.trades.forEach(function(t){
+        if(t.date===today){
+          var p=parseFloat(t.pl||t.pnl||t.profit||0);
+          if(!isNaN(p)) dayPnl+=p;
+        }
+      });
+      var dayEl=document.querySelector('#kpiPnlDay .kpi-value');
+      if(dayEl){
+        dayEl.textContent=dayPnl===0?'—':(dayPnl>0?'+':'')+Math.round(dayPnl).toLocaleString('en-US')+'$';
+        dayEl.style.color=dayPnl>0?'var(--green)':dayPnl<0?'var(--red)':'var(--t1)';
+      }
+    }catch(e){}
+
+    /* --- P&L Semaine --- */
+    try{
+      var weekPnl=0;
+      var now=new Date();
+      var dayOfWeek=now.getDay()||7; /* lundi=1 */
+      var monday=new Date(now);monday.setDate(now.getDate()-(dayOfWeek-1));
+      var mondayStr=monday.toISOString().slice(0,10);
+      j.trades.forEach(function(t){
+        if(t.date&&t.date>=mondayStr){
+          var p=parseFloat(t.pl||t.pnl||t.profit||0);
+          if(!isNaN(p)) weekPnl+=p;
+        }
+      });
+      var weekEl=document.querySelector('#kpiPnlWeek .kpi-value');
+      if(weekEl){
+        weekEl.textContent=weekPnl===0?'—':(weekPnl>0?'+':'')+Math.round(weekPnl).toLocaleString('en-US')+'$';
+        weekEl.style.color=weekPnl>0?'var(--green)':weekPnl<0?'var(--red)':'var(--t1)';
+      }
+    }catch(e){}
+
+    /* --- Formation --- */
+    try{
+      var formRaw=localStorage.getItem('aurum_formation_v1');
+      var formDone=0;
+      if(formRaw){try{formDone=(JSON.parse(formRaw).d||[]).length}catch(e){}}
+      var formEl=document.querySelector('#kpiFormation .kpi-value');
+      if(formEl){
+        formEl.textContent=formDone+'/32';
+        formEl.style.color=formDone>=32?'var(--green)':formDone>0?'var(--blue)':'var(--t1)';
+      }
+    }catch(e){}
+
+    /* --- Patrimoine --- */
+    try{
+      var nw=0;
+      if(cap.portfolio)cap.portfolio.forEach(function(p){nw+=(p.current||0)});
+      if(cap.payouts)cap.payouts.forEach(function(p){nw+=(p.net||0)});
+      if(cap.passifs)cap.passifs.forEach(function(p){nw-=(p.remaining||0)});
+      if(cap.entities)cap.entities.forEach(function(e){if(e.status==='Active'||e.status==='En création')nw+=(e.tresorerie||0)});
+      j.accounts.forEach(function(a){var t=(a.type||'').toLowerCase();if(t==='perso'||t==='personnel')nw+=(a.balance||0)});
+      var patEl=document.querySelector('#kpiPatrimoine .kpi-value');
+      if(patEl){
+        patEl.textContent='$'+Math.round(nw).toLocaleString('en-US');
+        patEl.style.color=nw>0?'var(--purple)':'var(--t1)';
+      }
+    }catch(e){}
+
+    /* --- Score Santé --- */
+    try{
+      var sc=calcHealthScore(j, cap);
+      var col=sc<=40?'var(--red)':sc<=60?'var(--gold)':sc<=80?'var(--gold)':'var(--green)';
+      var scoreEl=document.querySelector('#kpiScore .kpi-value');
+      if(scoreEl){
+        scoreEl.textContent=sc+'/100';
+        scoreEl.style.color=col;
+      }
+    }catch(e){}
+
+  }catch(e){console.error('renderKPI:',e)}
+}
+
+/* ─── CALCUL SCORE SANTÉ (réutilisable) ─── */
+function calcHealthScore(j, cap){
+  try{
+    var sc=0;
 
     /* 1. Discipline (25%) */
     var disc=50;
     if(j.trades.length>=5){var recent=j.trades.slice(-20);var wr=recent.filter(function(t){return(parseFloat(t.pl)||0)>0}).length/recent.length;disc=Math.round(wr*100)}
-    signals.push({name:'Discipline trading',value:disc,weight:25});
+    sc+=disc*25/100;
 
     /* 2. Performance (20%) */
     var perf=50;
     if(j.trades.length>=3){var gains=j.trades.reduce(function(s,t){var p=parseFloat(t.pl)||0;return s+(p>0?p:0)},0);var losses=Math.abs(j.trades.reduce(function(s,t){var p=parseFloat(t.pl)||0;return s+(p<0?p:0)},0));var pf=losses>0?gains/losses:0;perf=Math.min(100,Math.round(pf*40))}
-    signals.push({name:'Performance trading',value:perf,weight:20});
+    sc+=perf*20/100;
 
     /* 3. Trajectoire patrimoine (25%) */
     var traj=50;
@@ -1114,43 +1135,28 @@ function renderScore(){
     var pV=(cap.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0);
     var db=(cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0);
     if(pN>0||pV>0){traj=db>0?Math.max(10,Math.min(100,Math.round((1-db/(pN+pV))*100))):80}
-    signals.push({name:'Trajectoire patrimoine',value:traj,weight:25});
+    sc+=traj*25/100;
 
     /* 4. Hygiène financière (15%) */
     var hyg=60;
     if((cap.expenses||[]).length>0||db===0)hyg=75;
     if(db===0&&(cap.portfolio||[]).length>0)hyg=90;
-    signals.push({name:'Hygiène financière',value:hyg,weight:15});
+    sc+=hyg*15/100;
 
     /* 5. Hygiène système (15%) */
     var sys=50;
     var bkJ=localStorage.getItem('aurum_backup_journal');
     var bkC=localStorage.getItem('aurum_backup_capital');
     if(bkJ&&bkC){var days=Math.max(Math.floor((Date.now()-new Date(bkJ).getTime())/86400000),Math.floor((Date.now()-new Date(bkC).getTime())/86400000));sys=days<=7?100:days<=14?70:30}
-    signals.push({name:'Hygiène système',value:sys,weight:15});
+    sc+=sys*15/100;
 
-    /* Score total */
-    signals.forEach(function(s){sc+=s.value*s.weight/100;s.contribution=Math.round(s.value*s.weight/100)});
-    sc=Math.max(0,Math.min(100,Math.round(sc)));
+    return Math.max(0,Math.min(100,Math.round(sc)));
+  }catch(e){return 50}
+}
 
-    /* Render */
-    var col=sc<=40?'var(--red)':sc<=60?'var(--gold)':sc<=80?'var(--gold)':sc<=95?'var(--green)':'var(--green)';
-    var label=sc<=40?'Critique':sc<=60?'Faible':sc<=80?'Correct':sc<=95?'Bon':'Excellent';
-    document.getElementById('scoreValue').textContent=sc;
-    document.getElementById('scoreValue').style.color=col;
-    document.getElementById('scoreLabel').textContent=label;
-    document.getElementById('scoreLabel').style.color=col;
-
-    var quintile=Math.ceil(sc/20);
-    var dots='';for(var i=1;i<=5;i++){dots+='<div style="width:12px;height:12px;border-radius:50%;background:'+(i<=quintile?col:'var(--bg4)')+'"></div>'}
-    document.getElementById('scoreDots').innerHTML=dots;
-
-    /* Breakdown drawer */
-    document.getElementById('scoreBreakdown').innerHTML=signals.map(function(s){
-      var c=s.value>=70?'var(--green)':s.value>=45?'var(--gold)':'var(--red)';
-      return'<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="flex:1;font-size:12px;color:var(--t2)">'+s.name+' <span style="color:var(--t3)">('+s.weight+'%)</span></div><div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:'+c+'">'+s.value+'</div><div style="font-size:11px;color:var(--t3);width:40px;text-align:right">+'+s.contribution+'</div></div>'
-    }).join('');
-  }catch(e){console.error('renderScore:',e)}
+/* ─── RENDER SCORE (backward compat — appels internes) ─── */
+function renderScore(){
+  try{ renderKPI(); }catch(e){}
 }
 
 function renderAction(){
@@ -1178,26 +1184,42 @@ function renderAction(){
 
 function renderUniverses(){
   try{
-    /* Academy */
+    /* ─── Academy ─── */
     var formRaw=localStorage.getItem('aurum_formation_v1');
     var formDone=0;if(formRaw){try{formDone=(JSON.parse(formRaw).d||[]).length}catch(e){}}
-    document.getElementById('uniAcademy').textContent=formDone+'/32';
-    document.getElementById('uniAcademySub').textContent=formDone>=32?'Terminé':formDone>0?'En cours':'Pas commencé';
-    document.getElementById('uniAcademyBar').style.width=Math.round(formDone/32*100)+'%';
+    var acCard=document.getElementById('uniAcademy');
+    if(acCard){
+      var acStat=acCard.querySelector('.app-stat');
+      var acSub=acCard.querySelector('.app-sub');
+      var acBar=acCard.querySelector('.app-progress-bar');
+      if(acStat) acStat.textContent=formDone+'/32';
+      if(acSub) acSub.textContent=formDone>=32?'Formation terminée':formDone>0?'En cours':'Pas commencé';
+      if(acBar) acBar.style.width=Math.round(formDone/32*100)+'%';
+    }
 
-    /* Journal */
+    /* ─── Journal ─── */
     var j=readJournal();
-    document.getElementById('uniJournal').textContent=j.trades.length;
-    var wr=j.trades.length>=3?Math.round(j.trades.filter(function(t){return(parseFloat(t.pl)||0)>0}).length/j.trades.length*100):0;
-    document.getElementById('uniJournalSub').textContent=j.trades.length?'trades · WR '+wr+'%':'Aucun trade';
+    var jCard=document.getElementById('uniJournal');
+    if(jCard){
+      var jStat=jCard.querySelector('.app-stat');
+      var jSub=jCard.querySelector('.app-sub');
+      var wr=j.trades.length>=3?Math.round(j.trades.filter(function(t){return(parseFloat(t.pl)||0)>0}).length/j.trades.length*100):0;
+      if(jStat) jStat.textContent=j.trades.length>0?j.trades.length+' trades':'—';
+      if(jSub) jSub.textContent=j.trades.length?'WR '+wr+'%':'Aucun trade';
+    }
 
-    /* Capital */
+    /* ─── Capital ─── */
     var capRaw=localStorage.getItem('aurum_capital_v1');
     var nw=0;
     if(capRaw){try{var cap=JSON.parse(capRaw);nw=(cap.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0)+(cap.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0)-(cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0)}catch(e){}}
     j.accounts.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel')nw+=a.balance||0});
-    document.getElementById('uniCapital').textContent='$'+Math.round(nw).toLocaleString('en-US');
-    document.getElementById('uniCapitalSub').textContent='patrimoine net';
+    var cCard=document.getElementById('uniCapital');
+    if(cCard){
+      var cStat=cCard.querySelector('.app-stat');
+      var cSub=cCard.querySelector('.app-sub');
+      if(cStat) cStat.textContent='$'+Math.round(nw).toLocaleString('en-US');
+      if(cSub) cSub.textContent='patrimoine net';
+    }
   }catch(e){console.error('renderUniverses:',e)}
 }
 
