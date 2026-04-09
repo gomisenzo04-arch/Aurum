@@ -366,6 +366,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-hei
    AURUM HUB v3 — Daily Cockpit
    ═══════════════════════════════════════════════ */
 
+/* Nombre total de modules de formation (12 Edge + 12 App + 8 Capital) */
+var TOTAL_MODULES = 32;
+
 /* ─── MOBILE MENU TOGGLE ─── */
 function toggleMobileMenu() {
   try {
@@ -403,7 +406,15 @@ function obFinish(){
 function doLogin(){
   try{
     var code=document.getElementById('loginCode').value;
-    var stored=localStorage.getItem('aurum_code')||'2928';
+    var stored=localStorage.getItem('aurum_code');
+    if(!stored){
+      /* Pas de code défini — renvoyer vers l'onboarding */
+      localStorage.removeItem('aurum_setup');
+      document.querySelectorAll('.onboard .step').forEach(function(s){s.classList.remove('on')});
+      document.getElementById('ob-1').classList.add('on');
+      document.getElementById('onboard').style.display='flex';
+      return;
+    }
     if(code===stored){
       sessionStorage.setItem('aurum_auth','1');
       updateStreak();
@@ -590,105 +601,6 @@ function loadHub(){
   }catch(e){console.error(e)}
 }
 
-/* ─── CITATION MOTIVANTE ─── */
-function renderCitation(){
-  try{
-    var el=document.getElementById('hubCitation');
-    /* Bannière d'action contextuelle au lieu de citation */
-    var formRaw=localStorage.getItem('aurum_formation_v1');
-    var formDone=0;
-    if(formRaw){try{formDone=(JSON.parse(formRaw).d||[]).length}catch(e){}}
-    var j=readJournal();
-    var now=new Date(),dow=now.getDay();
-
-    var action='',color='var(--blue)',href='Aurum_Academy.html',btn='';
-
-    if(formDone<32&&j.trades.length>0){
-      /* AVERTISSEMENT : trades en live mais formation incomplète */
-      action='⚠️ Formation incomplète ('+formDone+'/32) — termine avant de trader en live';
-      btn='Reprendre Academy →';
-      href='Aurum_Academy.html';
-      color='var(--red)';
-    }else if(formDone<12){
-      /* Pas fini la stratégie */
-      action='🎓 Continue ta formation — module '+(formDone+1)+'/32';
-      btn='Ouvrir Academy →';
-      href='Aurum_Academy.html';
-      color='var(--blue)';
-    }else if(formDone<32){
-      /* Stratégie ok, continue l'app */
-      action='🎓 Formation en cours — '+(formDone)+'/32 modules faits';
-      btn='Continuer →';
-      href='Aurum_Academy.html';
-      color='var(--blue)';
-    }else if(j.trades.length===0){
-      /* Formation finie, pas de trade */
-      action='📊 Formation terminée ! Enregistre ton premier trade';
-      btn='Ouvrir Journal →';
-      href='Aurum.html';
-      color='var(--gold)';
-    }else if(dow>=1&&dow<=5){
-      /* Jour de trading */
-      var todayTrades=j.trades.filter(function(t){return t.date===now.toISOString().slice(0,10)}).length;
-      if(todayTrades===0){
-        action='✅ Ouvre ta checklist et commence ta session';
-        btn='Ouvrir Journal →';
-        href='Aurum.html';
-        color='var(--gold)';
-      }else{
-        action='📊 '+todayTrades+' trade(s) aujourd\'hui — continue ta session';
-        btn='Voir Dashboard →';
-        href='Aurum.html';
-        color='var(--green)';
-      }
-    }else{
-      /* Weekend */
-      action='📝 Weekend — fais ta review hebdo et ton backup';
-      btn='Ouvrir Journal →';
-      href='Aurum.html';
-      color='var(--gold)';
-    }
-
-    var alerts = '';
-    /* Checklist persistée */
-    try {
-      var ckRaw = localStorage.getItem('aurum_checklist');
-      if (ckRaw) {
-        var ckState = JSON.parse(ckRaw);
-        var today = new Date().toISOString().slice(0,10);
-        if (ckState.date === today && ckState.checks) {
-          var done = ckState.checks.filter(function(c){return c}).length;
-          var total = ckState.checks.length;
-          if (done > 0 && done < total) {
-            alerts += '<div style="font-size:11px;color:var(--gold);padding:4px 0">✅ Checklist en cours : '+done+'/'+total+'</div>';
-          }
-        }
-      }
-    } catch(e) {}
-    /* Capital santé */
-    try {
-      var capRaw = localStorage.getItem('aurum_capital_v1');
-      if (capRaw) {
-        var cap = JSON.parse(capRaw);
-        var db = (cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0);
-        var pV = (cap.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0);
-        var pN = (cap.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0);
-        var nw = pV + pN - db;
-        if (nw > 0 && db/nw > 0.5) alerts += '<div style="font-size:11px;color:var(--red);padding:4px 0">⚠️ Ratio dettes > 50% — vérifie dans Capital</div>';
-      }
-    } catch(e) {}
-
-    el.innerHTML='<div style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(212,160,23,.05),rgba(167,139,250,.03));border:1px solid var(--border);border-left:3px solid '+color+';border-radius:var(--radius);padding:12px 16px"><div style="flex:1;font-size:13px;font-weight:600;color:var(--t1)">'+action+'</div><a href="'+href+'" style="padding:8px 16px;border-radius:8px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#000;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .2s">'+btn+'</a></div>'+alerts;
-  }catch(e){}
-}
-
-function updateClock(){
-  try{
-    var n=new Date();
-    var el=document.getElementById('liveClock');
-    if(el) el.textContent=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
-  }catch(e){}
-}
 
 function renderGreeting(){
   try{
@@ -714,125 +626,6 @@ function renderGreeting(){
   }catch(e){}
 }
 
-function renderToday(){
-  try{
-    var el=document.getElementById('todayWidget');
-    var tips=[];
-    var now=new Date();
-    var dow=now.getDay();
-    var today=now.toISOString().slice(0,10);
-
-    /* Day icon */
-    var dayIcons=['😴','🟢','🟢','🟢','🟢','🟢','📊'];
-    var dayIcon=dayIcons[dow]||'🟢';
-
-    /* Weekend tip */
-    if(dow===0){
-      tips.push({text:dayIcon+' <b>Dimanche</b> — Repos. C\'est le moment de faire ta review hebdo et ton backup.',btn:null});
-    } else if(dow===6){
-      tips.push({text:dayIcon+' <b>Samedi</b> — C\'est le moment de faire ta review hebdo et ton backup.',btn:'Ouvrir Journal',href:'Aurum.html'});
-    }
-
-    /* Formation progress */
-    var MOD_NAMES=['Le système mécanique','Bougies japonaises','Supports & Résistances','Pullbacks & Direction','Liquidité','Quasimodo','Variante Gaps','Gestion du trade','Checklist','Gestion du risque','Discipline & Routine','Journée type','Bienvenue','Premier lancement','Enregistrer trade','Dashboard','Calculateur','Horaires','Coaching','Reviews','Multi-comptes','Backup','Pièges courants','Examen final','Fondamentaux','Revenus trading','Fiscalité','Entités','Portfolio','Budget','Dettes','Synthèse'];
-    var formRaw=localStorage.getItem('aurum_formation_v1');
-    var formDone=0;
-    var formDoneArr=[];
-    if(formRaw){try{var fd=JSON.parse(formRaw);formDoneArr=fd.d||[];formDone=formDoneArr.length}catch(e){}}
-    if(formDone<32){
-      var pct=Math.round((formDone/32)*100);
-      var progressBar='<div class="today-progress"><div class="today-progress-fill" style="width:'+pct+'%"></div></div>';
-      /* Trouver le premier module non complété */
-      var nextIdx=0;
-      for(var mi=0;mi<32;mi++){if(formDoneArr.indexOf(mi)===-1){nextIdx=mi;break}}
-      var nextName=MOD_NAMES[nextIdx]||('Module '+(nextIdx+1));
-      tips.push({text:(dow>=1&&dow<=5?dayIcon+' ':'')+'📖 Prochain module : <b>'+nextName+'</b> (module '+(nextIdx+1)+'/32 — '+pct+'%) '+progressBar,btn:'Continuer',href:'Aurum_Academy.html'});
-    }
-
-    /* Backup check */
-    var lastBk=getLastBackupDays();
-    if(lastBk.journal>7){
-      tips.push({text:'⚠️ <b>Backup Journal</b> : dernier il y a '+lastBk.journal+' jours. Exporte maintenant.',btn:null});
-    }
-    if(dow===5||dow===6){
-      tips.push({text:'C\'est le weekend → <b>Backup + Review hebdo</b> si pas encore fait.',btn:'Ouvrir Journal',href:'Aurum.html'});
-    }
-
-    /* Trades today */
-    var j=readJournal();
-    var tradesToday=j.trades.filter(function(t){return t.date===today}).length;
-    if(formDone>=23&&tradesToday===0&&dow!==0&&dow!==6){
-      tips.push({text:'Pas de trade aujourd\'hui. <b>Setup valide ?</b> Ouvre le Journal.',btn:'Journal',href:'Aurum.html'});
-    }
-    if(tradesToday>0){
-      tips.push({text:'✅ <b>'+tradesToday+' trade(s)</b> enregistré(s) aujourd\'hui.',btn:null});
-    }
-
-    /* Win Rate ce mois */
-    try{
-      var monthStr=now.toISOString().slice(0,7);
-      var monthTrades=j.trades.filter(function(t){return t.date&&t.date.slice(0,7)===monthStr});
-      if(monthTrades.length>=3){
-        var monthWins=0;
-        monthTrades.forEach(function(t){
-          var pnl=t.pnl||t.pl||t.profit||0;
-          if(typeof pnl==='string') pnl=parseFloat(pnl)||0;
-          if(pnl>0) monthWins++;
-        });
-        var monthWR=Math.round((monthWins/monthTrades.length)*100);
-        if(monthWR>=60){
-          tips.push({text:'🎯 WR à <b>'+monthWR+'%</b> ce mois — excellent, continue !',btn:null});
-        } else if(monthWR<45){
-          tips.push({text:'⚠️ Win Rate à <b>'+monthWR+'%</b> ce mois — revois ta sélection de setups.',btn:'Ouvrir Journal',href:'Aurum.html'});
-        }
-      }
-    }catch(e){}
-
-    /* Capital santé */
-    try{
-      var rawCap=localStorage.getItem('aurum_capital_v1');
-      if(rawCap){
-        var capD=JSON.parse(rawCap);
-        /* Calcul simplifié du score santé (cohérent avec Aurum_Capital) */
-        var score=50;
-        var hasPortfolio=capD.portfolio&&capD.portfolio.length>0;
-        var hasPayouts=capD.payouts&&capD.payouts.length>0;
-        var hasEntities=capD.entities&&capD.entities.length>0;
-        var totalDebt=0;
-        var totalAssets=0;
-        if(capD.portfolio)capD.portfolio.forEach(function(p){totalAssets+=(p.current||0)});
-        if(capD.payouts)capD.payouts.forEach(function(p){totalAssets+=(p.net||0)});
-        if(capD.entities)capD.entities.forEach(function(e){if(e.status==='Active'||e.status==='En création')totalAssets+=(e.tresorerie||0)});
-        if(capD.passifs)capD.passifs.forEach(function(p){totalDebt+=(p.remaining||0)});
-        /* Score basique : part de dettes vs actifs + diversification */
-        if(totalAssets>0){
-          var debtRatio=totalDebt/totalAssets;
-          if(debtRatio>0.5) score-=20;
-          else if(debtRatio>0.3) score-=10;
-          if(hasPortfolio) score+=10;
-          if(hasPayouts) score+=10;
-          if(hasEntities) score+=10;
-          if(capD.portfolio&&capD.portfolio.length>=3) score+=10;
-        } else if(totalDebt>0){
-          score=20;
-        } else {
-          score=50; /* pas assez de données */
-        }
-        if(score<50&&(totalAssets>0||totalDebt>0)){
-          tips.push({text:'💊 Score santé patrimoine faible (<b>'+score+'/100</b>) — vérifie tes dettes et dépenses.',btn:'Ouvrir Capital',href:'Aurum_Capital.html'});
-        }
-      }
-    }catch(e){}
-
-    if(tips.length===0){
-      tips.push({text:'Tout est à jour. <b>Continue comme ça.</b> 💪',btn:null});
-    }
-
-    el.innerHTML='<div class="today-title">📋 Aujourd\'hui</div>'+tips.map(function(t){
-      return '<div class="today-tip">→ '+t.text+(t.btn?'<br><a href="'+t.href+'" class="today-btn">'+t.btn+' →</a>':'')+'</div>';
-    }).join('');
-  }catch(e){console.error(e)}
-}
 
 /* ─── ANIMATED COUNTER ─── */
 function animateValue(el, start, end, duration, prefix, suffix) {
@@ -852,109 +645,6 @@ function animateValue(el, start, end, duration, prefix, suffix) {
   } catch(e) { el.textContent = prefix + end + suffix; }
 }
 
-function renderStats(){
-  try{
-    /* Formation */
-    var formRaw=localStorage.getItem('aurum_formation_v1');
-    var formDone=0;
-    var formData=null;
-    if(formRaw){try{formData=JSON.parse(formRaw);formDone=(formData.d||[]).length}catch(e){}}
-    var elForm=document.getElementById('statFormation');
-    elForm.textContent='0 / 32';
-    animateValue(elForm, 0, formDone, 800, '', ' / 32');
-
-    /* Sub-stat: average stars */
-    var subForm=document.getElementById('subFormation');
-    if(subForm&&formData&&formData.a&&formDone>0){
-      try{
-        var totalStars=0;var starCount=0;
-        var doneModules=formData.d||[];
-        var attempts=formData.a||{};
-        for(var i=0;i<doneModules.length;i++){
-          var mi=doneModules[i];
-          var att=attempts[mi]||1;
-          var stars=att===1?3:att===2?2:1;
-          totalStars+=stars;starCount++;
-        }
-        if(starCount>0){
-          var avg=(totalStars/starCount).toFixed(1);
-          subForm.textContent=avg+'★ moyenne';
-        }
-      }catch(e){}
-    }
-
-    /* Journal trades */
-    var j=readJournal();
-    var elJournal=document.getElementById('statJournal');
-    elJournal.textContent='0';
-    animateValue(elJournal, 0, j.trades.length, 800, '', '');
-
-    /* Sub-stat: win rate */
-    var subJournal=document.getElementById('subJournal');
-    if(subJournal&&j.trades.length>0){
-      try{
-        var wins=0;
-        j.trades.forEach(function(t){
-          var pnl=t.pnl||t.pl||t.profit||0;
-          if(typeof pnl==='string') pnl=parseFloat(pnl)||0;
-          if(pnl>0) wins++;
-        });
-        var wr=Math.round((wins/j.trades.length)*100);
-        subJournal.textContent='WR '+wr+'%';
-      }catch(e){}
-    }
-
-    /* Capital net worth */
-    var net=0;
-    var rawCap=localStorage.getItem('aurum_capital_v1');
-    var capData=null;
-    if(rawCap){
-      try{
-        capData=JSON.parse(rawCap);
-        if(capData.portfolio)capData.portfolio.forEach(function(p){net+=(p.current||0)});
-        if(capData.payouts)capData.payouts.forEach(function(p){net+=(p.net||0)});
-        if(capData.passifs)capData.passifs.forEach(function(p){net-=(p.remaining||0)});
-        if(capData.entities)capData.entities.forEach(function(e){if(e.status==='Active'||e.status==='En création')net+=(e.tresorerie||0)});
-      }catch(e){}
-    }
-    j.accounts.forEach(function(a){var t=(a.type||'').toLowerCase();if(t==='perso'||t==='personnel')net+=(a.balance||0)});
-    var roundedNet=Math.round(net);
-    var elCap=document.getElementById('statCapital');
-    elCap.textContent='$0';
-    animateValue(elCap, 0, roundedNet, 1000, '$', '');
-
-    /* Sub-stat: health score */
-    var subCapital=document.getElementById('subCapital');
-    if(subCapital&&capData){
-      try{
-        var score=capData.healthScore||capData.score||null;
-        if(score!==null&&score!==undefined){
-          subCapital.textContent='Score santé: '+Math.round(score)+'/100';
-        } else {
-          /* Calculate a basic health score */
-          var hs=0;var factors=0;
-          /* Has payouts */
-          if(capData.payouts&&capData.payouts.length>0){hs+=20;factors++}
-          /* Has portfolio */
-          if(capData.portfolio&&capData.portfolio.length>0){hs+=20;factors++}
-          /* Has entities */
-          if(capData.entities&&capData.entities.length>0){hs+=20;factors++}
-          /* Low debt ratio */
-          var totalDebt=0;
-          if(capData.passifs)capData.passifs.forEach(function(p){totalDebt+=(p.remaining||0)});
-          if(roundedNet>0&&totalDebt<roundedNet*0.5){hs+=20;factors++}
-          else if(roundedNet>0){hs+=10;factors++}
-          /* Has backup */
-          var bkDays=getLastBackupDays();
-          if(bkDays.journal<=7&&bkDays.capital<=7){hs+=20;factors++}
-          else if(bkDays.journal<=14||bkDays.capital<=14){hs+=10;factors++}
-          else{factors++}
-          if(factors>0) subCapital.textContent='Score santé: '+Math.min(hs,100)+'/100';
-        }
-      }catch(e){}
-    }
-  }catch(e){console.error(e)}
-}
 
 function backupBar(days){
   try{
@@ -964,70 +654,6 @@ function backupBar(days){
   }catch(e){return '';}
 }
 
-function renderWidgets(){
-  try{
-    var el=document.getElementById('hubWidgets');
-    if(!el) return;
-    var h='';
-
-    /* Widget Score Santé — calculé depuis Capital+Journal */
-    var score=50; /* défaut */
-    try{
-      var capRaw=localStorage.getItem('aurum_capital_v1');
-      if(capRaw){
-        var cap=JSON.parse(capRaw);
-        var sc=0;
-        var pN=(cap.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0);
-        var db=(cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0);
-        var pV=(cap.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0);
-        var nw=pV+pN-db;
-        /* Endettement 25pts */
-        if(nw>0){var dr=db/nw;sc+=dr<=0?25:dr<=.3?18:dr<=.5?10:0}else sc+=db===0?25:0;
-        /* Diversification 25pts */
-        var cn=new Set((cap.portfolio||[]).map(function(p){return p.cat})).size;
-        sc+=cn>=4?25:cn>=2?15:cn>=1?8:0;
-        /* Revenus 25pts */
-        var src=new Set((cap.payouts||[]).map(function(p){return p.source}));
-        sc+=src.size>=3?25:src.size>=2?15:src.size>=1?8:0;
-        /* Trading 25pts */
-        var j=readJournal();
-        if(j.trades.length>=5){
-          var wins=j.trades.filter(function(t){return(parseFloat(t.pl)||0)>0}).length;
-          var wr=wins/j.trades.length;
-          sc+=wr>=.55?25:wr>=.45?15:wr>=.35?8:0;
-        }else sc+=10;
-        score=Math.max(0,Math.min(100,sc));
-      }
-    }catch(e){}
-    var sCol=score>=70?'var(--green)':score>=45?'var(--gold)':'var(--red)';
-    var sLabel=score>=70?'Bonne':score>=45?'Attention':'Critique';
-    h+='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center">';
-    h+='<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Santé</div>';
-    h+='<div style="font-size:28px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+sCol+'">'+score+'</div>';
-    h+='<div style="font-size:10px;color:'+sCol+';font-weight:600">/100 · '+sLabel+'</div>';
-    h+='</div>';
-
-    /* Widget Coaching — prochain palier */
-    var nw2=0;
-    try{
-      var capRaw2=localStorage.getItem('aurum_capital_v1');
-      if(capRaw2){var cap2=JSON.parse(capRaw2);nw2=(cap2.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0)+(cap2.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0)-(cap2.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0)}
-      var j2=readJournal();j2.accounts.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel')nw2+=a.balance||0});
-    }catch(e){}
-    var paliers=[{t:5000,l:'$5K',e:'🌱'},{t:10000,l:'$10K',e:'🥉'},{t:25000,l:'$25K',e:'🥈'},{t:50000,l:'$50K',e:'🥇'},{t:100000,l:'$100K',e:'💎'},{t:250000,l:'$250K',e:'👑'},{t:500000,l:'$500K',e:'🏰'},{t:1000000,l:'$1M',e:'🏆'}];
-    var next=paliers.find(function(p){return p.t>nw2})||paliers[paliers.length-1];
-    var pct=Math.min(100,Math.round(nw2/next.t*100));
-    h+='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center">';
-    h+='<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Prochain palier</div>';
-    h+='<div style="font-size:20px;margin-bottom:4px">'+next.e+'</div>';
-    h+='<div style="font-size:16px;font-weight:800;color:var(--purple)">'+next.l+'</div>';
-    h+='<div style="height:4px;background:var(--bg4);border-radius:2px;margin-top:8px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--purple),var(--gold));border-radius:2px"></div></div>';
-    h+='<div style="font-size:10px;color:var(--t3);margin-top:4px">'+pct+'%</div>';
-    h+='</div>';
-
-    el.innerHTML=h;
-  }catch(e){console.error('renderWidgets:',e)}
-}
 
 /* ─── KPI STRIP ─── */
 function renderKPI(){
@@ -1080,8 +706,8 @@ function renderKPI(){
       if(formRaw){try{formDone=(JSON.parse(formRaw).d||[]).length}catch(e){}}
       var formEl=document.querySelector('#kpiFormation .kpi-value');
       if(formEl){
-        formEl.textContent=formDone+'/32';
-        formEl.style.color=formDone>=32?'var(--green)':formDone>0?'var(--blue)':'var(--t1)';
+        formEl.textContent=formDone+'/'+TOTAL_MODULES;
+        formEl.style.color=formDone>=TOTAL_MODULES?'var(--green)':formDone>0?'var(--blue)':'var(--t1)';
       }
     }catch(e){}
 
@@ -1171,8 +797,8 @@ function renderAction(){
 
     var action=null;
     if(bkDays>14||bkDays===999) action={icon:'🔴',label:'Backup urgent — données non sauvegardées depuis '+(bkDays===999?'jamais':bkDays+'j'),cta:'Exporter',onclick:'exportAll()'};
-    else if(formDone<32&&j.trades.length>0) action={icon:'🟠',label:'Formation incomplète ('+formDone+'/32) — termine avant de trader',cta:'Academy →',href:'Aurum_Academy.html'};
-    else if(formDone<32) action={icon:'🟡',label:'Continue ta formation — module '+(formDone+1)+'/32',cta:'Academy →',href:'Aurum_Academy.html'};
+    else if(formDone<TOTAL_MODULES&&j.trades.length>0) action={icon:'🟠',label:'Formation incomplète ('+formDone+'/'+TOTAL_MODULES+') — termine avant de trader',cta:'Academy →',href:'Aurum_Academy.html'};
+    else if(formDone<TOTAL_MODULES) action={icon:'🟡',label:'Continue ta formation — module '+(formDone+1)+'/'+TOTAL_MODULES,cta:'Academy →',href:'Aurum_Academy.html'};
 
     if(!action){el.innerHTML='<div style="text-align:center;padding:12px;font-size:13px;color:var(--green);font-weight:600">✓ Tout est en ordre. Bonne journée.</div>';return}
 
@@ -1192,9 +818,9 @@ function renderUniverses(){
       var acStat=acCard.querySelector('.app-stat');
       var acSub=acCard.querySelector('.app-sub');
       var acBar=acCard.querySelector('.app-progress-bar');
-      if(acStat) acStat.textContent=formDone+'/32';
-      if(acSub) acSub.textContent=formDone>=32?'Formation terminée':formDone>0?'En cours':'Pas commencé';
-      if(acBar) acBar.style.width=Math.round(formDone/32*100)+'%';
+      if(acStat) acStat.textContent=formDone+'/'+TOTAL_MODULES;
+      if(acSub) acSub.textContent=formDone>=TOTAL_MODULES?'Formation terminée':formDone>0?'En cours':'Pas commencé';
+      if(acBar) acBar.style.width=Math.round(formDone/TOTAL_MODULES*100)+'%';
     }
 
     /* ─── Journal ─── */
@@ -1558,7 +1184,8 @@ function mergeAllBackups(files){
     /* Résumé */
     var parts=[];
     if(mergedJournal){
-      var tradeCount=(mergedJournal.live||[]).length;
+      var tradeCount=0;
+      (mergedJournal.accounts||[]).forEach(function(a){tradeCount+=(a.trades||[]).length});
       var accCount=(mergedJournal.accounts||[]).length;
       parts.push('Journal ('+accCount+' comptes, '+tradeCount+' trades)');
     }
@@ -1586,12 +1213,6 @@ function mergeAllBackups(files){
   }catch(e){alert('Erreur de fusion : '+e.message);console.error('mergeAllBackups:',e)}
 }
 
-function toggleGuide(){
-  try{
-    var el=document.getElementById('secGuide');
-    el.style.display=el.style.display==='none'?'block':'none';
-  }catch(e){}
-}
 
 /* ─── INIT ─── */
 init();

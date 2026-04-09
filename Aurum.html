@@ -84,8 +84,7 @@ body {
   justify-content: center;
   margin: 0 auto 12px;
   filter: drop-shadow(0 8px 24px rgba(212,160,23,.4));
-}
-  box-shadow: 0 8px 40px rgba(212,160,23,.3), 0 0 80px rgba(212,160,23,.08)
+  box-shadow: 0 8px 40px rgba(212,160,23,.3), 0 0 80px rgba(212,160,23,.08);
 }
 .login-box h2 {
   font-size: 22px;
@@ -4528,7 +4527,7 @@ function calcToTrade() {
     var lot = document.getElementById('cRes').textContent;
     /* Pré-remplir le formulaire trade */
     var fSL = document.getElementById('fSL');
-    var fLot = document.getElementById('fLot');
+    var fLot = document.getElementById('fLo');
     if (fSL) fSL.value = sl;
     if (fLot) fLot.value = lot;
     /* Auto-remplir la date et l'heure */
@@ -7426,9 +7425,9 @@ function rSession() {
 
 function rSessionBriefing(el, target) {
   try {
-    var ctx = dailyContextReader([target.accountId]);
+    var ctx = dailyContextReader(target.kind === 'ACCOUNT_GROUP' ? target.accountIds : [target.accountId]);
     var timing = sessionTimingDetector();
-    var acc = D.accounts.find(function(a) { return a.id === target.accountId });
+    var acc = target.kind === 'ACCOUNT_GROUP' ? D.accounts.find(function(a) { return target.accountIds.indexOf(a.id) >= 0 }) : D.accounts.find(function(a) { return a.id === target.accountId });
     if (!acc) { el.innerHTML = '<div style="padding:20px;color:var(--red)">Compte introuvable</div>'; return }
 
     var prevCount = ctx.perAccountCumul.length ? ctx.perAccountCumul[0].cumulativeTradesToday : 0;
@@ -7546,7 +7545,17 @@ function updateMentalReco() {
 
 function openSessionFromBriefing() {
   try {
-    var target = { kind: 'SINGLE_ACCOUNT', accountId: D.activeAcc };
+    var target;
+    if (D.activeAcc && D.activeAcc.startsWith('ag_')) {
+      var grp = loadAccountGroups().find(function(g) { return g.id === D.activeAcc });
+      if (grp) {
+        target = { kind: 'ACCOUNT_GROUP', groupId: grp.id, accountIds: grp.accountIds };
+      } else {
+        target = { kind: 'SINGLE_ACCOUNT', accountId: D.accounts[0] ? D.accounts[0].id : '' };
+      }
+    } else {
+      target = { kind: 'SINGLE_ACCOUNT', accountId: D.activeAcc };
+    }
     var session = createSession(target, aT);
 
     /* Sauver état mental */
