@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.svg">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>/* ═══════════════════════════════════════════════
@@ -19,32 +19,34 @@
    Trading Journal SaaS-grade UI
    ═══════════════════════════════════════════════ */
 :root {
-  --bg: #06090e;
-  --bg2: #0c1018;
-  --bg3: #141a26;
-  --bg4: #1b2232;
+  --bg: #050809;
+  --bg2: #0a0f14;
+  --bg3: #111820;
+  --bg4: #1a222e;
   --border: #1d2840;
   --border2: #293756;
   --gold: #d4a017;
   --gold2: #b8860b;
   --gold3: #f5d060;
-  --gold-glow: rgba(212,160,23,.15);
+  --gold-glow: rgba(212,160,23,.12);
   --green: #00d68f;
   --green2: #00b377;
   --red: #ff4757;
   --red2: #d63447;
   --blue: #5b8def;
   --purple: #a78bfa;
-  --t1: #edf2f7;
+  --t1: #f0f4f8;
   --t2: #a8bdd4;
-  --t3: #8a9fc0;
+  --t3: #6b7f99;
   --radius: 12px;
   --radius-sm: 6px;
   --radius-lg: 14px;
   --shadow-sm: 0 2px 8px rgba(0,0,0,.25);
   --shadow-md: 0 4px 20px rgba(0,0,0,.35);
   --shadow-lg: 0 8px 40px rgba(0,0,0,.5);
-  --transition: .25s cubic-bezier(.4,0,.2,1)
+  --shadow-gold: 0 0 20px rgba(212,160,23,.08);
+  --transition: .25s cubic-bezier(.4,0,.2,1);
+  --transition-slow: .4s cubic-bezier(.4,0,.2,1)
 }
 * { box-sizing: border-box; margin: 0; padding: 0 }
 body {
@@ -1481,9 +1483,127 @@ a:hover{opacity:.85}
 .itabs + .itabs { padding: 4px 14px; background: rgba(12,16,24,.9); border-bottom-color: rgba(29,40,64,.5) }
 .itabs + .itabs .itab { font-size: 12px; font-weight: 600; padding: 8px 14px; min-height: 34px }
 .itabs + .itabs .itab.on::after { background: var(--gold3) }
+
+/* ═══ TOP BAR (standalone mode) ═══ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; z-index: 1000; gap: 16px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+  color: var(--gold); font-weight: 800; font-size: 18px; letter-spacing: -.02em;
+  font-family: 'Inter', sans-serif;
+}
+.topbar-logo svg { flex-shrink: 0 }
+.topbar-nav { display: flex; gap: 4px; margin-left: auto; margin-right: auto }
+.topbar-link {
+  color: var(--t3); text-decoration: none; font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border-radius: var(--radius-sm); transition: var(--transition);
+  font-family: 'Inter', sans-serif;
+}
+.topbar-link:hover { color: var(--t1); background: var(--bg3) }
+.topbar-link.active { color: var(--gold); background: rgba(212,160,23,.08) }
+.topbar-actions { display: flex; gap: 8px }
+.topbar-btn {
+  background: none; border: 1px solid var(--border); color: var(--t2);
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: var(--transition);
+}
+.topbar-btn:hover { border-color: var(--gold); color: var(--gold) }
+.topbar-burger {
+  display: none; background: none; border: none; cursor: pointer;
+  padding: 8px; flex-direction: column; gap: 5px;
+}
+.topbar-burger span {
+  display: block; width: 22px; height: 2px; background: var(--t2);
+  border-radius: 2px; transition: var(--transition);
+}
+.mobile-menu {
+  display: none; position: fixed; top: 56px; left: 0; right: 0; bottom: 0;
+  background: var(--bg); z-index: 999; padding: 20px; flex-direction: column; gap: 4px;
+}
+.mobile-menu.open { display: flex }
+.mobile-menu a, .mobile-menu button {
+  color: var(--t1); text-decoration: none; font-size: 16px; font-weight: 600;
+  padding: 14px 16px; border-radius: var(--radius); background: none; border: none;
+  text-align: left; cursor: pointer; transition: var(--transition);
+  font-family: 'Inter', sans-serif;
+}
+.mobile-menu a:hover, .mobile-menu button:hover { background: var(--bg2) }
+
+/* ═══ HORIZONTAL SUBTABS (standalone mode) ═══ */
+.subtabs {
+  position: fixed; top: 56px; left: 0; right: 0; height: 44px;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 16px; gap: 2px;
+  z-index: 998; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+.subtabs::-webkit-scrollbar { display: none }
+.subtab-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; flex-shrink: 0 }
+.subtab {
+  background: none; border: none; color: var(--t3); font-size: 12px; font-weight: 600;
+  padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;
+  transition: var(--transition); white-space: nowrap; font-family: 'Inter', sans-serif;
+  min-height: 32px;
+}
+.subtab:hover { color: var(--t1); background: var(--bg3) }
+.subtab.active { color: var(--gold); background: rgba(212,160,23,.08) }
+
+/* ─── Standalone layout adjustments ─── */
+.standalone-mode .side { display: none !important }
+.standalone-mode .content { margin-left: 0 !important; padding-top: 100px }
+
+/* ─── Iframe hides topbar/subtabs ─── */
+.in-iframe .topbar { display: none !important }
+.in-iframe .subtabs { display: none !important }
+.in-iframe .mobile-menu { display: none !important }
+
+@media(max-width:768px) {
+  .topbar-nav, .topbar-actions { display: none }
+  .topbar-burger { display: flex }
+}
 </style>
 </head>
 <body>
+
+<!-- TOP BAR (standalone mode — hidden by default, shown after login if not in iframe) -->
+<nav class="topbar" id="topbar" style="display:none">
+  <a href="Aurum_Hub.html" class="topbar-logo">
+    <svg width="28" height="28" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#d4a017" stroke-width="6"/><text x="50" y="58" text-anchor="middle" fill="#d4a017" font-size="36" font-weight="800" font-family="Inter,sans-serif">A</text></svg>
+    <span>Aurum</span>
+  </a>
+  <div class="topbar-nav">
+    <a href="Aurum_Academy.html" class="topbar-link">Academy</a>
+    <a href="Aurum.html" class="topbar-link active">Journal</a>
+    <a href="Aurum_Capital.html" class="topbar-link">Capital</a>
+  </div>
+  <div class="topbar-actions">
+    <button class="topbar-btn" onclick="go('settings')" title="Comptes">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+    <button class="topbar-btn" onclick="go('backup')" title="Backup">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+  </div>
+  <button class="topbar-burger" id="burgerBtn" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="Aurum_Academy.html">Academy</a>
+  <a href="Aurum.html">Journal</a>
+  <a href="Aurum_Capital.html">Capital</a>
+  <hr style="border-color:var(--border);margin:8px 0">
+  <button onclick="go('settings')">Comptes</button>
+  <button onclick="go('backup')">Backup</button>
+</div>
+<div class="subtabs" id="journalTabs" style="display:none">
+  <!-- Filled dynamically by JS -->
+</div>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
@@ -2462,9 +2582,10 @@ function go(id) {
   const idx = PAGES.indexOf(id);
   const navItems = document.querySelectorAll('.nav-item');
   if (idx >= 0 && idx < navItems.length) navItems[idx].classList.add('active');
-  const titles = { dash:'Dashboard', add:'Nouveau trade', hist:'Historique', time:'Horaires', check:'Checklist', calc:'Calculateur', review:'Review hebdo', rules:'Règles', viab:'Viabilité', backup:'Backup', settings:'Réglages' };
+  const titles = { dash:'Dashboard', add:'Nouveau trade', hist:'Historique', time:'Horaires', check:'Checklist', calc:'Calculateur', review:'Review hebdo', rules:'Règles', viab:'Viabilité', backup:'Backup', settings:'Réglages', session:'Session', monthly:'Mensuel', insights:'Analytics', compare:'Comptes', sessHist:'Sessions', playbook:'Playbook', groups:'Groupes liés' };
   document.getElementById('pageTitle').textContent = titles[id] || '';
   const scrollEl = document.querySelector('.scroll'); if (scrollEl) scrollEl.scrollTop = 0;
+  try { renderJournalTabs(); } catch(e) {}
   R();
   if (id === 'dash') {
     setTimeout(() => { if(ch.eq) ch.eq.resize(); if(ch.pi) ch.pi.resize(); if(ch.ba) ch.ba.resize() }, 80);
@@ -2523,7 +2644,7 @@ function R() {
 function rTSW() {
   try {
   const sw = document.getElementById('tsw');
-  sw.innerHTML = ['live','replay','insights'].map(t =>
+  sw.innerHTML = ['live','replay'].map(t =>
     `<button class="${t===aT?'active':''}" onclick="aT='${t}';adaptForm();R()">${t.charAt(0).toUpperCase()+t.slice(1)}<span class="count">${t==='live'?(D.activeAcc==='all'?D.live.length:D.live.filter(x=>x.accId===D.activeAcc).length):D[t].length}</span></button>`
   ).join('');
 } catch(e) { console.error("[Aurum] rTSW:", e) }
@@ -5958,9 +6079,19 @@ function tryLogin() {
 }
 function unlock(isAdmin) {
   document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('sideNav').style.display = '';
   document.getElementById('mainContent').style.display = '';
-  // admin class removed
+  /* Standalone mode: show topbar + subtabs, hide sidebar */
+  var isStandalone = false;
+  try { isStandalone = (window.self === window.top); } catch(e) {}
+  if (isStandalone) {
+    document.getElementById('sideNav').style.display = 'none';
+    document.getElementById('topbar').style.display = '';
+    document.getElementById('journalTabs').style.display = '';
+    document.body.classList.add('standalone-mode');
+    renderJournalTabs();
+  } else {
+    document.getElementById('sideNav').style.display = 'none';
+  }
   trackOpen(); R();
   setTimeout(() => { if(ch.eq) ch.eq.resize(); if(ch.pi) ch.pi.resize(); if(ch.ba) ch.ba.resize(); updCkProgress(); checkMilestones() }, 100);
 }
@@ -5984,6 +6115,57 @@ function trackOpen() {
   } catch(e) { console.warn('[Aurum] trackOpen:', e.message) }
 }
 function rAdmin() { /* removed */ }
+
+// ─── MOBILE MENU TOGGLE (standalone mode) ───
+function toggleMobileMenu() {
+  try {
+    var menu = document.getElementById('mobileMenu');
+    var btn = document.getElementById('burgerBtn');
+    if (!menu) return;
+    menu.classList.toggle('open');
+    if (btn) btn.classList.toggle('open');
+  } catch(e) { console.error('toggleMobileMenu:', e) }
+}
+
+// ─── JOURNAL GROUPS DEFINITION ───
+function getJournalGroups() {
+  try {
+    return [
+      {id:'dash', label:'Dashboard', pages:[]},
+      {id:'trading', label:'Trading', pages:
+        aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
+      },
+      {id:'performance', label:'Performance', pages:[
+        {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'insights',l:'Analytics'},{p:'compare',l:'Comptes'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
+      ]},
+      {id:'strategie', label:'Stratégie', pages:[
+        {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'},{p:'playbook',l:'Playbook'}
+      ]}
+    ];
+  } catch(e) { return []; }
+}
+
+// ─── RENDER STANDALONE SUBTABS ───
+function renderJournalTabs() {
+  try {
+    var el = document.getElementById('journalTabs');
+    if (!el || el.style.display === 'none') return;
+    var groups = getJournalGroups();
+    var activePg = (document.querySelector('.panel.active') || {}).id || 'dash';
+    var h = '';
+    groups.forEach(function(g, gi) {
+      if (gi > 0) h += '<span class="subtab-sep"></span>';
+      if (!g.pages.length) {
+        h += '<button class="subtab' + (activePg === 'dash' ? ' active' : '') + '" onclick="go(\'dash\')">' + g.label + '</button>';
+      } else {
+        g.pages.forEach(function(p) {
+          h += '<button class="subtab' + (activePg === p.p ? ' active' : '') + '" onclick="go(\'' + p.p + '\')">' + p.l + '</button>';
+        });
+      }
+    });
+    el.innerHTML = h;
+  } catch(e) { console.error('renderJournalTabs:', e) }
+}
 
 // ─── KEYBOARD SHORTCUTS ───
 document.addEventListener('keydown', e => {
@@ -11044,20 +11226,17 @@ function rGroups() {
 try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');
 
-  /* Tier 1 : 5 groupes principaux */
+  /* Tier 1 : 4 groupes principaux */
   var groups = [
-    {id:'dash', label:'📊 Dashboard', pages:[]},
-    {id:'trader', label:'Trader', pages:
-      aT==='replay' ? [{p:'replay',l:'Replay'}] : aT==='insights' ? [{p:'sandbox',l:'Entraînement'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
+    {id:'dash', label:'Dashboard', pages:[]},
+    {id:'trading', label:'Trading', pages:
+      aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}]
     },
-    {id:'analyser', label:'Analyser', pages:[
+    {id:'performance', label:'Performance', pages:[
       {p:'hist',l:'Historique'},{p:'monthly',l:'Mensuel'},{p:'insights',l:'Analytics'},{p:'compare',l:'Comptes'},{p:'sessHist',l:'Sessions'},{p:'time',l:'Horaires'},{p:'review',l:'Review'}
     ]},
-    {id:'systeme', label:'Système', pages:[
+    {id:'strategie', label:'Stratégie', pages:[
       {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'},{p:'playbook',l:'Playbook'}
-    ]},
-    {id:'comptes', label:'Comptes', pages:[
-      {p:'settings',l:'Mes comptes'},{p:'groups',l:'Groupes liés'}
     ]}
   ];
 
