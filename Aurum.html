@@ -9224,7 +9224,8 @@ function renderCandleChart(canvasId, candles, options) {
 
     /* ─── Helpers ─── */
     function priceY(p) { return marginTop + chartH - ((p - minP) / range * chartH) }
-    var totalSpace = chartW;
+    var rightPad = chartW * 0.08;
+    var totalSpace = chartW - rightPad;
     var candleW = Math.max(2, Math.min(14, totalSpace / visibleCandles.length * 0.7));
     var spacing = totalSpace / visibleCandles.length;
 
@@ -9440,6 +9441,8 @@ function setupChartInteractions(canvasId) {
   try {
     var canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    if (canvas._interactionsSetup) return;
+    canvas._interactionsSetup = true;
 
     /* Crosshair — mousemove */
     canvas.addEventListener('mousemove', function(e) {
@@ -9533,17 +9536,20 @@ var REPLAY_SCENARIOS = [
     id: 1, name: 'QM Buy classique', difficulty: 'facile',
     description: 'Un QM haussier simple. Identifie la direction, la liquidité et le point d\'entrée.',
     phases: [
-      { type: 'trend', direction: 'down', candles: 8, volatility: 5 },
+      { type: 'range', candles: 15, volatility: 3 },
+      { type: 'trend', direction: 'up', candles: 12, volatility: 4 },
+      { type: 'trend', direction: 'down', candles: 15, volatility: 5 },
       { type: 'support', candles: 2, volatility: 4 },
-      { type: 'pullback', direction: 'up', candles: 4, volatility: 4 },
+      { type: 'pullback', direction: 'up', candles: 5, volatility: 4 },
       { type: 'resistance', candles: 2, volatility: 4 },
       { type: 'breakout', direction: 'down', candles: 3, volatility: 5 },
+      { type: 'liquidity', position: 'low', candles: 3, volatility: 4 },
       { type: 'pullback', direction: 'up', candles: 3, volatility: 4 },
       { type: 'breakout', direction: 'up', candles: 3, volatility: 5 },
-      { type: 'continuation', direction: 'up', candles: 15, volatility: 4 }
+      { type: 'continuation', direction: 'up', candles: 25, volatility: 4 }
     ],
     startPrice: 2340,
-    analysisCandles: 25,
+    analysisCandles: 55,
     correct: { direction: 'buy', setup: 'qm', shouldTrade: true },
     filters: { newsUSD: false, after21h: false }
   },
@@ -9551,17 +9557,20 @@ var REPLAY_SCENARIOS = [
     id: 2, name: 'QM Sell classique', difficulty: 'facile',
     description: 'Un QM baissier. Identifie la tendance haussière, le retournement et le point de vente.',
     phases: [
-      { type: 'trend', direction: 'up', candles: 8, volatility: 5 },
+      { type: 'range', candles: 12, volatility: 3 },
+      { type: 'trend', direction: 'down', candles: 10, volatility: 4 },
+      { type: 'trend', direction: 'up', candles: 15, volatility: 5 },
       { type: 'resistance', candles: 2, volatility: 4 },
-      { type: 'pullback', direction: 'down', candles: 4, volatility: 4 },
+      { type: 'pullback', direction: 'down', candles: 5, volatility: 4 },
       { type: 'support', candles: 2, volatility: 4 },
       { type: 'breakout', direction: 'up', candles: 3, volatility: 5 },
+      { type: 'liquidity', position: 'high', candles: 3, volatility: 4 },
       { type: 'pullback', direction: 'down', candles: 3, volatility: 4 },
       { type: 'breakout', direction: 'down', candles: 3, volatility: 5 },
-      { type: 'continuation', direction: 'down', candles: 15, volatility: 4 }
+      { type: 'continuation', direction: 'down', candles: 25, volatility: 4 }
     ],
     startPrice: 2380,
-    analysisCandles: 25,
+    analysisCandles: 55,
     correct: { direction: 'sell', setup: 'qm', shouldTrade: true },
     filters: { newsUSD: false, after21h: false }
   },
@@ -10038,7 +10047,7 @@ function rReplayScenario(el) {
     }
 
     /* Render chart avec zoom/pan */
-    _chartZoom = { offset: 0, zoom: _chartZoom ? _chartZoom.zoom : 1 };
+    if (!_chartZoom) _chartZoom = { offset: 0, zoom: 1 };
     replayRedraw();
     setupChartInteractions('replayCanvas');
 
