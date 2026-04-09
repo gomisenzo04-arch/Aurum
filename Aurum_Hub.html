@@ -10,16 +10,32 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.svg">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#06090e;--bg2:#0c1018;--bg3:#141a26;--bg4:#1b2232;--border:#1d2840;--border2:#293756;--gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--green:#00d68f;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;--t1:#edf2f7;--t2:#a8bdd4;--t3:#8a9fc0;--radius:12px;--transition:.25s cubic-bezier(.4,0,.2,1)}
+:root{
+  /* Palette */
+  --bg:#050809;--bg2:#0a0f14;--bg3:#111820;--bg4:#1a222e;
+  --border:#1d2840;--border2:#293756;
+  --gold:#d4a017;--gold2:#b8860b;--gold3:#f5d060;--gold-glow:rgba(212,160,23,.12);
+  --green:#00d68f;--red:#ff4757;--blue:#5b8def;--purple:#a78bfa;
+  --t1:#f0f4f8;--t2:#a8bdd4;--t3:#6b7f99;
+  /* Spacing */
+  --space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;
+  /* Radius */
+  --radius-sm:6px;--radius:10px;--radius-lg:14px;--radius-xl:20px;
+  /* Shadows */
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);--shadow-md:0 4px 12px rgba(0,0,0,.4);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.5);--shadow-gold:0 0 20px rgba(212,160,23,.08);
+  /* Transitions */
+  --transition:.2s cubic-bezier(.4,0,.2,1);--transition-slow:.4s cubic-bezier(.4,0,.2,1)
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased}
 ::selection{background:rgba(212,160,23,.3)}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 
 /* ═══ ONBOARDING ═══ */
-.onboard{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.onboard{position:fixed;inset:0;background:var(--bg);z-index:1100;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .onboard .step{display:none;text-align:center;max-width:420px;padding:24px;animation:slideUp .5s ease}
 .onboard .step.on{display:block}
 @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
@@ -41,7 +57,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 .ob-err{font-size:12px;color:var(--red);margin-top:6px;min-height:18px}
 
 /* ═══ MAIN HUB ═══ */
-.hub{display:none;max-width:800px;margin:0 auto;padding:20px 16px 60px;min-height:100vh}
+.hub{display:none;max-width:800px;margin:0 auto;padding:72px 16px 60px;min-height:100vh}
 .hub.on{display:block;animation:slideUp .5s ease}
 
 /* Header */
@@ -109,7 +125,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 .hub-clock{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--t3);margin-left:4px}
 .today-progress{display:inline-block;width:100%;max-width:180px;height:6px;border-radius:3px;background:var(--bg4);margin-top:4px;vertical-align:middle}
 .today-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .4s ease}
-@media(max-width:500px){.hub{padding:16px 12px 40px}.ob-title{font-size:22px}.hub-hdr .greeting .g2{font-size:16px}}
+@media(max-width:500px){.hub{padding:72px 12px 40px}.ob-title{font-size:22px}.hub-hdr .greeting .g2{font-size:16px}}
 
 /* ═══ ANIMATED GRADIENT BORDER — APP CARDS ═══ */
 .app-card {
@@ -166,7 +182,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 /* ═══ RESPONSIVE UNIVERSES ═══ */
 @media(max-width:600px){
   .universes-grid{grid-template-columns:1fr!important}
-  .hub{padding:16px 12px 40px}
+  .hub{padding:72px 12px 40px}
   #scoreCard{padding:16px}
   #scoreCard [style*="font-size:64px"]{font-size:48px!important}
 }
@@ -199,15 +215,93 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 .uni-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.3);border-color:rgba(212,160,23,.2)}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
 ::selection{background:rgba(212,160,23,.25)}
+
+/* ═══ TOP BAR ═══ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; z-index: 1000; gap: 16px;
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+  color: var(--gold); font-weight: 800; font-size: 18px; letter-spacing: -.02em;
+}
+.topbar-logo svg { flex-shrink: 0 }
+.topbar-nav { display: flex; gap: 4px; margin-left: auto; margin-right: auto }
+.topbar-link {
+  color: var(--t3); text-decoration: none; font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border-radius: var(--radius-sm); transition: var(--transition);
+}
+.topbar-link:hover { color: var(--t1); background: var(--bg3) }
+.topbar-link.active { color: var(--gold); background: rgba(212,160,23,.08) }
+.topbar-actions { display: flex; gap: 8px }
+.topbar-btn {
+  background: none; border: 1px solid var(--border); color: var(--t2);
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: var(--transition);
+}
+.topbar-btn:hover { border-color: var(--gold); color: var(--gold) }
+.topbar-burger {
+  display: none; background: none; border: none; cursor: pointer;
+  padding: 8px; flex-direction: column; gap: 5px;
+}
+.topbar-burger span {
+  display: block; width: 22px; height: 2px; background: var(--t2);
+  border-radius: 2px; transition: var(--transition);
+}
+.mobile-menu {
+  display: none; position: fixed; top: 56px; left: 0; right: 0; bottom: 0;
+  background: var(--bg); z-index: 999; padding: 20px; flex-direction: column; gap: 4px;
+}
+.mobile-menu.open { display: flex }
+.mobile-menu a, .mobile-menu button {
+  color: var(--t1); text-decoration: none; font-size: 16px; font-weight: 600;
+  padding: 14px 16px; border-radius: var(--radius); background: none; border: none;
+  text-align: left; cursor: pointer; transition: var(--transition);
+  font-family: 'Inter', sans-serif;
+}
+.mobile-menu a:hover, .mobile-menu button:hover { background: var(--bg2) }
+@media(max-width:768px) {
+  .topbar-nav, .topbar-actions { display: none }
+  .topbar-burger { display: flex }
+}
 </style>
 </head>
 <body>
+
+<!-- ═══ TOP BAR ═══ -->
+<nav class="topbar" id="topbar">
+  <a href="Aurum_Hub.html" class="topbar-logo">
+    <svg width="28" height="28" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#d4a017" stroke-width="6"/><text x="50" y="58" text-anchor="middle" fill="#d4a017" font-size="36" font-weight="800" font-family="Inter,sans-serif">A</text></svg>
+    <span>Aurum</span>
+  </a>
+  <div class="topbar-nav">
+    <a href="Aurum_Academy.html" class="topbar-link">Academy</a>
+    <a href="Aurum.html" class="topbar-link">Journal</a>
+    <a href="Aurum_Capital.html" class="topbar-link">Capital</a>
+  </div>
+  <div class="topbar-actions">
+    <button class="topbar-btn" onclick="exportAll()" title="Exporter">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+  </div>
+  <button class="topbar-burger" id="burgerBtn" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="Aurum_Academy.html">Academy</a>
+  <a href="Aurum.html">Journal</a>
+  <a href="Aurum_Capital.html">Capital</a>
+  <button onclick="exportAll()">Exporter les donn&eacute;es</button>
+</div>
 
 <!-- ═══ ONBOARDING ═══ -->
 <div class="onboard" id="onboard">
   <!-- Step 1: Welcome -->
   <div class="step on" id="ob-1">
-    <svg class="ob-logo" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="olg" x1="0" y1="0" x2="80" y2="80"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="80" height="80" rx="20" fill="url(#olg)"/><text x="40" y="52" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="34" fill="#1a1000">Au</text></svg>
+    <svg class="ob-logo" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="olg" x1="0" y1="0" x2="80" y2="80"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="80" height="80" rx="20" fill="url(#olg)"/><text x="40" y="52" text-anchor="middle" font-family="Inter" font-weight="800" font-size="34" fill="#1a1000">Au</text></svg>
     <div class="ob-title">Bienvenue dans Aurum</div>
     <div class="ob-sub">L'écosystème complet pour maîtriser le trading XAUUSD et construire ton patrimoine. De la formation au premier million.</div>
     <button class="ob-btn" onclick="obNext(2)">Découvrir →</button>
@@ -257,7 +351,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 
   <!-- Login (returning users) -->
   <div class="step" id="ob-login">
-    <svg class="ob-logo" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="olg2" x1="0" y1="0" x2="80" y2="80"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="80" height="80" rx="20" fill="url(#olg2)"/><text x="40" y="52" text-anchor="middle" font-family="DM Sans" font-weight="800" font-size="34" fill="#1a1000">Au</text></svg>
+    <svg class="ob-logo" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="olg2" x1="0" y1="0" x2="80" y2="80"><stop offset="0%" stop-color="#f5d060"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="80" height="80" rx="20" fill="url(#olg2)"/><text x="40" y="52" text-anchor="middle" font-family="Inter" font-weight="800" font-size="34" fill="#1a1000">Au</text></svg>
     <div class="ob-title">Aurum</div>
     <div class="ob-sub">Entre ton code pour accéder à ton écosystème.</div>
     <input class="ob-input" type="password" id="loginCode" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" autofocus aria-label="Entrer le code d'accès">
@@ -344,6 +438,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 /* ═══════════════════════════════════════════════
    AURUM HUB v3 — Daily Cockpit
    ═══════════════════════════════════════════════ */
+
+/* ─── MOBILE MENU TOGGLE ─── */
+function toggleMobileMenu() {
+  try {
+    var menu = document.getElementById('mobileMenu');
+    var btn = document.getElementById('burgerBtn');
+    if (!menu) return;
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+  } catch(e) { console.error('toggleMobileMenu:', e) }
+}
 
 /* ─── ONBOARDING ─── */
 function obNext(step){
