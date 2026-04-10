@@ -3135,71 +3135,81 @@ function rConvergence() {
   try {
     var el = document.getElementById('convergence');
     if (!el) return;
-    // Besoin d'au moins des trades dans Live ET Replay
     var live = D.live || [];
     var replay = D.replay || [];
+    var insights = D.insights || [];
     if (D.activeAcc !== 'all') {
       live = live.filter(function(t) { return t.accId === D.activeAcc });
     }
-    if (live.length < 3 && replay.length < 3) {
+    if (live.length < 3 && replay.length < 3 && insights.length < 3) {
       el.innerHTML = '';
       return;
     }
 
-    // Stats Live
-    var lW = live.filter(function(t) { return (parseFloat(t.pl)||0) > 0 }).length;
-    var lN = live.length;
-    var lWR = lN > 0 ? ((lW/lN)*100).toFixed(1) : '—';
-    var lPL = live.reduce(function(s,t) { return s + (parseFloat(t.pl)||0) }, 0);
-    var lAvg = lN > 0 ? (lPL/lN).toFixed(2) : '—';
-    var lGains = live.reduce(function(s,t) { var p=parseFloat(t.pl)||0; return s+(p>0?p:0) }, 0);
-    var lLosses = Math.abs(live.reduce(function(s,t) { var p=parseFloat(t.pl)||0; return s+(p<0?p:0) }, 0));
-    var lPF = lLosses > 0 ? (lGains/lLosses).toFixed(2) : '—';
+    function modeStats(trades, usePL) {
+      var n = trades.length;
+      var w = trades.filter(function(t) { return (parseFloat(usePL ? t.pl : t.rr)||0) > 0 }).length;
+      var wr = n > 0 ? ((w/n)*100).toFixed(1) : '—';
+      var total = trades.reduce(function(s,t) { return s + (parseFloat(usePL ? t.pl : t.rr)||0) }, 0);
+      var avg = n > 0 ? (total/n).toFixed(2) : '—';
+      var gains = trades.reduce(function(s,t) { var p=parseFloat(usePL ? t.pl : t.rr)||0; return s+(p>0?p:0) }, 0);
+      var losses = Math.abs(trades.reduce(function(s,t) { var p=parseFloat(usePL ? t.pl : t.rr)||0; return s+(p<0?p:0) }, 0));
+      var pf = losses > 0 ? (gains/losses).toFixed(2) : '—';
+      return { n:n, wr:wr, avg:avg, pf:pf, total:total };
+    }
 
-    // Stats Replay
-    var rW = replay.filter(function(t) { return (parseFloat(t.rr)||0) > 0 }).length;
-    var rN = replay.length;
-    var rWR = rN > 0 ? ((rW/rN)*100).toFixed(1) : '—';
-    var rTotR = replay.reduce(function(s,t) { return s + (parseFloat(t.rr)||0) }, 0);
-    var rAvg = rN > 0 ? (rTotR/rN).toFixed(2) : '—';
-    var rGains = replay.reduce(function(s,t) { var r=parseFloat(t.rr)||0; return s+(r>0?r:0) }, 0);
-    var rLosses = Math.abs(replay.reduce(function(s,t) { var r=parseFloat(t.rr)||0; return s+(r<0?r:0) }, 0));
-    var rPF = rLosses > 0 ? (rGains/rLosses).toFixed(2) : '—';
+    var lS = modeStats(live, true);
+    var rS = modeStats(replay, false);
+    var iS = modeStats(insights, true);
 
-    // Convergence score (0-100)
-    var wrDiff = (lWR !== '—' && rWR !== '—') ? Math.abs(parseFloat(lWR) - parseFloat(rWR)) : 99;
-    var pfDiff = (lPF !== '—' && rPF !== '—') ? Math.abs(parseFloat(lPF) - parseFloat(rPF)) : 99;
-    var conv = Math.max(0, 100 - wrDiff * 2 - pfDiff * 15);
+    // Convergence score — compare all pairs
+    function pairConv(a, b) {
+      if (a.wr === '—' || b.wr === '—') return 0;
+      var wrD = Math.abs(parseFloat(a.wr) - parseFloat(b.wr));
+      var pfD = (a.pf !== '—' && b.pf !== '—') ? Math.abs(parseFloat(a.pf) - parseFloat(b.pf)) : 10;
+      return Math.max(0, 100 - wrD * 2 - pfD * 15);
+    }
+    var pairs = [];
+    if (lS.n >= 3 && rS.n >= 3) pairs.push(pairConv(lS, rS));
+    if (lS.n >= 3 && iS.n >= 3) pairs.push(pairConv(lS, iS));
+    if (rS.n >= 3 && iS.n >= 3) pairs.push(pairConv(rS, iS));
+    var conv = pairs.length > 0 ? Math.round(pairs.reduce(function(a,b){return a+b},0)/pairs.length) : 0;
     var convCol = conv >= 70 ? 'var(--green)' : conv >= 40 ? 'var(--gold)' : 'var(--red)';
-    var convLabel = conv >= 70 ? 'Excellente' : conv >= 40 ? 'Correcte' : 'Faible';
 
-    function row(label, lVal, rVal, unit) {
+    var hasInsights = iS.n >= 3;
+
+    function row(label, lVal, rVal, iVal, unit) {
       unit = unit || '';
-      var match = lVal === rVal || (lVal !== '—' && rVal !== '—' && Math.abs(parseFloat(lVal)-parseFloat(rVal)) < 5);
-      return '<tr><td style="color:var(--t2);font-weight:600">'+label+'</td>' +
+      var cells = '<tr><td style="color:var(--t2);font-weight:600">'+label+'</td>' +
         '<td class="mn" style="color:var(--gold)">'+lVal+unit+'</td>' +
-        '<td class="mn" style="color:var(--blue)">'+rVal+unit+'</td>' +
-        '<td style="text-align:center">'+(match?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--red)">✗</span>')+'</td></tr>';
+        '<td class="mn" style="color:var(--blue)">'+rVal+unit+'</td>';
+      if (hasInsights) cells += '<td class="mn" style="color:var(--purple)">'+iVal+unit+'</td>';
+      var vals = [lVal, rVal]; if (hasInsights) vals.push(iVal);
+      var nums = vals.filter(function(v){return v!=='—'}).map(function(v){return parseFloat(v)});
+      var match = nums.length >= 2 && (Math.max.apply(null,nums) - Math.min.apply(null,nums)) < 5;
+      cells += '<td style="text-align:center">'+(match?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--red)">✗</span>')+'</td></tr>';
+      return cells;
     }
 
     el.innerHTML = '<div class="box-title" style="display:flex;align-items:center;justify-content:space-between">' +
-      '<span>⭐ Convergence Live / Replay</span>' +
-      '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:var(--gold);border:1px solid rgba(212,160,23,.2);padding:2px 8px;border-radius:4px;font-weight:600">Signature Aurum</span><span style="font-size:12px;font-weight:700;color:'+convCol+'">'+Math.round(conv)+'%</span></div></div>' +
-      '<div style="font-size:11px;color:var(--t3);margin-bottom:10px">Ton edge d\'entraînement tient-il en argent réel ?</div>' +
+      '<span>⭐ Convergence Live / Replay' + (hasInsights ? ' / Insights' : '') + '</span>' +
+      '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:var(--gold);border:1px solid rgba(212,160,23,.2);padding:2px 8px;border-radius:4px;font-weight:600">Signature Aurum</span><span style="font-size:12px;font-weight:700;color:'+convCol+'">'+conv+'%</span></div></div>' +
+      '<div style="font-size:11px;color:var(--t3);margin-bottom:10px">Ton edge tient-il entre entraînement, insights et argent réel ?</div>' +
       '<table style="width:100%;font-size:12px"><thead><tr>' +
       '<th style="text-align:left;color:var(--t3)">Métrique</th>' +
       '<th style="color:var(--gold)">Live ($)</th>' +
       '<th style="color:var(--blue)">Replay (R)</th>' +
+      (hasInsights ? '<th style="color:var(--purple)">Insights ($)</th>' : '') +
       '<th style="color:var(--t3);text-align:center">Match</th></tr></thead><tbody>' +
-      row('Trades', lN, rN, '') +
-      row('Win Rate', lWR, rWR, '%') +
-      row('Profit Factor', lPF, rPF, '') +
-      row('Moyenne', lAvg, rAvg, '') +
+      row('Trades', lS.n, rS.n, iS.n, '') +
+      row('Win Rate', lS.wr, rS.wr, iS.wr, '%') +
+      row('Profit Factor', lS.pf, rS.pf, iS.pf, '') +
+      row('Moyenne', lS.avg, rS.avg, iS.avg, '') +
       '</tbody></table>' +
       '<div style="margin-top:10px;padding:10px 12px;border-radius:8px;border-left:3px solid '+convCol+';background:rgba(212,160,23,.04);font-size:11px;color:var(--t2);line-height:1.6">' +
-      (conv >= 70 ? '✅ <b>Tes résultats Live et Replay sont cohérents.</b> Ton edge fonctionne en conditions réelles.' :
-       conv >= 40 ? '⚠️ <b>Écart modéré</b> entre Live et Replay. Vérifie si tu respectes les mêmes règles en live qu\'en entraînement.' :
-       '🔴 <b>Écart important.</b> Tes performances en live ne reflètent pas tes résultats en replay. Causes possibles : émotions, taille de position, sélection de setups.') +
+      (conv >= 70 ? '✅ <b>Tes résultats sont cohérents entre les modes.</b> Ton edge fonctionne.' :
+       conv >= 40 ? '⚠️ <b>Écart modéré.</b> Vérifie si tu respectes les mêmes règles dans chaque mode.' :
+       '🔴 <b>Écart important.</b> Tes performances divergent entre les modes. Causes possibles : émotions, taille de position, sélection de setups.') +
       '</div>';
   } catch(e) { console.error("[Aurum] rConvergence:", e) }
 }
