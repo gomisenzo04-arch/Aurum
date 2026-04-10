@@ -135,105 +135,7 @@ body {
 }
 .login-box .enter-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(212,160,23,.3) }
 .login-box .enter-btn:active { transform: translateY(0) }
-/* ─── SIDEBAR ─── */
-.side {
-  width: 64px;
-  background: rgba(13,17,23,.85);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 14px 0;
-  gap: 2px;
-  flex-shrink: 0;
-  transition: width var(--transition);
-  z-index: 50;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px)
-}
-.side .logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-  filter: drop-shadow(0 4px 12px rgba(212,160,23,.4));
-  animation: logoGlow 4s ease-in-out infinite
-}
-.nav-link {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition);
-  position: relative;
-  color: var(--t2)
-}
-.nav-link:hover { background: rgba(212,160,23,.1); color: var(--t1); transform: scale(1.05) }
-.nav-item {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition);
-  position: relative;
-  color: var(--t2)
-}
-.nav-item:hover { background: rgba(212,160,23,.1); color: var(--t1); transform: scale(1.05) }
-.nav-item.active { background: linear-gradient(135deg, rgba(212,160,23,.15), rgba(212,160,23,.08)); color: var(--gold) }
-.nav-item.active::before {
-  content: '';
-  position: absolute;
-  left: -11px;
-  width: 3px;
-  height: 20px;
-  border-radius: 0 3px 3px 0;
-  background: linear-gradient(180deg, var(--gold), var(--gold2));
-  box-shadow: 0 0 8px rgba(212,160,23,.4)
-}
-.nav-item svg {
-  width: 19px;
-  height: 19px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round
-}
-.nav-item .tooltip {
-  position: absolute;
-  left: 54px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--bg4);
-  border: 1px solid var(--border2);
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  color: var(--t1);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .15s;
-  z-index: 200;
-  box-shadow: var(--shadow-sm)
-}
-.nav-item:hover .tooltip { opacity: 1 }
-.nav-sep {
-  width: 24px;
-  height: 1px;
-  background: var(--border);
-  margin: 6px 0
-}
+/* ─── SIDEBAR REMOVED ─── */
 /* ─── MAIN CONTENT ─── */
 .content {
   flex: 1;
@@ -1158,10 +1060,6 @@ td.n { color: var(--red); font-weight: 600; text-shadow: 0 0 12px rgba(255,71,87
 /* admin-only removed */
 /* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
-  .side { width: 50px }
-  .side .logo { width: 30px; height: 30px; font-size: 12px }
-  .nav-item { width: 36px; height: 36px }
-  .nav-item.active::before { display: none }
   .strip { display: none }
   .mobile-strip { display: block }
   .top-bar { padding: 0 16px }
@@ -1175,9 +1073,6 @@ td.n { color: var(--red); font-weight: 600; text-shadow: 0 0 12px rgba(255,71,87
   .calendar-grid .cal-day { font-size: 10px }
 }
 @media (max-width: 480px) {
-  .side { width: 44px; padding: 8px 0 }
-  .side .logo { width: 26px; height: 26px; font-size: 10px; margin-bottom: 10px }
-  .nav-item { width: 32px; height: 32px }
   .scroll { padding: 12px }
   .cards { grid-template-columns: 1fr 1fr; gap: 6px }
   .card { padding: 12px }
@@ -1309,11 +1204,11 @@ body::before {
 /* ─── FOCUS RING GLOBAL ─── */
 *:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px }
 /* ─── SMOOTH ALL TRANSITIONS ─── */
-.card, .box, .tf-btn, .fb, .nav-item, .btn, .edit-btn, .del-btn, .guide, .rv-q, .ck-section { transition: all .25s cubic-bezier(.4,0,.2,1) }
+.card, .box, .tf-btn, .fb, .btn, .edit-btn, .del-btn, .guide, .rv-q, .ck-section { transition: all .25s cubic-bezier(.4,0,.2,1) }
 /* ─── PRINT — override premium for clean print ─── */
 @media print {
   body { background: #fff !important; color: #000 !important }
-  .side, .top-bar, .alert-strip, .type-sw, .scroll > .panel:not(.printing), .toast-container { display: none !important }
+  .top-bar, .alert-strip, .type-sw, .scroll > .panel:not(.printing), .toast-container { display: none !important }
   .content { overflow: visible !important }
   .scroll { overflow: visible !important; padding: 10px !important }
   .ck-section { border: 1px solid #ccc !important; background: #fff !important; break-inside: avoid }
@@ -1600,14 +1495,13 @@ a:hover{opacity:.85}
 .enter-btn { position:relative; overflow:hidden }
 .enter-btn::after { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent); animation:btnShimmer 3s ease-in-out infinite }
 @keyframes btnShimmer { 0%{left:-100%} 50%{left:100%} 100%{left:100%} }
-.nav-item.active { box-shadow:inset 0 0 12px rgba(212,160,23,.08) }
 .strip .val { transition:color .3s,text-shadow .3s }
 .strip .val:hover { text-shadow:0 0 12px currentColor }
 *:focus-visible { outline:2px solid var(--gold); outline-offset:2px }
-@media print { .side,.top-bar,.nav-item{display:none!important} .content{margin:0!important} .scroll{overflow:visible!important;padding:0!important} }
+@media print { .top-bar{display:none!important} .content{margin:0!important} .scroll{overflow:visible!important;padding:0!important} }
 
 /* ─── IFRAME MODE ─── */
-.in-iframe .side { display: none !important }
+/* sidebar removed */
 .in-iframe .top-bar { display: none !important }
 .in-iframe .login-overlay { border-radius: 0 }
 /* ─── Navigation tiers ─── */
@@ -1705,7 +1599,6 @@ a:hover{opacity:.85}
 .subtab.active { color: var(--gold); background: rgba(212,160,23,.08) }
 
 /* ─── Standalone layout adjustments ─── */
-.standalone-mode .side { display: none !important }
 .standalone-mode .content { margin-left: 0 !important; padding-top: 100px }
 
 /* ─── Iframe hides topbar/subtabs ─── */
@@ -1772,25 +1665,7 @@ a:hover{opacity:.85}
 </div>
 </div>
 
-<!-- SIDEBAR -->
-<nav class="side" id="sideNav" style="display:none">
-<div class="logo"><a href="Aurum_Hub.html" title="Hub Aurum" style="display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 40 40" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="auGrad" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#f5d060"/><stop offset="50%" stop-color="#d4a017"/><stop offset="100%" stop-color="#b8860b"/></linearGradient></defs><rect width="40" height="40" rx="10" fill="url(#auGrad)"/><text x="20" y="26" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="800" font-size="18" fill="#1a1000">Au</text><path d="M8 30 L14 24 L20 27 L26 18 L32 14" stroke="rgba(26,16,0,.25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></a></div>
-<a href="Aurum_Hub.html" class="nav-link" style="text-decoration:none;color:var(--t3);margin-bottom:4px" title="Hub"><svg viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg><span class="tooltip">Hub Aurum</span></a>
-<div class="nav-item active" onclick="go('dash')"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="tooltip">Dashboard</span></div>
-<div class="nav-item" onclick="go('session')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><span class="tooltip">Session</span></div>
-<div class="nav-sep"></div>
-<div class="nav-item" onclick="go('add')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg><span class="tooltip">Nouveau trade</span></div>
-<div class="nav-item" onclick="go('hist')"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="15" y2="18"/></svg><span class="tooltip">Historique</span></div>
-<div class="nav-item" onclick="go('time')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><span class="tooltip">Horaires</span></div>
-<div class="nav-sep"></div>
-<div class="nav-item" onclick="go('review')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="tooltip">Review hebdo</span></div>
-<div class="nav-item" onclick="go('rules')"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span class="tooltip">Règles</span></div>
-<div class="nav-item" onclick="go('viab')"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="tooltip">Viabilité</span></div>
-<div class="nav-sep"></div>
-<div class="nav-item" onclick="go('backup')"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="tooltip">Backup</span></div>
-<div class="nav-item" onclick="go('config')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="tooltip">Réglages</span></div>
-<div style="margin-top:auto;padding-top:8px"><div class="nav-sep"></div><div class="nav-item" onclick="if(confirm('Déconnexion ?')){sessionStorage.removeItem('enz_role');location.reload()}" style="color:var(--t3)"><svg viewBox="0 0 24 24" style="width:17px;height:17px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="tooltip">Déconnexion</span></div></div>
-</nav>
+<!-- SIDEBAR REMOVED — navigation unified in top bar + subtabs -->
 
 <!-- MAIN -->
 <div class="content" id="mainContent" style="display:none">
@@ -1902,6 +1777,9 @@ a:hover{opacity:.85}
 <div class="panel" id="monthly">
 <div id="monthlyView"></div>
 </div>
+
+<!-- ANNUAL SUMMARY -->
+<div class="panel" id="annual"><div id="annualView"></div></div>
 
 <!-- SESSION -->
 <div class="panel" id="session">
@@ -2749,19 +2627,22 @@ function renderFilterSummary(containerId, all, filtered, isLive) {
 }
 
 // ─── NAVIGATION ───
-const PAGES = ['dash','session','add','hist','time','review','rules','viab','backup','config','settings'];
+const PAGES = ['dash','session','add','hist','time','review','rules','viab','backup','config','settings','sessHist','monthly','insights','compare','playbook','replay','groups','annual'];
 function go(id) {
   /* Redirect check/calc → session */
   if (id === 'check' || id === 'calc') { go('session'); return; }
 
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const panel = document.getElementById(id);
   if (panel) panel.classList.add('active');
-  const idx = PAGES.indexOf(id);
-  const navItems = document.querySelectorAll('.nav-item');
-  if (idx >= 0 && idx < navItems.length) navItems[idx].classList.add('active');
-  const titles = { dash:'Dashboard', add:'Nouveau trade', hist:'Trades', time:'Horaires', check:'Checklist', calc:'Calculateur', review:'Review hebdo', rules:'Règles', viab:'Viabilité', config:'Réglages', backup:'Backup', settings:'Comptes de trading', session:'Session', monthly:'Mensuel', insights:'Insights', compare:'Comparaison comptes', sessHist:'Sessions', playbook:'Playbook', groups:'Groupes liés' };
+  const titles = {
+    dash:'Dashboard', add:'Nouveau trade', hist:'Global', time:'Horaires',
+    review:'Hebdomadaire', rules:'Trading Plan', viab:'Viabilité',
+    config:'Préférences', backup:'Backup', settings:'Comptes de trading',
+    session:'Session', monthly:'Mensuel', annual:'Annuel',
+    insights:'Insights', compare:'Comparaison', sessHist:'Sessions',
+    playbook:'Playbook', groups:'Groupes liés', replay:'Replay'
+  };
   document.getElementById('pageTitle').textContent = titles[id] || '';
   const scrollEl = document.querySelector('.scroll'); if (scrollEl) scrollEl.scrollTop = 0;
   try { renderJournalTabs(); } catch(e) {}
@@ -2816,6 +2697,7 @@ function R() {
   else if (pg === 'insights') { rInsights() }
   else if (pg === 'playbook') { rPlaybook() }
   else if (pg === 'replay') { rReplay() }
+  else if (pg === 'annual') { rAnnual() }
 
 }
 
@@ -6464,18 +6346,15 @@ function tryLogin() {
 function unlock(isAdmin) {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainContent').style.display = '';
-  /* Standalone mode: show topbar + subtabs, hide sidebar */
+  /* Standalone mode: show topbar + subtabs */
   var isStandalone = false;
   try { isStandalone = (window.self === window.top); } catch(e) {}
   if (isStandalone) {
-    document.getElementById('sideNav').style.display = 'none';
     document.getElementById('topbar').style.display = '';
-    document.getElementById('journalTabs').style.display = '';
     document.body.classList.add('standalone-mode');
-    renderJournalTabs();
-  } else {
-    document.getElementById('sideNav').style.display = 'none';
   }
+  document.getElementById('journalTabs').style.display = '';
+  renderJournalTabs();
   trackOpen(); R();
   setTimeout(() => { if(ch.eq) ch.eq.resize(); if(ch.pi) ch.pi.resize(); if(ch.ba) ch.ba.resize(); updCkProgress(); checkMilestones() }, 100);
 }
@@ -6514,16 +6393,22 @@ function toggleMobileMenu() {
 // ─── JOURNAL GROUPS DEFINITION ───
 function getJournalGroups() {
   try {
+    var isReplay = aT === 'replay';
     return [
-      {id:'dash', label:'Dashboard', pages:[]},
+      {id:'dashboard', label:'Dashboard', pages:[]},
       {id:'trading', label:'Trading', pages:
-        aT==='replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'add',l:'Trade'}]
+        isReplay
+          ? [{p:'replay',l:'Replay'},{p:'insights',l:'Insights'}]
+          : [{p:'session',l:'Session'},{p:'add',l:'Trade'},{p:'insights',l:'Insights'}]
       },
       {id:'performance', label:'Performance', pages:[
-        {p:'hist',l:'Trades'},{p:'sessHist',l:'Sessions'},{p:'monthly',l:'Mensuel'},{p:'time',l:'Horaires'},{p:'insights',l:'Insights'},{p:'review',l:'Review'}
+        {p:'hist',l:'Global'},{p:'annual',l:'Annuel'},{p:'monthly',l:'Mensuel'},{p:'review',l:'Hebdomadaire'},{p:'time',l:'Horaires'}
       ]},
       {id:'strategie', label:'Stratégie', pages:[
-        {p:'rules',l:'Règles'},{p:'viab',l:'Viabilité'},{p:'playbook',l:'Playbook'}
+        {p:'rules',l:'Trading Plan'},{p:'playbook',l:'Playbook'},{p:'viab',l:'Viabilité'}
+      ]},
+      {id:'settings_grp', label:'Settings', pages:[
+        {p:'settings',l:'Comptes'},{p:'groups',l:'Groupes'},{p:'backup',l:'Backup'}
       ]}
     ];
   } catch(e) { return []; }
@@ -10092,6 +9977,137 @@ function renderMonthlyChart(ym, dayPnl, daysInMonth) {
       }]
     });
   } catch(e) { console.error('renderMonthlyChart:', e) }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ANNUAL SUMMARY
+   ═══════════════════════════════════════════════════════ */
+var _annualYear = new Date().getFullYear();
+
+function rAnnual() {
+  try {
+    var el = document.getElementById('annualView');
+    if (!el) return;
+    var isLive = aT === 'live';
+    var allTr = getTr();
+
+    /* Available years */
+    var yearsSet = {};
+    allTr.forEach(function(t) { if (t.date) yearsSet[t.date.slice(0,4)] = true });
+    var years = Object.keys(yearsSet).sort().reverse();
+    if (!years.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--t3)">Aucun trade enregistré</div>'; return; }
+    if (years.indexOf(String(_annualYear)) < 0) _annualYear = parseInt(years[0]);
+
+    var yr = String(_annualYear);
+    var trades = allTr.filter(function(t) { return t.date && t.date.slice(0,4) === yr });
+
+    var h = '';
+
+    /* Year selector */
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px">';
+    h += '<button class="btn btn-o" onclick="_annualYear--;rAnnual()" style="padding:8px 12px;font-size:14px">◀</button>';
+    h += '<select onchange="_annualYear=parseInt(this.value);rAnnual()" style="background:var(--bg2);border:1px solid var(--border);color:var(--t1);font-family:inherit;font-size:18px;font-weight:800;padding:6px 12px;border-radius:8px;cursor:pointer">';
+    years.forEach(function(y) {
+      h += '<option value="' + y + '"' + (y === yr ? ' selected' : '') + '>' + y + '</option>';
+    });
+    h += '</select>';
+    h += '<button class="btn btn-o" onclick="_annualYear++;rAnnual()" style="padding:8px 12px;font-size:14px">▶</button>';
+    h += '</div>';
+
+    if (!trades.length) {
+      h += '<div style="text-align:center;padding:40px;color:var(--t3);font-size:13px">Aucun trade en ' + yr + '</div>';
+      el.innerHTML = h;
+      return;
+    }
+
+    /* Global KPIs */
+    var totalPnl = trades.reduce(function(a,t) { return a + (parseFloat(t.pl)||0) }, 0);
+    var wins = trades.filter(function(t) { return (parseFloat(t.pl)||0) > 0 }).length;
+    var wr = trades.length ? (wins/trades.length*100).toFixed(1) : '0';
+
+    /* Monthly data */
+    var monthNames = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    var monthData = [];
+    for (var mi = 0; mi < 12; mi++) {
+      var mk = yr + '-' + String(mi+1).padStart(2,'0');
+      var mt = trades.filter(function(t) { return t.date && t.date.slice(0,7) === mk });
+      var mPnl = mt.reduce(function(a,t) { return a + (parseFloat(t.pl)||0) }, 0);
+      var mWins = mt.filter(function(t) { return (parseFloat(t.pl)||0) > 0 }).length;
+      var mWr = mt.length ? (mWins/mt.length*100).toFixed(1) : '-';
+      var mAvgW = mWins ? mt.filter(function(t){return t.pl>0}).reduce(function(a,t){return a+t.pl},0)/mWins : 0;
+      var mLosses = mt.filter(function(t){return (parseFloat(t.pl)||0)<0}).length;
+      var mAvgL = mLosses ? Math.abs(mt.filter(function(t){return t.pl<0}).reduce(function(a,t){return a+t.pl},0)/mLosses) : 0;
+      var mEsp = mt.length ? mPnl / mt.length : 0;
+      monthData.push({ name:monthNames[mi], trades:mt.length, pnl:mPnl, wr:mWr, wins:mWins, losses:mLosses, esp:mEsp });
+    }
+
+    var bestMonth = monthData.reduce(function(b,m) { return m.pnl > b.pnl ? m : b }, monthData[0]);
+    var worstMonth = monthData.reduce(function(w,m) { return m.pnl < w.pnl ? m : w }, monthData[0]);
+
+    /* KPI cards */
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:20px">';
+    var kpis = [
+      { l:'P&L Total', v:(totalPnl>=0?'+':'')+'\$'+totalPnl.toFixed(0), c:totalPnl>=0?'var(--green)':'var(--red)' },
+      { l:'Trades', v:trades.length, c:'var(--t1)' },
+      { l:'Win Rate', v:wr+'%', c:parseFloat(wr)>=50?'var(--green)':'var(--red)' },
+      { l:'Meilleur mois', v:bestMonth.name+' (+\$'+bestMonth.pnl.toFixed(0)+')', c:'var(--green)' },
+      { l:'Pire mois', v:worstMonth.name+' (\$'+worstMonth.pnl.toFixed(0)+')', c:'var(--red)' }
+    ];
+    kpis.forEach(function(k) {
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">';
+      h += '<div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">' + k.l + '</div>';
+      h += '<div style="font-size:20px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + k.c + '">' + k.v + '</div>';
+      h += '</div>';
+    });
+    h += '</div>';
+
+    /* Bar chart — P&L by month (CSS only) */
+    var maxAbs = 1;
+    monthData.forEach(function(m) { if (Math.abs(m.pnl) > maxAbs) maxAbs = Math.abs(m.pnl) });
+
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">P&L mensuel</div>';
+    h += '<div style="display:flex;align-items:flex-end;gap:6px;height:160px;padding-bottom:24px;position:relative">';
+    /* Zero line */
+    h += '<div style="position:absolute;left:0;right:0;bottom:calc(24px + 80px);height:1px;background:rgba(138,159,192,.2)"></div>';
+    monthData.forEach(function(m) {
+      var barH = m.pnl === 0 ? 2 : Math.max(4, Math.abs(m.pnl)/maxAbs * 76);
+      var col = m.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+      var bottom = m.pnl >= 0 ? 80 : (80 - barH);
+      h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;height:100%">';
+      h += '<div style="position:absolute;bottom:' + bottom + 'px;width:70%;height:' + barH + 'px;background:' + col + ';border-radius:3px;opacity:.85;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85"></div>';
+      h += '<div style="position:absolute;bottom:0;font-size:9px;color:var(--t3);font-weight:600">' + m.name.slice(0,3) + '</div>';
+      if (m.pnl !== 0) h += '<div style="position:absolute;bottom:' + (m.pnl>=0 ? bottom+barH+2 : bottom-12) + 'px;font-size:8px;color:' + col + ';font-family:JetBrains Mono,monospace;white-space:nowrap">' + (m.pnl>=0?'+':'') + '\$' + m.pnl.toFixed(0) + '</div>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+
+    /* Monthly breakdown table */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;overflow-x:auto">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Détail mensuel</div>';
+    h += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    h += '<thead><tr style="border-bottom:1px solid var(--border)">';
+    h += '<th style="text-align:left;padding:8px 6px;color:var(--t3);font-size:10px">Mois</th>';
+    h += '<th style="text-align:center;padding:8px 6px;color:var(--t3);font-size:10px">Trades</th>';
+    h += '<th style="text-align:center;padding:8px 6px;color:var(--t3);font-size:10px">WR</th>';
+    h += '<th style="text-align:right;padding:8px 6px;color:var(--t3);font-size:10px">P&L</th>';
+    h += '<th style="text-align:right;padding:8px 6px;color:var(--t3);font-size:10px">Espérance</th>';
+    h += '</tr></thead><tbody>';
+    monthData.forEach(function(m) {
+      if (m.trades === 0) return;
+      var pCol = m.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+      h += '<tr style="border-bottom:1px solid rgba(42,54,84,.3)">';
+      h += '<td style="padding:8px 6px;font-weight:600;color:var(--t1)">' + m.name + '</td>';
+      h += '<td style="padding:8px 6px;text-align:center;color:var(--t2);font-family:JetBrains Mono,monospace">' + m.trades + '</td>';
+      h += '<td style="padding:8px 6px;text-align:center;color:' + (parseFloat(m.wr)>=50?'var(--green)':'var(--red)') + ';font-family:JetBrains Mono,monospace">' + m.wr + '%</td>';
+      h += '<td style="padding:8px 6px;text-align:right;font-weight:700;color:' + pCol + ';font-family:JetBrains Mono,monospace">' + (m.pnl>=0?'+':'') + '\$' + m.pnl.toFixed(0) + '</td>';
+      h += '<td style="padding:8px 6px;text-align:right;color:' + (m.esp>=0?'var(--green)':'var(--red)') + ';font-family:JetBrains Mono,monospace">' + (m.esp>=0?'+':'') + '\$' + m.esp.toFixed(0) + '</td>';
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+
+    el.innerHTML = h;
+  } catch(e) { console.error('rAnnual:', e) }
 }
 
 /* ═══════════════════════════════════════════════════════
