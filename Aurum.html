@@ -1342,18 +1342,18 @@ body::before {
 .sess-ck-item{display:flex;align-items:center;gap:10px;padding:6px 4px;font-size:12px}
 .sess-ck-item input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px;cursor:pointer;flex-shrink:0}
 /* ─── SESSION COCKPIT — Immersive Operating ─── */
-.sess-operating{display:grid;grid-template-columns:1fr 340px;gap:14px;margin-top:10px}
-.sess-col-left{display:flex;flex-direction:column;gap:12px;min-width:0}
-.sess-col-right{position:sticky;top:180px;align-self:start;max-height:calc(100vh - 200px);overflow-y:auto;scrollbar-width:thin;background:var(--bg)}
-.sess-hud{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(13,17,23,.98), rgba(8,11,16,.95));backdrop-filter:blur(16px);border:1px solid rgba(212,160,23,.12);border-bottom:1px solid rgba(212,160,23,.12);border-radius:14px;padding:14px 18px;margin-bottom:2px}
-.sess-hud-kpis{display:flex;justify-content:space-around;gap:6px;flex-wrap:wrap}
-.sess-hud-kpi{text-align:center;min-width:60px}
+.sess-operating{display:grid;grid-template-columns:1fr 340px;gap:0;margin-top:0}
+.sess-col-left{display:flex;flex-direction:column;gap:10px;min-width:0;padding:16px 16px 16px 0}
+.sess-col-right{position:sticky;top:100px;align-self:start;max-height:calc(100vh - 120px);overflow-y:auto;scrollbar-width:thin;background:var(--bg);padding:16px;border-left:1px solid var(--border)}
+.sess-hud{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border);padding:14px 16px 10px;margin:0 -16px 0 0}
+.sess-hud-kpis{display:flex;justify-content:space-between;gap:8px}
+.sess-hud-kpi{text-align:center;flex:1}
 .sess-hud-kpi-label{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
 .sess-hud-kpi-val{font-size:15px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--t1)}
-.sess-hud-gauges{display:flex;gap:12px;margin-top:8px;justify-content:center}
+.sess-hud-gauges{display:flex;gap:12px;margin-top:6px;justify-content:center}
 .sess-hud-gauge{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--t3)}
-.sess-hud-gauge-bar{width:90px;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
-.sess-hud-gauge-fill{height:100%;border-radius:3px;transition:width .3s}
+.sess-hud-gauge-bar{width:90px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.sess-hud-gauge-fill{height:100%;border-radius:2px;transition:width .3s}
 /* Checklist phases — collapsible */
 .sess-phase{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:8px}
 .sess-phase-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s;min-height:44px;user-select:none}
@@ -1395,8 +1395,10 @@ body::before {
 .sess-trade-log-item:last-child{margin-bottom:0}
 .sess-trade-log-item:hover{background:var(--bg4)}
 /* Alerts strip */
-.sess-alerts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.sess-alert-item{padding:10px 16px;border-radius:10px;font-size:12px;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px}
+.sess-alerts{display:flex;flex-wrap:wrap;gap:4px;padding:8px 0}
+.sess-alert-item{padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.sess-alert-item.sess-alert-red{background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.15);color:var(--red)}
+.sess-alert-item.sess-alert-orange{background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.15);color:var(--gold)}
 /* SL grid (4 columns) */
 .sess-sl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px}
 .sess-sl-grid-btn{padding:10px 0;border-radius:6px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--t2);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s;min-height:44px;text-align:center}
@@ -1425,7 +1427,8 @@ body::before {
   .sess-strip-time{align-items:center;margin-left:0}
   .sess-lot-result{font-size:40px}
   .sess-operating{grid-template-columns:1fr}
-  .sess-col-right{position:static;max-height:none}
+  .sess-col-left{padding:12px}
+  .sess-col-right{position:static;max-height:none;border-left:none;border-top:1px solid var(--border)}
   .sess-lot-big{font-size:40px}
 }
 .tfm-steps{display:flex;gap:4px;margin-bottom:16px}
@@ -8469,7 +8472,10 @@ function rSessionOperating(el) {
     if (maxReached) alerts.push({ type: 'red', msg: 'Max trades atteint (' + s.logicalTradeCount + '/' + maxT + ')' });
     if (lossReached) alerts.push({ type: 'red', msg: 'Perte max atteinte ($' + Math.abs(sessPnl).toFixed(0) + '/$' + maxL + ')' });
     if (isPaused) alerts.push({ type: 'orange', msg: 'Session en pause' });
-    rails.forEach(function(r) { if (!r.checked) alerts.push({ type: 'red', msg: 'FILTRE : ' + r.label }) });
+    var uncheckedRails = rails.filter(function(r) { return !r.checked });
+    if (uncheckedRails.length > 0) {
+      alerts.push({ type: 'red', msg: uncheckedRails.length + ' filtre' + (uncheckedRails.length > 1 ? 's' : '') + ' non validé' + (uncheckedRails.length > 1 ? 's' : '') });
+    }
     if (alerts.length > 0) {
       h += '<div class="sess-alerts">';
       alerts.forEach(function(a) {
