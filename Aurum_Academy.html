@@ -2053,6 +2053,6 @@ drawProg();
 render();
 try{if(window.self!==window.top){document.body.classList.add('in-iframe')}}catch(e){document.body.classList.add('in-iframe')}
 </script>
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(function(reg){reg.update()}).catch(function(){})}</script>
 </body>
 </html>

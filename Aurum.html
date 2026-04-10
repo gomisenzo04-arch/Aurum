@@ -12952,6 +12952,6 @@ try{if(window.self!==window.top){
   bar2.style.display = 'none';
 }}catch(e){}
 </script>
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(function(reg){reg.update()}).catch(function(){})}</script>
 </body>
 </html>
