@@ -439,6 +439,7 @@ Tout ce que tu dois rembourser : crédit auto, prêt immobilier, dette perso, et
 <div style="display:flex;gap:6px"><button class="btn bp bs" onclick="aPS()">Ajouter la dette</button><button class="btn bo bs" onclick="tg('psF')">Annuler</button></div>
 </div>
 <div class="tw"><table><thead><tr><th>Nom</th><th>Restant</th><th>Mensualité</th><th>Mois restants</th><th></th></tr></thead><tbody id="psT"></tbody><tfoot><tr><td style="font-weight:700;color:var(--t1)">Total</td><td class="mn ng" id="psTot">$0</td><td class="mn ng" id="psMt">$0</td><td></td><td></td></tr></tfoot></table></div></div>
+<div class="pnl" id="p-bank"><div class="st">Trésorerie bancaire</div><div id="bankC"></div></div>
 <div class="pnl" id="p-goals"><div class="st">Objectifs <button class="btn bg bs" onclick="tgGoalForm()">+ Objectif</button></div><div id="goalForm" style="display:none;margin-bottom:14px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)"><div style="display:grid;gap:8px;margin-bottom:8px"><input id="gl-n" placeholder="Nom de l'objectif" style="padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"><div style="display:flex;gap:8px"><input type="number" id="gl-t" placeholder="Montant cible $" min="0" style="flex:1;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"><input type="date" id="gl-d" style="flex:1;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px"></div></div><div style="display:flex;gap:6px"><button class="btn bg bs" onclick="addGoal()">Ajouter</button><button class="btn bo bs" onclick="tgGoalForm()">Annuler</button></div></div><div id="goalList"></div></div>
 <div class="pnl" id="p-yir"><div id="yirView"></div></div>
 <div class="pnl" id="p-bak">
@@ -477,20 +478,20 @@ Tout ce que tu dois rembourser : crédit auto, prêt immobilier, dette perso, et
 <script>
 /* ═══ AURUM CAPITAL v2 ═══ */
 var K='aurum_capital_v1';
-var D={payouts:[],portfolio:[],passifs:[],expenses:[],propfirms:[],entities:[],abonnements:[],categories:['Logement','Transport','Alimentaire','Outils Trading','Challenges','Abos','Santé','Loisirs','Impôts'],history:[],envelopes:{},goals:[]};
+var D={payouts:[],portfolio:[],passifs:[],expenses:[],propfirms:[],entities:[],abonnements:[],categories:['Logement','Transport','Alimentaire','Outils Trading','Challenges','Abos','Santé','Loisirs','Impôts'],history:[],envelopes:{},goals:[],bankAccounts:[]};
 function esc(s){try{var d=document.createElement('div');d.textContent=s;return d.innerHTML}catch(e){return''}}
 function uid(){try{return Date.now().toString(36)+Math.random().toString(36).substr(2,5)}catch(e){return''+Date.now()}}
 function fm(n){try{return'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}catch(e){return'$0.00'}}
 function toast(m){try{var e=document.createElement('div');e.className='ts';e.textContent=m;document.getElementById('toC').appendChild(e);setTimeout(function(){e.remove()},2500)}catch(e){console.error(e)}}
 function tg(id){try{var e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none'}catch(e){console.error(e)}}
 function save(){try{var c=JSON.parse(JSON.stringify(D));c.netWorth=cNW();var data=JSON.stringify(c);if(data.length>4*1024*1024){toast('Données > 4MB — exporte un backup !')}localStorage.setItem(K,data)}catch(e){if(e.name==='QuotaExceededError'||e.code===22){toast('Stockage plein — exporte un backup JSON')}console.error('save:',e)}}
-function load(){try{var r=localStorage.getItem(K);if(!r)return;var p=JSON.parse(r);['payouts','portfolio','passifs','expenses','propfirms','entities','abonnements','history'].forEach(function(k){if(p[k])D[k]=p[k]});if(p.categories&&p.categories.length)D.categories=p.categories;if(p.envelopes)D.envelopes=p.envelopes;if(p.goals)D.goals=p.goals}catch(e){console.error('load:',e)}}
+function load(){try{var r=localStorage.getItem(K);if(!r)return;var p=JSON.parse(r);['payouts','portfolio','passifs','expenses','propfirms','entities','abonnements','history'].forEach(function(k){if(p[k])D[k]=p[k]});if(p.categories&&p.categories.length)D.categories=p.categories;if(p.envelopes)D.envelopes=p.envelopes;if(p.goals)D.goals=p.goals;if(p.bankAccounts)D.bankAccounts=p.bankAccounts}catch(e){console.error('load:',e)}}
 /* ─── JOURNAL SYNC ─── */
 function rJ(){try{var r=localStorage.getItem('enz_v4');if(!r)return{a:[],t:[]};var j=JSON.parse(r),a=[],t=[];if(j.accounts)j.accounts.forEach(function(ac){a.push({name:ac.name||'',type:ac.type||'',balance:ac.balance||0,risk:ac.risk||1,target:ac.target||0,floor:ac.floor||0,id:ac.id||''})});if(j.live)j.live.forEach(function(tr){var accName='',accType='';if(tr.accId&&j.accounts){var acc=j.accounts.find(function(a){return a.id===tr.accId});if(acc){accName=acc.name||'';accType=acc.type||''}}t.push(Object.assign({},tr,{account:accName,accType:accType}))});return{a:a,t:t}}catch(e){return{a:[],t:[]}}}
 function mPnL(){try{var j=rJ(),m={};j.t.forEach(function(t){if(!t.date)return;var k=t.date.slice(0,7);if(!m[k])m[k]={pnl:0,n:0,w:0};var p=parseFloat(t.pl)||0;m[k].pnl+=p;m[k].n++;if(p>0)m[k].w++});return m}catch(e){return{}}}
-function cNW(){try{var pV=D.portfolio.reduce(function(s,p){return s+(p.current||0)},0);var pN=D.payouts.reduce(function(s,p){return s+(p.net||0)},0);var db=D.passifs.reduce(function(s,p){return s+(p.remaining||0)},0);var j=rJ(),tc=0;j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel'){var bal=a.balance||0;j.t.forEach(function(t){if(t.account===a.name)bal+=parseFloat(t.pl)||0});tc+=bal}});var eT=D.entities.reduce(function(s,e){return s+((e.status==='Active'||e.status==='En création')?(e.tresorerie||0):0)},0);return pV+pN+tc+eT-db}catch(e){return 0}}
+function cNW(){try{var pV=D.portfolio.reduce(function(s,p){return s+(p.current||0)},0);var pN=D.payouts.reduce(function(s,p){return s+(p.net||0)},0);var db=D.passifs.reduce(function(s,p){return s+(p.remaining||0)},0);var j=rJ(),tc=0;j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel'){var bal=a.balance||0;j.t.forEach(function(t){if(t.account===a.name)bal+=parseFloat(t.pl)||0});tc+=bal}});var eT=D.entities.reduce(function(s,e){return s+((e.status==='Active'||e.status==='En création')?(e.tresorerie||0):0)},0);var bankTotal=D.bankAccounts.reduce(function(s,ba){return s+(ba.balance||0)},0);if(D.bankAccounts.length>0){return pV+bankTotal+tc-db}return pV+pN+tc+eT-db}catch(e){return 0}}
 /* ─── NAV ─── */
-var PG=['dash','coach','health','acc','pf','po','ent','fis','inv','bud','pas','bak'];
+var PG=['dash','coach','health','acc','pf','po','ent','fis','inv','bud','pas','bank','bak'];
 var cP='dash';
 /* ─── MOBILE MENU TOGGLE ─── */
 function toggleMobileMenu() {
@@ -532,7 +533,7 @@ function renderCapitalNav() {
         {p:'acc',l:'Comptes'},{p:'pf',l:'Prop Firms'}
       ]},
       {id:'patrimoine', label:'Patrimoine', pages:[
-        {p:'inv',l:'Portfolio'},{p:'po',l:'Payouts'},{p:'bud',l:'Budget'},{p:'pas',l:'Dettes'},{p:'coach',l:'Coaching'},{p:'health',l:'Santé'}
+        {p:'bank',l:'Trésorerie'},{p:'inv',l:'Portfolio'},{p:'po',l:'Payouts'},{p:'bud',l:'Budget'},{p:'pas',l:'Dettes'},{p:'coach',l:'Coaching'},{p:'health',l:'Santé'}
       ]},
       {id:'fiscal', label:'Fiscal', pages:[
         {p:'fis',l:'Simulateur'},{p:'ent',l:'Entités'}
@@ -585,7 +586,7 @@ document.addEventListener('click', function(e) {
     }
   } catch(ex) {}
 });
-function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA();else if(p==='goals')rGoals();else if(p==='yir')rYIR()}catch(e){console.error(e)}}
+function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA();else if(p==='bank')rBank();else if(p==='goals')rGoals();else if(p==='yir')rYIR()}catch(e){console.error(e)}}
 /* ─── KPI helper ─── */
 function kp(l,v,c,icon){
   try {
@@ -658,7 +659,8 @@ var gains=j.t.reduce(function(s,t){var p=parseFloat(t.pl)||0;return s+(p>0?p:0)}
 var losses=Math.abs(j.t.reduce(function(s,t){var p=parseFloat(t.pl)||0;return s+(p<0?p:0)},0));
 var pf=losses>0?(gains/losses).toFixed(2):'—';
 var eT=D.entities.reduce(function(s,e){return s+((e.status==='Active'||e.status==='En création')?(e.tresorerie||0):0)},0);
-var liquide=pN+eT;
+var bankTotal=D.bankAccounts.reduce(function(s,ba){return s+(ba.balance||0)},0);
+var liquide=D.bankAccounts.length>0?bankTotal:(pN+eT);
 var nonLiquide=pV+persoTotal;
 document.getElementById('dK').innerHTML=kp('Patrimoine net',fm(nw),nw>=0?'var(--purple)':'var(--red)')+kp('Liquidité',fm(liquide),liquide>0?'var(--green)':'var(--red)')+kp('Actifs non-liquides',fm(nonLiquide),'var(--blue)')+kp('Capital trading perso',fm(tc),'var(--blue)')+kp('Portfolio',fm(pV),'var(--green)')+kp('Dettes',fm(db),'var(--red)')+kp('Trading P&L mois',fm(tM),tM>=0?'var(--green)':'var(--red)')+kp('Trades mois',mp[cm]?mp[cm].n:0,'var(--t2)')+kp('Win Rate',wr+'%',wr>=50?'var(--green)':'var(--red)')+kp('Moy/trade',fm(avgTrade),avgTrade>=0?'var(--green)':'var(--red)')+kp('Série',streakTxt,streakType==='W'?'var(--green)':streakType==='L'?'var(--red)':'var(--t3)')+kp('Profit Factor',pf,parseFloat(pf)>=1.5?'var(--green)':parseFloat(pf)>=1?'var(--gold)':'var(--red)');
 document.getElementById('dK').innerHTML+='<div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px"><div class="crd" style="border-left:3px solid var(--green)"><div class="lb" style="font-size:10px;color:var(--t3)">👤 Personnel</div><div class="vl" style="color:var(--green);font-size:15px">'+fm(persoTotal)+'</div><div style="font-size:9px;color:var(--green);margin-top:2px;opacity:.7">✓ Dans le patrimoine</div></div><div class="crd" style="border-left:3px solid var(--gold)"><div class="lb" style="font-size:10px;color:var(--t3)">✓ Funded</div><div class="vl" style="color:var(--gold);font-size:15px">'+fm(fundedTotal)+'</div><div style="font-size:9px;color:var(--t3);margin-top:2px">Revenus via payouts</div></div><div class="crd" style="border-left:3px solid var(--t3)"><div class="lb" style="font-size:10px;color:var(--t3)">🏆 Challenge</div><div class="vl" style="color:var(--t3);font-size:15px">'+fm(challengeTotal)+'</div><div style="font-size:9px;color:var(--t3);margin-top:2px">Non compté</div></div></div><div style="grid-column:1/-1;text-align:right;font-size:10px;color:var(--t3);opacity:.6;margin-top:-4px">Sync Journal · Live uniquement</div>';
@@ -942,7 +944,9 @@ function checkPropFirmStatus(){try{
 }catch(e){console.error('checkPropFirmStatus:',e)}}
 
 /* ─── PAYOUTS ─── */
-function aPO(){try{var d=document.getElementById('po-d').value,s=document.getElementById('po-s').value,b=parseFloat(document.getElementById('po-b').value)||0,f=parseFloat(document.getElementById('po-f').value)||0;if(!d||b<=0){toast('Date et montant requis');return}D.payouts.push({id:uid(),date:d,source:s,brut:b,frais:f,net:b-f});D.history.unshift({type:'payout',text:s+' : '+fm(b-f),date:d});save();rPO();tg('poF');toast('Ajouté');document.getElementById('po-b').value='';document.getElementById('po-f').value='0'}catch(e){console.error(e)}}
+function aPO(){try{var d=document.getElementById('po-d').value,s=document.getElementById('po-s').value,b=parseFloat(document.getElementById('po-b').value)||0,f=parseFloat(document.getElementById('po-f').value)||0;if(!d||b<=0){toast('Date et montant requis');return}var net=b-f;D.payouts.push({id:uid(),date:d,source:s,brut:b,frais:f,net:net});D.history.unshift({type:'payout',text:s+' : '+fm(net),date:d});save();rPO();tg('poF');toast('Ajouté');document.getElementById('po-b').value='';document.getElementById('po-f').value='0';if(D.bankAccounts.length>0){showBankDepositToast(net,s+' — Payout '+d)}}catch(e){console.error(e)}}
+function showBankDepositToast(amount,label){try{var el=document.createElement('div');el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--gold);border-radius:var(--radius);padding:14px 18px;z-index:2000;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-width:420px;width:90%';el.innerHTML='<div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">💰 Payout de '+fm(amount)+' ajouté</div><div style="font-size:11px;color:var(--t2)">Déposer sur un compte bancaire ?</div></div><button onclick="this.parentElement.remove();bankDepositFromPayout('+amount+',\''+label.replace(/'/g,"\\'")+'\')" style="background:var(--green);color:#000;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;min-height:44px">Déposer</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:4px">×</button>';document.body.appendChild(el);setTimeout(function(){if(el.parentElement)el.remove()},8000)}catch(e){console.error(e)}}
+function bankDepositFromPayout(amount,label){try{if(!D.bankAccounts.length){toast('Aucun compte bancaire');return}var accId=D.bankAccounts[0].id;if(D.bankAccounts.length>1){var opts=D.bankAccounts.map(function(ba,i){return(i+1)+'. '+ba.name+' ('+ba.bank+')'}).join('\n');var choice=prompt('Sur quel compte ?\n'+opts,1);if(!choice)return;var idx=parseInt(choice)-1;if(idx<0||idx>=D.bankAccounts.length){toast('Choix invalide');return}accId=D.bankAccounts[idx].id}addBankTransaction(accId,amount,label,'deposit');go('bank')}catch(e){console.error(e)}}
 function dPO(id){try{if(!confirm('?'))return;D.payouts=D.payouts.filter(function(p){return p.id!==id});save();rPO()}catch(e){console.error(e)}}
 function rPO(){try{if(!D.payouts.length){document.getElementById('poSum').innerHTML='<div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(0,214,143,.05),rgba(91,141,239,.03));border-left:3px solid var(--green);border-radius:10px;padding:20px 24px;text-align:center"><div style="font-size:32px;margin-bottom:10px">💰</div><div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Ton premier revenu t\'attend</div><div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Un payout, c\'est de l\'argent qui sort d\'un compte de trading vers ton compte bancaire. Prop firm, compte perso, salaire... tout se suit ici.</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;font-size:11px"><div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">💰</div><div style="color:var(--t2)">Prop Firm</div></div><div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">💼</div><div style="color:var(--t2)">Salaire</div></div><div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">🏢</div><div style="color:var(--t2)">Business</div></div><div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">📊</div><div style="color:var(--t2)">Autre</div></div></div><button class="btn bp bs" onclick="tg(\'poF\')">+ Ajouter un payout</button></div>';document.getElementById('poT').innerHTML='';document.getElementById('poTot').textContent='$0';return}var t=0,bySrc={};var ico={'Prop Firm':'💰','Salaire':'💼','Business':'🏢','Autre':'📊'};D.payouts.forEach(function(p){t+=p.net;bySrc[p.source]=(bySrc[p.source]||0)+p.net});var sh='<div style="background:linear-gradient(135deg,rgba(0,214,143,.08),rgba(91,141,239,.05));border-radius:12px;padding:16px;border:1px solid rgba(0,214,143,.15);text-align:center;margin-bottom:4px"><div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Total Payouts</div><div style="font-size:36px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--green)">'+fm(t)+'</div></div>';if(Object.keys(bySrc).length){sh+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;margin-top:8px">';for(var k in bySrc){sh+='<div style="background:var(--bg3);padding:8px;border-radius:6px;text-align:center;font-size:11px"><div style="color:var(--t3)">'+(ico[k]||'📊')+' '+k+'</div><div style="font-weight:700;color:var(--gold);margin-top:2px;font-family:JetBrains Mono,monospace">'+fm(bySrc[k])+'</div></div>'}sh+='</div>'}document.getElementById('poSum').innerHTML=sh;document.getElementById('poT').innerHTML=D.payouts.sort(function(a,b){return b.date.localeCompare(a.date)}).map(function(p){return'<tr><td>'+p.date+'</td><td>'+(ico[p.source]||'')+' '+p.source+'</td><td class="mn">'+fm(p.brut)+'</td><td class="mn ng">'+fm(p.frais)+'</td><td class="mn ps">'+fm(p.net)+'</td><td><button class="btn br bs" onclick="dPO(\''+p.id+'\')">×</button></td></tr>'}).join('');document.getElementById('poTot').textContent=fm(t)}catch(e){console.error(e)}}
 /* ─── ENTITIES ─── */
@@ -955,7 +959,7 @@ D.history.unshift({type:'entity',text:'\ud83c\udfe2 '+n+' ('+document.getElement
 save();rEN();tg('enF');toast('Entit\u00e9 cr\u00e9\u00e9e');
 document.getElementById('en-n').value='';document.getElementById('en-si').value='';document.getElementById('en-ger').value='';document.getElementById('en-act').value='';
 }catch(e){console.error('aEN:',e)}}
-function dEN(id){try{var ent=D.entities.find(function(x){return x.id===id});if(!confirm('Supprimer '+((ent&&ent.name)||'')+' ?'))return;D.entities.forEach(function(e){if(e.parent===id)e.parent=''});D.entities=D.entities.filter(function(e){return e.id!==id});save();rEN();toast('Supprim\u00e9e')}catch(e){console.error(e)}}
+function dEN(id){try{var ent=D.entities.find(function(x){return x.id===id});var linkedBanks=D.bankAccounts.filter(function(ba){return ba.entityId===id});var warnMsg='Supprimer '+((ent&&ent.name)||'')+' ?';if(linkedBanks.length){warnMsg+='\n\n⚠ '+linkedBanks.length+' compte(s) bancaire(s) lié(s) à cette entité :\n'+linkedBanks.map(function(ba){return'- '+ba.name+' ('+ba.bank+')'}).join('\n')+'\n\nLes comptes bancaires seront convertis en comptes perso.'}if(!confirm(warnMsg))return;D.entities.forEach(function(e){if(e.parent===id)e.parent=''});linkedBanks.forEach(function(ba){ba.type='perso';ba.entityId=null});D.entities=D.entities.filter(function(e){return e.id!==id});save();rEN();toast('Supprimée')}catch(e){console.error(e)}}
 function eEF(id,f,label){try{var e=D.entities.find(function(x){return x.id===id});if(!e)return;var v=prompt((label||f)+' (actuel: '+(e[f]||0)+') :',e[f]||0);if(v===null)return;e[f]=parseFloat(v)||0;if(f==='ca'||f==='charges'||f==='chargesSociales'){e.resultat=(e.ca||0)-(e.charges||0)-(e.chargesSociales||0)}save();rEN();toast(e.name+' OK')}catch(e){console.error(e)}}
 function eENotes(id){try{var e=D.entities.find(function(x){return x.id===id});if(!e)return;var v=prompt('Notes :',e.notes||'');if(v===null)return;e.notes=v;save();rEN()}catch(e){console.error(e)}}
 function rEN(){try{
@@ -1254,7 +1258,7 @@ function mport(ev){try{var f=ev.target.files[0];if(!f)return;var r=new FileReade
   }
   /* Legacy capital-only */
   else if(data.payouts||data.portfolio){
-    ['payouts','portfolio','passifs','expenses','propfirms','entities','abonnements','history'].forEach(function(k){if(data[k])D[k]=data[k]});if(data.categories)D.categories=data.categories;save();rP(cP);toast('Capital restauré');
+    ['payouts','portfolio','passifs','expenses','propfirms','entities','abonnements','history','bankAccounts'].forEach(function(k){if(data[k])D[k]=data[k]});if(data.categories)D.categories=data.categories;save();rP(cP);toast('Capital restauré');
   }
   /* Legacy journal-only — store it */
   else if(data.accounts||data.live){
@@ -1262,7 +1266,274 @@ function mport(ev){try{var f=ev.target.files[0];if(!f)return;var r=new FileReade
   }
   localStorage.setItem('aurum_backup_capital',new Date().toISOString());localStorage.setItem('aurum_backup_journal',new Date().toISOString());
 }catch(err){toast('Fichier invalide')}};r.readAsText(f);ev.target.value=''}catch(e){console.error(e)}}
-function xreset(){try{if(!confirm('⚠ TOUT SUPPRIMER ?'))return;if(!confirm('Dernière chance ?'))return;D={payouts:[],portfolio:[],passifs:[],expenses:[],propfirms:[],entities:[],abonnements:[],categories:['Logement','Transport','Alimentaire','Outils Trading','Challenges','Abos','Santé','Loisirs','Impôts'],history:[],envelopes:{},goals:[]};localStorage.removeItem(K);rP(cP);toast('Effacé')}catch(e){console.error(e)}}
+function xreset(){try{if(!confirm('⚠ TOUT SUPPRIMER ?'))return;if(!confirm('Dernière chance ?'))return;D={payouts:[],portfolio:[],passifs:[],expenses:[],propfirms:[],entities:[],abonnements:[],categories:['Logement','Transport','Alimentaire','Outils Trading','Challenges','Abos','Santé','Loisirs','Impôts'],history:[],envelopes:{},goals:[],bankAccounts:[]};localStorage.removeItem(K);rP(cP);toast('Effacé')}catch(e){console.error(e)}}
+/* ═══════════════════════════════════════════════════════
+   TRÉSORERIE BANCAIRE
+   ═══════════════════════════════════════════════════════ */
+function rBank() {
+  try {
+    var el = document.getElementById('bankC');
+    if (!el) return;
+    var h = '';
+    var totalAll = D.bankAccounts.reduce(function(s, ba) { return s + (ba.balance || 0) }, 0);
+    var totalPerso = D.bankAccounts.filter(function(ba) { return ba.type === 'perso' }).reduce(function(s, ba) { return s + (ba.balance || 0) }, 0);
+    var totalEntite = D.bankAccounts.filter(function(ba) { return ba.type === 'entite' }).reduce(function(s, ba) { return s + (ba.balance || 0) }, 0);
+
+    /* ─── Summary strip ─── */
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px">';
+    h += '<div style="background:linear-gradient(135deg,rgba(0,214,143,.08),rgba(91,141,239,.04));border:1px solid rgba(0,214,143,.15);border-radius:var(--radius);padding:16px;text-align:center">';
+    h += '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Liquidité totale</div>';
+    h += '<div style="font-size:28px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--green)">' + fm(totalAll) + '</div></div>';
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center">';
+    h += '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Comptes perso</div>';
+    h += '<div style="font-size:22px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--green)">' + fm(totalPerso) + '</div></div>';
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center">';
+    h += '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Comptes entités</div>';
+    h += '<div style="font-size:22px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--purple)">' + fm(totalEntite) + '</div></div>';
+    h += '</div>';
+
+    /* ─── Holding suggestion ─── */
+    if (D.entities.length > 0) {
+      var hasHolding = D.entities.some(function(e) { return e.forme === 'Holding' && (e.status === 'Active' || e.status === 'En création') });
+      if (hasHolding) {
+        var holdingEntity = D.entities.find(function(e) { return e.forme === 'Holding' && (e.status === 'Active' || e.status === 'En création') });
+        var hasHoldingBank = D.bankAccounts.some(function(ba) { return ba.entityId === holdingEntity.id });
+        if (!hasHoldingBank) {
+          h += '<div style="background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.15);border-left:3px solid var(--purple);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
+          h += '<div style="flex:1;font-size:12px;color:var(--t2)"><b style="color:var(--purple)">💡 Holding détectée</b> — Crée un compte bancaire pour <b>' + esc(holdingEntity.name) + '</b></div>';
+          h += '</div>';
+        }
+      }
+    }
+
+    /* ─── Bank account cards ─── */
+    if (!D.bankAccounts.length) {
+      h += '<div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(0,214,143,.05),rgba(91,141,239,.03));border-left:3px solid var(--green);border-radius:10px;padding:20px 24px;text-align:center">';
+      h += '<div style="font-size:32px;margin-bottom:10px">🏦</div>';
+      h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Ajoute ton premier compte bancaire</div>';
+      h += '<div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Suis ta liquidité réelle : comptes courants, comptes épargne, comptes d\'entités. Ta liquidité dans le dashboard sera basée sur ces comptes.</div>';
+      h += '</div>';
+    } else {
+      h += '<div style="display:grid;gap:12px;margin-bottom:20px">';
+      D.bankAccounts.forEach(function(ba) {
+        var entName = '';
+        if (ba.type === 'entite' && ba.entityId) {
+          var ent = D.entities.find(function(e) { return e.id === ba.entityId });
+          if (ent) entName = ent.name;
+        }
+        var badgeColor = ba.type === 'entite' ? 'var(--purple)' : 'var(--green)';
+        var badgeLabel = ba.type === 'entite' ? 'Entité' : 'Perso';
+        var balColor = (ba.balance || 0) >= 0 ? 'var(--green)' : 'var(--red)';
+
+        h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;transition:border-color .2s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">';
+        /* Header */
+        h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">';
+        h += '<div style="font-size:14px;font-weight:700;color:var(--t1)">' + esc(ba.name) + '</div>';
+        h += '<div style="font-size:11px;color:var(--t3)">' + esc(ba.bank) + '</div>';
+        h += '<span style="background:' + badgeColor + '22;color:' + badgeColor + ';font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px">' + badgeLabel + '</span>';
+        if (entName) {
+          h += '<span style="font-size:10px;color:var(--purple);font-weight:600">🏢 ' + esc(entName) + '</span>';
+        }
+        h += '</div>';
+        /* Balance */
+        h += '<div style="font-size:32px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + balColor + ';margin-bottom:14px">' + fm(ba.balance || 0) + '</div>';
+        /* Transactions */
+        var txs = (ba.transactions || []).slice(-5).reverse();
+        if (txs.length) {
+          h += '<div style="margin-bottom:14px">';
+          h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Dernières opérations</div>';
+          txs.forEach(function(tx) {
+            var txColor = tx.amount >= 0 ? 'var(--green)' : 'var(--red)';
+            var txSign = tx.amount >= 0 ? '+' : '';
+            h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">';
+            h += '<span style="color:var(--t3);font-family:JetBrains Mono,monospace;font-size:10px;min-width:70px">' + (tx.date || '') + '</span>';
+            h += '<span style="flex:1;color:var(--t2)">' + esc(tx.label || '') + '</span>';
+            h += '<span style="font-weight:700;font-family:JetBrains Mono,monospace;color:' + txColor + '">' + txSign + fm(Math.abs(tx.amount)) + '</span>';
+            h += '</div>';
+          });
+          h += '</div>';
+        }
+        /* Action buttons */
+        h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+        h += '<button class="btn" style="background:var(--green);color:#000;font-size:11px;padding:8px 14px;border:none;border-radius:6px;font-weight:700;cursor:pointer;min-height:44px;transition:opacity .2s" onmouseover="this.style.opacity=\'0.85\'" onmouseout="this.style.opacity=\'1\'" onclick="showBankTxModal(\'' + ba.id + '\',\'deposit\')">+ Dépôt</button>';
+        h += '<button class="btn" style="background:var(--red);color:#fff;font-size:11px;padding:8px 14px;border:none;border-radius:6px;font-weight:700;cursor:pointer;min-height:44px;transition:opacity .2s" onmouseover="this.style.opacity=\'0.85\'" onmouseout="this.style.opacity=\'1\'" onclick="showBankTxModal(\'' + ba.id + '\',\'withdrawal\')">- Retrait</button>';
+        h += '<button class="btn bo" style="font-size:11px;padding:8px 14px;border-color:var(--border2);color:var(--t2);min-height:44px" onclick="editBankAccount(\'' + ba.id + '\')">Modifier</button>';
+        h += '<button class="btn bo" style="font-size:11px;padding:8px 14px;border-color:var(--red);color:var(--red);min-height:44px;margin-left:auto" onclick="deleteBankAccount(\'' + ba.id + '\')">Supprimer</button>';
+        h += '</div>';
+        h += '</div>';
+      });
+      h += '</div>';
+    }
+
+    /* ─── Add new account form ─── */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-top:10px">';
+    h += '<div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px">+ Nouveau compte bancaire</div>';
+    h += '<div style="display:grid;gap:10px">';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    h += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Nom du compte</label>';
+    h += '<input id="ba-name" placeholder="Ex: Compte courant" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px"></div>';
+    h += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Banque</label>';
+    h += '<input id="ba-bank" placeholder="Ex: BoursoBank" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px"></div>';
+    h += '</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    h += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Type</label>';
+    h += '<select id="ba-type" onchange="bankTypeChanged()" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px">';
+    h += '<option value="perso">Perso</option>';
+    if (D.entities.length > 0) {
+      h += '<option value="entite">Entité</option>';
+    }
+    h += '</select></div>';
+    h += '<div id="ba-entity-wrap" style="display:none"><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Entité</label>';
+    h += '<select id="ba-entity" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px">';
+    D.entities.forEach(function(ent) {
+      if (ent.status === 'Active' || ent.status === 'En création') {
+        h += '<option value="' + ent.id + '">' + esc(ent.name) + ' (' + ent.forme + ')</option>';
+      }
+    });
+    h += '</select></div>';
+    h += '</div>';
+    h += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Solde initial ($)</label>';
+    h += '<input type="number" id="ba-balance" placeholder="0" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px"></div>';
+    h += '<button class="btn bg" style="min-height:44px;font-size:13px;font-weight:700" onclick="addBankAccount()">Ajouter le compte</button>';
+    h += '</div></div>';
+
+    el.innerHTML = h;
+  } catch(e) { console.error('rBank:', e) }
+}
+
+function bankTypeChanged() {
+  try {
+    var sel = document.getElementById('ba-type');
+    var wrap = document.getElementById('ba-entity-wrap');
+    if (sel && wrap) {
+      wrap.style.display = sel.value === 'entite' ? 'block' : 'none';
+    }
+  } catch(e) { console.error(e) }
+}
+
+function addBankAccount() {
+  try {
+    var name = (document.getElementById('ba-name').value || '').trim();
+    var bank = (document.getElementById('ba-bank').value || '').trim();
+    var type = document.getElementById('ba-type').value || 'perso';
+    var balance = parseFloat(document.getElementById('ba-balance').value) || 0;
+    var entityId = null;
+    if (type === 'entite') {
+      entityId = document.getElementById('ba-entity').value || null;
+      if (!entityId) { toast('Sélectionne une entité'); return }
+    }
+    if (!name) { toast('Nom requis'); return }
+    if (!bank) { toast('Banque requise'); return }
+    D.bankAccounts.push({
+      id: 'ba_' + uid(),
+      name: name,
+      bank: bank,
+      type: type,
+      entityId: entityId,
+      balance: balance,
+      transactions: []
+    });
+    D.history.unshift({ type: 'bank', text: '🏦 ' + name + ' (' + bank + ')', date: new Date().toISOString().slice(0, 10) });
+    save(); rBank(); toast('Compte ajouté');
+  } catch(e) { console.error('addBankAccount:', e) }
+}
+
+function editBankAccount(id) {
+  try {
+    var ba = D.bankAccounts.find(function(x) { return x.id === id });
+    if (!ba) return;
+    var newName = prompt('Nom du compte :', ba.name);
+    if (newName === null) return;
+    var newBank = prompt('Banque :', ba.bank);
+    if (newBank === null) return;
+    var newBal = prompt('Solde actuel ($) :', ba.balance || 0);
+    if (newBal === null) return;
+    ba.name = newName.trim() || ba.name;
+    ba.bank = newBank.trim() || ba.bank;
+    ba.balance = parseFloat(newBal) || 0;
+    save(); rBank(); toast('Modifié');
+  } catch(e) { console.error('editBankAccount:', e) }
+}
+
+function deleteBankAccount(id) {
+  try {
+    var ba = D.bankAccounts.find(function(x) { return x.id === id });
+    if (!ba) return;
+    if (!confirm('Supprimer le compte « ' + ba.name + ' » ?\n\nSolde : ' + fm(ba.balance) + '\nTransactions : ' + (ba.transactions || []).length)) return;
+    D.bankAccounts = D.bankAccounts.filter(function(x) { return x.id !== id });
+    save(); rBank(); toast('Compte supprimé');
+  } catch(e) { console.error('deleteBankAccount:', e) }
+}
+
+function addBankTransaction(accId, amount, label, type) {
+  try {
+    var ba = D.bankAccounts.find(function(x) { return x.id === accId });
+    if (!ba) { toast('Compte introuvable'); return }
+    if (!ba.transactions) ba.transactions = [];
+    var txAmount = type === 'withdrawal' ? -Math.abs(amount) : Math.abs(amount);
+    ba.transactions.push({
+      id: 'tx_' + uid(),
+      date: new Date().toISOString().slice(0, 10),
+      amount: txAmount,
+      label: label || '',
+      type: type
+    });
+    ba.balance = (ba.balance || 0) + txAmount;
+    save(); rBank(); toast(type === 'deposit' ? 'Dépôt enregistré' : 'Retrait enregistré');
+  } catch(e) { console.error('addBankTransaction:', e) }
+}
+
+function showBankTxModal(accId, txType) {
+  try {
+    var ba = D.bankAccounts.find(function(x) { return x.id === accId });
+    if (!ba) return;
+    var isDeposit = txType === 'deposit';
+    var title = isDeposit ? 'Dépôt sur ' + ba.name : 'Retrait de ' + ba.name;
+    var color = isDeposit ? 'var(--green)' : 'var(--red)';
+
+    /* Suggestions */
+    var suggestions = isDeposit
+      ? ['Payout FundedNext', 'Payout FTMO', 'Salaire', 'Virement holding', 'Remboursement', 'Autre']
+      : ['Retrait trading', 'Loyer', 'Challenge prop firm', 'Virement entité', 'Dépense courante', 'Autre'];
+
+    var overlay = document.createElement('div');
+    overlay.id = 'bankTxOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px';
+    var modal = '<div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:24px;max-width:400px;width:100%;box-shadow:0 12px 48px rgba(0,0,0,.6)">';
+    modal += '<div style="font-size:15px;font-weight:700;color:' + color + ';margin-bottom:16px">' + (isDeposit ? '↓' : '↑') + ' ' + title + '</div>';
+    modal += '<div style="display:grid;gap:12px">';
+    modal += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Montant ($)</label>';
+    modal += '<input type="number" id="btx-amount" placeholder="0" min="0" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:14px;min-height:44px"></div>';
+    modal += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Libellé</label>';
+    modal += '<input id="btx-label" placeholder="Description" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px"></div>';
+    modal += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+    suggestions.forEach(function(s) {
+      modal += '<button onclick="document.getElementById(\'btx-label\').value=\'' + s + '\'" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:6px 10px;border-radius:20px;font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s;min-height:32px" onmouseover="this.style.borderColor=\'' + (isDeposit ? 'var(--green)' : 'var(--red)') + '\';this.style.color=\'' + (isDeposit ? 'var(--green)' : 'var(--red)') + '\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--t2)\'">' + s + '</button>';
+    });
+    modal += '</div>';
+    modal += '<div style="display:flex;gap:8px;margin-top:4px">';
+    modal += '<button onclick="submitBankTx(\'' + accId + '\',\'' + txType + '\')" style="flex:1;background:' + color + ';color:' + (isDeposit ? '#000' : '#fff') + ';border:none;padding:12px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;min-height:44px;transition:opacity .2s" onmouseover="this.style.opacity=\'0.85\'" onmouseout="this.style.opacity=\'1\'">' + (isDeposit ? 'Déposer' : 'Retirer') + '</button>';
+    modal += '<button onclick="document.getElementById(\'bankTxOverlay\').remove()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--t2);padding:12px 20px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;min-height:44px;transition:all .15s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border2)\'">Annuler</button>';
+    modal += '</div></div></div>';
+    overlay.innerHTML = modal;
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove() });
+    document.body.appendChild(overlay);
+    setTimeout(function() { var inp = document.getElementById('btx-amount'); if (inp) inp.focus() }, 100);
+  } catch(e) { console.error('showBankTxModal:', e) }
+}
+
+function submitBankTx(accId, txType) {
+  try {
+    var amount = parseFloat(document.getElementById('btx-amount').value) || 0;
+    var label = (document.getElementById('btx-label').value || '').trim();
+    if (amount <= 0) { toast('Montant requis'); return }
+    if (!label) { toast('Libellé requis'); return }
+    addBankTransaction(accId, amount, label, txType);
+    var overlay = document.getElementById('bankTxOverlay');
+    if (overlay) overlay.remove();
+  } catch(e) { console.error('submitBankTx:', e) }
+}
+
 /* ═══════════════════════════════════════════════════════
    OBJECTIFS SMART
    ═══════════════════════════════════════════════════════ */
@@ -1554,7 +1825,7 @@ try{if(window.self!==window.top){
       {p:'po',l:'Payouts'},{p:'pf',l:'Prop Firms'}
     ]},
     {id:'patrimoine',label:'Patrimoine',pages:[
-      {p:'inv',l:'Portfolio'},{p:'pas',l:'Dettes'},{p:'goals',l:'Objectifs'}
+      {p:'bank',l:'Trésorerie'},{p:'inv',l:'Portfolio'},{p:'pas',l:'Dettes'},{p:'goals',l:'Objectifs'}
     ]},
     {id:'gestion',label:'Gestion',pages:[
       {p:'bud',l:'Budget'},{p:'fis',l:'Fiscal'}
