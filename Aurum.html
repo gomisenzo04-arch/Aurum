@@ -1786,8 +1786,8 @@ a:hover{opacity:.85}
 <div id="sessionView"></div>
 </div>
 
-<!-- CHECKLIST -->
-<div class="panel" id="check">
+<!-- CHECKLIST (hidden — integrated into session cockpit, kept for DOM readers) -->
+<div class="panel" id="check" style="display:none!important">
 <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
 <button class="btn btn-g" onclick="dlPDF()">Télécharger PDF</button>
 <button class="btn btn-o" onclick="resetChecklist()">Reset journée</button>
@@ -1846,8 +1846,8 @@ a:hover{opacity:.85}
 </div>
 </div>
 
-<!-- CALCULATOR -->
-<div class="panel" id="calc">
+<!-- CALCULATOR (hidden — integrated into session cockpit, kept for DOM readers) -->
+<div class="panel" id="calc" style="display:none!important">
 
 <!-- QUICK LOT ZONE -->
 <div class="box" style="margin-bottom:16px;padding:20px">
@@ -2631,6 +2631,9 @@ const PAGES = ['dash','session','add','hist','time','review','rules','viab','bac
 function go(id) {
   /* Redirect check/calc → session */
   if (id === 'check' || id === 'calc') { go('session'); return; }
+
+  /* Clear HUD timer when navigating away from session */
+  if (id !== 'session' && _sessTimerInterval) { clearInterval(_sessTimerInterval); _sessTimerInterval = null }
 
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const panel = document.getElementById(id);
@@ -6963,7 +6966,8 @@ function strategyConfigReader() {
         { id: 'tp', label: 'TP', icon: '🎯' },
         { id: 'sl', label: 'SL', icon: '🛑' },
         { id: 'trail', label: 'Trail', icon: '📐' },
-        { id: '21h', label: '21h', icon: '🕘' }
+        { id: '21h', label: '21h', icon: '🕘' },
+        { id: 'be', label: 'BE', icon: '⚖️' }
       ],
       standardSLPoints: typeof SL_PRESETS !== 'undefined' ? SL_PRESETS : [250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200],
       riskPerTradePercent: S().risk || 1,
@@ -7988,7 +7992,7 @@ function rSessionOperating(el) {
     h += '<div class="sess-hud-kpi"><div class="sess-hud-kpi-label">P&L</div><div class="sess-hud-kpi-val" style="color:' + pnlCol + ';font-size:20px">' + (sessPnl >= 0 ? '+' : '') + '$' + sessPnl.toFixed(0) + '</div></div>';
     h += '<div class="sess-hud-kpi"><div class="sess-hud-kpi-label">Trades</div><div class="sess-hud-kpi-val">' + s.logicalTradeCount + '/' + maxT + '</div></div>';
     h += '<div class="sess-hud-kpi"><div class="sess-hud-kpi-label">WR</div><div class="sess-hud-kpi-val">' + wr + '</div></div>';
-    h += '<div class="sess-hud-kpi"><div class="sess-hud-kpi-label">Durée</div><div class="sess-hud-kpi-val">' + durStr + '</div></div>';
+    h += '<div class="sess-hud-kpi"><div class="sess-hud-kpi-label">Durée</div><div class="sess-hud-kpi-val" id="sessHudDuration">' + durStr + '</div></div>';
     h += '</div>';
 
     /* Gauges row */
@@ -8073,6 +8077,21 @@ function rSessionOperating(el) {
       var firstBroken = rails.find(function(r) { return !r.checked });
       toast('Filtre : ' + (firstBroken ? firstBroken.label : ''));
       setTimeout(function() { window._lastRailToast = false }, 30000);
+    }
+
+    /* HUD Timer — update duration every second */
+    if (!_sessTimerInterval) {
+      _sessTimerInterval = setInterval(function() {
+        try {
+          if (!_currentSession || _currentSession.status !== 'OPERATING') {
+            clearInterval(_sessTimerInterval);
+            _sessTimerInterval = null;
+            return;
+          }
+          var durEl = document.getElementById('sessHudDuration');
+          if (durEl) durEl.textContent = sessCalcDuration(_currentSession);
+        } catch(e) {}
+      }, 1000);
     }
   } catch(e) { console.error('rSessionOperating:', e) }
 }
@@ -8281,6 +8300,12 @@ function rSessCockpitQuickTrade(s, blocked, sessTrades, config) {
     h += '<input type="number" id="sessQTPL" step="0.01" placeholder="ex: 92.50" value="' + (_sessQTForm.pl || '') + '" oninput="_sessQTForm.pl=this.value" style="flex:1;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:14px;min-height:44px">';
     h += '</div>';
 
+    /* Notes (optional) */
+    h += '<div style="margin-bottom:10px">';
+    h += '<label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Notes (optionnel)</label>';
+    h += '<textarea id="sessQTNotes" rows="2" placeholder="Observations, contexte..." oninput="_sessQTForm.notes=this.value" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-size:12px;min-height:44px;resize:vertical;font-family:inherit;box-sizing:border-box">' + (_sessQTForm.notes || '') + '</textarea>';
+    h += '</div>';
+
     /* SAVE button */
     h += '<button class="btn btn-g" onclick="sessCockpitSaveTrade()" style="width:100%;padding:14px;font-size:14px;font-weight:800;border-radius:10px;min-height:50px">ENREGISTRER LE TRADE</button>';
 
@@ -8305,7 +8330,10 @@ function sessCockpitSaveTrade() {
     var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
 
     var dirMap = { buy: 'Buy', sell: 'Sell' };
-    var resMap = { tp: 'TP', sl: 'SL', trail: 'Trail', '21h': '21h' };
+    var resMap = { tp: 'TP', sl: 'SL', trail: 'Trail', '21h': '21h', be: 'BE' };
+
+    var notesInput = document.getElementById('sessQTNotes');
+    var notes = (notesInput ? notesInput.value : '') || _sessQTForm.notes || '';
 
     var now = new Date();
     var pct = acc.bal > 0 ? (pl / acc.bal * 100).toFixed(2) : '0';
@@ -8323,7 +8351,7 @@ function sessCockpitSaveTrade() {
       rr: 0,
       news: 'Non',
       s5: '', s1: '', sr: '',
-      notes: '',
+      notes: notes,
       tags: [],
       ts: Date.now(),
       accId: D.activeAcc
@@ -8952,6 +8980,8 @@ function closeCurrentSession() {
   try {
     if (!_currentSession) return;
     if (!confirm('Clôturer la session ?')) return;
+    /* Stop HUD timer */
+    if (_sessTimerInterval) { clearInterval(_sessTimerInterval); _sessTimerInterval = null }
     openDebrief(_currentSession.id);
     _currentSession.status = 'DEBRIEF';
     rSession();
