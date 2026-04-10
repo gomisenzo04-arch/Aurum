@@ -966,6 +966,11 @@ td.n { color: var(--red); font-weight: 600; text-shadow: 0 0 12px rgba(255,71,87
 .cal-day.mixed { background: rgba(212,160,23,.08); border-color: rgba(212,160,23,.15) }
 .cal-day.mixed .cal-pl { color: var(--gold) }
 .cal-day-detail { display:none; margin-top:12px; padding:16px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius) }
+.cal-day.holiday { background: rgba(167,139,250,.12); border-color: rgba(167,139,250,.3) }
+.cal-day.holiday .cal-num { color: var(--purple) }
+.cal-holiday-icon { font-size:8px; line-height:1; position:absolute; top:2px; right:3px }
+.cal-holiday-dot { position:absolute; top:3px; right:3px; width:6px; height:6px; border-radius:50%; background:var(--purple); box-shadow:0 0 4px var(--purple) }
+@keyframes sessDot { 0%,100%{opacity:1} 50%{opacity:.4} }
 /* ─── MODAL ─── */
 .modal-overlay {
   position: fixed;
@@ -1067,6 +1072,7 @@ td.n { color: var(--red); font-weight: 600; text-shadow: 0 0 12px rgba(255,71,87
   .type-sw button { padding: 5px 10px; font-size: 11px }
   .scroll { padding: 16px }
   .grid2 { grid-template-columns: 1fr }
+  #dash > div[style*="grid-template-columns:2fr 1fr 1fr"] { grid-template-columns: 1fr !important }
   .cards { grid-template-columns: repeat(2, 1fr) }
   .fg { grid-template-columns: 1fr 1fr }
   .sg { grid-template-columns: 1fr 1fr }
@@ -1682,41 +1688,40 @@ a:hover{opacity:.85}
 
 <!-- DASHBOARD -->
 <div class="panel active" id="dash">
+<div id="dashSessionWidget" style="margin-bottom:12px"></div>
 
 <!-- Zone 1 : Filtres -->
 <div class="filter-bar" id="dashFilters"></div>
 <div class="filter-summary" id="dashFilterSum" style="display:none"></div>
 
 <!-- Zone 2 : Bandeau GO/NO-GO -->
-<div id="goNoGo" style="margin-bottom:16px"></div>
+<div id="goNoGo" style="margin-bottom:10px"></div>
 
 <!-- Zone 3 : Hero KPIs (3 cartes) -->
-<div id="heroKpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px"></div>
+<div id="heroKpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px"></div>
 
 <!-- Zone 4 : Secondary KPIs (5 cartes) -->
 <div id="cards" style="grid-template-columns:repeat(5,1fr)"></div>
 
-<!-- Zone 5 : Equity Curve + Win/Loss -->
+<!-- Zone 5 : Equity Curve + Win/Loss + Doughnut -->
 <div id="dashFinancial" style="display:none"></div>
 <div id="dashMonthly" style="display:none"></div>
-<div class="grid2">
+<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:10px">
 <div class="box"><div class="box-title">Equity Curve</div><div style="position:relative"><canvas id="eqC"></canvas></div></div>
 <div class="box"><div class="box-title">Win / Loss</div><div style="position:relative"><canvas id="piC"></canvas></div></div>
-</div>
-
-<!-- Zone 6 : P&L par trade + Breakdown -->
-<div class="grid2">
-<div class="box"><div class="box-title">P&L par trade</div><div style="position:relative"><canvas id="baC"></canvas></div></div>
 <div class="box"><div class="box-title">Breakdown</div><div id="bd"></div></div>
 </div>
+
+<!-- Zone 6 : P&L par trade -->
+<div class="box" style="margin-bottom:10px"><div class="box-title">P&L par trade</div><div style="position:relative"><canvas id="baC"></canvas></div></div>
 
 <!-- Per-account breakdown (all mode) -->
 <div id="dashAccBreakdown" style="display:none"></div>
 
 <!-- Zone 7 : Convergence Live/Replay ⭐ -->
-<div id="convergence" class="box" style="margin-bottom:18px;border:1px solid rgba(212,160,23,.15)"></div>
+<div id="convergence" class="box" style="margin-bottom:10px;border:1px solid rgba(212,160,23,.15)"></div>
 <!-- Calendar -->
-<div class="box" style="margin-bottom:18px">
+<div class="box" style="margin-bottom:10px">
 <div class="box-title" style="display:flex;align-items:center;justify-content:space-between">
 <span>Calendrier</span>
 <div style="display:flex;gap:8px;align-items:center">
@@ -1731,7 +1736,7 @@ a:hover{opacity:.85}
 <div id="calDayDetail" class="cal-day-detail"></div>
 </div>
 <!-- Glossaire rapide -->
-<div class="box" style="margin-bottom:18px">
+<div class="box" style="margin-bottom:10px">
 <div class="box-title" style="cursor:pointer" onclick="var g=document.getElementById('glossBody');g.style.display=g.style.display==='none'?'block':'none'">📖 Glossaire des termes <span style="font-size:10px;color:var(--t3);font-weight:400">cliquer pour ouvrir</span></div>
 <div id="glossBody" style="display:none;font-size:12px;color:var(--t2);line-height:1.8;columns:2;column-gap:20px">
 <div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">WR (Win Rate)</b> — Pourcentage de trades gagnants. Ex: 60% = 6 trades sur 10 sont positifs.</div>
@@ -2117,12 +2122,6 @@ a:hover{opacity:.85}
 
 <div class="box"><div class="box-title">Interprétation</div><div id="timeInsights" style="font-size:14px;color:var(--t2);line-height:1.9"></div></div>
 
-<!-- Calendrier jours fériés XAUUSD -->
-<div class="box" style="margin-top:14px">
-<div class="box-title">📅 Jours fériés XAUUSD 2025 — Impact marché</div>
-<div style="font-size:11px;color:var(--t3);margin-bottom:10px">Heures françaises (CET). Le XAUUSD suit les horaires US — ces jours le marché ferme tôt ou ne trade pas.</div>
-<div id="holidayCalendar"></div>
-</div>
 </div>
 
 <!-- REVIEW -->
@@ -2673,6 +2672,7 @@ function R() {
   // Page-specific rendering (only active page)
   const pg = document.querySelector('.panel.active')?.id || 'dash';
   if (pg === 'dash') {
+    rDashSessionWidget();
     renderFilterBar('dashFilters');
     const dispTr = getTr(); renderFilterSummary('dashFilterSum', dispTr, applyFilters(dispTr), aT==='live');
     rGoNoGo(); rHeroKpis(); rCards(); rDashFinancial(); rDashMonthly(); rCharts(); rBd(); rDashAccBreakdown(); rConvergence(); rCalendar();
@@ -3318,6 +3318,45 @@ function rBd() {
 } catch(e) { console.error("[Aurum] rBd:", e) }
 }
 
+// ─── DASHBOARD SESSION WIDGET ───
+function rDashSessionWidget() {
+  try {
+    var el = document.getElementById('dashSessionWidget');
+    if (!el) return;
+    var sessions = loadSessions();
+    var active = sessions.find(function(s) { return s.status === 'OPERATING' || s.status === 'PAUSED'; });
+
+    if (!active) {
+      el.innerHTML = '<div style="background:rgba(212,160,23,.05);border:1px solid rgba(212,160,23,.15);border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;min-height:44px;transition:all .15s" onmouseover="this.style.borderColor=\'rgba(212,160,23,.4)\'" onmouseout="this.style.borderColor=\'rgba(212,160,23,.15)\'" onclick="go(\'session\')"><div><div style="font-size:13px;font-weight:700;color:var(--t1)">D\u00e9marrer une session</div><div style="font-size:11px;color:var(--t3)">Checklist \u00b7 Calculateur \u00b7 Trading</div></div><span style="color:var(--gold);font-size:18px">\u2192</span></div>';
+      return;
+    }
+
+    var trades = D.live.filter(function(t) { return active.tradeIds.indexOf(t.ts ? t.ts.toString() : '') >= 0 });
+    var pnl = trades.reduce(function(s,t){ return s + (parseFloat(t.pl)||0); }, 0);
+    var dur = Math.floor((Date.now() - new Date(active.openedAt).getTime()) / 60000);
+    var durStr = dur < 60 ? dur + 'min' : Math.floor(dur/60) + 'h' + String(dur%60).padStart(2,'0');
+    var col = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+
+    el.innerHTML = '<div style="background:rgba(212,160,23,.08);border:2px solid rgba(212,160,23,.2);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:16px;cursor:pointer;min-height:44px;transition:all .15s" onclick="go(\'session\')"><div style="width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:sessDot 2s infinite"></div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--t1)">Session en cours \u00b7 ' + durStr + '</div><div style="font-size:11px;color:var(--t3)">' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '') + '</div></div><div style="font-size:18px;font-weight:800;font-family:\'JetBrains Mono\',monospace;color:' + col + '">' + (pnl >= 0 ? '+' : '') + pnl.toFixed(0) + '$</div><span style="color:var(--gold);font-size:18px">\u2192</span></div>';
+  } catch(e) {}
+}
+
+// ─── XAUUSD HOLIDAYS ───
+var XAUUSD_HOLIDAYS = {
+  '2025-01-01':'Nouvel An (ferm\u00e9)','2025-01-20':'MLK Day (anticip\u00e9e)',
+  '2025-02-17':'Presidents Day (anticip\u00e9e)','2025-04-18':'Good Friday (ferm\u00e9)',
+  '2025-05-26':'Memorial Day (anticip\u00e9e)','2025-06-19':'Juneteenth (anticip\u00e9e)',
+  '2025-07-04':'Independence Day (ferm\u00e9)','2025-09-01':'Labor Day (anticip\u00e9e)',
+  '2025-11-27':'Thanksgiving (ferm\u00e9)','2025-11-28':'Black Friday (anticip\u00e9e)',
+  '2025-12-25':'Christmas (ferm\u00e9)','2025-12-31':'NYE (anticip\u00e9e)',
+  '2026-01-01':'Nouvel An (ferm\u00e9)','2026-01-19':'MLK Day (anticip\u00e9e)',
+  '2026-02-16':'Presidents Day (anticip\u00e9e)','2026-04-03':'Good Friday (ferm\u00e9)',
+  '2026-05-25':'Memorial Day (anticip\u00e9e)','2026-06-19':'Juneteenth (anticip\u00e9e)',
+  '2026-07-03':'Independence Day (ferm\u00e9)','2026-09-07':'Labor Day (anticip\u00e9e)',
+  '2026-11-26':'Thanksgiving (ferm\u00e9)','2026-11-27':'Black Friday (anticip\u00e9e)',
+  '2026-12-25':'Christmas (ferm\u00e9)'
+};
+
 // ─── CALENDAR ───
 function calNav(dir) { calMonth += dir; if(calMonth>11){calMonth=0;calYear++} if(calMonth<0){calMonth=11;calYear--} rCalendar() }
 function rCalendar() {
@@ -3349,6 +3388,7 @@ function rCalendar() {
   for (let d = 1; d <= lastDay; d++) {
     const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const info = dayMap[dateStr];
+    const holiday = XAUUSD_HOLIDAYS[dateStr];
     let cls = 'cal-day';
     if (dateStr === today) cls += ' today';
     if (info) {
@@ -3356,11 +3396,15 @@ function rCalendar() {
       if (info.wins > 0 && info.losses === 0) cls += ' win';
       else if (info.losses > 0 && info.wins === 0) cls += ' loss';
       else if (info.wins > 0 && info.losses > 0) cls += ' mixed';
+    } else if (holiday) {
+      cls += ' holiday';
     }
     const plText = info ? `<span class="cal-pl">${isLive?(info.pl>=0?'+':'')+info.pl.toFixed(0)+'$':(info.pl>=0?'+':'')+info.pl.toFixed(1)+'R'}</span>` : '';
     const countText = info ? `<span class="cal-count">${info.trades}t</span>` : '';
     const clickHandler = info ? `onclick="openCalDay('${dateStr}')"` : '';
-    html += `<div class="${cls}" ${clickHandler}><span class="cal-num">${d}</span>${plText}${countText}</div>`;
+    const holidayIcon = holiday ? (info ? '<span class="cal-holiday-dot"></span>' : '<span class="cal-holiday-icon">' + (holiday.indexOf('ferm') >= 0 ? '\uD83D\uDD12' : '\u26A1') + '</span>') : '';
+    const titleAttr = holiday ? `title="${holiday}"` : '';
+    html += `<div class="${cls}" ${clickHandler} ${titleAttr}><span class="cal-num">${d}</span>${plText}${countText}${holidayIcon}</div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
 
@@ -3975,7 +4019,6 @@ function rHours() {
     recoEl.style.display = '';
   } else if (recoEl) { recoEl.style.display = 'none' }
 
-  rHolidays();
 } catch(e) { console.error("[Aurum] rHours:", e) }
 }
 
