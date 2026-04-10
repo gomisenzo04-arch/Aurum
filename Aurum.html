@@ -6487,15 +6487,25 @@ function imJSON(inp) {
           /* Merge mode: only merge journal trades, keep rest */
           if (data.keys['enz_v4']) {
             const srcJ = typeof data.keys['enz_v4'] === 'string' ? JSON.parse(data.keys['enz_v4']) : data.keys['enz_v4'];
-            if (srcJ.live) {
-              const existingTs = new Set(D.live.map(t => t.ts));
-              const newT = srcJ.live.filter(t => !existingTs.has(t.ts));
-              D.live.push(...newT);
-              tradeCount += newT.length;
-            }
+            ['live','replay','insights'].forEach(function(mode) {
+              if (srcJ[mode] && D[mode]) {
+                var existingTs = new Set(D[mode].map(function(t){return t.ts}));
+                var newT = srcJ[mode].filter(function(t){return !existingTs.has(t.ts)});
+                D[mode].push.apply(D[mode], newT);
+                tradeCount += newT.length;
+              }
+            });
             if (srcJ.accounts) {
-              const existingIds = new Set(D.accounts.map(a => a.id));
-              srcJ.accounts.forEach(a => { if (!existingIds.has(a.id)) D.accounts.push(a) });
+              var existingIds = new Set(D.accounts.map(function(a){return a.id}));
+              srcJ.accounts.forEach(function(a){ if (!existingIds.has(a.id)) D.accounts.push(a) });
+            }
+            if (srcJ.sessions) {
+              var existingSess = new Set((D.sessions||[]).map(function(s){return s.id}));
+              (srcJ.sessions||[]).forEach(function(s){ if (!existingSess.has(s.id)) { if(!D.sessions)D.sessions=[]; D.sessions.push(s) } });
+            }
+            if (srcJ.periodReviews) {
+              if (!D.periodReviews) D.periodReviews = {};
+              Object.keys(srcJ.periodReviews).forEach(function(k){ if (!D.periodReviews[k]) D.periodReviews[k] = srcJ.periodReviews[k] });
             }
             restoredCount++;
           }
@@ -8103,7 +8113,7 @@ var _sessTimerInterval = null;
 var _sessNotesOpen = false;
 var _sessSubTab = 'stats';
 var _sessPhaseOpen = { p1: true, p2: true, p3: true, p4: true };
-var _sessQTForm = { dir: '', res: '', pl: '', tags: '', notes: '' };
+var _sessQTForm = { dir: '', res: '', pl: '', setup: '', sl: '', tp: '', tags: '', notes: '' };
 var _sessCalcTriggered = false;
 
 function sessSubTab(id) {
