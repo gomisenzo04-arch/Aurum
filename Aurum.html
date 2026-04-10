@@ -8743,6 +8743,12 @@ function rSessCockpitQuickTrade(s, blocked, sessTrades, config) {
     h += '<button class="sess-qt-btn sell' + (_sessQTForm.dir === 'sell' ? ' active' : '') + '" onclick="_sessQTForm.dir=\'sell\';rSession()">↓ SELL</button>';
     h += '</div>';
 
+    /* Setup type QM/Gap */
+    h += '<div class="sess-qt-row">';
+    h += '<button class="sess-qt-btn' + (_sessQTForm.setup === 'QM' ? ' active' : '') + '" onclick="_sessQTForm.setup=\'QM\';rSession()">QM</button>';
+    h += '<button class="sess-qt-btn' + (_sessQTForm.setup === 'Gap' ? ' active' : '') + '" onclick="_sessQTForm.setup=\'Gap\';rSession()">Gap</button>';
+    h += '</div>';
+
     /* Résultat TP/SL/Trail/21h */
     h += '<div class="sess-qt-row">';
     config.exitTypes.forEach(function(ex) {
@@ -8751,16 +8757,24 @@ function rSessCockpitQuickTrade(s, blocked, sessTrades, config) {
     });
     h += '</div>';
 
+    /* SL + TP (auto = SL×2) */
+    h += '<div style="display:flex;gap:8px;margin-bottom:8px">';
+    h += '<div style="flex:1"><label style="font-size:10px;color:var(--t3);display:block;margin-bottom:3px">SL (pts)</label>';
+    h += '<input type="number" id="sessQTSL" value="' + (_sessQTForm.sl || currentSL) + '" oninput="_sessQTForm.sl=this.value;var tp=document.getElementById(\'sessQTTP\');if(tp)tp.value=parseInt(this.value||0)*2" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:13px;min-height:44px;box-sizing:border-box"></div>';
+    h += '<div style="flex:1"><label style="font-size:10px;color:var(--t3);display:block;margin-bottom:3px">TP (pts)</label>';
+    h += '<input type="number" id="sessQTTP" value="' + (_sessQTForm.tp || currentSL * 2) + '" oninput="_sessQTForm.tp=this.value" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:13px;min-height:44px;box-sizing:border-box"></div>';
+    h += '</div>';
+
     /* P&L input */
-    h += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">';
-    h += '<label style="font-size:11px;color:var(--t3);min-width:40px">P&L $</label>';
-    h += '<input type="number" id="sessQTPL" step="0.01" placeholder="ex: 92.50" value="' + (_sessQTForm.pl || '') + '" oninput="_sessQTForm.pl=this.value" style="flex:1;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:14px;min-height:44px">';
+    h += '<div style="margin-bottom:8px">';
+    h += '<label style="font-size:10px;color:var(--t3);display:block;margin-bottom:3px">P&L ($)</label>';
+    h += '<input type="number" id="sessQTPL" step="0.01" placeholder="ex: 92.50" value="' + (_sessQTForm.pl || '') + '" oninput="_sessQTForm.pl=this.value" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:14px;min-height:44px;box-sizing:border-box">';
     h += '</div>';
 
     /* Notes (optional) */
     h += '<div style="margin-bottom:10px">';
-    h += '<label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Notes (optionnel)</label>';
-    h += '<textarea id="sessQTNotes" rows="2" placeholder="Observations, contexte..." oninput="_sessQTForm.notes=this.value" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-size:12px;min-height:44px;resize:vertical;font-family:inherit;box-sizing:border-box">' + (_sessQTForm.notes || '') + '</textarea>';
+    h += '<label style="font-size:10px;color:var(--t3);display:block;margin-bottom:3px">Notes (optionnel)</label>';
+    h += '<textarea id="sessQTNotes" rows="2" placeholder="Observations, contexte..." oninput="_sessQTForm.notes=this.value" style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-size:12px;min-height:44px;resize:vertical;font-family:inherit;box-sizing:border-box">' + (_sessQTForm.notes || '') + '</textarea>';
     h += '</div>';
 
     /* SAVE button */
@@ -8780,7 +8794,11 @@ function sessCockpitSaveTrade() {
 
     var plInput = document.getElementById('sessQTPL');
     var pl = parseFloat(plInput ? plInput.value : 0) || 0;
-    var currentSL = parseInt(document.getElementById('cSL').value) || 350;
+    var slInput = document.getElementById('sessQTSL');
+    var currentSL = parseInt(slInput ? slInput.value : 0) || parseInt(document.getElementById('cSL').value) || 350;
+    var tpInput = document.getElementById('sessQTTP');
+    var currentTP = parseInt(tpInput ? tpInput.value : 0) || currentSL * 2;
+    var setup = _sessQTForm.setup || 'QM';
     var acc = S();
     var ra = acc.bal * (acc.risk || 1) / 100;
     var co = acc.comm || 0;
@@ -8794,18 +8812,20 @@ function sessCockpitSaveTrade() {
 
     var now = new Date();
     var pct = acc.bal > 0 ? (pl / acc.bal * 100).toFixed(2) : '0';
+    var rr = ra > 0 ? (pl / ra).toFixed(2) : '0';
 
     var trade = {
       date: now.toISOString().slice(0, 10),
       time: now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0'),
       dir: dirMap[dir] || dir,
-      type: 'QM',
+      type: setup,
       sl: currentSL,
+      tp: currentTP,
       lot: lot,
       res: resMap[res] || res,
       pl: pl,
       pct: pct,
-      rr: 0,
+      rr: parseFloat(rr),
       news: 'Non',
       s5: '', s1: '', sr: '',
       notes: notes,
@@ -8825,7 +8845,7 @@ function sessCockpitSaveTrade() {
     toast((pl >= 0 ? 'Trade gagnant' : 'Trade enregistré') + ' · ' + dirMap[dir] + ' · ' + (pl >= 0 ? '+' : '') + '$' + pl.toFixed(2));
 
     /* Reset quick trade form */
-    _sessQTForm = { dir: '', res: '', pl: '', tags: '', notes: '' };
+    _sessQTForm = { dir: '', res: '', pl: '', setup: '', sl: '', tp: '', tags: '', notes: '' };
     _sessCalcTriggered = false;
 
     /* Reset Phase 2 (Entrée) and Phase 3 (Gestion) checkboxes */
