@@ -80,11 +80,11 @@ canvas{display:block;max-width:100%}
 }
 .mobile-menu a:hover, .mobile-menu button:hover { background: var(--bg2) }
 
-/* ═══ HORIZONTAL SUBTABS ═══ */
+/* ═══ HORIZONTAL SUBTABS (legacy) ═══ */
 .subtabs {
-  position: fixed; top: 56px; left: 0; right: 0; height: 44px;
+  position: fixed; top: 56px; left: 0; right: 0; min-height: 44px;
   background: var(--bg); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; padding: 0 16px; gap: 2px;
+  display: flex; align-items: center; padding: 0 8px; gap: 2px;
   z-index: 998; overflow-x: auto; -webkit-overflow-scrolling: touch;
 }
 .subtabs::-webkit-scrollbar { display: none }
@@ -97,6 +97,23 @@ canvas{display:block;max-width:100%}
 }
 .subtab:hover { color: var(--t1); background: var(--bg3) }
 .subtab.active { color: var(--gold); background: rgba(212,160,23,.08) }
+
+/* ─── Dropdown nav ─── */
+.nav-dropdown { position:relative; display:inline-block; }
+.nav-dropdown-trigger { padding:10px 16px; background:none; border:none; color:var(--t2); font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; border-radius:8px; display:flex; align-items:center; gap:4px; min-height:44px; }
+.nav-dropdown-trigger:hover, .nav-dropdown-trigger.active { color:var(--gold); background:rgba(212,160,23,.06); }
+.nav-dropdown-trigger .arrow { font-size:8px; transition:transform .2s; }
+.nav-dropdown:hover .arrow { transform:rotate(180deg); }
+.nav-dropdown-menu { position:absolute; top:100%; left:0; min-width:180px; background:var(--bg2); border:1px solid var(--border2); border-radius:10px; padding:6px; box-shadow:0 8px 32px rgba(0,0,0,.5); opacity:0; visibility:hidden; transform:translateY(-4px); transition:all .15s; z-index:100; }
+.nav-dropdown:hover .nav-dropdown-menu { opacity:1; visibility:visible; transform:translateY(0); }
+.nav-dropdown-item { display:block; width:100%; padding:10px 14px; border:none; background:none; color:var(--t2); font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; border-radius:6px; text-align:left; transition:all .12s; min-height:40px; }
+.nav-dropdown-item:hover { background:rgba(212,160,23,.08); color:var(--gold); }
+.nav-dropdown-item.active { color:var(--gold); background:rgba(212,160,23,.06); }
+
+@media (max-width:768px) {
+  .nav-dropdown-trigger { padding:8px 12px; font-size:12px; }
+  .nav-dropdown-menu { min-width:160px; }
+}
 /* ─── MAIN ─── */
 .mw{padding-top:100px;min-height:100vh}
 .th{padding:14px 24px 10px;border-bottom:1px solid var(--border);background:rgba(6,9,14,.85);backdrop-filter:blur(8px);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -156,7 +173,7 @@ tr:hover td{background:rgba(167,139,250,.02)}
 .pnl.on{animation:pnlIn .3s cubic-bezier(.4,0,.2,1)}
 @keyframes pnlIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .subtab{transition:all .2s cubic-bezier(.4,0,.2,1)}
-.subtab:hover{transform:scale(1.02)}
+.subtab:hover{color:var(--t1);background:var(--bg3)}
 tbody tr{transition:background .15s}
 tbody tr:hover{background:rgba(167,139,250,.04)!important}
 .tip{transition:border-color .3s}
@@ -247,25 +264,9 @@ tbody tr:hover{background:rgba(167,139,250,.04)!important}
   <a href="Aurum_Capital.html">Capital</a>
 </div>
 
-<!-- HORIZONTAL TABS -->
+<!-- DROPDOWN NAV -->
 <div class="subtabs" id="capitalTabs">
-  <button class="subtab active" data-p="dash">Dashboard</button>
-  <span class="subtab-sep"></span>
-  <button class="subtab" data-p="po">Payouts</button>
-  <button class="subtab" data-p="pf">Prop Firms</button>
-  <span class="subtab-sep"></span>
-  <button class="subtab" data-p="inv">Portfolio</button>
-  <button class="subtab" data-p="pas">Dettes</button>
-  <span class="subtab-sep"></span>
-  <button class="subtab" data-p="bud">Budget</button>
-  <button class="subtab" data-p="fis">Fiscal</button>
-  <span class="subtab-sep"></span>
-  <button class="subtab" data-p="ent">Entités</button>
-  <span class="subtab-sep"></span>
-  <button class="subtab" data-p="coach">Coaching</button>
-  <button class="subtab" data-p="health">Santé</button>
-  <span class="subtab-sep"></span>
-  <button class="subtab" data-p="acc">Comptes</button>
+  <!-- Filled dynamically by renderCapitalNav() -->
 </div>
 
 <!-- MAIN -->
@@ -520,10 +521,8 @@ function goCapital(p) {
       var e = document.getElementById('p-' + x);
       if (e) e.classList.toggle('on', x === p);
     });
-    /* Update active subtab */
-    document.querySelectorAll('.subtab[data-p]').forEach(function(btn) {
-      btn.classList.toggle('active', btn.dataset.p === p);
-    });
+    /* Render dropdown nav */
+    renderCapitalNav();
     /* Render panel content */
     rP(p);
   } catch(e) { console.error('goCapital:', e) }
@@ -531,9 +530,69 @@ function goCapital(p) {
 /* Keep go() as alias for backward compat (iframe nav uses it) */
 function go(p) { try { goCapital(p) } catch(e) { console.error(e) } }
 
-/* Subtab click handlers */
-document.querySelectorAll('.subtab[data-p]').forEach(function(btn) {
-  btn.addEventListener('click', function() { goCapital(btn.dataset.p) });
+/* ─── DROPDOWN NAV RENDERER ─── */
+function renderCapitalNav() {
+  try {
+    var el = document.getElementById('capitalTabs');
+    if (!el) return;
+    var groups = [
+      {id:'dashboard', label:'Dashboard', pages:[]},
+      {id:'trading', label:'Trading', pages:[
+        {p:'acc',l:'Comptes'},{p:'pf',l:'Prop Firms'}
+      ]},
+      {id:'patrimoine', label:'Patrimoine', pages:[
+        {p:'inv',l:'Portfolio'},{p:'po',l:'Payouts'},{p:'bud',l:'Budget'},{p:'pas',l:'Dettes'},{p:'coach',l:'Coaching'},{p:'health',l:'Santé'}
+      ]},
+      {id:'fiscal', label:'Fiscal', pages:[
+        {p:'fis',l:'Simulateur'},{p:'ent',l:'Entités'}
+      ]}
+    ];
+    var html = '<div style="display:flex;align-items:center;gap:2px;padding:4px 8px;width:100%">';
+    groups.forEach(function(g) {
+      if (g.pages.length === 0) {
+        var isActive = cP === 'dash';
+        html += '<button class="nav-dropdown-trigger' + (isActive ? ' active' : '') + '" onclick="goCapital(\'dash\')">' + g.label + '</button>';
+      } else {
+        var groupActive = g.pages.some(function(p) { return p.p === cP; });
+        html += '<div class="nav-dropdown">';
+        html += '<button class="nav-dropdown-trigger' + (groupActive ? ' active' : '') + '">' + g.label + ' <span class="arrow">&#9662;</span></button>';
+        html += '<div class="nav-dropdown-menu">';
+        g.pages.forEach(function(p) {
+          html += '<button class="nav-dropdown-item' + (p.p === cP ? ' active' : '') + '" onclick="goCapital(\'' + p.p + '\')">' + p.l + '</button>';
+        });
+        html += '</div></div>';
+      }
+    });
+    // Gear icon for backup/settings
+    html += '<button class="nav-dropdown-trigger" style="margin-left:auto" onclick="goCapital(\'bak\')" title="Backup"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>';
+    html += '</div>';
+    el.innerHTML = html;
+  } catch(e) { console.error('renderCapitalNav:', e); }
+}
+
+/* Mobile dropdown toggle (tap support) */
+document.addEventListener('click', function(e) {
+  try {
+    if (window.innerWidth > 768) return;
+    var trigger = e.target.closest('.nav-dropdown-trigger');
+    if (trigger && trigger.parentElement.classList.contains('nav-dropdown')) {
+      e.preventDefault();
+      e.stopPropagation();
+      var menu = trigger.parentElement.querySelector('.nav-dropdown-menu');
+      if (!menu) return;
+      var isOpen = menu.style.opacity === '1';
+      document.querySelectorAll('.nav-dropdown-menu').forEach(function(m) {
+        m.style.opacity = ''; m.style.visibility = ''; m.style.transform = '';
+      });
+      if (!isOpen) {
+        menu.style.opacity = '1'; menu.style.visibility = 'visible'; menu.style.transform = 'translateY(0)';
+      }
+    } else if (!e.target.closest('.nav-dropdown-menu')) {
+      document.querySelectorAll('.nav-dropdown-menu').forEach(function(m) {
+        m.style.opacity = ''; m.style.visibility = ''; m.style.transform = '';
+      });
+    }
+  } catch(ex) {}
 });
 function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA();else if(p==='goals')rGoals();else if(p==='yir')rYIR()}catch(e){console.error(e)}}
 /* ─── KPI helper ─── */
@@ -1465,7 +1524,7 @@ function renderYIRDoughnut(portfolio, tradingPerso, payouts, tresoEntites) {
 /* ─── INIT ─── */
 load();
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){console.error(e)}})();
-rCL();rCS();rAL();rD();
+rCL();rCS();rAL();renderCapitalNav();rD();
 /* ─── Détection iframe + création navigation 2 niveaux ─── */
 try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');

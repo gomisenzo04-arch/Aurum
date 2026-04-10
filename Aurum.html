@@ -1495,7 +1495,7 @@ a:hover{opacity:.85}
 .panel canvas { border-radius:8px }
 .login-box input:focus { animation:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,160,23,.1),0 0 30px rgba(212,160,23,.06) }
 .ck-item { transition:all .2s cubic-bezier(.4,0,.2,1) }
-.ck-item:hover { background:rgba(212,160,23,.03); transform:translateX(2px) }
+.ck-item:hover { background:rgba(212,160,23,.03) }
 .form-step { transition:all .3s cubic-bezier(.4,0,.2,1) }
 .form-step.done { opacity:.6; transform:scale(.98) }
 .enter-btn { position:relative; overflow:hidden }
@@ -1604,6 +1604,35 @@ a:hover{opacity:.85}
 .subtab:hover { color: var(--t1); background: var(--bg3) }
 .subtab.active { color: var(--gold); background: rgba(212,160,23,.08) }
 
+/* ─── Mode selector ─── */
+.mode-selector { display:flex; gap:2px; padding:2px; background:var(--bg3); border-radius:8px; }
+.mode-btn { padding:6px 12px; border:none; background:none; color:var(--t3); font-size:11px; font-weight:700; border-radius:6px; cursor:pointer; font-family:inherit; transition:all .15s; }
+.mode-btn:hover { color:var(--t1); }
+.mode-btn.active { background:var(--gold); color:#000; }
+
+/* ─── Dropdown nav ─── */
+.nav-dropdown { position:relative; display:inline-block; }
+.nav-dropdown-trigger { padding:10px 16px; background:none; border:none; color:var(--t2); font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; border-radius:8px; display:flex; align-items:center; gap:4px; min-height:44px; }
+.nav-dropdown-trigger:hover, .nav-dropdown-trigger.active { color:var(--gold); background:rgba(212,160,23,.06); }
+.nav-dropdown-trigger .arrow { font-size:8px; transition:transform .2s; }
+.nav-dropdown:hover .arrow { transform:rotate(180deg); }
+.nav-dropdown-menu { position:absolute; top:100%; left:0; min-width:180px; background:var(--bg2); border:1px solid var(--border2); border-radius:10px; padding:6px; box-shadow:0 8px 32px rgba(0,0,0,.5); opacity:0; visibility:hidden; transform:translateY(-4px); transition:all .15s; z-index:100; }
+.nav-dropdown:hover .nav-dropdown-menu { opacity:1; visibility:visible; transform:translateY(0); }
+.nav-dropdown-item { display:block; width:100%; padding:10px 14px; border:none; background:none; color:var(--t2); font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; border-radius:6px; text-align:left; transition:all .12s; min-height:40px; }
+.nav-dropdown-item:hover { background:rgba(212,160,23,.08); color:var(--gold); }
+.nav-dropdown-item.active { color:var(--gold); background:rgba(212,160,23,.06); }
+.nav-session-btn { padding:10px 20px; background:rgba(212,160,23,.1); border:1.5px solid var(--gold); color:var(--gold); font-size:13px; font-weight:700; border-radius:10px; cursor:pointer; font-family:inherit; transition:all .15s; margin-left:auto; display:flex; align-items:center; gap:6px; min-height:44px; }
+.nav-session-btn:hover { background:rgba(212,160,23,.2); transform:translateY(-1px); }
+.nav-session-btn .dot { width:8px; height:8px; border-radius:50%; background:var(--green); }
+
+@media (max-width:768px) {
+  .nav-dropdown-trigger { padding:8px 12px; font-size:12px; }
+  .nav-dropdown-menu { min-width:160px; }
+  .nav-session-btn { padding:8px 14px; font-size:12px; }
+  .mode-selector { gap:1px; }
+  .mode-btn { padding:5px 8px; font-size:10px; }
+}
+
 /* ─── Standalone layout adjustments ─── */
 .standalone-mode .content { margin-left: 0 !important; padding-top: 100px }
 
@@ -1632,6 +1661,11 @@ a:hover{opacity:.85}
     <a href="Aurum_Capital.html" class="topbar-link">Capital</a>
   </div>
   <div class="topbar-actions">
+    <div class="mode-selector" id="modeSelector">
+      <button class="mode-btn active" data-mode="live" onclick="switchMode('live')">Live</button>
+      <button class="mode-btn" data-mode="replay" onclick="switchMode('replay')">Replay</button>
+      <button class="mode-btn" data-mode="insights" onclick="switchMode('insights')">Insights</button>
+    </div>
     <button class="topbar-btn" onclick="go('config')" title="Réglages">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     </button>
@@ -2460,7 +2494,7 @@ function getAccTrades() {
     if (D.activeAcc === 'all') return D.live;
     return D.live.filter(t => (D.activeAcc === 'all' || t.accId === D.activeAcc));
   }
-  return D[aT];
+  return D[aT] || [];
 }
 function getTr() { return getAccTrades() }
 function getAllLiveTrades() { return D.live }
@@ -2632,6 +2666,8 @@ const PAGES = ['dash','session','add','hist','time','review','rules','viab','bac
 function go(id) {
   /* Redirect check/calc → session */
   if (id === 'check' || id === 'calc') { go('session'); return; }
+  /* Session only available in live mode */
+  if (id === 'session' && aT !== 'live') { go('dash'); return; }
 
   /* Clear HUD timer when navigating away from session */
   if (id !== 'session' && _sessTimerInterval) { clearInterval(_sessTimerInterval); _sessTimerInterval = null }
@@ -2706,14 +2742,37 @@ function R() {
 
 }
 
-// ─── TYPE SWITCHER ───
+// ─── TYPE SWITCHER (legacy inline — kept for backward compat) ───
 function rTSW() {
   try {
-  const sw = document.getElementById('tsw');
-  sw.innerHTML = ['live','replay'].map(t =>
-    `<button class="${t===aT?'active':''}" onclick="aT='${t}';adaptForm();R()">${t.charAt(0).toUpperCase()+t.slice(1)}<span class="count">${t==='live'?(D.activeAcc==='all'?D.live.length:D.live.filter(x=>x.accId===D.activeAcc).length):D[t].length}</span></button>`
-  ).join('');
-} catch(e) { console.error("[Aurum] rTSW:", e) }
+  var sw = document.getElementById('tsw');
+  if (!sw) return;
+  sw.innerHTML = ['live','replay','insights'].map(function(t) {
+    var count = t==='live' ? (D.activeAcc==='all' ? D.live.length : D.live.filter(function(x){return x.accId===D.activeAcc}).length) : D[t].length;
+    return '<button class="' + (t===aT?'active':'') + '" onclick="switchMode(\'' + t + '\')">' + t.charAt(0).toUpperCase()+t.slice(1) + '<span class="count">' + count + '</span></button>';
+  }).join('');
+  } catch(e) { console.error("[Aurum] rTSW:", e) }
+}
+
+// ─── MODE SWITCHER ───
+function switchMode(mode) {
+  try {
+    aT = mode;
+    // Update mode buttons in topbar
+    document.querySelectorAll('.mode-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    adaptForm();
+    // Re-render navigation (Session visibility depends on mode)
+    renderJournalTabs();
+    // If on session/replay page and mode changed, redirect to dash
+    var pg = document.querySelector('.panel.active');
+    var pgId = pg ? pg.id : 'dash';
+    if (pgId === 'session' && mode !== 'live') { go('dash'); return; }
+    if (pgId === 'replay' && mode !== 'replay') { go('dash'); return; }
+    // Refresh current page
+    R();
+  } catch(e) { console.error('switchMode:', e); }
 }
 
 // ─── TOP STRIP + MOBILE STRIP — COCKPIT HUD ───
@@ -4304,7 +4363,7 @@ function adaptForm() {
     if (window.self !== window.top && typeof groups !== 'undefined') {
       var traderGroup = groups.find(function(g) { return g.id === 'trader' });
       if (traderGroup) {
-        traderGroup.pages = aT === 'replay' ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}];
+        traderGroup.pages = (aT === 'replay' || aT === 'insights') ? [{p:'replay',l:'Replay'}] : [{p:'session',l:'Session'},{p:'check',l:'Checklist'},{p:'calc',l:'Calculateur'},{p:'add',l:'Trade'}];
         if (activeGroup === 'trader') renderSubTabs('trader');
       }
     }
@@ -5960,7 +6019,7 @@ function renderAccountForm(acc) {
       <div class="f"><label>Broker</label><input type="text" id="afBroker" value="${a.broker||''}" placeholder="ex: FundedNext"></div>
     </div>
     <div class="f" style="margin-bottom:12px"><label>Type de compte</label>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">${types.map(t => `<button class="fb ${a.type===t.v?'active':''}" onclick="document.querySelectorAll('#accountFormContent .fb').forEach(b=>b.classList.remove('active'));this.classList.add('active');document.getElementById('afType').value='${t.v}'" style="padding:8px 14px">${t.icon} ${t.l}</button>`).join('')}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${types.map(t => `<button class="fb ${a.type===t.v?'active':''}" onclick="document.querySelectorAll('#accountFormContent .fb').forEach(b=>b.classList.remove('active'));this.classList.add('active');document.getElementById('afType').value='${t.v}';var ff=document.getElementById('afFundedFields');if(ff)ff.style.display='${t.v}'==='funded'?'':'none'" style="padding:8px 14px">${t.icon} ${t.l}</button>`).join('')}</div>
     <input type="hidden" id="afType" value="${a.type}">
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px">
@@ -5971,6 +6030,16 @@ function renderAccountForm(acc) {
       <div class="f"><label>Plancher ($)</label><input type="number" id="afFloor" value="${a.floor}"></div>
       <div class="f"><label>Garde-fou daily (%)</label><input type="number" id="afDaily" step="0.5" value="${a.daily}"></div>
       <div class="f"><label>Cap gain daily (%)</label><input type="number" id="afCap" step="1" value="${a.cap}"></div>
+    </div>
+    <div id="afFundedFields" style="display:${a.type==='funded'?'':'none'};margin-bottom:14px;padding:14px;border:1px solid var(--border);border-radius:var(--radius);background:rgba(0,214,143,.03)">
+      <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px">Paramètres Payout auto</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">
+        <div class="f"><label>Date de funding</label><input type="date" id="afFundedDate" value="${a.fundedDate||''}"></div>
+        <div class="f"><label>Fréquence payout</label><select id="afPayoutFreq" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--t1);font-family:inherit"><option value="bimensuel" ${(a.payoutFreq||'')==='bimensuel'?'selected':''}>Bimensuel (14j)</option><option value="mensuel" ${(a.payoutFreq||'')==='mensuel'?'selected':''}>Mensuel (30j)</option></select></div>
+        <div class="f"><label>Split profit (%)</label><input type="number" id="afSplit" value="${a.split||80}" min="0" max="100"></div>
+        <div class="f"><label>Minimum payout ($)</label><input type="number" id="afMinPayout" value="${a.minPayout||0}" min="0"></div>
+        <div class="f"><label>Jours avant éligibilité</label><input type="number" id="afPayoutDelay" value="${a.payoutDelay||14}" min="0"></div>
+      </div>
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-g" onclick="saveAccount('${isEdit?a.id:''}')">${isEdit?'Sauvegarder':'Créer le compte'}</button>
@@ -5990,6 +6059,19 @@ function saveAccount(editId) {
     daily: +document.getElementById('afDaily').value || 4,
     cap: +document.getElementById('afCap').value || 8,
   };
+  // Funded account payout fields
+  if (data.type === 'funded') {
+    var fdEl = document.getElementById('afFundedDate');
+    var fpEl = document.getElementById('afPayoutFreq');
+    var fsEl = document.getElementById('afSplit');
+    var fmEl = document.getElementById('afMinPayout');
+    var fpDelay = document.getElementById('afPayoutDelay');
+    if (fdEl) data.fundedDate = fdEl.value || '';
+    if (fpEl) data.payoutFreq = fpEl.value || 'mensuel';
+    if (fsEl) data.split = +fsEl.value || 80;
+    if (fmEl) data.minPayout = +fmEl.value || 0;
+    if (fpDelay) data.payoutDelay = +fpDelay.value || 14;
+  }
   if (editId) {
     const acc = D.accounts.find(a => a.id === editId);
     if (acc) Object.assign(acc, data);
@@ -6559,6 +6641,69 @@ function tryLogin() {
   if (code === stored) { sessionStorage.setItem('enz_role','user'); unlock(true) }
   else { document.getElementById('loginErr').textContent = 'Code incorrect'; document.getElementById('codeInput').value = '' }
 }
+// ─── AUTO-PAYOUTS FOR FUNDED ACCOUNTS ───
+function checkAutoPayouts() {
+  try {
+    if (!D.accounts || !D.accounts.length) return;
+    D.accounts.forEach(function(acc) {
+      if (acc.type !== 'funded' || !acc.fundedDate || !acc.payoutFreq) return;
+
+      var split = (acc.split || 80) / 100;
+      var minPayout = acc.minPayout || 0;
+      var delayDays = acc.payoutDelay || 14;
+      var fundedDate = new Date(acc.fundedDate);
+      var now = new Date();
+
+      // Payout frequency in days
+      var freqDays = acc.payoutFreq === 'bimensuel' ? 14 : 30;
+      var eligibleDate = new Date(fundedDate.getTime() + delayDays * 86400000);
+      if (now < eligibleDate) return;
+
+      // Get existing auto-payouts for this account from Capital data
+      var capRaw = localStorage.getItem('aurum_capital_v1');
+      var cap = capRaw ? JSON.parse(capRaw) : {};
+      var payouts = cap.payouts || [];
+      var autoPayouts = payouts.filter(function(p) { return p.autoFrom === acc.id; });
+      var lastPayoutDate = autoPayouts.length > 0
+        ? new Date(Math.max.apply(null, autoPayouts.map(function(p) { return new Date(p.date).getTime(); })))
+        : eligibleDate;
+
+      // Check if a new payout period has elapsed
+      var daysSinceLastPayout = Math.floor((now - lastPayoutDate) / 86400000);
+      if (daysSinceLastPayout < freqDays) return;
+
+      // Calculate profit in this period (live trades on this funded account since last payout)
+      var periodStart = lastPayoutDate.toISOString().slice(0, 10);
+      var periodEnd = now.toISOString().slice(0, 10);
+      var trades = D.live.filter(function(t) {
+        return t.accId === acc.id && t.date && t.date > periodStart && t.date <= periodEnd;
+      });
+      var profit = trades.reduce(function(s, t) { return s + (parseFloat(t.pl) || 0); }, 0);
+
+      if (profit <= 0) return;
+      var payoutAmount = profit * split;
+      if (payoutAmount < minPayout) return;
+
+      // Create auto-payout in Capital
+      var newPayout = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        date: periodEnd,
+        source: acc.name + ' (auto)',
+        brut: Math.round(payoutAmount * 100) / 100,
+        frais: 0,
+        net: Math.round(payoutAmount * 100) / 100,
+        autoFrom: acc.id,
+        period: periodStart + ' → ' + periodEnd
+      };
+
+      if (!cap.payouts) cap.payouts = [];
+      cap.payouts.push(newPayout);
+      localStorage.setItem('aurum_capital_v1', JSON.stringify(cap));
+      toast('Payout auto: ' + acc.name + ' +$' + newPayout.net.toFixed(0));
+    });
+  } catch(e) { console.error('checkAutoPayouts:', e); }
+}
+
 function unlock(isAdmin) {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainContent').style.display = '';
@@ -6573,6 +6718,7 @@ function unlock(isAdmin) {
   renderJournalTabs();
   trackOpen(); R();
   setTimeout(() => { if(ch.eq) ch.eq.resize(); if(ch.pi) ch.pi.resize(); if(ch.ba) ch.ba.resize(); updCkProgress(); checkMilestones() }, 100);
+  setTimeout(checkAutoPayouts, 500);
 }
 function checkSession() {
   /* Si dans une iframe (SPA shell), skip le login — le shell a déjà authentifié */
@@ -6609,48 +6755,86 @@ function toggleMobileMenu() {
 // ─── JOURNAL GROUPS DEFINITION ───
 function getJournalGroups() {
   try {
-    var isReplay = aT === 'replay';
+    var tradingPages = [{p:'add',l:'Nouveau trade'}];
+    if (aT === 'replay') tradingPages = [{p:'replay',l:'Replay'},{p:'add',l:'Nouveau trade'}];
     return [
       {id:'dashboard', label:'Dashboard', pages:[]},
-      {id:'trading', label:'Trading', pages:
-        isReplay
-          ? [{p:'replay',l:'Replay'},{p:'insights',l:'Insights'}]
-          : [{p:'session',l:'Session'},{p:'add',l:'Trade'},{p:'insights',l:'Insights'}]
-      },
+      {id:'trading', label:'Trading', pages: tradingPages},
       {id:'performance', label:'Performance', pages:[
         {p:'hist',l:'Global'},{p:'annual',l:'Annuel'},{p:'monthly',l:'Mensuel'},{p:'review',l:'Hebdomadaire'},{p:'time',l:'Horaires'}
       ]},
       {id:'strategie', label:'Stratégie', pages:[
         {p:'rules',l:'Trading Plan'},{p:'playbook',l:'Playbook'},{p:'viab',l:'Viabilité'}
-      ]},
-      {id:'settings_grp', label:'Settings', pages:[
-        {p:'settings',l:'Comptes'},{p:'groups',l:'Groupes'},{p:'backup',l:'Backup'}
       ]}
     ];
   } catch(e) { return []; }
 }
 
-// ─── RENDER STANDALONE SUBTABS ───
+// ─── RENDER DROPDOWN NAV ───
 function renderJournalTabs() {
   try {
     var el = document.getElementById('journalTabs');
-    if (!el || el.style.display === 'none') return;
+    if (!el) return;
     var groups = getJournalGroups();
-    var activePg = (document.querySelector('.panel.active') || {}).id || 'dash';
-    var h = '';
-    groups.forEach(function(g, gi) {
-      if (gi > 0) h += '<span class="subtab-sep"></span>';
-      if (!g.pages.length) {
-        h += '<button class="subtab' + (activePg === 'dash' ? ' active' : '') + '" onclick="go(\'dash\')">' + g.label + '</button>';
+    var currentPage = document.querySelector('.panel.active');
+    var currentId = currentPage ? currentPage.id : 'dash';
+
+    var html = '<div style="display:flex;align-items:center;gap:2px;padding:4px 8px;width:100%">';
+
+    groups.forEach(function(g) {
+      if (g.pages.length === 0) {
+        // Dashboard — direct click
+        var isActive = currentId === 'dash';
+        html += '<button class="nav-dropdown-trigger' + (isActive ? ' active' : '') + '" onclick="go(\'dash\')">' + g.label + '</button>';
       } else {
+        // Dropdown group
+        var groupActive = g.pages.some(function(p) { return p.p === currentId; });
+        html += '<div class="nav-dropdown">';
+        html += '<button class="nav-dropdown-trigger' + (groupActive ? ' active' : '') + '">' + g.label + ' <span class="arrow">&#9662;</span></button>';
+        html += '<div class="nav-dropdown-menu">';
         g.pages.forEach(function(p) {
-          h += '<button class="subtab' + (activePg === p.p ? ' active' : '') + '" onclick="go(\'' + p.p + '\')">' + p.l + '</button>';
+          html += '<button class="nav-dropdown-item' + (p.p === currentId ? ' active' : '') + '" onclick="go(\'' + p.p + '\')">' + p.l + '</button>';
         });
+        html += '</div></div>';
       }
     });
-    el.innerHTML = h;
-  } catch(e) { console.error('renderJournalTabs:', e) }
+
+    // Session button — only in Live mode
+    if (aT === 'live') {
+      var sessActive = currentId === 'session';
+      html += '<button class="nav-session-btn' + (sessActive ? ' active' : '') + '" onclick="go(\'session\')"><span class="dot"></span> Session</button>';
+    }
+
+    html += '</div>';
+    el.innerHTML = html;
+  } catch(e) { console.error('renderJournalTabs:', e); }
 }
+
+// ─── MOBILE DROPDOWN TOGGLE (tap support) ───
+document.addEventListener('click', function(e) {
+  try {
+    if (window.innerWidth > 768) return;
+    var trigger = e.target.closest('.nav-dropdown-trigger');
+    if (trigger && trigger.parentElement.classList.contains('nav-dropdown')) {
+      e.preventDefault();
+      e.stopPropagation();
+      var menu = trigger.parentElement.querySelector('.nav-dropdown-menu');
+      if (!menu) return;
+      var isOpen = menu.style.opacity === '1';
+      // Close all menus first
+      document.querySelectorAll('.nav-dropdown-menu').forEach(function(m) {
+        m.style.opacity = ''; m.style.visibility = ''; m.style.transform = '';
+      });
+      if (!isOpen) {
+        menu.style.opacity = '1'; menu.style.visibility = 'visible'; menu.style.transform = 'translateY(0)';
+      }
+    } else if (!e.target.closest('.nav-dropdown-menu')) {
+      document.querySelectorAll('.nav-dropdown-menu').forEach(function(m) {
+        m.style.opacity = ''; m.style.visibility = ''; m.style.transform = '';
+      });
+    }
+  } catch(ex) {}
+});
 
 // ─── KEYBOARD SHORTCUTS ───
 document.addEventListener('keydown', e => {
@@ -6989,9 +7173,9 @@ function diag() {
   
   // Test mode switching
   ['live','replay','insights'].forEach(m => {
-    test('Mode ' + m, () => { aT = m; adaptForm(); R() });
+    test('Mode ' + m, () => { switchMode(m) });
   });
-  aT = 'live'; R();
+  switchMode('live');
   
   console.log('\n=== AURUM DIAGNOSTIC ===');
   results.forEach(r => console.log(r));
