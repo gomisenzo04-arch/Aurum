@@ -2155,45 +2155,7 @@ a:hover{opacity:.85}
 
 <!-- REVIEW -->
 <div class="panel" id="review">
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-<div>
-<div style="font-size:16px;font-weight:700;color:var(--gold)" id="revWeekLabel"></div>
-<div style="font-size:11px;color:var(--t3);margin-top:2px" id="revAccLabel"></div>
-</div>
-<div style="display:flex;gap:8px;flex-wrap:wrap">
-<button class="btn btn-g" onclick="svRev()">Sauvegarder</button>
-<button class="btn btn-o" onclick="exRevPDF()">PDF</button>
-<button class="btn btn-o" onclick="exRev()">Exporter .txt</button>
-<button class="btn btn-o" onclick="exAllRev()">Tout exporter</button>
-</div>
-</div>
-
-<!-- Auto stats -->
-<div class="box" style="margin-bottom:14px">
-<div class="box-title">Statistiques automatiques de la semaine</div>
-<div id="revAutoStats"></div>
-</div>
-
-<!-- Review Analysis (3+ reviews) -->
-<div id="revAnalysis" class="box" style="margin-bottom:14px;display:none">
-<div class="box-title" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="this.parentElement.querySelector('#revAnalysisBody').style.display=this.parentElement.querySelector('#revAnalysisBody').style.display==='none'?'':'none';this.querySelector('.ra-arrow').textContent=this.parentElement.querySelector('#revAnalysisBody').style.display==='none'?'▸':'▾'">
-<span>Analyse globale des reviews <span style="font-size:11px;font-weight:400;color:var(--t3)" id="raCount"></span></span>
-<span class="ra-arrow" style="color:var(--t3);font-size:12px">▾</span>
-</div>
-<div id="revAnalysisBody"></div>
-</div>
-
-<!-- Manual questions -->
-<div id="rQs"></div>
-
-<!-- Review alert -->
-<div id="revAlert" style="display:none"></div>
-
-<!-- History timeline -->
-<div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px">
-<div style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:12px">Historique <span style="font-size:12px;color:var(--t3);font-weight:400" id="revCount"></span></div>
-<div id="revHistory"></div>
-</div>
+<div id="reviewView"></div>
 </div>
 
 <!-- RULES -->
@@ -2445,6 +2407,10 @@ function _l() {
       ['live','replay','insights','reviews'].forEach(k => { if (!D[k]) D[k] = [] });
       if (!D.monthlyReviews) D.monthlyReviews = {};
       if (!D.annualReviews) D.annualReviews = {};
+      if (!D.periodReviews) D.periodReviews = {};
+      /* Migrate old monthly/annual reviews into unified periodReviews */
+      if (D.monthlyReviews) { Object.keys(D.monthlyReviews).forEach(function(k) { if (!D.periodReviews[k]) D.periodReviews[k] = D.monthlyReviews[k]; }); }
+      if (D.annualReviews) { Object.keys(D.annualReviews).forEach(function(k) { if (!D.periodReviews[k]) D.periodReviews[k] = D.annualReviews[k]; }); }
       // Migration: old format had D.st, new has D.accounts
       if (!D.accounts || !D.accounts.length) {
         const old = d.st || { bal:6000, risk:1, comm:5, target:6480, floor:5400, daily:4, cap:8 };
@@ -5551,175 +5517,203 @@ function weekAutoStats(weekId) {
 
 function rReview() {
   try {
-  if (!activeRevWeek) activeRevWeek = getWeekId();
-  const weekId = activeRevWeek;
-  const { from, to } = getWeekRange(weekId);
-  const isNow = weekId === getWeekId();
+    var el = document.getElementById('reviewView');
+    if (!el) return;
+    if (!activeRevWeek) activeRevWeek = getWeekId();
+    var weekId = activeRevWeek;
+    var range = getWeekRange(weekId);
+    var from = range.from, to = range.to;
+    var isNow = weekId === getWeekId();
+    var isLive = aT === 'live';
+    var allTr = isLive ? D.live.filter(function(t) { return D.activeAcc === 'all' || t.accId === D.activeAcc }) : D[aT];
+    var weekTrades = allTr.filter(function(t) { return t.date && t.date >= from && t.date <= to });
 
-  const acc = S();
-  document.getElementById('revWeekLabel').textContent = 'Semaine du ' + from + ' au ' + to + (isNow ? ' (en cours)' : '');
-  const accLabel = document.getElementById('revAccLabel');
-  if (accLabel) accLabel.textContent = aT === 'live' ? (acc.name || 'Compte principal') + ' — ' + aT.toUpperCase() : aT.toUpperCase();
+    /* Available weeks */
+    var weeksSet = {};
+    allTr.forEach(function(t) { if (t.date) weeksSet[getWeekId(t.date)] = true });
+    var availWeeks = Object.keys(weeksSet).sort().reverse();
 
-  // Auto stats
-  const stats = weekAutoStats(weekId);
-  const autoEl = document.getElementById('revAutoStats');
-  const isLive = aT === 'live';
-  const pf = (v, d=2) => isLive ? '$' + v.toFixed(d) : v.toFixed(d) + 'R';
+    var h = '';
 
-  if (!stats || stats.n === 0) {
-    autoEl.innerHTML = '<div style="font-size:13px;color:var(--t3);padding:8px 0">Aucun trade cette semaine.</div>';
-  } else {
-    const s = stats;
+    /* Week selector */
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px">';
+    h += '<button class="btn btn-o" onclick="navWeekReview(-1)" style="padding:8px 12px;font-size:14px;min-width:44px;min-height:44px">\u25C0</button>';
+    h += '<div style="position:relative;display:inline-block">';
+    h += '<button id="weeklyLabel" onclick="toggleWeekDropdown()" style="background:none;border:none;font-family:inherit;font-size:18px;font-weight:800;color:var(--t1);cursor:pointer;padding:4px 8px">Sem. ' + from + ' au ' + to + (isNow ? ' (en cours)' : '') + ' <span style="font-size:10px;color:var(--t3)">\u25BC</span></button>';
+    h += '<div id="weekDropdown" style="display:none;position:absolute;left:50%;transform:translateX(-50%);top:100%;margin-top:4px;min-width:260px;max-height:300px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:200;padding:4px 0">';
+    availWeeks.forEach(function(wk) {
+      var wr = getWeekRange(wk);
+      var active = wk === weekId;
+      var wkTr = allTr.filter(function(t) { return t.date && t.date >= wr.from && t.date <= wr.to });
+      h += '<div onclick="activeRevWeek=\'' + wk + '\';rReview()" style="padding:8px 14px;cursor:pointer;font-size:13px;color:' + (active ? 'var(--gold)' : 'var(--t2)') + ';font-weight:' + (active ? '700' : '400') + '" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">' + wr.from + ' au ' + wr.to + ' <span style="font-size:10px;color:var(--t3)">' + wkTr.length + ' trades</span></div>';
+    });
+    h += '</div></div>';
+    h += '<button class="btn btn-o" onclick="navWeekReview(1)" style="padding:8px 12px;font-size:14px;min-width:44px;min-height:44px">\u25B6</button>';
+    h += '<button class="btn btn-o" onclick="exRevPDF()" style="padding:6px 12px;font-size:11px;margin-left:12px;min-height:44px">PDF</button>';
+    h += '</div>';
 
-    // ── Week totals cards ──
-    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px">';
-    html += [
-      { l:'Trades', v:s.n },
-      { l:'Jours actifs', v:s.days },
-      { l:'Winrate', v:(s.wr*100).toFixed(0)+'%', c:s.wr>=.5?'var(--green)':'var(--red)' },
-      { l:'P&L', v:(s.total>=0?'+':'')+pf(s.total), c:s.total>=0?'var(--green)':'var(--red)' },
-      { l:'Espérance', v:(s.exp>=0?'+':'')+pf(s.exp), c:s.exp>=0?'var(--green)':'var(--red)' },
-      { l:'Max DD', v:pf(Math.abs(s.mdd)), c:'var(--red)' },
-    ].map(c => '<div style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px;text-align:center">'
-      + '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-bottom:4px">' + c.l + '</div>'
-      + '<div style="font-size:18px;font-weight:700;color:' + (c.c||'var(--t1)') + ';font-family:\'JetBrains Mono\',monospace">' + c.v + '</div></div>').join('');
-    html += '</div>';
+    if (!weekTrades.length) {
+      h += '<div style="text-align:center;padding:40px;color:var(--t3);font-size:13px">Aucun trade cette semaine (' + from + ' au ' + to + ')</div>';
+      h += _buildPeriodReview(weekId, 'Review hebdomadaire');
+      el.innerHTML = h;
+      _loadPeriodReview(weekId);
+      return;
+    }
 
-    // ── Sessions of the week ──
-    const allSessions = (typeof loadSessions === 'function') ? loadSessions() : [];
-    const weekSessions = allSessions.filter(function(sess) {
-      return sess.dayDate && sess.dayDate >= from && sess.dayDate <= to
-        && (D.activeAcc === 'all' || !sess.target || sess.target.accountId === D.activeAcc);
-    }).sort(function(a,b) { return (a.dayDate||'').localeCompare(b.dayDate||'') || (a.openedAt||'').localeCompare(b.openedAt||'') });
+    /* Calculs */
+    var totalPnl = weekTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+    var wins = weekTrades.filter(function(t) { return (parseFloat(t.pl) || 0) > 0 }).length;
+    var losses = weekTrades.filter(function(t) { return (parseFloat(t.pl) || 0) < 0 }).length;
+    var wr = weekTrades.length ? (wins / weekTrades.length * 100).toFixed(1) : '0';
+    var avgW = wins ? weekTrades.filter(function(t) { return (parseFloat(t.pl)||0) > 0 }).reduce(function(a, t) { return a + (parseFloat(t.pl)||0) }, 0) / wins : 0;
+    var avgL = losses ? Math.abs(weekTrades.filter(function(t) { return (parseFloat(t.pl)||0) < 0 }).reduce(function(a, t) { return a + (parseFloat(t.pl)||0) }, 0) / losses) : 0;
+    var esperance = weekTrades.length ? totalPnl / weekTrades.length : 0;
 
-    // ── Daily breakdown ──
-    const allTr = isLive ? D.live.filter(function(t) { return (D.activeAcc === 'all' || t.accId === D.activeAcc) }) : D[aT];
-    const weekTrades = allTr.filter(function(t) { return t.date && t.date >= from && t.date <= to });
-    const dayMap = {};
+    /* Max DD */
+    var cum = 0, peak = 0, mdd = 0;
+    weekTrades.forEach(function(t) { cum += parseFloat(t.pl)||0; if(cum>peak) peak=cum; if(cum-peak<mdd) mdd=cum-peak; });
+
+    /* Daily P&L */
+    var dayPnl = {};
     weekTrades.forEach(function(t) {
-      if (!dayMap[t.date]) dayMap[t.date] = [];
-      dayMap[t.date].push(t);
+      if (!dayPnl[t.date]) dayPnl[t.date] = 0;
+      dayPnl[t.date] += parseFloat(t.pl) || 0;
     });
-    // Also include session-only days
-    weekSessions.forEach(function(sess) {
-      if (!dayMap[sess.dayDate]) dayMap[sess.dayDate] = [];
+    var days = Object.keys(dayPnl).sort();
+    var bestDay = days[0] || '', worstDay = days[0] || '';
+    days.forEach(function(d) {
+      if (dayPnl[d] > dayPnl[bestDay]) bestDay = d;
+      if (dayPnl[d] < dayPnl[worstDay]) worstDay = d;
     });
-    const dayKeys = Object.keys(dayMap).sort();
 
-    if (dayKeys.length > 0 || weekSessions.length > 0) {
-      html += '<div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:8px">Détail par jour</div>';
-      html += '<div style="display:grid;gap:6px;margin-bottom:14px">';
-      const dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    /* Previous week comparison */
+    var prevDate = new Date(from);
+    prevDate.setDate(prevDate.getDate() - 7);
+    var prevId = getWeekId(prevDate);
+    var prevRange = getWeekRange(prevId);
+    var prevTrades = allTr.filter(function(t) { return t.date && t.date >= prevRange.from && t.date <= prevRange.to });
+    var prevPnl = prevTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
+    var prevWins = prevTrades.filter(function(t) { return (parseFloat(t.pl)||0) > 0 }).length;
+    var prevWr = prevTrades.length ? (prevWins / prevTrades.length * 100) : 0;
+    var prevEsp = prevTrades.length ? prevPnl / prevTrades.length : 0;
+    var prevMdd = 0;
+    var pCum = 0, pPeak = 0;
+    prevTrades.forEach(function(t) { pCum += parseFloat(t.pl)||0; if(pCum>pPeak) pPeak=pCum; if(pCum-pPeak<prevMdd) prevMdd=pCum-pPeak; });
 
-      dayKeys.forEach(function(day) {
-        const trades = dayMap[day];
-        const dn = new Date(day).getDay();
-        const dayLabel = dayNames[dn] + ' ' + day.slice(5);
-        const daySess = weekSessions.filter(function(sess) { return sess.dayDate === day });
-        const dayN = trades.length;
-        const dayW = trades.filter(function(t) { return isLive ? t.pl > 0 : (t.rr||0) > 0 }).length;
-        const dayWR = dayN ? (dayW / dayN * 100).toFixed(0) : '0';
-        const dayPL = isLive ? trades.reduce(function(a,t) { return a + t.pl }, 0) : trades.reduce(function(a,t) { return a + (t.rr||0) }, 0);
-        const plCol = dayPL >= 0 ? 'var(--green)' : 'var(--red)';
-
-        // Session duration
-        var durStr = '';
-        if (daySess.length > 0) {
-          var totalMin = 0;
-          daySess.forEach(function(sess) {
-            var openDate = new Date(sess.openedAt);
-            var dur = sess.closedAt ? Math.floor((new Date(sess.closedAt) - openDate) / 60000) : Math.floor((Date.now() - openDate.getTime()) / 60000);
-            totalMin += dur;
-          });
-          durStr = totalMin < 60 ? totalMin + 'min' : Math.floor(totalMin / 60) + 'h' + String(totalMin % 60).padStart(2, '0');
-        }
-
-        html += '<div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid ' + plCol + ';border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">';
-        html += '<div style="min-width:65px;font-size:13px;font-weight:700;color:var(--t1)">' + dayLabel + '</div>';
-        html += '<div style="font-size:12px;color:var(--t2)">' + dayN + ' trade' + (dayN > 1 ? 's' : '') + '</div>';
-        html += '<div style="font-size:12px;color:var(--t2)">WR <b style="color:' + (parseInt(dayWR) >= 50 ? 'var(--green)' : 'var(--red)') + '">' + dayWR + '%</b></div>';
-        html += '<div style="font-size:14px;font-weight:700;color:' + plCol + ';font-family:\'JetBrains Mono\',monospace;margin-left:auto">' + (dayPL >= 0 ? '+' : '') + pf(dayPL) + '</div>';
-        if (durStr) html += '<div style="font-size:11px;color:var(--t3)">' + durStr + '</div>';
-        html += '</div>';
-      });
-      html += '</div>';
+    /* Helper for delta arrows */
+    function deltaArrow(curr, prev, isMoney) {
+      var d = curr - prev;
+      if (d === 0 || !prev) return '';
+      var arrow = d > 0 ? '\u25B2' : '\u25BC';
+      var col = d > 0 ? 'var(--green)' : 'var(--red)';
+      var val = isMoney ? (d > 0 ? '+' : '') + '$' + d.toFixed(0) : (d > 0 ? '+' : '') + d.toFixed(1);
+      return '<div style="font-size:9px;color:' + col + ';margin-top:2px">' + arrow + ' ' + val + '</div>';
     }
 
-    // ── Best / Worst day ──
-    if (dayKeys.length >= 2) {
-      var bestDay = null, worstDay = null, bestPL = -Infinity, worstPL = Infinity;
-      dayKeys.forEach(function(day) {
-        var dp = isLive ? dayMap[day].reduce(function(a,t){return a+t.pl},0) : dayMap[day].reduce(function(a,t){return a+(t.rr||0)},0);
-        if (dp > bestPL) { bestPL = dp; bestDay = day }
-        if (dp < worstPL) { worstPL = dp; worstDay = day }
-      });
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">';
-      html += '<div style="background:rgba(0,214,143,.04);border:1px solid rgba(0,214,143,.12);border-radius:var(--radius-sm);padding:10px;text-align:center">';
-      html += '<div style="font-size:10px;color:var(--green);text-transform:uppercase;margin-bottom:4px">Meilleur jour</div>';
-      html += '<div style="font-size:14px;font-weight:700;color:var(--green);font-family:\'JetBrains Mono\',monospace">' + bestDay + ' — ' + (bestPL>=0?'+':'') + pf(bestPL) + '</div></div>';
-      html += '<div style="background:rgba(255,71,87,.04);border:1px solid rgba(255,71,87,.12);border-radius:var(--radius-sm);padding:10px;text-align:center">';
-      html += '<div style="font-size:10px;color:var(--red);text-transform:uppercase;margin-bottom:4px">Pire jour</div>';
-      html += '<div style="font-size:14px;font-weight:700;color:var(--red);font-family:\'JetBrains Mono\',monospace">' + worstDay + ' — ' + (worstPL>=0?'+':'') + pf(worstPL) + '</div></div>';
-      html += '</div>';
-    }
+    /* Section 1 — 6 KPI cards with comparison */
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">';
+    var kpis = [
+      { l: 'Trades', v: '' + weekTrades.length, delta: deltaArrow(weekTrades.length, prevTrades.length, false), c: 'var(--t1)' },
+      { l: 'Win Rate', v: wr + '%', delta: deltaArrow(parseFloat(wr), prevWr, false), c: parseFloat(wr) >= 50 ? 'var(--green)' : 'var(--red)' },
+      { l: 'P&L Total', v: (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(0), delta: deltaArrow(totalPnl, prevPnl, true), c: totalPnl >= 0 ? 'var(--green)' : 'var(--red)' },
+      { l: 'Esperance', v: (esperance >= 0 ? '+' : '') + '$' + esperance.toFixed(0), delta: deltaArrow(esperance, prevEsp, true), c: esperance >= 0 ? 'var(--green)' : 'var(--red)' },
+      { l: 'Max DD', v: '$' + Math.abs(mdd).toFixed(0), delta: deltaArrow(Math.abs(prevMdd), Math.abs(mdd), true), c: 'var(--red)' },
+      { l: 'Meilleur / Pire jour', v: (days.length >= 2 ? '+$' + (dayPnl[bestDay] || 0).toFixed(0) + ' / $' + (dayPnl[worstDay] || 0).toFixed(0) : '-'), delta: (days.length >= 2 ? '<div style="font-size:9px;color:var(--t3);margin-top:2px">' + (bestDay ? bestDay.slice(5) : '') + ' / ' + (worstDay ? worstDay.slice(5) : '') + '</div>' : ''), c: 'var(--t1)' }
+    ];
+    kpis.forEach(function(k) {
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">';
+      h += '<div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">' + k.l + '</div>';
+      h += '<div style="font-size:20px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + k.c + '">' + k.v + '</div>';
+      h += k.delta;
+      h += '</div>';
+    });
+    h += '</div>';
 
-    // ── Setup & details ──
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;color:var(--t2);line-height:2">';
-    html += '<div>';
-    html += '<div>QM : <b>' + s.qm + '</b> trades — WR <b style="color:' + (parseInt(s.wrQM)>=50?'var(--green)':'var(--red)') + '">' + s.wrQM + '%</b></div>';
-    html += '<div>Gaps : <b>' + s.gaps + '</b> trades — WR <b style="color:' + (parseInt(s.wrGaps)>=50?'var(--green)':'var(--red)') + '">' + s.wrGaps + '%</b></div>';
-    html += '<div>Trades news : <b>' + s.news + '</b></div>';
-    html += '</div><div>';
-    html += '<div>Meilleure heure : <b style="color:var(--green)">' + s.bestH + '</b></div>';
-    html += '<div>Pire heure : <b style="color:var(--red)">' + s.worstH + '</b></div>';
-    if (s.prevN) html += '<div>Semaine précédente : <b>' + s.prevN + '</b>t, WR <b>' + (s.prevWR*100).toFixed(0) + '%</b></div>';
-    html += '</div></div>';
+    /* Section 2 — Bar chart — P&L by day (CSS only) */
+    var dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    var maxDayAbs = 1;
+    days.forEach(function(d) { if (Math.abs(dayPnl[d]) > maxDayAbs) maxDayAbs = Math.abs(dayPnl[d]); });
 
-    if (s.alerts.length) {
-      html += '<div style="margin-top:10px">' + s.alerts.map(function(a) {
-        return '<div style="background:rgba(255,71,87,.06);border:1px solid rgba(255,71,87,.12);border-radius:var(--radius-sm);padding:8px 12px;margin-top:6px;font-size:12px;color:var(--red)">⚠ ' + a + '</div>';
-      }).join('') + '</div>';
-    }
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">P&L par jour</div>';
+    h += '<div style="display:flex;align-items:flex-end;gap:6px;height:160px;padding-bottom:24px;position:relative">';
+    h += '<div style="position:absolute;left:0;right:0;bottom:calc(24px + 80px);height:1px;background:rgba(138,159,192,.2)"></div>';
+    days.forEach(function(d) {
+      var v = dayPnl[d];
+      var barH = v === 0 ? 2 : Math.max(4, Math.abs(v) / maxDayAbs * 76);
+      var col = v >= 0 ? 'var(--green)' : 'var(--red)';
+      var bottom = v >= 0 ? 80 : (80 - barH);
+      var dn = new Date(d + 'T00:00:00').getDay();
+      h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;height:100%">';
+      h += '<div style="position:absolute;bottom:' + bottom + 'px;width:70%;height:' + barH + 'px;background:' + col + ';border-radius:3px;opacity:.85;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.85"></div>';
+      h += '<div style="position:absolute;bottom:0;font-size:9px;color:var(--t3);font-weight:600">' + dayNames[dn] + ' ' + d.slice(8) + '</div>';
+      if (v !== 0) h += '<div style="position:absolute;bottom:' + (v >= 0 ? bottom + barH + 2 : bottom - 12) + 'px;font-size:8px;color:' + col + ';font-family:JetBrains Mono,monospace;white-space:nowrap">' + (v >= 0 ? '+' : '') + '$' + v.toFixed(0) + '</div>';
+      h += '</div>';
+    });
+    h += '</div></div>';
 
-    autoEl.innerHTML = html;
-  }
+    /* Section 3 — Daily breakdown table */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;overflow-x:auto;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Detail par jour</div>';
+    h += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    h += '<thead><tr style="border-bottom:1px solid var(--border)">';
+    h += '<th style="text-align:left;padding:8px 6px;color:var(--t3);font-size:10px">Jour</th>';
+    h += '<th style="text-align:center;padding:8px 6px;color:var(--t3);font-size:10px">Trades</th>';
+    h += '<th style="text-align:center;padding:8px 6px;color:var(--t3);font-size:10px">WR</th>';
+    h += '<th style="text-align:right;padding:8px 6px;color:var(--t3);font-size:10px">P&L</th>';
+    h += '<th style="text-align:right;padding:8px 6px;color:var(--t3);font-size:10px">Esperance</th>';
+    h += '</tr></thead><tbody>';
+    days.forEach(function(d) {
+      var dTr = weekTrades.filter(function(t) { return t.date === d });
+      var dW = dTr.filter(function(t) { return (parseFloat(t.pl)||0) > 0 }).length;
+      var dWr = dTr.length ? (dW / dTr.length * 100).toFixed(1) : '-';
+      var dPnl = dayPnl[d];
+      var dEsp = dTr.length ? dPnl / dTr.length : 0;
+      var pCol = dPnl >= 0 ? 'var(--green)' : 'var(--red)';
+      var dn = new Date(d + 'T00:00:00').getDay();
+      h += '<tr style="border-bottom:1px solid rgba(42,54,84,.3)">';
+      h += '<td style="padding:8px 6px;font-weight:600;color:var(--t1)">' + dayNames[dn] + ' ' + d.slice(5) + '</td>';
+      h += '<td style="padding:8px 6px;text-align:center;color:var(--t2);font-family:JetBrains Mono,monospace">' + dTr.length + '</td>';
+      h += '<td style="padding:8px 6px;text-align:center;color:' + (parseFloat(dWr) >= 50 ? 'var(--green)' : 'var(--red)') + ';font-family:JetBrains Mono,monospace">' + dWr + '%</td>';
+      h += '<td style="padding:8px 6px;text-align:right;font-weight:700;color:' + pCol + ';font-family:JetBrains Mono,monospace">' + (dPnl >= 0 ? '+' : '') + '$' + dPnl.toFixed(0) + '</td>';
+      h += '<td style="padding:8px 6px;text-align:right;color:' + (dEsp >= 0 ? 'var(--green)' : 'var(--red)') + ';font-family:JetBrains Mono,monospace">' + (dEsp >= 0 ? '+' : '') + '$' + dEsp.toFixed(0) + '</td>';
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
 
-  // ── Reflection questions ──
-  const ex = D.reviews.find(r => r.w === weekId && (D.activeAcc === 'all' || !r.accId || r.accId === D.activeAcc)) || { a:{} };
-  document.getElementById('rQs').innerHTML = '<div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px">Réflexion de la semaine</div>' + RQ.map((q,i) =>
-    '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:6px">' + (i+1) + '. ' + q + '</div><textarea id="rv' + i + '" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--t1);font-family:inherit;font-size:13px;min-height:60px;resize:vertical;outline:none;transition:border .2s;line-height:1.6" onfocus="this.style.borderColor=\'var(--gold)\'" onblur="this.style.borderColor=\'var(--border)\'" placeholder="Écris ici...">' + (ex.a[i]||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</textarea></div>'
-  ).join('');
+    /* Section 4 — Trade history (paginated 20 per page) */
+    h += _buildPerfTradeHistory(weekTrades, 'weekly');
 
-  // Review alert (7+ days without review)
-  const alertEl = document.getElementById('revAlert');
-  if (alertEl) {
-    const lastRev = D.reviews.filter(r => D.activeAcc === 'all' || !r.accId || r.accId === D.activeAcc).sort((a,b) => b.w.localeCompare(a.w))[0];
-    const daysSince = lastRev ? Math.floor((Date.now() - new Date(lastRev.w).getTime()) / 86400000) : 999;
-    if (daysSince > 7) {
-      alertEl.style.display = '';
-      alertEl.innerHTML = '<div style="background:rgba(212,160,23,.08);border:1px solid rgba(212,160,23,.2);border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--gold)">⚠ Dernière review il y a ' + (daysSince === 999 ? 'jamais' : daysSince + ' jours') + ' — prends 5 minutes pour faire le point.</div>';
-    } else { alertEl.style.display = 'none' }
-  }
+    /* Section 5 — Review questions */
+    h += _buildPeriodReview(weekId, 'Review hebdomadaire');
 
-  // History timeline
-  const sorted = [...D.reviews].filter(r => D.activeAcc === 'all' || !r.accId || r.accId === D.activeAcc).sort((a,b) => b.w.localeCompare(a.w));
-  document.getElementById('revCount').textContent = '(' + sorted.length + ' review' + (sorted.length>1?'s':'') + ')';
+    el.innerHTML = h;
+    _loadPeriodReview(weekId);
+  } catch(e) { console.error('[Aurum] rReview:', e) }
+}
 
-  document.getElementById('revHistory').innerHTML = sorted.length ? sorted.map(r => {
-    const isActive = r.w === weekId;
-    const filled = RQ.filter((_,i) => r.a[i]&&r.a[i].trim()).length;
-    const ws = weekAutoStats(r.w);
-    const miniStats = ws && ws.n > 0 ? '<span style="font-size:10px;color:var(--t3);margin-left:6px">' + ws.n + 't · WR ' + (ws.wr*100).toFixed(0) + '% · ' + (ws.isLive?(ws.total>=0?'+':'')+ws.total.toFixed(0)+'$':(ws.total>=0?'+':'')+ws.total.toFixed(1)+'R') + '</span>' : '';
+function navWeekReview(dir) {
+  try {
+    var isLive = aT === 'live';
+    var allTr = isLive ? D.live.filter(function(t) { return D.activeAcc === 'all' || t.accId === D.activeAcc }) : D[aT];
+    var weeksSet = {};
+    allTr.forEach(function(t) { if (t.date) weeksSet[getWeekId(t.date)] = true });
+    var weeks = Object.keys(weeksSet).sort();
+    if (!weeks.length) return;
+    var idx = weeks.indexOf(activeRevWeek);
+    var newIdx = idx + dir;
+    if (newIdx < 0) newIdx = 0;
+    if (newIdx >= weeks.length) newIdx = weeks.length - 1;
+    activeRevWeek = weeks[newIdx];
+    rReview();
+  } catch(e) { console.error('navWeekReview:', e) }
+}
 
-    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid ' + (isActive?'var(--gold)':'var(--border)') + ';border-left:3px solid ' + (ws&&ws.total>=0?'var(--green)':ws&&ws.n>0?'var(--red)':'var(--border)') + ';border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:all .15s;background:' + (isActive?'rgba(212,160,23,.04)':'var(--bg2)') + '" onclick="loadRev(\'' + r.w + '\')">'
-    + '<div style="min-width:90px"><div style="font-size:13px;font-weight:600;color:' + (isActive?'var(--gold)':'var(--t1)') + '">' + r.w + '</div>' + miniStats + '</div>'
-    + '<div style="font-size:11px;color:var(--t3)">' + filled + '/' + RQ.length + '</div>'
-    + '<div style="margin-left:auto;font-size:11px;color:var(--t3);cursor:pointer;padding:4px 8px;border-radius:4px;transition:color .15s;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center" onclick="event.stopPropagation();exRevByWeek(\'' + r.w + '\')">↓</div>'
-    + '</div>';
-  }).join('') : '<p style="font-size:13px;color:var(--t3)">Aucune review sauvegardée.</p>';
-  rRevAnalysis();
-} catch(e) { console.error("[Aurum] rReview:", e) }
+function toggleWeekDropdown() {
+  try {
+    var dd = document.getElementById('weekDropdown');
+    if (dd) dd.style.display = dd.style.display === 'none' ? '' : 'none';
+  } catch(e) {}
 }
 
 function loadRev(wk) { activeRevWeek = wk; rReview(); document.querySelector('.scroll').scrollTop = 0 }
@@ -10238,8 +10232,9 @@ function rMonthly() {
     if (!trades.length) {
       h += '<div style="text-align:center;padding:40px;color:var(--t3);font-size:13px">Aucun trade en ' + monthLabel(ym) + '</div>';
       // Still show review questions even with no trades
-      h += _buildMonthlyReview(ym);
+      h += _buildPeriodReview(ym, 'Review mensuelle');
       el.innerHTML = h;
+      _loadPeriodReview(ym);
       return;
     }
 
@@ -10460,14 +10455,14 @@ function rMonthly() {
     h += _buildPerfTradeHistory(trades, 'monthly');
 
     /* Section 7 — Monthly review questions */
-    h += _buildMonthlyReview(ym);
+    h += _buildPeriodReview(ym, 'Review mensuelle');
 
     el.innerHTML = h;
 
     renderMonthlyChart(ym, dayPnl, daysInMonth);
 
     // Load saved review data into textareas
-    _loadMonthlyReviewData(ym);
+    _loadPeriodReview(ym);
   } catch(e) { console.error('rMonthly:', e) }
 }
 
@@ -10625,8 +10620,9 @@ function rAnnual() {
 
     if (!trades.length) {
       h += '<div style="text-align:center;padding:40px;color:var(--t3);font-size:13px">Aucun trade en ' + yr + '</div>';
-      h += _buildAnnualReview(yr);
+      h += _buildPeriodReview(yr, 'Review annuelle');
       el.innerHTML = h;
+      _loadPeriodReview(yr);
       return;
     }
 
@@ -10747,10 +10743,10 @@ function rAnnual() {
     h += _buildPerfTradeHistory(trades, 'annual');
 
     /* Section 5 — Review */
-    h += _buildAnnualReview(yr);
+    h += _buildPeriodReview(yr, 'Review annuelle');
 
     el.innerHTML = h;
-    _loadAnnualReviewData(yr);
+    _loadPeriodReview(yr);
   } catch(e) { console.error('rAnnual:', e) }
 }
 
@@ -10802,6 +10798,59 @@ function _loadAnnualReviewData(yr) {
     if (improve && data.improve) improve.value = data.improve;
     if (goal && data.goal) goal.value = data.goal;
   } catch(e) {}
+}
+
+/* ─── SHARED PERIOD REVIEW (used by weekly, monthly, annual) ─── */
+function _buildPeriodReview(periodKey, periodLabel) {
+  try {
+    var prefix = 'pRev_' + periodKey.replace(/[^a-zA-Z0-9]/g, '_') + '_';
+    var h = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">' + periodLabel + '</div>';
+    var questions = [
+      { id: 'good', label: "Qu'est-ce qui a bien fonctionne cette periode ?" },
+      { id: 'improve', label: "Qu'est-ce que tu aurais fait differemment ?" },
+      { id: 'goal', label: 'Objectif pour la prochaine periode ?' }
+    ];
+    questions.forEach(function(q) {
+      h += '<div style="margin-bottom:14px">';
+      h += '<label style="display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px">' + q.label + '</label>';
+      h += '<textarea id="' + prefix + q.id + '" onchange="_savePeriodReview(\'' + periodKey.replace(/'/g, "\\'") + '\')" style="width:100%;min-height:70px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;resize:vertical;line-height:1.6" placeholder="Ecris ici..."></textarea>';
+      h += '</div>';
+    });
+    h += '</div>';
+    return h;
+  } catch(e) { return ''; }
+}
+
+function _savePeriodReview(periodKey) {
+  try {
+    if (!D.periodReviews) D.periodReviews = {};
+    var prefix = 'pRev_' + periodKey.replace(/[^a-zA-Z0-9]/g, '_') + '_';
+    var good = document.getElementById(prefix + 'good');
+    var improve = document.getElementById(prefix + 'improve');
+    var goal = document.getElementById(prefix + 'goal');
+    D.periodReviews[periodKey] = {
+      good: good ? good.value : '',
+      improve: improve ? improve.value : '',
+      goal: goal ? goal.value : '',
+      updated: new Date().toISOString()
+    };
+    _s();
+  } catch(e) { console.error('[Aurum] _savePeriodReview:', e); }
+}
+
+function _loadPeriodReview(periodKey) {
+  try {
+    if (!D.periodReviews || !D.periodReviews[periodKey]) return;
+    var data = D.periodReviews[periodKey];
+    var prefix = 'pRev_' + periodKey.replace(/[^a-zA-Z0-9]/g, '_') + '_';
+    var good = document.getElementById(prefix + 'good');
+    var improve = document.getElementById(prefix + 'improve');
+    var goal = document.getElementById(prefix + 'goal');
+    if (good && data.good) good.value = data.good;
+    if (improve && data.improve) improve.value = data.improve;
+    if (goal && data.goal) goal.value = data.goal;
+  } catch(e) { console.error('[Aurum] _loadPeriodReview:', e); }
 }
 
 /* ─── SHARED TRADE HISTORY FOR PERF PAGES (paginated 20) ─── */
