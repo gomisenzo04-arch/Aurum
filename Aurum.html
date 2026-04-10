@@ -2286,11 +2286,12 @@ a:hover{opacity:.85}
 
 <!-- SETTINGS / ACCOUNTS -->
 <div class="panel" id="settings">
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-<h2 style="font-size:16px;font-weight:700;color:var(--t1);margin:0">Comptes de trading</h2>
-<button class="btn btn-g" onclick="showAddAccount()">+ Nouveau compte</button>
+<div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:16px">Comptes de trading</div>
+<div id="settingsTabs" style="display:flex;gap:4px;padding:4px;background:var(--bg2);border-radius:8px;margin-bottom:16px">
+  <button class="subtab active" onclick="goSettings('accounts')">Mes comptes</button>
+  <button class="subtab" onclick="goSettings('propfirm')">Suivi Prop Firms</button>
 </div>
-<div id="accountsList"></div>
+<div id="settingsContent"></div>
 
 <div id="accountForm" style="display:none;margin-top:16px">
 <div class="box" id="accountFormContent"></div>
@@ -2408,6 +2409,7 @@ function _l() {
     if (d) {
       D = d;
       ['live','replay','insights','reviews'].forEach(k => { if (!D[k]) D[k] = [] });
+      if (!D.monthlyReviews) D.monthlyReviews = {};
       // Migration: old format had D.st, new has D.accounts
       if (!D.accounts || !D.accounts.length) {
         const old = d.st || { bal:6000, risk:1, comm:5, target:6480, floor:5400, daily:4, cap:8 };
@@ -2688,7 +2690,7 @@ function R() {
     cLot();
   }
   else if (pg === 'review') { rReview() }
-  else if (pg === 'rules') { rRules() }
+  else if (pg === 'rules') { rTradingPlan() }
   else if (pg === 'viab') { rViability(); rCoaching() }
   else if (pg === 'backup') { rBackupStats() }
   else if (pg === 'settings') { ldS() }
@@ -4696,107 +4698,123 @@ function rLotTables() {
   } catch(e) { console.error("[Aurum] rLotTables:", e) }
 }
 
-// ─── RULES MODULE (Interactive cards) ───
-function rRules() {
+// ─── TRADING PLAN MODULE (Accordion sections) ───
+function rRules() { rTradingPlan(); }
+function rTradingPlan() {
   try {
   var el = document.getElementById('rulesView');
-  if (!el) return;
+  if (!el) { el = document.getElementById('rules'); if (!el) return; }
 
-  var categories = [
+  var sections = [
     {
-      id: 'sr', icon: '📐', title: 'Support / Résistance',
+      id: 'overview', icon: '🎯', title: 'Vue d\'ensemble',
       color: 'var(--gold)',
-      rules: [
-        { type: 'do', text: 'Support = bougie baissière + bougie haussière. Niveau = clôture de la baissière. Validé à la clôture de la 2ème bougie.' },
-        { type: 'do', text: 'Résistance = bougie haussière + bougie baissière. Niveau = clôture de la haussière. Validé à la clôture de la 2ème bougie.' },
-        { type: 'do', text: 'Casser = le <b>CORPS</b> d\'une bougie <b>CLÔTURE</b> au-delà du niveau. Jamais la mèche seule.' },
-        { type: 'dont', text: 'Ne jamais considérer une mèche comme une cassure (exception unique : prise de liquidité).' },
-      ]
+      content: '<div style="font-size:13px;color:var(--t2);line-height:2">' +
+        '<p><b style="color:var(--t1)">Instrument :</b> XAUUSD (Or/Dollar) uniquement</p>' +
+        '<p><b style="color:var(--t1)">Timeframes :</b> 5 minutes (direction + liquidite) → 1 minute (confirmation QM + entree)</p>' +
+        '<p><b style="color:var(--t1)">Setups :</b> QM (Quasimodo) et Gaps — aucun autre setup autorise</p>' +
+        '<p><b style="color:var(--t1)">Ratio :</b> 1:2 fixe (TP = 2x SL)</p>' +
+        '<p><b style="color:var(--t1)">Max :</b> 1 trade a la fois, 4 par jour</p>' +
+        '</div>'
     },
     {
-      id: 'dir', icon: '🧭', title: 'Direction',
+      id: 'structure', icon: '📐', title: 'Structure de marche',
       color: 'var(--blue)',
       rules: [
-        { type: 'do', text: 'Direction toujours binaire : haussier ou baissier. <b>Jamais neutre.</b>' },
-        { type: 'do', text: 'Pullback valide = minimum <b>2 bougies consécutives</b> dans le sens opposé.' },
-        { type: 'do', text: 'Changement de direction = corps clôture au-delà de la mèche la plus extrême des 2 bougies du dernier pullback valide.' },
-        { type: 'dont', text: 'Ne jamais rester neutre — choisis ta direction et trade-la.' },
+        { type:'do', text:'<b>Support</b> = bougie baissiere + bougie haussiere. Niveau = cloture de la baissiere.' },
+        { type:'do', text:'<b>Resistance</b> = bougie haussiere + bougie baissiere. Niveau = cloture de la haussiere.' },
+        { type:'do', text:'<b>Casser</b> = le CORPS d\'une bougie CLOTURE au-dela du niveau. Jamais la meche seule.' },
+        { type:'do', text:'<b>Direction</b> toujours binaire : haussier ou baissier. Jamais neutre.' },
+        { type:'do', text:'<b>Pullback valide</b> = minimum 2 bougies consecutives dans le sens oppose.' },
+        { type:'do', text:'Changement de direction = corps cloture au-dela de la meche la plus extreme du dernier pullback.' },
+        { type:'dont', text:'Ne jamais considerer une meche comme une cassure (exception : prise de liquidite).' }
       ]
     },
     {
-      id: 'qm', icon: '🔄', title: 'QM (Quasimodo)',
+      id: 'setups', icon: '🔄', title: 'Setups : QM & Gaps',
       color: 'var(--green)',
       rules: [
-        { type: 'do', text: 'QM Baissier (M) : Résistance → Support → Casse résistance (nouveau + haut) → Casse support → <b>SELL</b>' },
-        { type: 'do', text: 'QM Haussier (W) : Support → Résistance → Casse support (nouveau + bas) → Casse résistance → <b>BUY</b>' },
-        { type: 'do', text: 'Liquidité : <b>3 bougies clôturées</b>, mèche milieu strictement plus haute/basse que les voisines.' },
-        { type: 'dont', text: 'Ne pas entrer sans que toutes les étapes du QM soient validées.' },
+        { type:'do', text:'QM Baissier (M) : Resistance → Support → Casse resistance (nouveau + haut) → Casse support → <b>SELL</b>' },
+        { type:'do', text:'QM Haussier (W) : Support → Resistance → Casse support (nouveau + bas) → Casse resistance → <b>BUY</b>' },
+        { type:'do', text:'Liquidite : <b>3 bougies cloturees</b>, meche milieu strictement plus haute/basse que les voisines.' },
+        { type:'do', text:'Prise de liquidite = prix touche/depasse (meche suffit) → passage immediat en 1 min. Consommee definitivement.' },
+        { type:'do', text:'Gap = <b>2 bougies consecutives de meme couleur, cloturees</b>. Niveau = cloture de la 1ere.' },
+        { type:'do', text:'Variante Gaps : si ecart R/S > <b style="color:var(--gold)">1200 pts</b> → 2 gaps consecutifs → casse le 1er → casse le 2eme → entree.' },
+        { type:'dont', text:'Ne pas entrer sans que toutes les etapes du QM soient validees.' },
+        { type:'dont', text:'Ne pas prendre un Gap variante si ecart R/S < <b style="color:var(--gold)">1200 pts</b>.' }
       ]
     },
     {
-      id: 'gaps', icon: '📊', title: 'Gaps',
+      id: 'execution', icon: '⚡', title: 'Execution : SL / TP / Trailing',
       color: 'var(--purple)',
       rules: [
-        { type: 'do', text: 'Gap = <b>2 bougies consécutives de même couleur, clôturées</b>. Niveau = clôture de la 1ère.' },
-        { type: 'do', text: 'Variante : si écart R/S > <b style="color:var(--gold)">1200 pts</b> → 2 gaps consécutifs → casse le 1er → casse le 2ème → entrée.' },
-        { type: 'dont', text: 'Ne pas prendre un Gap si l\'écart R/S < <b style="color:var(--gold)">1200 pts</b> en variante.' },
+        { type:'do', text:'SL standard : meche extreme du QM + <b style="color:var(--gold)">50 pts</b>.' },
+        { type:'do', text:'SL minimum : <b style="color:var(--gold)">250 pts</b> — SL maximum : <b style="color:var(--gold)">1200 pts</b>.' },
+        { type:'do', text:'SL reduit (si standard > 1000 pts) : meche bougie de cassure + <b style="color:var(--gold)">50 pts</b>.' },
+        { type:'do', text:'TP = <b style="color:var(--gold)">2x SL</b> (ratio <b style="color:var(--gold)">1:2</b> fixe).' },
+        { type:'do', text:'Trailing stop (1 min) : retracement valide casse → SL derriere meche + <b style="color:var(--gold)">40 pts</b> (spread).' },
+        { type:'dont', text:'Aucun break even, aucun partiel, aucune fermeture manuelle sauf 21h.' }
       ]
     },
     {
-      id: 'risk', icon: '🛡️', title: 'Gestion & Risque',
+      id: 'risk', icon: '🛡️', title: 'Gestion du risque',
       color: 'var(--red)',
       rules: [
-        { type: 'do', text: 'SL standard : mèche extrême du QM + <b style="color:var(--gold)">50 pts</b>.' },
-        { type: 'do', text: 'SL minimum : <b style="color:var(--gold)">250 pts</b> — SL maximum : <b style="color:var(--gold)">1200 pts</b>.' },
-        { type: 'do', text: 'TP = <b style="color:var(--gold)">2x SL</b> (ratio <b style="color:var(--gold)">1:2</b> fixe).' },
-        { type: 'do', text: 'Trailing stop (1 min) : retracement valide cassé → SL derrière mèche + <b style="color:var(--gold)">40 pts</b> (spread).' },
-        { type: 'do', text: 'Risque : 1K-99K = <b>1%</b>, 100K-999K = <b>0,5%</b>, 1M+ = <b>0,25%</b>.' },
-        { type: 'dont', text: 'Aucun break even, aucun partiel, aucune fermeture manuelle sauf 21h.' },
-        { type: 'dont', text: 'Max <b>1 seul trade</b> à la fois, max <b>4/jour</b>.' },
+        { type:'do', text:'Risque : 1K-99K = <b>1%</b>, 100K-999K = <b>0,5%</b>, 1M+ = <b>0,25%</b>.' },
+        { type:'do', text:'Prop firm = solde <b>INITIAL</b> / Perso = solde <b>ACTUEL</b>.' },
+        { type:'do', text:'SL arrondi au palier superieur (lot plus petit).' },
+        { type:'dont', text:'Max <b>1 seul trade</b> a la fois, max <b>4/jour</b>.' },
+        { type:'do', text:'Daily Drawdown FundedNext : limite = <b style="color:var(--red)">5% du solde initial</b>. Garde-fou perso = <b style="color:var(--red)">-4%</b>.' }
       ]
     },
     {
-      id: 'filter', icon: '🚦', title: 'Filtres & Sécurité',
+      id: 'filters', icon: '🚦', title: 'Filtres & Discipline',
       color: 'var(--gold)',
       rules: [
-        { type: 'do', text: 'Daily Drawdown FundedNext : limite = <b style="color:var(--red)">5% du solde initial</b>. Garde-fou perso = <b style="color:var(--red)">-4%</b>.' },
-        { type: 'dont', text: 'Pas de trade <b>5 min avant/après news rouges USD</b> (Forex Factory).' },
-        { type: 'dont', text: '<b style="color:var(--red)">-4% jour → fin de journée.</b>' },
-        { type: 'do', text: '<b style="color:var(--green)">+8% jour → fin de journée.</b> Prends tes gains.' },
-        { type: 'dont', text: 'Tout fermé <b>21h max</b>. Jamais overnight, jamais week-end.' },
-        { type: 'do', text: 'SL <b>toujours placé avant de quitter MT5</b>. Si crash → reconnecter.' },
-        { type: 'do', text: 'News rouge + trade ouvert → <b>ne rien toucher</b>. SL et trailing font leur travail.' },
-        { type: 'do', text: '<b>50 trades minimum en Replay</b> avant de toucher le challenge. WR < 45% après 50 trades = pas validé.' },
+        { type:'dont', text:'Pas de trade <b>5 min avant/apres news rouges USD</b> (Forex Factory).' },
+        { type:'dont', text:'<b style="color:var(--red)">-4% jour → fin de journee.</b>' },
+        { type:'do', text:'<b style="color:var(--green)">+8% jour → fin de journee.</b> Prends tes gains.' },
+        { type:'dont', text:'Tout ferme <b>21h max</b>. Jamais overnight, jamais week-end.' },
+        { type:'do', text:'SL <b>toujours place avant de quitter MT5</b>. Si crash → reconnecter.' },
+        { type:'do', text:'News rouge + trade ouvert → <b>ne rien toucher</b>. SL et trailing font leur travail.' },
+        { type:'do', text:'<b>50 trades minimum en Replay</b> avant de toucher le challenge. WR < 45% apres 50 trades = pas valide.' }
       ]
     }
   ];
 
-  var h = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">';
-  categories.forEach(function(cat) {
-    h += '<div class="rule-card" id="ruleCard_' + cat.id + '" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .2s;cursor:pointer" onclick="toggleRuleCard(\'' + cat.id + '\')">';
-    h += '<div style="padding:16px;display:flex;align-items:center;gap:12px;min-height:44px">';
-    h += '<span style="font-size:22px">' + cat.icon + '</span>';
-    h += '<div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--t1)">' + cat.title + '</div>';
-    h += '<div style="font-size:11px;color:var(--t3)">' + cat.rules.length + ' règles</div></div>';
-    h += '<span class="rule-arrow" id="ruleArrow_' + cat.id + '" style="color:var(--t3);font-size:14px;transition:transform .2s">▸</span>';
+  var h = '<div style="display:flex;flex-direction:column;gap:10px">';
+  sections.forEach(function(sec) {
+    var ruleCount = sec.rules ? sec.rules.length : 0;
+    h += '<div class="rule-card" id="ruleCard_' + sec.id + '" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .2s">';
+    h += '<div style="padding:16px;display:flex;align-items:center;gap:12px;min-height:44px;cursor:pointer" onclick="toggleRuleCard(\'' + sec.id + '\')">';
+    h += '<span style="font-size:22px">' + sec.icon + '</span>';
+    h += '<div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--t1)">' + sec.title + '</div>';
+    if (ruleCount) h += '<div style="font-size:11px;color:var(--t3)">' + ruleCount + ' regles</div>';
     h += '</div>';
-    h += '<div class="rule-details" id="ruleDetails_' + cat.id + '" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border)">';
-    cat.rules.forEach(function(r) {
-      var isDo = r.type === 'do';
-      var bgCol = isDo ? 'rgba(0,214,143,.04)' : 'rgba(255,71,87,.04)';
-      var borderCol = isDo ? 'rgba(0,214,143,.15)' : 'rgba(255,71,87,.15)';
-      var icon = isDo ? '✓' : '✗';
-      var iconCol = isDo ? 'var(--green)' : 'var(--red)';
-      h += '<div style="background:' + bgCol + ';border:1px solid ' + borderCol + ';border-radius:var(--radius-sm);padding:10px 12px;margin-top:8px;display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6">';
-      h += '<span style="color:' + iconCol + ';font-weight:800;font-size:14px;flex-shrink:0;min-width:18px;text-align:center">' + icon + '</span>';
-      h += '<span style="color:var(--t2)">' + r.text + '</span>';
-      h += '</div>';
-    });
+    h += '<span class="rule-arrow" id="ruleArrow_' + sec.id + '" style="color:var(--t3);font-size:14px;transition:transform .2s">▸</span>';
+    h += '</div>';
+    h += '<div class="rule-details" id="ruleDetails_' + sec.id + '" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border)">';
+    if (sec.content) {
+      h += '<div style="margin-top:8px">' + sec.content + '</div>';
+    }
+    if (sec.rules) {
+      sec.rules.forEach(function(r) {
+        var isDo = r.type === 'do';
+        var bgCol = isDo ? 'rgba(0,214,143,.04)' : 'rgba(255,71,87,.04)';
+        var borderCol = isDo ? 'rgba(0,214,143,.15)' : 'rgba(255,71,87,.15)';
+        var icon = isDo ? '✓' : '✗';
+        var iconCol = isDo ? 'var(--green)' : 'var(--red)';
+        h += '<div style="background:' + bgCol + ';border:1px solid ' + borderCol + ';border-radius:var(--radius-sm);padding:10px 12px;margin-top:8px;display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6">';
+        h += '<span style="color:' + iconCol + ';font-weight:800;font-size:14px;flex-shrink:0;min-width:18px;text-align:center">' + icon + '</span>';
+        h += '<span style="color:var(--t2)">' + r.text + '</span>';
+        h += '</div>';
+      });
+    }
     h += '</div></div>';
   });
   h += '</div>';
   el.innerHTML = h;
-  } catch(e) { console.error('[Aurum] rRules:', e) }
+  } catch(e) { console.error('[Aurum] rTradingPlan:', e) }
 }
 
 function toggleRuleCard(id) {
@@ -6145,8 +6163,7 @@ function svS() {
   _s(); R();
 }
 function ldS() {
-  // No longer loads into static inputs — accounts list handles this
-  rAccounts();
+  rSettingsContent();
   rAccSelector();
   // Settings info
   const infoEl = document.getElementById('settingsInfo');
@@ -6154,6 +6171,159 @@ function ldS() {
     const dataSize = (JSON.stringify(D).length / 1024).toFixed(0);
     infoEl.innerHTML = `Données : <b>${dataSize} Ko</b> · ${D.live.length} live · ${D.replay.length} replay · ${D.reviews.length} reviews · ${D.accounts.length} comptes`;
   }
+}
+
+// ─── SETTINGS TABS ───
+var _settingsTab = 'accounts';
+function goSettings(tab) {
+  try {
+    _settingsTab = tab;
+    document.querySelectorAll('#settingsTabs .subtab').forEach(function(b){ b.classList.remove('active'); });
+    if (event && event.target) event.target.classList.add('active');
+    else {
+      var btns = document.querySelectorAll('#settingsTabs .subtab');
+      btns.forEach(function(b){ if ((tab==='accounts' && b.textContent.indexOf('Mes comptes')>=0) || (tab==='propfirm' && b.textContent.indexOf('Prop')>=0)) b.classList.add('active'); });
+    }
+    rSettingsContent();
+  } catch(e) { console.error('[Aurum] goSettings:', e); }
+}
+function rSettingsContent() {
+  try {
+    var el = document.getElementById('settingsContent');
+    if (!el) return;
+    if (_settingsTab === 'accounts') { rSettingsAccounts(el); }
+    else if (_settingsTab === 'propfirm') { rSettingsPropFirm(el); }
+  } catch(e) { console.error('[Aurum] rSettingsContent:', e); }
+}
+function rSettingsAccounts(el) {
+  try {
+    var typeInfo = { prop: { icon:'🏆', label:'Challenge', col:'var(--gold)', bg:'rgba(212,160,23,.08)' }, funded: { icon:'✓', label:'Funded', col:'var(--green)', bg:'rgba(0,214,143,.08)' }, perso: { icon:'👤', label:'Personnel', col:'var(--blue)', bg:'rgba(91,141,239,.08)' }, demo: { icon:'◎', label:'Demo', col:'var(--t3)', bg:'rgba(107,127,153,.08)' } };
+    var h = '';
+    D.accounts.forEach(function(a) {
+      var ti = typeInfo[a.type] || typeInfo.prop;
+      var trades = D.live.filter(function(t) { return t.accId === a.id; });
+      var total = trades.reduce(function(s,t) { return s + (parseFloat(t.pl)||0); }, 0);
+      var bal = a.bal + total;
+      var isActive = a.id === D.activeAcc;
+      h += '<div style="background:var(--bg2);border:1px solid ' + (isActive?'var(--gold)':'var(--border)') + ';border-radius:var(--radius);padding:16px;margin-bottom:10px;cursor:pointer;transition:all .15s" onclick="setActiveAcc(\'' + a.id + '\')">';
+      h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">';
+      h += '<div style="flex:1;min-width:0">';
+      h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+      h += '<span style="font-size:16px;font-weight:700;color:var(--t1)">' + (a.name||'Sans nom') + '</span>';
+      h += '<span style="font-size:10px;padding:3px 10px;border-radius:10px;background:' + ti.bg + ';color:' + ti.col + ';font-weight:700">' + ti.icon + ' ' + ti.label + '</span>';
+      if (isActive) h += '<span style="font-size:9px;padding:2px 6px;border-radius:10px;background:rgba(0,214,143,.1);color:var(--green);font-weight:600">ACTIF</span>';
+      h += '</div>';
+      h += '<div style="font-size:12px;color:var(--t3);margin-top:3px">' + (a.broker||'—') + '</div>';
+      h += '</div>';
+      h += '<div style="display:flex;gap:4px">';
+      h += '<button class="edit-btn" onclick="event.stopPropagation();renderAccountForm(D.accounts.find(function(x){return x.id===\'' + a.id + '\'}));document.getElementById(\'accountForm\').style.display=\'\'" title="Modifier" style="min-width:44px;min-height:44px">✎</button>';
+      if (D.accounts.length > 1) h += '<button class="del-btn" onclick="event.stopPropagation();deleteAccount(\'' + a.id + '\')" title="Supprimer" style="min-width:44px;min-height:44px">✕</button>';
+      h += '</div></div>';
+      // KPI row
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px">';
+      h += '<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Capital initial</div><div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t1)">$' + a.bal.toLocaleString() + '</div></div>';
+      h += '<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Solde actuel</div><div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:' + (bal>=a.bal?'var(--green)':'var(--red)') + '">$' + bal.toFixed(0) + '</div></div>';
+      h += '<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Risque</div><div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--gold)">' + a.risk + '%</div></div>';
+      h += '<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Commission</div><div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t2)">$' + (a.comm||0) + '</div></div>';
+      h += '<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;text-align:center"><div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">Trades</div><div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--t1)">' + trades.length + '</div></div>';
+      h += '</div></div>';
+    });
+    h += '<button class="btn btn-g" onclick="showAddAccount()" style="width:100%;margin-top:12px;min-height:44px;font-size:14px">+ Nouveau compte</button>';
+    el.innerHTML = h;
+  } catch(e) { console.error('[Aurum] rSettingsAccounts:', e); }
+}
+function rSettingsPropFirm(el) {
+  try {
+    var propAccs = D.accounts.filter(function(a) { return a.type === 'prop' || a.type === 'funded'; });
+    if (!propAccs.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:12px">🏆</div><div style="font-size:15px;color:var(--t2);line-height:1.8">Aucun compte prop firm.<br>Ajoute un compte de type <b style="color:var(--gold)">Challenge</b> ou <b style="color:var(--green)">Funded</b> dans l\'onglet <b style="color:var(--t1)">Mes comptes</b>.</div></div>';
+      return;
+    }
+    var h = '';
+    propAccs.forEach(function(a) {
+      var trades = D.live.filter(function(t) { return t.accId === a.id; });
+      var totalPnl = trades.reduce(function(s,t) { return s + (parseFloat(t.pl)||0); }, 0);
+      var currentBal = a.bal + totalPnl;
+      var isFunded = a.type === 'funded';
+      var statusLabel = isFunded ? 'Funded' : 'Challenge en cours';
+      var statusCol = isFunded ? 'var(--green)' : 'var(--gold)';
+      var statusBg = isFunded ? 'rgba(0,214,143,.08)' : 'rgba(212,160,23,.08)';
+
+      // Profit target progress
+      var targetGain = (a.target || a.bal) - a.bal;
+      var profitPct = targetGain > 0 ? Math.min(100, Math.max(0, (totalPnl / targetGain) * 100)) : (totalPnl >= 0 ? 100 : 0);
+
+      // Drawdown
+      var floorDD = a.bal - (a.floor || 0);
+      var usedDD = Math.max(0, -totalPnl);
+      var ddPct = floorDD > 0 ? Math.min(100, (usedDD / floorDD) * 100) : 0;
+
+      // Daily DD (today)
+      var todayStr = new Date().toISOString().slice(0,10);
+      var todayTrades = trades.filter(function(t) { return t.date === todayStr; });
+      var todayPnl = todayTrades.reduce(function(s,t) { return s + (parseFloat(t.pl)||0); }, 0);
+      var dailyLimit = a.bal * (a.daily || 4) / 100;
+      var dailyUsed = Math.max(0, -todayPnl);
+      var dailyPct = dailyLimit > 0 ? Math.min(100, (dailyUsed / dailyLimit) * 100) : 0;
+
+      // Trading days
+      var tradingDays = {};
+      trades.forEach(function(t) { if (t.date) tradingDays[t.date] = true; });
+      var activeDays = Object.keys(tradingDays).length;
+
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:14px">';
+      // Header
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">';
+      h += '<div><div style="font-size:18px;font-weight:800;color:var(--t1)">' + (a.name||'Sans nom') + '</div>';
+      h += '<div style="font-size:12px;color:var(--t3)">' + (a.broker||'—') + '</div></div>';
+      h += '<div style="display:flex;align-items:center;gap:8px">';
+      h += '<span style="font-size:11px;padding:4px 12px;border-radius:10px;background:' + statusBg + ';color:' + statusCol + ';font-weight:700">' + statusLabel + '</span>';
+      h += '<div style="font-size:22px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + (totalPnl>=0?'var(--green)':'var(--red)') + '">' + (totalPnl>=0?'+':'') + '$' + totalPnl.toFixed(0) + '</div>';
+      h += '</div></div>';
+
+      // Progress bars
+      h += '<div style="margin-bottom:14px">';
+      h += '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:var(--t2)">Objectif profit</span><span style="color:var(--green);font-weight:700;font-family:JetBrains Mono,monospace">' + profitPct.toFixed(0) + '%</span></div>';
+      h += '<div style="height:10px;background:var(--bg4);border-radius:5px;overflow:hidden"><div style="height:100%;width:' + profitPct + '%;background:linear-gradient(90deg,var(--green),var(--green2));border-radius:5px;transition:width .4s"></div></div>';
+      h += '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:2px"><span>$' + a.bal.toLocaleString() + '</span><span>$' + (a.target||a.bal).toLocaleString() + '</span></div>';
+      h += '</div>';
+
+      h += '<div style="margin-bottom:14px">';
+      h += '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:var(--t2)">Drawdown utilisé</span><span style="color:' + (ddPct>70?'var(--red)':ddPct>40?'var(--gold)':'var(--t2)') + ';font-weight:700;font-family:JetBrains Mono,monospace">' + ddPct.toFixed(0) + '%</span></div>';
+      h += '<div style="height:10px;background:var(--bg4);border-radius:5px;overflow:hidden"><div style="height:100%;width:' + ddPct + '%;background:linear-gradient(90deg,var(--red2),var(--red));border-radius:5px;transition:width .4s"></div></div>';
+      h += '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:2px"><span>Plancher $' + (a.floor||0).toLocaleString() + '</span><span>DD max $' + floorDD.toFixed(0) + '</span></div>';
+      h += '</div>';
+
+      // KPI grid
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-bottom:14px">';
+      var kpis = [
+        { l:'Solde', v:'$'+currentBal.toFixed(0), c: currentBal>=a.bal?'var(--green)':'var(--red)' },
+        { l:'Trades', v:''+trades.length, c:'var(--t1)' },
+        { l:'DD jour max', v:(a.daily||4)+'%', c:'var(--red)' },
+        { l:'Cap gain', v:(a.cap||8)+'%', c:'var(--green)' },
+        { l:'Jours actifs', v:''+activeDays, c:'var(--t1)' },
+        { l:'DD jour util.', v: dailyPct.toFixed(0)+'%', c: dailyPct>70?'var(--red)':'var(--t2)' }
+      ];
+      kpis.forEach(function(k) {
+        h += '<div style="background:var(--bg3);border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:8px;color:var(--t3);text-transform:uppercase;margin-bottom:2px">' + k.l + '</div><div style="font-size:13px;font-weight:700;font-family:JetBrains Mono,monospace;color:' + k.c + '">' + k.v + '</div></div>';
+      });
+      h += '</div>';
+
+      // Rules summary
+      h += '<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--t2);line-height:1.8">';
+      h += '<span style="font-weight:700;color:var(--t1)">Regles :</span> ';
+      h += 'Target <b style="color:var(--green)">$' + (a.target||0).toLocaleString() + '</b> · ';
+      h += 'Plancher <b style="color:var(--red)">$' + (a.floor||0).toLocaleString() + '</b> · ';
+      h += 'DD jour <b style="color:var(--red)">' + (a.daily||4) + '%</b> · ';
+      h += 'Cap gain <b style="color:var(--green)">' + (a.cap||8) + '%</b>';
+      h += '</div>';
+
+      // Button
+      h += '<button class="btn btn-o" onclick="renderAccountForm(D.accounts.find(function(x){return x.id===\'' + a.id + '\'}));document.getElementById(\'accountForm\').style.display=\'\'" style="min-height:44px;font-size:12px;width:100%">Modifier les regles</button>';
+      h += '</div>';
+    });
+    el.innerHTML = h;
+  } catch(e) { console.error('[Aurum] rSettingsPropFirm:', e); }
 }
 
 // ─── EXPORT ───
@@ -9830,7 +10000,7 @@ function rMonthly() {
 
     /* Navigation mois */
     h += '<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px">';
-    h += '<button class="btn btn-o" onclick="navMonth(-1)" style="padding:8px 12px;font-size:14px">◀</button>';
+    h += '<button class="btn btn-o" onclick="navMonth(-1)" style="padding:8px 12px;font-size:14px;min-width:44px;min-height:44px">◀</button>';
     h += '<div style="position:relative;display:inline-block">';
     h += '<button id="monthlyLabel" onclick="toggleMonthDropdown()" style="background:none;border:none;font-family:inherit;font-size:18px;font-weight:800;color:var(--t1);cursor:pointer;padding:4px 8px">' + monthLabel(ym) + ' <span style="font-size:10px;color:var(--t3)">▼</span></button>';
     h += '<div id="monthDropdown" style="display:none;position:absolute;left:50%;transform:translateX(-50%);top:100%;margin-top:4px;min-width:180px;max-height:300px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:200;padding:4px 0">';
@@ -9839,12 +10009,14 @@ function rMonthly() {
       h += '<div onclick="_monthlyKey=\'' + m + '\';rMonthly()" style="padding:8px 14px;cursor:pointer;font-size:13px;color:' + (active ? 'var(--gold)' : 'var(--t2)') + ';font-weight:' + (active ? '700' : '400') + '" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">' + monthLabel(m) + ' <span style="font-size:10px;color:var(--t3)">' + (getMonthlyTrades(m).length) + ' trades</span></div>';
     });
     h += '</div></div>';
-    h += '<button class="btn btn-o" onclick="navMonth(1)" style="padding:8px 12px;font-size:14px">▶</button>';
-    h += '<button class="btn btn-o" onclick="exportMonthlyPDF()" style="padding:6px 12px;font-size:11px;margin-left:12px">📄 PDF</button>';
+    h += '<button class="btn btn-o" onclick="navMonth(1)" style="padding:8px 12px;font-size:14px;min-width:44px;min-height:44px">▶</button>';
+    h += '<button class="btn btn-o" onclick="exportMonthlyPDF()" style="padding:6px 12px;font-size:11px;margin-left:12px;min-height:44px">PDF</button>';
     h += '</div>';
 
     if (!trades.length) {
       h += '<div style="text-align:center;padding:40px;color:var(--t3);font-size:13px">Aucun trade en ' + monthLabel(ym) + '</div>';
+      // Still show review questions even with no trades
+      h += _buildMonthlyReview(ym);
       el.innerHTML = h;
       return;
     }
@@ -9857,19 +10029,21 @@ function rMonthly() {
     var avgW = wins ? trades.filter(function(t) { return t.pl > 0 }).reduce(function(a, t) { return a + t.pl }, 0) / wins : 0;
     var avgL = losses ? Math.abs(trades.filter(function(t) { return t.pl < 0 }).reduce(function(a, t) { return a + t.pl }, 0) / losses) : 0;
     var pf = avgL > 0 ? (avgW / avgL).toFixed(2) : '∞';
+    var esperance = trades.length ? totalPnl / trades.length : 0;
 
     var dayPnl = {};
     trades.forEach(function(t) {
       if (!dayPnl[t.date]) dayPnl[t.date] = 0;
       dayPnl[t.date] += parseFloat(t.pl) || 0;
     });
-    var days = Object.keys(dayPnl);
+    var days = Object.keys(dayPnl).sort();
     var bestDay = days[0] || '', worstDay = days[0] || '';
     days.forEach(function(d) {
       if (dayPnl[d] > dayPnl[bestDay]) bestDay = d;
       if (dayPnl[d] < dayPnl[worstDay]) worstDay = d;
     });
 
+    /* Previous month comparison */
     var prevParts = ym.split('-');
     var prevM = parseInt(prevParts[1]) - 2;
     var prevY = parseInt(prevParts[0]);
@@ -9877,32 +10051,82 @@ function rMonthly() {
     var prevKey = prevY + '-' + String(prevM + 1).padStart(2, '0');
     var prevTrades = getMonthlyTrades(prevKey);
     var prevPnl = prevTrades.reduce(function(a, t) { return a + (parseFloat(t.pl) || 0) }, 0);
-    var delta = totalPnl - prevPnl;
+    var prevWins = prevTrades.filter(function(t) { return (parseFloat(t.pl)||0) > 0 }).length;
+    var prevWr = prevTrades.length ? (prevWins / prevTrades.length * 100) : 0;
+    var prevEsp = prevTrades.length ? prevPnl / prevTrades.length : 0;
 
     var s = S();
     var balStart = s.bal - totalPnl;
 
-    /* Section 1 — KPIs */
-    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">';
+    /* Helper for delta arrows */
+    function deltaArrow(curr, prev, isMoney) {
+      var d = curr - prev;
+      if (d === 0 || !prev) return '';
+      var arrow = d > 0 ? '▲' : '▼';
+      var col = d > 0 ? 'var(--green)' : 'var(--red)';
+      var val = isMoney ? (d > 0 ? '+' : '') + '$' + d.toFixed(0) : (d > 0 ? '+' : '') + d.toFixed(1);
+      return '<div style="font-size:9px;color:' + col + ';margin-top:2px">' + arrow + ' ' + val + '</div>';
+    }
+
+    /* Section 1 — KPIs with comparison */
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">';
     var kpis = [
-      { l: 'P&L', v: (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(0), sub: balStart > 0 ? (totalPnl / balStart * 100).toFixed(1) + '%' : '', c: totalPnl >= 0 ? 'var(--green)' : 'var(--red)' },
-      { l: 'Win Rate', v: wr + '%', sub: wins + 'W / ' + losses + 'L', c: parseFloat(wr) >= 50 ? 'var(--green)' : 'var(--red)' },
-      { l: 'Trades', v: trades.length, sub: Object.keys(dayPnl).length + ' jours actifs', c: 'var(--t1)' },
-      { l: 'Profit Factor', v: pf, sub: '', c: parseFloat(pf) >= 1.5 ? 'var(--green)' : parseFloat(pf) >= 1 ? 'var(--gold)' : 'var(--red)' },
-      { l: 'Meilleur jour', v: '+$' + (dayPnl[bestDay] || 0).toFixed(0), sub: bestDay.slice(5), c: 'var(--green)' },
-      { l: 'Pire jour', v: '$' + (dayPnl[worstDay] || 0).toFixed(0), sub: worstDay.slice(5), c: 'var(--red)' },
-      { l: 'vs mois préc.', v: (delta >= 0 ? '+' : '') + '$' + delta.toFixed(0), sub: prevTrades.length ? prevTrades.length + ' trades' : 'aucun', c: delta >= 0 ? 'var(--green)' : 'var(--red)' }
+      { l: 'Trades', v: '' + trades.length, delta: deltaArrow(trades.length, prevTrades.length, false), c: 'var(--t1)' },
+      { l: 'Win Rate', v: wr + '%', delta: deltaArrow(parseFloat(wr), prevWr, false), c: parseFloat(wr) >= 50 ? 'var(--green)' : 'var(--red)' },
+      { l: 'P&L Total', v: (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(0), delta: deltaArrow(totalPnl, prevPnl, true), c: totalPnl >= 0 ? 'var(--green)' : 'var(--red)' },
+      { l: 'Esperance', v: (esperance >= 0 ? '+' : '') + '$' + esperance.toFixed(0), delta: deltaArrow(esperance, prevEsp, true), c: esperance >= 0 ? 'var(--green)' : 'var(--red)' },
+      { l: 'Meilleur jour', v: '+$' + (dayPnl[bestDay] || 0).toFixed(0), delta: '<div style="font-size:9px;color:var(--t3);margin-top:2px">' + (bestDay ? bestDay.slice(5) : '') + '</div>', c: 'var(--green)' },
+      { l: 'Pire jour', v: '$' + (dayPnl[worstDay] || 0).toFixed(0), delta: '<div style="font-size:9px;color:var(--t3);margin-top:2px">' + (worstDay ? worstDay.slice(5) : '') + '</div>', c: 'var(--red)' }
     ];
     kpis.forEach(function(k) {
       h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">';
       h += '<div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">' + k.l + '</div>';
       h += '<div style="font-size:20px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + k.c + '">' + k.v + '</div>';
-      if (k.sub) h += '<div style="font-size:10px;color:var(--t3);margin-top:2px">' + k.sub + '</div>';
+      h += k.delta;
       h += '</div>';
     });
     h += '</div>';
 
-    /* Section 2 — Discipline */
+    /* Section 1b — 15% Objective progress bar */
+    var acc = S();
+    if (acc && acc.type !== 'demo' && acc.type !== 'all') {
+      var objPct15 = acc.bal * 0.15;
+      var objProgress = objPct15 > 0 ? Math.min(100, Math.max(0, (totalPnl / objPct15) * 100)) : 0;
+      var onTrack = totalPnl >= 0;
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px">';
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+      h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px">Objectif 15% mensuel</div>';
+      h += '<div style="font-size:13px;font-weight:700;font-family:JetBrains Mono,monospace;color:' + (onTrack ? 'var(--green)' : 'var(--red)') + '">' + (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(0) + ' / $' + objPct15.toFixed(0) + '</div>';
+      h += '</div>';
+      h += '<div style="height:12px;background:var(--bg4);border-radius:6px;overflow:hidden">';
+      h += '<div style="height:100%;width:' + Math.max(0, objProgress) + '%;background:linear-gradient(90deg,' + (onTrack ? 'var(--green),var(--green2)' : 'var(--red),var(--red2)') + ');border-radius:6px;transition:width .4s"></div>';
+      h += '</div>';
+      h += '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:3px"><span>0%</span><span style="color:' + (objProgress >= 100 ? 'var(--green)' : 'var(--gold)') + ';font-weight:700">' + objProgress.toFixed(0) + '%</span><span>15%</span></div>';
+      h += '</div>';
+    }
+
+    /* Section 2 — Daily P&L bars */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">P&L par jour</div>';
+    var maxDayAbs = 1;
+    days.forEach(function(d) { if (Math.abs(dayPnl[d]) > maxDayAbs) maxDayAbs = Math.abs(dayPnl[d]); });
+    h += '<div style="display:flex;align-items:flex-end;gap:3px;height:120px;padding-bottom:20px;position:relative">';
+    // Zero line
+    h += '<div style="position:absolute;left:0;right:0;bottom:calc(20px + 50px);height:1px;background:var(--border);z-index:1"></div>';
+    days.forEach(function(d) {
+      var v = dayPnl[d];
+      var barH = Math.max(2, Math.abs(v) / maxDayAbs * 50);
+      var isUp = v >= 0;
+      var col = isUp ? 'var(--green)' : 'var(--red)';
+      var bottom = isUp ? 50 + 20 : 50 + 20 - barH;
+      h += '<div style="flex:1;position:relative;height:100%" title="' + d.slice(5) + ': ' + (v>=0?'+':'') + '$' + v.toFixed(0) + '">';
+      h += '<div style="position:absolute;bottom:' + bottom + 'px;left:10%;width:80%;height:' + barH + 'px;background:' + col + ';border-radius:2px;opacity:.85"></div>';
+      h += '<div style="position:absolute;bottom:0;left:0;width:100%;text-align:center;font-size:8px;color:var(--t3)">' + d.slice(8) + '</div>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+
+    /* Section 3 — Discipline */
     var sessions = loadSessions();
     var monthSessions = sessions.filter(function(ss) { return ss.dayDate && ss.dayDate.slice(0, 7) === ym && ss.status === 'LOCKED' });
     var avgDisc = 0;
@@ -9939,7 +10163,35 @@ function rMonthly() {
     }
     h += '</div>';
 
-    /* Section 3 — Calendrier visuel */
+    /* Section 4 — Weekly breakdown */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Semaines</div>';
+    var weeks = {};
+    trades.forEach(function(t) {
+      if (!t.date) return;
+      var dt = new Date(t.date + 'T00:00:00');
+      var dayOfYear = Math.floor((dt - new Date(dt.getFullYear(),0,1)) / 86400000);
+      var wk = 'S' + Math.ceil((dayOfYear + new Date(dt.getFullYear(),0,1).getDay()) / 7);
+      if (!weeks[wk]) weeks[wk] = { trades:[], pnl:0, wins:0 };
+      weeks[wk].trades.push(t);
+      weeks[wk].pnl += parseFloat(t.pl) || 0;
+      if ((parseFloat(t.pl)||0) > 0) weeks[wk].wins++;
+    });
+    h += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+    h += '<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px 6px;color:var(--t3);font-weight:600;font-size:10px">Semaine</th><th style="text-align:center;padding:8px 6px;color:var(--t3);font-weight:600;font-size:10px">Trades</th><th style="text-align:center;padding:8px 6px;color:var(--t3);font-weight:600;font-size:10px">WR</th><th style="text-align:right;padding:8px 6px;color:var(--t3);font-weight:600;font-size:10px">P&L</th></tr>';
+    Object.keys(weeks).sort().forEach(function(wk) {
+      var w = weeks[wk];
+      var wWr = w.trades.length ? (w.wins / w.trades.length * 100).toFixed(0) : '0';
+      h += '<tr style="border-bottom:1px solid var(--border)">';
+      h += '<td style="padding:8px 6px;color:var(--t1);font-weight:600">' + wk + '</td>';
+      h += '<td style="text-align:center;padding:8px 6px;color:var(--t2)">' + w.trades.length + '</td>';
+      h += '<td style="text-align:center;padding:8px 6px;color:' + (parseFloat(wWr)>=50?'var(--green)':'var(--red)') + ';font-family:JetBrains Mono,monospace">' + wWr + '%</td>';
+      h += '<td style="text-align:right;padding:8px 6px;font-family:JetBrains Mono,monospace;font-weight:700;color:' + (w.pnl>=0?'var(--green)':'var(--red)') + '">' + (w.pnl>=0?'+':'') + '$' + w.pnl.toFixed(0) + '</td>';
+      h += '</tr>';
+    });
+    h += '</table></div></div>';
+
+    /* Section 5 — Calendrier visuel */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
     h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Calendrier</div>';
     h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:10px;color:var(--t3);margin-bottom:6px">';
@@ -9972,16 +10224,71 @@ function rMonthly() {
     }
     h += '</div></div>';
 
-    /* Section 4 — Equity curve */
-    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    /* Section 6 — Equity curve */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">';
     h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Equity curve du mois</div>';
     h += '<div style="position:relative;height:200px;max-height:200px;overflow:hidden"><canvas id="monthlyEqChart"></canvas></div>';
     h += '</div>';
 
+    /* Section 7 — Monthly review questions */
+    h += _buildMonthlyReview(ym);
+
     el.innerHTML = h;
 
     renderMonthlyChart(ym, dayPnl, daysInMonth);
+
+    // Load saved review data into textareas
+    _loadMonthlyReviewData(ym);
   } catch(e) { console.error('rMonthly:', e) }
+}
+
+function _buildMonthlyReview(ym) {
+  try {
+    var h = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px">';
+    h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">Review mensuelle</div>';
+    var questions = [
+      { id: 'good', label: 'Qu\'est-ce qui a bien fonctionne ce mois ?' },
+      { id: 'improve', label: 'Qu\'est-ce que tu aurais fait differemment ?' },
+      { id: 'goal', label: 'Objectif principal pour le mois suivant ?' }
+    ];
+    questions.forEach(function(q) {
+      h += '<div style="margin-bottom:14px">';
+      h += '<label style="display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px">' + q.label + '</label>';
+      h += '<textarea id="mReview_' + q.id + '" onchange="saveMonthlyReview(\'' + ym + '\')" style="width:100%;min-height:70px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;resize:vertical;line-height:1.6" placeholder="Ecris ici..."></textarea>';
+      h += '</div>';
+    });
+    h += '</div>';
+    return h;
+  } catch(e) { return ''; }
+}
+
+function saveMonthlyReview(ym) {
+  try {
+    if (!D.monthlyReviews) D.monthlyReviews = {};
+    var good = document.getElementById('mReview_good');
+    var improve = document.getElementById('mReview_improve');
+    var goal = document.getElementById('mReview_goal');
+    D.monthlyReviews[ym] = {
+      good: good ? good.value : '',
+      improve: improve ? improve.value : '',
+      goal: goal ? goal.value : '',
+      updated: new Date().toISOString()
+    };
+    _s();
+  } catch(e) { console.error('[Aurum] saveMonthlyReview:', e); }
+}
+
+function _loadMonthlyReviewData(ym) {
+  try {
+    if (!D.monthlyReviews || !D.monthlyReviews[ym]) return;
+    var data = D.monthlyReviews[ym];
+    var good = document.getElementById('mReview_good');
+    var improve = document.getElementById('mReview_improve');
+    var goal = document.getElementById('mReview_goal');
+    if (good && data.good) good.value = data.good;
+    if (improve && data.improve) improve.value = data.improve;
+    if (goal && data.goal) goal.value = data.goal;
+  } catch(e) { console.error('[Aurum] _loadMonthlyReviewData:', e); }
 }
 
 function renderMonthlyChart(ym, dayPnl, daysInMonth) {
