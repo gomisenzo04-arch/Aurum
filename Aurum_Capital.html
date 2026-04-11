@@ -122,7 +122,7 @@ canvas{display:block;max-width:100%}
 .th{padding:14px 24px 10px;border-bottom:1px solid var(--border);background:rgba(6,9,14,.85);backdrop-filter:blur(8px);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .th h1{font-size:16px;font-weight:700;flex:1}.th .hb{padding:6px 14px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--gold);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;transition:all var(--transition);display:flex;align-items:center;gap:4px}
 .th .hb:hover{border-color:var(--gold);background:rgba(212,160,23,.06)}
-.pnl{display:none;padding:20px 24px 40px;max-width:1200px;margin:0 auto;animation:fi .25s ease}.pnl.on{display:block}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.pnl{display:none;padding:20px 24px 40px;max-width:1200px;margin:0 auto;animation:fi .25s ease}.pnl.on{display:block}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1}}@keyframes sessDot{0%,100%{opacity:1}50%{opacity:.3}}
 /* ─── COMPONENTS ─── */
 .crd{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
 .crd .lb{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
@@ -264,8 +264,8 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
 <div class="mw">
 <div class="th"><h1>💎 Aurum Capital</h1></div>
 <!-- PANELS - IDs match data-p attributes -->
-<div class="pnl on" id="p-dash"><div id="dEmpty" style="display:none"></div><div id="dH" style="text-align:center;margin-bottom:16px"></div><div class="sg" id="dK"></div><div id="dW"></div><div class="chg"><div class="cb"><div class="ct">Allocation</div><div style="position:relative;width:100%;height:240px;max-height:240px;overflow:hidden"><canvas id="cA"></canvas></div></div><div class="cb"><div class="ct">Évolution</div><div style="position:relative;width:100%;height:240px;max-height:240px;overflow:hidden"><canvas id="cE"></canvas></div></div></div><div class="cb"><div class="ct">Revenus vs Dépenses</div><div style="position:relative;width:100%;height:220px;max-height:220px;overflow:hidden"><canvas id="cR"></canvas></div></div><div class="cb"><div class="ct">Échéances fiscales</div><div id="dF"></div></div><div class="cb"><div class="ct">Activité récente</div><div id="dA" style="font-size:12px;color:var(--t3)"></div></div><div class="cb"><div class="ct">Projection</div><div id="dP" style="font-size:12px;color:var(--t2)"></div></div></div>
-<div class="pnl" id="p-coach"><div class="st">Coaching patrimonial</div><div id="coC"></div></div>
+<div class="pnl on" id="p-dash"><div id="dEmpty" style="display:none"></div><div id="dH" style="margin-bottom:16px"></div><div id="dK"></div><div id="dW"></div><!-- Évolution --><div style="margin-top:18px"><div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Évolution</div><div class="cb"><div class="ct">Courbe de patrimoine</div><div style="position:relative;width:100%;height:240px;max-height:240px;overflow:hidden"><canvas id="cE"></canvas></div></div></div><!-- Répartition --><div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Répartition</div><div class="cb"><div class="ct">Allocation</div><div style="position:relative;width:100%;height:240px;max-height:240px;overflow:hidden"><canvas id="cA"></canvas></div></div></div><!-- Revenus vs Dépenses --><div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Revenus vs Dépenses</div><div class="cb"><div style="position:relative;width:100%;height:220px;max-height:220px;overflow:hidden"><canvas id="cR"></canvas></div></div></div><div class="cb" style="margin-top:14px"><div class="ct">Échéances fiscales</div><div id="dF"></div></div><div class="cb"><div class="ct">Activité récente</div><div id="dA" style="font-size:12px;color:var(--t3)"></div></div><div class="cb"><div class="ct">Projection</div><div id="dP" style="font-size:12px;color:var(--t2)"></div></div></div>
+<div class="pnl" id="p-coach"><div class="st">Guide étape par étape</div><div id="coC"></div></div>
 <div class="pnl" id="p-health"><div class="st">Santé financière</div><div id="heC"></div></div>
 <div class="pnl" id="p-acc"><div class="st">Comptes trading <span style="font-size:10px;color:var(--t3);font-weight:400">Sync auto depuis Journal</span></div><div id="acC"></div></div>
 <div class="pnl" id="p-pf"><div class="st">Prop Firms <button class="btn bp bs" onclick="tg('pfF')">+ Challenge</button> <button class="btn bo bs" onclick="importPFFromJournal()">Importer depuis Journal</button></div>
@@ -528,14 +528,14 @@ function renderCapitalNav() {
     var el = document.getElementById('capitalTabs');
     if (!el) return;
     var groups = [
-      {id:'dashboard', label:'Dashboard', pages:[]},
+      {id:'dashboard', label:'Vue d\u0027ensemble', pages:[]},
       {id:'trading', label:'Trading', pages:[
-        {p:'acc',l:'Comptes'},{p:'pf',l:'Prop Firms'}
+        {p:'acc',l:'Mes comptes'},{p:'pf',l:'Prop Firms'}
       ]},
       {id:'patrimoine', label:'Patrimoine', pages:[
-        {p:'bank',l:'Trésorerie'},{p:'inv',l:'Portfolio'},{p:'po',l:'Payouts'},{p:'bud',l:'Budget'},{p:'pas',l:'Dettes'},{p:'coach',l:'Coaching'},{p:'health',l:'Santé'}
+        {p:'bank',l:'Trésorerie'},{p:'inv',l:'Mes investissements'},{p:'po',l:'Payouts'},{p:'bud',l:'Dépenses & Budget'},{p:'pas',l:'Dettes & Crédits'},{p:'coach',l:'Guide étape par étape'},{p:'health',l:'Bilan de santé'}
       ]},
-      {id:'fiscal', label:'Fiscal', pages:[
+      {id:'fiscal', label:'Impôts & Fiscalité', pages:[
         {p:'fis',l:'Simulateur'},{p:'ent',l:'Entités'}
       ]}
     ];
@@ -587,6 +587,10 @@ document.addEventListener('click', function(e) {
   } catch(ex) {}
 });
 function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA();else if(p==='bank')rBank();else if(p==='goals')rGoals();else if(p==='yir')rYIR()}catch(e){console.error(e)}}
+/* ─── TOOLTIP HELPER ─── */
+function tip(text){
+  try{return ' <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--t3);font-size:9px;cursor:help;font-weight:700;vertical-align:middle" title="'+text.replace(/"/g,'&quot;')+'">?</span>'}catch(e){return''}
+}
 /* ─── KPI helper ─── */
 function kp(l,v,c,icon){
   try {
@@ -648,7 +652,6 @@ var eM=D.expenses.filter(function(e){return e.month===cm}).reduce(function(s,e){
 var aM=D.abonnements.reduce(function(s,a){return s+(a.cost||0)},0);
 var mp=mPnL(),tM=mp[cm]?mp[cm].pnl:0;
 var hs=cH(),hc=hs>=75?'var(--green)':hs>=50?'var(--gold)':'var(--red)';
-document.getElementById('dH').innerHTML='<div class="hr" style="background:conic-gradient('+hc+' '+hs+'%,var(--bg3) '+hs+'%)"><div style="width:100px;height:100px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column"><div style="font-size:28px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+hc+'">'+hs+'</div><div style="font-size:8px;color:var(--t3);font-weight:700">SANTÉ</div></div></div>';
 var wr=j.t.length>0?Math.round(j.t.filter(function(t){return(parseFloat(t.pl)||0)>0}).length/j.t.length*100):0;
 var avgTrade=j.t.length>0?j.t.reduce(function(s,t){return s+(parseFloat(t.pl)||0)},0)/j.t.length:0;
 var streak=0,streakType='';
@@ -662,8 +665,56 @@ var eT=D.entities.reduce(function(s,e){return s+((e.status==='Active'||e.status=
 var bankTotal=D.bankAccounts.reduce(function(s,ba){return s+(ba.balance||0)},0);
 var liquide=D.bankAccounts.length>0?bankTotal:(pN+eT);
 var nonLiquide=pV+persoTotal;
-document.getElementById('dK').innerHTML=kp('Patrimoine net',fm(nw),nw>=0?'var(--purple)':'var(--red)')+kp('Liquidité',fm(liquide),liquide>0?'var(--green)':'var(--red)')+kp('Actifs non-liquides',fm(nonLiquide),'var(--blue)')+kp('Capital trading perso',fm(tc),'var(--blue)')+kp('Portfolio',fm(pV),'var(--green)')+kp('Dettes',fm(db),'var(--red)')+kp('Trading P&L mois',fm(tM),tM>=0?'var(--green)':'var(--red)')+kp('Trades mois',mp[cm]?mp[cm].n:0,'var(--t2)')+kp('Win Rate',wr+'%',wr>=50?'var(--green)':'var(--red)')+kp('Moy/trade',fm(avgTrade),avgTrade>=0?'var(--green)':'var(--red)')+kp('Série',streakTxt,streakType==='W'?'var(--green)':streakType==='L'?'var(--red)':'var(--t3)')+kp('Profit Factor',pf,parseFloat(pf)>=1.5?'var(--green)':parseFloat(pf)>=1?'var(--gold)':'var(--red)');
-document.getElementById('dK').innerHTML+='<div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px"><div class="crd" style="border-left:3px solid var(--green)"><div class="lb" style="font-size:10px;color:var(--t3)">👤 Personnel</div><div class="vl" style="color:var(--green);font-size:15px">'+fm(persoTotal)+'</div><div style="font-size:9px;color:var(--green);margin-top:2px;opacity:.7">✓ Dans le patrimoine</div></div><div class="crd" style="border-left:3px solid var(--gold)"><div class="lb" style="font-size:10px;color:var(--t3)">✓ Funded</div><div class="vl" style="color:var(--gold);font-size:15px">'+fm(fundedTotal)+'</div><div style="font-size:9px;color:var(--t3);margin-top:2px">Revenus via payouts</div></div><div class="crd" style="border-left:3px solid var(--t3)"><div class="lb" style="font-size:10px;color:var(--t3)">🏆 Challenge</div><div class="vl" style="color:var(--t3);font-size:15px">'+fm(challengeTotal)+'</div><div style="font-size:9px;color:var(--t3);margin-top:2px">Non compté</div></div></div><div style="grid-column:1/-1;text-align:right;font-size:10px;color:var(--t3);opacity:.6;margin-top:-4px">Sync Journal · Live uniquement</div>';
+/* ── PRIORITY 1: Patrimoine net — always visible hero card ── */
+document.getElementById('dH').innerHTML='<div style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(212,160,23,.04));border:1px solid rgba(167,139,250,.18);border-radius:12px;padding:20px 24px;margin-bottom:4px">'
++'<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Patrimoine net'+tip('Tout ce que tu possèdes moins tout ce que tu dois')+'</div>'
++'<div style="font-size:32px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+(nw>=0?'var(--purple)':'var(--red)')+'">'+fm(nw)+'</div>'
++'<div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12px">'
++'<span style="color:var(--t2)">Liquidité'+tip('L\u0027argent disponible immédiatement sur tes comptes bancaires')+' <b style="color:'+(liquide>0?'var(--green)':'var(--red)')+'">'+fm(liquide)+'</b></span>'
++'<span style="color:var(--t3)">|</span>'
++'<span style="color:var(--t2)">Non-liquide'+tip('L\u0027argent investi ou chez ton broker — pas immédiatement disponible')+' <b style="color:var(--blue)">'+fm(nonLiquide)+'</b></span>'
++'</div>'
++'<details style="margin-top:12px"><summary style="font-size:11px;color:var(--gold);cursor:pointer;font-weight:600;user-select:none">Voir le détail ▾</summary>'
++'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">'
++'<div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--t3)">👤 Personnel</div><div style="font-size:15px;font-weight:700;color:var(--green);font-family:JetBrains Mono,monospace">'+fm(persoTotal)+'</div><div style="font-size:9px;color:var(--green);opacity:.7">✓ Dans le patrimoine</div></div>'
++'<div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--t3)">✓ Funded</div><div style="font-size:15px;font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace">'+fm(fundedTotal)+'</div><div style="font-size:9px;color:var(--t3)">Revenus via payouts</div></div>'
++'<div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--t3)">🏆 Challenge</div><div style="font-size:15px;font-weight:700;color:var(--t3);font-family:JetBrains Mono,monospace">'+fm(challengeTotal)+'</div><div style="font-size:9px;color:var(--t3)">Non compté</div></div>'
++'</div>'
++'<div style="text-align:right;font-size:10px;color:var(--t3);opacity:.6;margin-top:4px">Sync Journal · Live uniquement</div>'
++'</details>'
++'</div>';
+/* ── PRIORITY 2: Ce mois-ci — quick summary ── */
+document.getElementById('dK').innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">'
++kp('Trading P&L mois'+tip('Tes gains/pertes de trading ce mois-ci'),fm(tM),tM>=0?'var(--green)':'var(--red)')
++kp('Dépenses mois',fm(eM+aM),'var(--red)')
++kp('Santé'+tip('Note sur 100 basée sur ton fonds d\u0027urgence, tes dettes et ta diversification'),hs+'/100',hc)
++'</div>';
+/* ── PRIORITY 3: Actions guidées (contextual) ── */
+var _actions=[];
+if(!D.bankAccounts.length)_actions.push({color:'var(--blue)',icon:'🏦',title:'Ajoute ton premier compte bancaire',why:'Pour calculer ta liquidité réelle et ton patrimoine net.',btn:'Ajouter un compte',page:'bank'});
+if(!D.payouts.length)_actions.push({color:'var(--gold)',icon:'💰',title:'Enregistre ton premier payout',why:'Un salaire, un payout prop firm... pour suivre tes revenus.',btn:'Ajouter un payout',page:'po'});
+if(!D.expenses.length&&!D.categories.length)_actions.push({color:'var(--purple)',icon:'💸',title:'Crée tes catégories de dépenses',why:'Pour savoir où part ton argent chaque mois.',btn:'Configurer le budget',page:'bud'});
+if(!D.entities.length&&nw>=25000)_actions.push({color:'var(--t3)',icon:'🏢',title:'Pense aux entités juridiques',why:'À ton niveau de patrimoine, structurer peut optimiser ta fiscalité.',btn:'En savoir plus',page:'ent'});
+if(_actions.length){
+document.getElementById('dK').innerHTML+='<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Prochaines étapes</div>'
++_actions.map(function(a){return'<div class="crd" style="cursor:pointer;border-left:3px solid '+a.color+';margin-bottom:8px;display:flex;align-items:center;gap:12px" onclick="go(\''+a.page+'\')">'
++'<div style="font-size:24px">'+a.icon+'</div>'
++'<div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--t1)">'+a.title+'</div><div style="font-size:11px;color:var(--t3);line-height:1.5">'+a.why+'</div></div>'
++'<span style="color:var(--gold);font-size:12px;white-space:nowrap">'+a.btn+' →</span>'
++'</div>'}).join('')+'</div>';
+}
+/* ── PRIORITY 4: More KPIs in collapsible detail ── */
+document.getElementById('dK').innerHTML+='<details style="margin-top:10px"><summary style="font-size:11px;color:var(--t2);cursor:pointer;font-weight:600;user-select:none">Plus de statistiques ▾</summary><div class="sg" style="margin-top:10px">'
++kp('Capital trading perso',fm(tc),'var(--blue)')
++kp('Portfolio',fm(pV),'var(--green)')
++kp('Dettes',fm(db),'var(--red)')
++kp('Trades mois',mp[cm]?mp[cm].n:0,'var(--t2)')
++kp('Win Rate',wr+'%',wr>=50?'var(--green)':'var(--red)')
++kp('Moy/trade',fm(avgTrade),avgTrade>=0?'var(--green)':'var(--red)')
++kp('Série',streakTxt,streakType==='W'?'var(--green)':streakType==='L'?'var(--red)':'var(--t3)')
++kp('Profit Factor',pf,parseFloat(pf)>=1.5?'var(--green)':parseFloat(pf)>=1?'var(--gold)':'var(--red)')
++kp('Runway'+tip('Combien de mois tu pourrais vivre sans revenus'),(eM+aM)>0?Math.floor(pN/(eM+aM))+' mois':'—','var(--t2)')
++'</div></details>';
 var tips=gWT();document.getElementById('dW').innerHTML=tips.length?'<div class="tip"><div class="tt2">📋 Cette semaine</div>'+tips.map(function(t){return'<div style="margin-bottom:4px">→ '+t+'</div>'}).join('')+'</div>':'';
 /* Charts */
 requestAnimationFrame(function(){rAC();rEC();rRC()});rDF();
@@ -856,11 +907,38 @@ function rCo(){try{var nw=cNW(),h='';
 var cur=ML.find(function(m){return m.t>nw})||ML[ML.length-1];
 var prev=ML.filter(function(m){return nw>=m.t});
 var pl=prev.length?prev[prev.length-1].l:'$0';
-h+='<div style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(212,160,23,.04));border:1px solid rgba(167,139,250,.18);border-radius:12px;padding:18px 20px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">';
+var curIdx=ML.indexOf(cur);
+var doneCount=prev.length;
+h+='<div style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(212,160,23,.04));border:1px solid rgba(167,139,250,.18);border-radius:12px;padding:18px 20px;margin-bottom:18px">';
+h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">';
 h+='<div><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">📍 OÙ TU EN ES</div>';
 h+='<div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--purple)">'+fm(nw)+'</div></div>';
 h+='<div style="text-align:right"><div style="font-size:12px;color:var(--t2);font-weight:600">Progression vers</div>';
 h+='<div style="font-size:14px;font-weight:700;color:var(--gold)">'+pl+' → '+cur.l+'</div></div></div>';
+/* ── Visual progress bar (roadmap) ── */
+h+='<div style="display:flex;align-items:center;gap:2px;margin-bottom:8px">';
+ML.forEach(function(m,i){
+  var done=nw>=m.t;
+  var isCur=!done&&(cur.t===m.t);
+  var bg=done?'var(--green)':isCur?'var(--gold)':'var(--bg3)';
+  var ht=done?'6px':isCur?'8px':'4px';
+  h+='<div style="flex:1;height:'+ht+';border-radius:4px;background:'+bg+';transition:all .3s" title="'+m.l+(done?' ✓':isCur?' ← Tu es ici':'')+'"></div>';
+});
+h+='</div>';
+h+='<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t3)">';
+h+='<span>'+ML[0].l+'</span>';
+h+='<span style="color:var(--gold);font-weight:700">'+doneCount+'/'+ML.length+' paliers</span>';
+h+='<span>'+ML[ML.length-1].l+'</span>';
+h+='</div></div>';
+/* ── Prochaine étape section ── */
+if(nw<ML[ML.length-1].t){
+var nextPc=Math.min(100,(nw/cur.t)*100);
+h+='<div style="background:rgba(212,160,23,.06);border:1px solid rgba(212,160,23,.15);border-left:3px solid var(--gold);border-radius:8px;padding:14px 16px;margin-bottom:18px">';
+h+='<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Prochaine étape : '+cur.e+' '+cur.l+'</div>';
+h+='<div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:8px">Il te reste <b style="color:var(--gold)">'+fm(cur.t-nw)+'</b> pour atteindre ce palier. Tu es à <b>'+nextPc.toFixed(0)+'%</b>.</div>';
+if(cur.expert&&cur.expert.length){h+='<div style="font-size:11px;color:var(--t2);margin-bottom:4px"><b>Ce que tu devrais faire maintenant :</b></div>';h+=cur.expert.slice(0,3).map(function(tip){return'<div style="font-size:11px;color:var(--t2);line-height:1.5;padding:2px 0;display:flex;gap:6px"><span style="color:var(--gold);flex-shrink:0">→</span><span>'+tip+'</span></div>'}).join('')}
+h+='</div>';
+}
 /* ── Actions concrètes par palier ── */
 var ACT={};
 ACT[5000]='<button onclick="go(\'bud\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:Inter,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Calculer mes dépenses</button> <button onclick="go(\'pf\')" style="display:inline-block;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--t2);font-family:Inter,sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s">→ Voir challenges</button>';
@@ -880,6 +958,7 @@ var isNext=!ok&&(cur.t===m.t);
 var bg=isNext?'background:rgba(167,139,250,.06);border-color:var(--purple)':'';
 var barGrad=ok?'background:linear-gradient(90deg,var(--green),var(--green2))':'background:linear-gradient(90deg,var(--purple),var(--gold))';
 var card='<div class="ob" style="'+bg+'">';
+if(isNext){card+='<div style="font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold);animation:sessDot 2s infinite"></span> Tu es ici</div>';}
 card+='<div class="obh"><div class="obn">'+m.e+' '+m.l+'</div><div class="obp">'+pc.toFixed(1)+'%</div></div>';
 card+='<div class="obb"><div class="obf" style="width:'+pc+'%;'+barGrad+';transition:width .6s ease-out"></div></div>';
 if(ok){

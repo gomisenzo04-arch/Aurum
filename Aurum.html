@@ -978,6 +978,7 @@ td.n { color: var(--red); font-weight: 600; text-shadow: 0 0 12px rgba(255,71,87
 .cal-day.holiday .cal-num { color: var(--purple) }
 .cal-holiday-icon { font-size:8px; line-height:1; position:absolute; top:2px; right:3px }
 .cal-holiday-dot { position:absolute; top:3px; right:3px; width:6px; height:6px; border-radius:50%; background:var(--purple); box-shadow:0 0 4px var(--purple) }
+.cal-news-dot { position:absolute; bottom:3px; left:3px; width:5px; height:5px; border-radius:50%; background:var(--red); box-shadow:0 0 4px var(--red); cursor:help }
 @keyframes sessDot { 0%,100%{opacity:1} 50%{opacity:.4} }
 /* ─── MODAL ─── */
 .modal-overlay {
@@ -1782,6 +1783,12 @@ a:hover{opacity:.85}
 </div>
 <div class="calendar-grid" id="calGrid"></div>
 <div id="calSummary" style="display:none;font-size:12px;padding:8px 0;text-align:center"></div>
+<div style="display:flex;gap:12px;justify-content:center;font-size:9px;color:var(--t3);margin-top:6px;flex-wrap:wrap">
+  <span>🟢 Jour positif</span>
+  <span>🔴 Jour négatif</span>
+  <span style="color:var(--purple)">🟣 Jour férié</span>
+  <span style="color:var(--red)">● News rouge USD</span>
+</div>
 <div id="calDayDetail" class="cal-day-detail"></div>
 </div>
 <!-- Glossaire rapide -->
@@ -3392,6 +3399,28 @@ function rDashSessionWidget() {
   } catch(e) {}
 }
 
+// ─── FOREX FACTORY RED NEWS (USD) ───
+var FF_RED_NEWS = {
+  '2025-01-10':'CPI','2025-01-29':'FOMC','2025-02-07':'NFP','2025-02-12':'CPI',
+  '2025-03-07':'NFP','2025-03-12':'CPI','2025-03-19':'FOMC',
+  '2025-04-04':'NFP','2025-04-10':'CPI','2025-05-02':'NFP','2025-05-07':'FOMC','2025-05-13':'CPI',
+  '2025-06-06':'NFP','2025-06-11':'CPI','2025-06-18':'FOMC',
+  '2025-07-03':'NFP','2025-07-10':'CPI','2025-07-30':'FOMC',
+  '2025-08-01':'NFP','2025-08-12':'CPI','2025-09-05':'NFP','2025-09-10':'CPI','2025-09-17':'FOMC',
+  '2025-10-03':'NFP','2025-10-14':'CPI','2025-10-29':'FOMC',
+  '2025-11-07':'NFP','2025-11-12':'CPI','2025-12-05':'NFP','2025-12-10':'CPI','2025-12-17':'FOMC',
+  '2026-01-09':'NFP','2026-01-14':'CPI','2026-01-28':'FOMC',
+  '2026-02-06':'NFP','2026-02-11':'CPI',
+  '2026-03-06':'NFP','2026-03-11':'CPI','2026-03-18':'FOMC',
+  '2026-04-03':'NFP','2026-04-10':'CPI','2026-04-29':'FOMC',
+  '2026-05-01':'NFP','2026-05-12':'CPI','2026-06-05':'NFP','2026-06-10':'CPI','2026-06-17':'FOMC',
+  '2026-07-02':'NFP','2026-07-14':'CPI','2026-07-29':'FOMC',
+  '2026-08-07':'NFP','2026-08-12':'CPI','2026-09-04':'NFP','2026-09-10':'CPI','2026-09-16':'FOMC',
+  '2026-10-02':'NFP','2026-10-13':'CPI','2026-10-28':'FOMC',
+  '2026-11-06':'NFP','2026-11-12':'CPI','2026-12-04':'NFP','2026-12-09':'CPI','2026-12-16':'FOMC'
+};
+var FF_LABELS = {'NFP':'NFP (Non-Farm Payrolls)','CPI':'CPI (Inflation)','FOMC':'FOMC (Taux directeur)'};
+
 // ─── XAUUSD HOLIDAYS ───
 var XAUUSD_HOLIDAYS = {
   '2025-01-01':'Nouvel An (ferm\u00e9)','2025-01-20':'MLK Day (anticip\u00e9e)',
@@ -3454,8 +3483,10 @@ function rCalendar() {
     const countText = info ? `<span class="cal-count">${info.trades}t</span>` : '';
     const clickHandler = info ? `onclick="openCalDay('${dateStr}')"` : '';
     const holidayIcon = holiday ? (info ? '<span class="cal-holiday-dot"></span>' : '<span class="cal-holiday-icon">' + (holiday.indexOf('ferm') >= 0 ? '\uD83D\uDD12' : '\u26A1') + '</span>') : '';
-    const titleAttr = holiday ? `title="${holiday}"` : '';
-    html += `<div class="${cls}" ${clickHandler} ${titleAttr}><span class="cal-num">${d}</span>${plText}${countText}${holidayIcon}</div>`;
+    const news = FF_RED_NEWS[dateStr];
+    const newsIcon = news ? '<span class="cal-news-dot" title="' + (FF_LABELS[news]||news) + '"></span>' : '';
+    const titleAttr = holiday ? `title="${holiday}"` : (news ? `title="${FF_LABELS[news]||news}"` : '');
+    html += `<div class="${cls}" ${clickHandler} ${titleAttr}><span class="cal-num">${d}</span>${plText}${countText}${holidayIcon}${newsIcon}</div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
 
