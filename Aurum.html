@@ -2299,9 +2299,10 @@ a:hover{opacity:.85}
 <!-- SETTINGS / ACCOUNTS -->
 <div class="panel" id="settings">
 <div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:16px">Comptes de trading</div>
-<div id="settingsTabs" style="display:flex;gap:4px;padding:4px;background:var(--bg2);border-radius:8px;margin-bottom:16px">
+<div id="settingsTabs" style="display:flex;gap:4px;padding:4px;background:var(--bg2);border-radius:8px;margin-bottom:16px;flex-wrap:wrap">
   <button class="subtab active" onclick="goSettings('accounts')">Mes comptes</button>
   <button class="subtab" onclick="goSettings('propfirm')">Suivi Prop Firms</button>
+  <button class="subtab" onclick="goSettings('news')">News USD</button>
 </div>
 <div id="settingsContent"></div>
 
@@ -3399,212 +3400,202 @@ function rDashSessionWidget() {
   } catch(e) {}
 }
 
-// ─── FOREX FACTORY RED NEWS (USD) ───
-/* Forex Factory — ALL red-flag USD events 2025-2026 with times (ET → Paris +6h) */
-var FF_RED_NEWS = {
-  /* ══ 2025 ══ */
-  /* Janvier */
-  '2025-01-03':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2025-01-10':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-01-14':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-01-16':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2025-01-29':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2025-01-30':[{t:'14:30',n:'GDP',d:'PIB (avancé)'}],
-  '2025-01-31':[{t:'14:30',n:'PCE',d:'Core PCE (inflation préférée Fed)'}],
-  /* Février */
-  '2025-02-03':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-02-05':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-02-07':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2025-02-12':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-02-13':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-02-14':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2025-02-25':[{t:'16:00',n:'CB Conf',d:'Confiance consommateurs'}],
-  '2025-02-28':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  /* Mars */
-  '2025-03-03':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-03-05':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-03-07':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2025-03-12':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-03-13':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-03-17':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2025-03-19':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2025-03-27':[{t:'14:30',n:'GDP',d:'PIB (final)'}],
-  '2025-03-28':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  /* Avril */
-  '2025-04-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-04-03':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-04-04':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2025-04-10':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-04-11':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-04-16':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2025-04-25':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2025-04-29':[{t:'16:00',n:'CB Conf',d:'Confiance consommateurs'}],
-  '2025-04-30':[{t:'14:30',n:'GDP',d:'PIB (avancé)'}],
-  /* Mai */
-  '2025-05-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-05-02':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2025-05-05':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-05-07':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2025-05-13':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-05-15':[{t:'14:30',n:'Retail',d:'Ventes au détail'},{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-05-29':[{t:'14:30',n:'GDP',d:'PIB (2e estimation)'}],
-  '2025-05-30':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  /* Juin */
-  '2025-06-02':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-06-04':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-06-06':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2025-06-11':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-06-12':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-06-17':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2025-06-18':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2025-06-26':[{t:'14:30',n:'GDP',d:'PIB (final)'}],
-  '2025-06-27':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  /* Juillet */
-  '2025-07-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-07-03':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'},{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-07-10':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-07-11':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-07-16':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2025-07-25':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2025-07-30':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'},{t:'14:30',n:'GDP',d:'PIB (avancé)'}],
-  /* Août */
-  '2025-08-01':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'},{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-08-05':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-08-12':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-08-14':[{t:'14:30',n:'Retail',d:'Ventes au détail'},{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-08-28':[{t:'14:30',n:'GDP',d:'PIB (2e estimation)'}],
-  '2025-08-29':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  /* Septembre */
-  '2025-09-02':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-09-04':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-09-05':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2025-09-10':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-09-11':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-09-16':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2025-09-17':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2025-09-25':[{t:'14:30',n:'GDP',d:'PIB (final)'}],
-  '2025-09-26':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  /* Octobre */
-  '2025-10-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-10-03':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'},{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-10-14':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-10-15':[{t:'14:30',n:'Retail',d:'Ventes au détail'},{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-10-28':[{t:'16:00',n:'CB Conf',d:'Confiance consommateurs'}],
-  '2025-10-29':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'},{t:'14:30',n:'GDP',d:'PIB (avancé)'}],
-  '2025-10-31':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  /* Novembre */
-  '2025-11-03':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-11-05':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-11-07':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2025-11-12':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-11-13':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-11-14':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2025-11-26':[{t:'14:30',n:'GDP',d:'PIB (2e estimation)'},{t:'14:30',n:'PCE',d:'Core PCE'}],
-  /* Décembre */
-  '2025-12-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2025-12-03':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2025-12-05':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2025-12-10':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2025-12-11':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2025-12-16':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2025-12-17':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2025-12-23':[{t:'16:00',n:'CB Conf',d:'Confiance consommateurs'}],
-  '2025-12-24':[{t:'14:30',n:'GDP',d:'PIB (final)'},{t:'14:30',n:'PCE',d:'Core PCE'}],
-  /* ══ 2026 ══ */
-  '2026-01-02':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-01-07':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-01-09':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2026-01-14':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'},{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2026-01-16':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-01-28':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2026-01-29':[{t:'14:30',n:'GDP',d:'PIB (avancé)'}],
-  '2026-01-30':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2026-02-02':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-02-04':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-02-06':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2026-02-11':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-02-12':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2026-02-17':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-02-24':[{t:'16:00',n:'CB Conf',d:'Confiance consommateurs'}],
-  '2026-02-27':[{t:'14:30',n:'PCE',d:'Core PCE'},{t:'14:30',n:'GDP',d:'PIB (2e estimation)'}],
-  '2026-03-02':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-03-04':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-03-06':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2026-03-11':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-03-12':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2026-03-17':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-03-18':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2026-03-26':[{t:'14:30',n:'GDP',d:'PIB (final)'}],
-  '2026-03-27':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2026-04-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-04-03':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'},{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-04-10':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-04-14':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2026-04-15':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-04-28':[{t:'16:00',n:'CB Conf',d:'Confiance consommateurs'}],
-  '2026-04-29':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'},{t:'14:30',n:'GDP',d:'PIB (avancé)'}],
-  '2026-04-30':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2026-05-01':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'},{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-05-05':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-05-12':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-05-14':[{t:'14:30',n:'PPI',d:'Prix à la production'},{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-05-28':[{t:'14:30',n:'GDP',d:'PIB (2e estimation)'}],
-  '2026-05-29':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2026-06-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-06-03':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-06-05':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2026-06-10':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-06-11':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2026-06-16':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-06-17':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2026-06-25':[{t:'14:30',n:'GDP',d:'PIB (final)'}],
-  '2026-06-26':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2026-07-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-07-02':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'},{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-07-14':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-07-15':[{t:'14:30',n:'PPI',d:'Prix à la production'},{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-07-29':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'},{t:'14:30',n:'GDP',d:'PIB (avancé)'}],
-  '2026-07-31':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2026-08-03':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-08-05':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-08-07':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2026-08-12':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-08-13':[{t:'14:30',n:'PPI',d:'Prix à la production'},{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-08-27':[{t:'14:30',n:'GDP',d:'PIB (2e estimation)'}],
-  '2026-08-28':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2026-09-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-09-03':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-09-04':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2026-09-10':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-09-11':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2026-09-15':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-09-16':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2026-09-24':[{t:'14:30',n:'GDP',d:'PIB (final)'}],
-  '2026-09-25':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2026-10-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-10-02':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'},{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-10-13':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-10-14':[{t:'14:30',n:'PPI',d:'Prix à la production'},{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-10-27':[{t:'16:00',n:'CB Conf',d:'Confiance consommateurs'}],
-  '2026-10-28':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'},{t:'14:30',n:'GDP',d:'PIB (avancé)'}],
-  '2026-10-30':[{t:'14:30',n:'PCE',d:'Core PCE'}],
-  '2026-11-02':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-11-04':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-11-06':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2026-11-12':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-11-13':[{t:'14:30',n:'PPI',d:'Prix à la production'},{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-11-25':[{t:'14:30',n:'GDP',d:'PIB (2e estimation)'},{t:'14:30',n:'PCE',d:'Core PCE'},{t:'16:00',n:'CB Conf',d:'Confiance consommateurs'}],
-  '2026-12-01':[{t:'16:00',n:'ISM',d:'ISM Manufacturier'}],
-  '2026-12-03':[{t:'16:00',n:'ISM-S',d:'ISM Services'}],
-  '2026-12-04':[{t:'14:30',n:'NFP',d:'Non-Farm Payrolls'},{t:'14:30',n:'Unemployment',d:'Taux de chômage'}],
-  '2026-12-09':[{t:'14:30',n:'CPI',d:'Inflation (IPC)'}],
-  '2026-12-10':[{t:'14:30',n:'PPI',d:'Prix à la production'}],
-  '2026-12-15':[{t:'14:30',n:'Retail',d:'Ventes au détail'}],
-  '2026-12-16':[{t:'20:00',n:'FOMC',d:'Décision taux Fed'},{t:'20:30',n:'Powell',d:'Conférence Powell'}],
-  '2026-12-22':[{t:'16:00',n:'CB Conf',d:'Confiance consommateurs'}],
-  '2026-12-23':[{t:'14:30',n:'GDP',d:'PIB (final)'},{t:'14:30',n:'PCE',d:'Core PCE'}]
+// ─── FOREX FACTORY RED NEWS (USD) — user-managed ───
+var FF_TYPES = {
+  'NFP': 'Non-Farm Payrolls',
+  'CPI': 'Inflation (IPC)',
+  'FOMC': 'Décision taux Fed',
+  'PPI': 'Prix à la production',
+  'Retail': 'Ventes au détail',
+  'ISM': 'ISM Manufacturier',
+  'ISM-S': 'ISM Services',
+  'GDP': 'PIB',
+  'PCE': 'Core PCE (inflation Fed)',
+  'CB Conf': 'Confiance consommateurs',
+  'Powell': 'Conférence Powell',
+  'Unemployment': 'Taux de chômage'
 };
+var FF_RED_NEWS = {};
+function loadFFNews() {
+  try {
+    var raw = localStorage.getItem('aurum_ff_news');
+    if (raw) FF_RED_NEWS = JSON.parse(raw);
+    else FF_RED_NEWS = {};
+  } catch(e) { FF_RED_NEWS = {}; }
+}
+function saveFFNews() {
+  try { localStorage.setItem('aurum_ff_news', JSON.stringify(FF_RED_NEWS)); } catch(e) {}
+}
+function addFFNewsEntry(dateStr, time, name, desc) {
+  try {
+    if (!FF_RED_NEWS[dateStr]) FF_RED_NEWS[dateStr] = [];
+    var exists = FF_RED_NEWS[dateStr].some(function(ev) { return ev.t === time && ev.n === name; });
+    if (!exists) {
+      FF_RED_NEWS[dateStr].push({ t: time, n: name, d: desc || FF_TYPES[name] || name });
+      FF_RED_NEWS[dateStr].sort(function(a,b) { return a.t.localeCompare(b.t); });
+    }
+    saveFFNews();
+  } catch(e) { console.error('[Aurum] addFFNewsEntry:', e); }
+}
+function removeFFNewsEntry(dateStr, idx) {
+  try {
+    if (FF_RED_NEWS[dateStr]) {
+      FF_RED_NEWS[dateStr].splice(idx, 1);
+      if (FF_RED_NEWS[dateStr].length === 0) delete FF_RED_NEWS[dateStr];
+      saveFFNews();
+    }
+  } catch(e) { console.error('[Aurum] removeFFNewsEntry:', e); }
+}
+function clearAllFFNews() {
+  try {
+    if (!confirm('Supprimer toutes les news USD ?')) return;
+    FF_RED_NEWS = {};
+    saveFFNews();
+    rSettingsContent();
+    toast('Toutes les news supprimées');
+  } catch(e) { console.error('[Aurum] clearAllFFNews:', e); }
+}
+function prefillFFNews() {
+  try {
+    if (Object.keys(FF_RED_NEWS).length > 0 && !confirm('Des news existent déjà. Ajouter les estimations sans supprimer les existantes ?')) return;
+    var year = new Date().getFullYear();
+    /* NFP: ~first Friday each month at 14:30 */
+    for (var m = 0; m < 12; m++) {
+      var d = new Date(year, m, 1);
+      while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
+      var ds = year + '-' + String(m+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      addFFNewsEntry(ds, '14:30', 'NFP', 'Non-Farm Payrolls');
+      addFFNewsEntry(ds, '14:30', 'Unemployment', 'Taux de chômage');
+    }
+    /* CPI: ~12th each month at 14:30 */
+    for (var m2 = 0; m2 < 12; m2++) {
+      var ds2 = year + '-' + String(m2+1).padStart(2,'0') + '-12';
+      addFFNewsEntry(ds2, '14:30', 'CPI', 'Inflation (IPC)');
+    }
+    /* FOMC: 8 meetings/year (approximate months: 1,3,5,6,7,9,11,12 — 3rd Wednesday) */
+    var fomcMonths = [0,2,4,5,6,8,10,11];
+    fomcMonths.forEach(function(fm) {
+      var fd = new Date(year, fm, 1);
+      var wedCount = 0;
+      while (wedCount < 3) { if (fd.getDay() === 3) wedCount++; if (wedCount < 3) fd.setDate(fd.getDate() + 1); }
+      var fds = year + '-' + String(fm+1).padStart(2,'0') + '-' + String(fd.getDate()).padStart(2,'0');
+      addFFNewsEntry(fds, '20:00', 'FOMC', 'Décision taux Fed');
+      addFFNewsEntry(fds, '20:30', 'Powell', 'Conférence Powell');
+    });
+    saveFFNews();
+    rSettingsContent();
+    toast('News estimées chargées (' + year + ')');
+  } catch(e) { console.error('[Aurum] prefillFFNews:', e); }
+}
+function importBulkFFNews() {
+  try {
+    var ta = document.getElementById('ffBulkTA');
+    if (!ta) return;
+    var lines = ta.value.trim().split('\n').filter(function(l) { return l.trim().length > 0; });
+    var count = 0;
+    lines.forEach(function(line) {
+      var parts = line.trim().match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\s+(.+)$/);
+      if (parts) {
+        var dateStr = parts[1], time = parts[2], name = parts[3].trim();
+        var desc = FF_TYPES[name] || name;
+        addFFNewsEntry(dateStr, time, name, desc);
+        count++;
+      }
+    });
+    ta.value = '';
+    saveFFNews();
+    rSettingsContent();
+    toast(count + ' news importée' + (count > 1 ? 's' : ''));
+  } catch(e) { console.error('[Aurum] importBulkFFNews:', e); }
+}
+function rSettingsNews(el) {
+  try {
+    var h = '';
+    /* Quick add form */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px">';
+    h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:12px">Ajouter une news</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:end">';
+    h += '<div style="flex:1;min-width:140px"><label style="font-size:10px;color:var(--t3);display:block;margin-bottom:4px">Date</label><input type="date" id="ffAddDate" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px"></div>';
+    h += '<div style="min-width:90px"><label style="font-size:10px;color:var(--t3);display:block;margin-bottom:4px">Heure</label><input type="time" id="ffAddTime" value="14:30" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px"></div>';
+    h += '<div style="min-width:140px"><label style="font-size:10px;color:var(--t3);display:block;margin-bottom:4px">Type</label><select id="ffAddType" onchange="document.getElementById(\'ffCustomName\').style.display=this.value===\'Autre\'?\'block\':\'none\'" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px">';
+    var types = ['NFP','CPI','FOMC','PPI','Retail','ISM','ISM-S','GDP','PCE','CB Conf','Powell','Unemployment','Autre'];
+    types.forEach(function(t) { h += '<option value="' + t + '">' + t + '</option>'; });
+    h += '</select></div>';
+    h += '<div id="ffCustomName" style="display:none;min-width:140px"><label style="font-size:10px;color:var(--t3);display:block;margin-bottom:4px">Nom personnalisé</label><input type="text" id="ffAddCustom" placeholder="Ex: Core CPI" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px"></div>';
+    h += '<button class="btn btn-g" onclick="ffQuickAdd()" style="min-height:44px;padding:10px 20px;white-space:nowrap">+ Ajouter</button>';
+    h += '</div></div>';
 
+    /* Bulk paste */
+    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px">';
+    h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px">Import groupé</div>';
+    h += '<div style="font-size:11px;color:var(--t3);margin-bottom:8px">Une news par ligne : <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:10px">YYYY-MM-DD HH:MM NOM</code></div>';
+    h += '<textarea id="ffBulkTA" placeholder="2025-04-10 14:30 CPI\n2025-04-04 14:30 NFP\n2025-04-04 14:30 Unemployment Rate" style="width:100%;height:90px;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:\'JetBrains Mono\',monospace;font-size:12px;resize:vertical"></textarea>';
+    h += '<div style="display:flex;gap:8px;margin-top:8px">';
+    h += '<button class="btn btn-g" onclick="importBulkFFNews()" style="min-height:44px;padding:10px 20px">Importer</button>';
+    h += '<button class="btn btn-o" onclick="prefillFFNews()" style="min-height:44px;padding:10px 16px;font-size:12px">Charger news courantes (estimées)</button>';
+    h += '</div></div>';
+
+    /* Existing news list grouped by month */
+    var dates = Object.keys(FF_RED_NEWS).sort();
+    if (dates.length > 0) {
+      h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px">';
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:14px;font-weight:700;color:var(--t1)">News enregistrées</div><span style="font-size:11px;color:var(--t3)">' + dates.reduce(function(s,d){return s+FF_RED_NEWS[d].length},0) + ' événement(s)</span></div>';
+      var monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+      var currentMonth = '';
+      dates.forEach(function(dateStr) {
+        var ym = dateStr.substring(0, 7);
+        var parts = ym.split('-');
+        var label = monthNames[parseInt(parts[1])-1] + ' ' + parts[0];
+        if (ym !== currentMonth) {
+          if (currentMonth) h += '</div>';
+          currentMonth = ym;
+          h += '<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)">' + label + '</div>';
+        }
+        FF_RED_NEWS[dateStr].forEach(function(ev, idx) {
+          var dayP = dateStr.split('-');
+          var dayLabel = dayP[2] + '/' + dayP[1];
+          h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;margin-bottom:2px;background:var(--bg3)">';
+          h += '<span style="font-size:12px;font-weight:600;color:var(--t2);min-width:42px;font-family:JetBrains Mono,monospace">' + dayLabel + '</span>';
+          h += '<span style="font-size:12px;color:var(--gold);min-width:40px;font-family:JetBrains Mono,monospace">' + ev.t + '</span>';
+          h += '<span style="font-size:12px;font-weight:700;color:var(--red);min-width:60px">' + ev.n + '</span>';
+          h += '<span style="font-size:11px;color:var(--t3);flex:1">' + (ev.d||'') + '</span>';
+          h += '<button onclick="removeFFNewsEntry(\'' + dateStr + '\',' + idx + ');rSettingsContent()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px 8px;min-width:36px;min-height:36px;border-radius:6px;transition:background .15s" onmouseover="this.style.background=\'rgba(255,71,87,.1)\'" onmouseout="this.style.background=\'none\'">&times;</button>';
+          h += '</div>';
+        });
+      });
+      if (currentMonth) h += '</div>';
+      h += '<button onclick="clearAllFFNews()" style="margin-top:12px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);color:var(--red);padding:10px 20px;border-radius:var(--radius);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;min-height:44px;transition:all .15s" onmouseover="this.style.background=\'rgba(255,71,87,.18)\'" onmouseout="this.style.background=\'rgba(255,71,87,.1)\'">Tout supprimer</button>';
+      h += '</div>';
+    } else {
+      h += '<div style="text-align:center;padding:30px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)"><div style="font-size:32px;margin-bottom:8px">📰</div><div style="font-size:13px;color:var(--t3);line-height:1.6">Aucune news enregistrée.<br>Utilise le bouton <b style="color:var(--gold)">Charger news courantes</b> pour commencer.</div></div>';
+    }
+    el.innerHTML = h;
+    /* Set default date to today */
+    var todayInput = document.getElementById('ffAddDate');
+    if (todayInput && !todayInput.value) todayInput.value = new Date().toISOString().slice(0,10);
+  } catch(e) { console.error('[Aurum] rSettingsNews:', e); }
+}
+function ffQuickAdd() {
+  try {
+    var dateStr = document.getElementById('ffAddDate').value;
+    var time = document.getElementById('ffAddTime').value;
+    var type = document.getElementById('ffAddType').value;
+    if (!dateStr || !time) { toast('Date et heure requises'); return; }
+    var name = type;
+    if (type === 'Autre') {
+      name = (document.getElementById('ffAddCustom').value || '').trim();
+      if (!name) { toast('Nom personnalisé requis'); return; }
+    }
+    var desc = FF_TYPES[name] || name;
+    addFFNewsEntry(dateStr, time, name, desc);
+    rSettingsContent();
+    rCalendar();
+    toast('News ajoutée : ' + name + ' le ' + dateStr);
+  } catch(e) { console.error('[Aurum] ffQuickAdd:', e); }
+}
+loadFFNews();
+
+/* Legacy comment: FF_RED_NEWS is now loaded from localStorage via loadFFNews() */
 // ─── XAUUSD HOLIDAYS ───
 var XAUUSD_HOLIDAYS = {
   '2025-01-01':'Nouvel An (ferm\u00e9)','2025-01-20':'MLK Day (anticip\u00e9e)',
@@ -6516,7 +6507,7 @@ function goSettings(tab) {
     if (event && event.target) event.target.classList.add('active');
     else {
       var btns = document.querySelectorAll('#settingsTabs .subtab');
-      btns.forEach(function(b){ if ((tab==='accounts' && b.textContent.indexOf('Mes comptes')>=0) || (tab==='propfirm' && b.textContent.indexOf('Prop')>=0)) b.classList.add('active'); });
+      btns.forEach(function(b){ if ((tab==='accounts' && b.textContent.indexOf('Mes comptes')>=0) || (tab==='propfirm' && b.textContent.indexOf('Prop')>=0) || (tab==='news' && b.textContent.indexOf('News')>=0)) b.classList.add('active'); });
     }
     rSettingsContent();
   } catch(e) { console.error('[Aurum] goSettings:', e); }
@@ -6527,6 +6518,7 @@ function rSettingsContent() {
     if (!el) return;
     if (_settingsTab === 'accounts') { rSettingsAccounts(el); }
     else if (_settingsTab === 'propfirm') { rSettingsPropFirm(el); }
+    else if (_settingsTab === 'news') { rSettingsNews(el); }
   } catch(e) { console.error('[Aurum] rSettingsContent:', e); }
 }
 function rSettingsAccounts(el) {
@@ -6671,7 +6663,7 @@ function exCSV(t) {
 }
 function exJSON() {
   try {
-    var ALL_KEYS=['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist'];
+    var ALL_KEYS=['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist','aurum_ff_news'];
     /* Save current journal state first */
     _s();
     var backup={ _version:2, _date:new Date().toISOString(), keys:{} };
@@ -6699,7 +6691,7 @@ function imJSON(inp) {
   reader.onload = e => {
     try {
       const data = JSON.parse(e.target.result);
-      const ALL_KEYS=['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist'];
+      const ALL_KEYS=['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist','aurum_ff_news'];
       let restoredCount = 0;
       let tradeCount = 0, moduleCount = 0, payoutCount = 0;
 
@@ -6714,7 +6706,7 @@ function imJSON(inp) {
             }
           });
           /* Reload journal data from restored localStorage */
-          _l(); R();
+          _l(); loadFFNews(); R();
         } else {
           /* Merge mode: only merge journal trades, keep rest */
           if (data.keys['enz_v4']) {
@@ -6829,7 +6821,7 @@ function resetAllData() {
   try {
     if (!confirm('ATTENTION : Cela va supprimer TOUTES tes donnees (trades, formation, capital, sessions). Cette action est irreversible.\n\nEs-tu sur ?')) return;
     if (!confirm('Derniere chance. Toutes les donnees seront perdues. Continuer ?')) return;
-    ['enz_v4', 'aurum_formation_v1', 'aurum_capital_v1', 'aurum_streak', 'aurum_checklist', 'aurum_backup_journal', 'aurum_backup_capital', 'aurum_draft_trade'].forEach(function(k) {
+    ['enz_v4', 'aurum_formation_v1', 'aurum_capital_v1', 'aurum_streak', 'aurum_checklist', 'aurum_backup_journal', 'aurum_backup_capital', 'aurum_draft_trade', 'aurum_ff_news'].forEach(function(k) {
       localStorage.removeItem(k);
     });
     toast('Donnees reinitialisees');
