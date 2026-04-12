@@ -3511,6 +3511,26 @@ function importBulkFFNews() {
 function rSettingsNews(el) {
   try {
     var h = '';
+
+    /* ─── GUIDE EXPLICATIF ─── */
+    h += '<div style="background:linear-gradient(135deg,rgba(212,160,23,.06),rgba(255,71,87,.04));border:1px solid rgba(212,160,23,.15);border-left:3px solid var(--gold);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px">';
+    h += '<div style="font-size:15px;font-weight:800;color:var(--t1);margin-bottom:8px">Pourquoi c\'est important ?</div>';
+    h += '<div style="font-size:12px;color:var(--t2);line-height:1.8">';
+    h += 'Les <b style="color:var(--red)">news rouges USD</b> (NFP, CPI, FOMC...) provoquent des <b>mouvements violents</b> sur le XAUUSD. ';
+    h += 'Ta r\u00e8gle : <b>pas de trade 5 min avant/apr\u00e8s une news rouge</b>.<br>';
+    h += 'Ces \u00e9v\u00e9nements apparaissent dans le <b>calendrier du Dashboard</b> sous forme de <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:7px;background:var(--red);color:#fff;font-size:8px;font-weight:700;vertical-align:middle">2</span> points rouges avec l\'heure et le d\u00e9tail au survol.';
+    h += '</div>';
+    h += '<div style="margin-top:12px;padding:12px 14px;background:var(--bg3);border-radius:8px">';
+    h += '<div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Comment faire ?</div>';
+    h += '<div style="display:grid;gap:8px;font-size:12px;color:var(--t2);line-height:1.6">';
+    h += '<div style="display:flex;gap:10px;align-items:start"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold);flex-shrink:0">1</span><div>Va sur <b style="color:var(--t1)">forexfactory.com/calendar</b> \u2192 filtre <b style="color:var(--red)">High Impact</b> + <b>USD</b></div></div>';
+    h += '<div style="display:flex;gap:10px;align-items:start"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold);flex-shrink:0">2</span><div>Note les dates, heures et noms (ex: <code style="background:var(--bg);padding:1px 6px;border-radius:4px;font-size:10px">2025-04-10 14:30 CPI</code>)</div></div>';
+    h += '<div style="display:flex;gap:10px;align-items:start"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold);flex-shrink:0">3</span><div>Colle-les dans la zone <b style="color:var(--t1)">Import group\u00e9</b> ci-dessous (un par ligne) puis clique <b>Importer</b></div></div>';
+    h += '<div style="display:flex;gap:10px;align-items:start"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold);flex-shrink:0">4</span><div>Ou clique <b style="color:var(--gold)">Charger news courantes</b> pour un remplissage auto des NFP, CPI et FOMC de l\'ann\u00e9e</div></div>';
+    h += '</div></div>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-top:8px">Les heures sont en heure de Paris (UTC+1/+2). Tes news sont sauvegard\u00e9es et incluses dans tes backups.</div>';
+    h += '</div>';
+
     /* Quick add form */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px">';
     h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:12px">Ajouter une news</div>';
@@ -3527,8 +3547,8 @@ function rSettingsNews(el) {
 
     /* Bulk paste */
     h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px">';
-    h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px">Import groupé</div>';
-    h += '<div style="font-size:11px;color:var(--t3);margin-bottom:8px">Une news par ligne : <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:10px">YYYY-MM-DD HH:MM NOM</code></div>';
+    h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px">Import group\u00e9 depuis Forex Factory</div>';
+    h += '<div style="font-size:11px;color:var(--t2);margin-bottom:8px;line-height:1.6">Copie les news depuis <b style="color:var(--t1)">forexfactory.com</b> et colle-les ici. <b>Une news par ligne</b>, format :<br><code style="background:var(--bg3);padding:3px 8px;border-radius:4px;font-size:11px;color:var(--gold);font-family:JetBrains Mono,monospace">AAAA-MM-JJ HH:MM NOM</code></div>';
     h += '<textarea id="ffBulkTA" placeholder="2025-04-10 14:30 CPI\n2025-04-04 14:30 NFP\n2025-04-04 14:30 Unemployment Rate" style="width:100%;height:90px;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:\'JetBrains Mono\',monospace;font-size:12px;resize:vertical"></textarea>';
     h += '<div style="display:flex;gap:8px;margin-top:8px">';
     h += '<button class="btn btn-g" onclick="importBulkFFNews()" style="min-height:44px;padding:10px 20px">Importer</button>';
@@ -3567,7 +3587,7 @@ function rSettingsNews(el) {
       h += '<button onclick="clearAllFFNews()" style="margin-top:12px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);color:var(--red);padding:10px 20px;border-radius:var(--radius);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;min-height:44px;transition:all .15s" onmouseover="this.style.background=\'rgba(255,71,87,.18)\'" onmouseout="this.style.background=\'rgba(255,71,87,.1)\'">Tout supprimer</button>';
       h += '</div>';
     } else {
-      h += '<div style="text-align:center;padding:30px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)"><div style="font-size:32px;margin-bottom:8px">📰</div><div style="font-size:13px;color:var(--t3);line-height:1.6">Aucune news enregistrée.<br>Utilise le bouton <b style="color:var(--gold)">Charger news courantes</b> pour commencer.</div></div>';
+      h += '<div style="text-align:center;padding:30px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)"><div style="font-size:32px;margin-bottom:8px">\uD83D\uDCF0</div><div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Aucune news enregistr\u00e9e</div><div style="font-size:12px;color:var(--t3);line-height:1.6;max-width:400px;margin:0 auto">Commence par cliquer <b style="color:var(--gold)">Charger news courantes</b> pour remplir automatiquement les NFP, CPI et FOMC.<br>Puis compl\u00e8te avec les autres news depuis Forex Factory.</div></div>';
     }
     el.innerHTML = h;
     /* Set default date to today */
