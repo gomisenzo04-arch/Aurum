@@ -11,46 +11,49 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.svg">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style>/* ═══════════════════════════════════════════════
-   AURUM — COMPLETE REDESIGN
-   Trading Journal SaaS-grade UI
-   ═══════════════════════════════════════════════ */
+<style>
+/* Aurum Design System v2.0 — Dark Luxury Terminal
+   Fonts: Bricolage Grotesque (display) + DM Sans (body) + JetBrains Mono (data)
+   Palette: #07090d/#0c1017/#121820 backgrounds, #d4a017 gold accent
+   See DESIGN_SYSTEM.md for full specification */
 :root {
-  --bg: #080b10;
-  --bg2: #0d1117;
-  --bg3: #151b24;
-  --bg4: #1e2736;
-  --border: #1c2640;
-  --border2: #2a3756;
-  --gold: #d4a017;
-  --gold2: #b8860b;
-  --gold3: #f5d060;
-  --gold-glow: rgba(212,160,23,.15);
-  --green: #00d68f;
-  --green2: #00b377;
-  --red: #ff4757;
-  --red2: #d63447;
-  --blue: #5b8def;
-  --purple: #a78bfa;
-  --t1: #e8ecf2;
-  --t2: #8b9dc0;
-  --t3: #5a6b85;
-  --radius: 12px;
-  --radius-sm: 6px;
-  --radius-lg: 14px;
-  --shadow-sm: 0 2px 8px rgba(0,0,0,.25);
-  --shadow-md: 0 4px 20px rgba(0,0,0,.35);
-  --shadow-lg: 0 8px 40px rgba(0,0,0,.5);
-  --shadow-gold: 0 0 20px rgba(212,160,23,.08);
+  /* Backgrounds */
+  --bg: #07090d; --bg2: #0c1017; --bg3: #121820; --bg4: #1a2230;
+  /* Borders */
+  --border: #182038; --border2: #223052; --border3: #2d4070;
+  /* Gold */
+  --gold: #d4a017; --gold2: #b8860b; --gold3: #f0d060;
+  --gold-glow: rgba(212,160,23,.08); --gold-border: rgba(212,160,23,.15); --gold-surface: rgba(212,160,23,.06);
+  /* Semantic */
+  --green: #00d68f; --green2: #00b377; --red: #ff4757; --red2: #d63447; --blue: #5b8def; --purple: #a78bfa;
+  --green-surface: rgba(0,214,143,.06); --red-surface: rgba(255,71,87,.06);
+  /* Text */
+  --t1: #e8ecf2; --t2: #8b9dc0; --t3: #506580;
+  /* Radius */
+  --radius-xs: 4px; --radius-sm: 6px; --radius: 10px; --radius-lg: 14px; --radius-xl: 20px;
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.4), 0 2px 4px rgba(0,0,0,.2);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.5), 0 4px 12px rgba(0,0,0,.3);
+  --shadow-gold: 0 0 20px rgba(212,160,23,.06);
+  /* Spacing */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px;
+  /* Transitions */
+  --ease: cubic-bezier(.16,1,.3,1); --duration: 200ms; --duration-fast: 120ms; --duration-slow: 350ms;
+  /* Z-index */
+  --z-dropdown: 100; --z-sticky: 200; --z-modal: 600; --z-toast: 800; --z-nav: 900; --z-top: 1000;
+  /* Legacy compat */
   --transition: .25s cubic-bezier(.4,0,.2,1);
   --transition-slow: .4s cubic-bezier(.4,0,.2,1)
 }
-* { box-sizing: border-box; margin: 0; padding: 0 }
+* { box-sizing: border-box; margin: 0; padding: 0; scrollbar-width: thin; scrollbar-color: #1a2230 transparent; }
+::selection { background: rgba(212,160,23,.2); color: #fff; }
+:focus-visible { outline: 2px solid rgba(212,160,23,.4); outline-offset: 2px; border-radius: 4px; }
 body {
-  font-family: 'Outfit', -apple-system, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
   background: var(--bg);
   color: var(--t1);
   height: 100vh;
@@ -58,10 +61,10 @@ body {
   display: flex;
   -webkit-font-smoothing: antialiased
 }
-::-webkit-scrollbar { width: 6px }
+::-webkit-scrollbar { width: 5px; height: 5px }
 ::-webkit-scrollbar-track { background: transparent }
-::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px }
-::-webkit-scrollbar-thumb:hover { background: var(--border2) }
+::-webkit-scrollbar-thumb { background: #1a2230; border-radius: 3px }
+::-webkit-scrollbar-thumb:hover { background: #2d4070 }
 /* ─── LOGIN ─── */
 .login-overlay {
   position: fixed;
@@ -87,6 +90,7 @@ body {
   box-shadow: 0 8px 40px rgba(212,160,23,.3), 0 0 80px rgba(212,160,23,.08);
 }
 .login-box h2 {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
   font-size: 22px;
   color: var(--t1);
   margin-bottom: 4px;
@@ -133,7 +137,7 @@ body {
   box-shadow: 0 4px 20px rgba(212,160,23,.3);
   text-shadow: 0 1px 2px rgba(0,0,0,.2)
 }
-.login-box .enter-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(212,160,23,.3) }
+.login-box .enter-btn:hover { box-shadow: 0 6px 24px rgba(212,160,23,.4); background: linear-gradient(135deg, #f5d060, var(--gold)) }
 .login-box .enter-btn:active { transform: translateY(0) }
 /* ─── SIDEBAR REMOVED ─── */
 /* ─── MAIN CONTENT ─── */
@@ -152,10 +156,12 @@ body {
   align-items: center;
   gap: 14px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, #0d1117 0%, #080b10 100%);
-  box-shadow: 0 1px 12px rgba(0,0,0,.4)
+  background: linear-gradient(180deg, #0c1017 0%, #07090d 100%);
+  box-shadow: 0 1px 16px rgba(0,0,0,.5);
+  backdrop-filter: blur(12px)
 }
 .top-bar h1 {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
   font-size: 22px;
   font-weight: 700;
   color: var(--t1);
@@ -391,7 +397,7 @@ body {
   font-size: 22px;
   font-weight: 700;
   margin-top: 4px;
-  font-family: 'JetBrains Mono', 'Outfit', monospace;
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
   background: linear-gradient(135deg, var(--t1) 30%, var(--t2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -434,6 +440,7 @@ body {
 }
 .box:hover { border-color: rgba(212,160,23,.2) }
 .box-title {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
   font-size: 12px;
   color: #e8b820;
   font-weight: 600;
@@ -779,7 +786,7 @@ td.n { color: var(--red); font-weight: 600; text-shadow: 0 0 12px rgba(255,71,87
   transition: all .15s;
   cursor: default
 }
-.hm-c:hover { transform: scale(1.04); border-color: var(--border2) }
+.hm-c:hover { border-color: var(--border2); background: rgba(212,160,23,.04) }
 .hm-c .hl { color: var(--t3); font-size: 10px }
 .hm-c .hv { font-weight: 700; font-size: 14px; font-family: 'JetBrains Mono', monospace }
 .hm-c.hot { background: rgba(0,214,143,.04); border-color: rgba(0,214,143,.15) }
@@ -960,7 +967,7 @@ td.n { color: var(--red); font-weight: 600; text-shadow: 0 0 12px rgba(255,71,87
   transition: all .15s; position: relative; gap: 2px; padding: 3px;
   min-height: 48px
 }
-.cal-day:hover { border-color: var(--gold); transform: scale(1.05); z-index: 1; box-shadow: 0 2px 8px rgba(0,0,0,.3) }
+.cal-day:hover { border-color: var(--gold); z-index: 1; box-shadow: 0 2px 8px rgba(0,0,0,.3) }
 .cal-day.empty { opacity: 0; pointer-events: none }
 .cal-day.today { border-color: var(--gold); border-width: 2px; box-shadow: 0 0 12px rgba(212,160,23,.25); background: rgba(212,160,23,.06) }
 .cal-day.today .cal-num { color: var(--gold); font-size: 15px }
@@ -1274,7 +1281,7 @@ body::before {
 @keyframes tfmFade{from{opacity:0}to{opacity:1}}
 .tfm-box{background:var(--bg);border:1px solid var(--border);border-radius:16px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;padding:24px;position:relative}
 .tfm-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.tfm-title{font-size:16px;font-weight:800;color:var(--t1)}
+.tfm-title{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:16px;font-weight:800;color:var(--t1)}
 .tfm-close{width:32px;height:32px;border-radius:8px;border:none;background:var(--bg3);color:var(--t3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .tfm-close:hover{background:var(--bg4);color:var(--t1)}
 /* ─── SESSION IMMERSIVE DASHBOARD ─── */
@@ -1293,8 +1300,8 @@ body::before {
 .sess-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px}
 .sess-calc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg,14px);padding:20px;position:sticky;top:90px;align-self:start}
 .sess-activity{display:flex;flex-direction:column;gap:12px}
-.sess-lot-result{font-size:52px;font-weight:900;font-family:'JetBrains Mono',monospace;color:var(--gold);text-align:center;padding:14px 0;cursor:pointer;transition:color .2s,transform .15s;user-select:all;line-height:1}
-.sess-lot-result:hover{color:#e8b929;transform:scale(1.03)}
+.sess-lot-result{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:52px;font-weight:900;color:var(--gold);text-align:center;padding:14px 0;cursor:pointer;transition:color .2s;user-select:all;line-height:1}
+.sess-lot-result:hover{color:#e8b929}
 .sess-lot-result.copied{color:var(--green);transform:scale(1.06)}
 .sess-sl-presets{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;max-height:72px;overflow-y:auto;scrollbar-width:thin}
 .sess-sl-btn{padding:7px 11px;border-radius:6px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--t2);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
@@ -1319,7 +1326,7 @@ body::before {
 .sess-precheck-item:hover{background:rgba(212,160,23,.04)}
 .sess-precheck-item input[type=checkbox]{accent-color:var(--gold);width:20px;height:20px;cursor:pointer}
 .sess-go-btn{padding:18px 48px;font-size:18px;font-weight:900;border-radius:14px;border:2px solid var(--green);background:rgba(0,214,143,.12);color:var(--green);cursor:pointer;transition:all .2s;min-height:60px;font-family:inherit;letter-spacing:1px}
-.sess-go-btn:hover{background:rgba(0,214,143,.2);transform:scale(1.03)}
+.sess-go-btn:hover{background:rgba(0,214,143,.2)}
 .sess-go-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
 .sess-notes{width:100%;min-height:60px;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-family:inherit;font-size:12px;resize:vertical}
 .sess-ck-trade{background:var(--bg2);border:1px solid rgba(212,160,23,.15);border-radius:10px;padding:14px;margin-bottom:8px}
@@ -1415,8 +1422,8 @@ body::before {
 .sess-gauge-score-val{font-size:48px;font-weight:900;font-family:'JetBrains Mono',monospace;line-height:1}
 .sess-gauge-score-label{font-size:11px;color:var(--t3);margin-top:4px}
 /* Lot result in cockpit */
-.sess-lot-big{font-size:56px;font-weight:900;font-family:'JetBrains Mono',monospace;color:var(--gold);text-align:center;padding:10px 0;cursor:pointer;transition:color .2s,transform .15s;user-select:all;line-height:1}
-.sess-lot-big:hover{color:#e8b929;transform:scale(1.03)}
+.sess-lot-big{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:56px;font-weight:900;color:var(--gold);text-align:center;padding:10px 0;cursor:pointer;transition:color .2s;user-select:all;line-height:1}
+.sess-lot-big:hover{color:#e8b929}
 .sess-lot-big.copied{color:var(--green);transform:scale(1.06)}
 .sess-lot-big.pulse{animation:sessLotPulse .6s ease-out}
 @keyframes sessLotPulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
@@ -1449,7 +1456,7 @@ body::before {
 .tf-btn { transition:all .2s cubic-bezier(.4,0,.2,1) }
 .tf-btn:hover { background:rgba(212,160,23,.04) }
 .tf-btn:active { transform:scale(.97) }
-.cal-day:hover { transform:scale(1.1); z-index:2 }
+.cal-day:hover { z-index:2; background:rgba(212,160,23,.04) }
 .scroll { scroll-behavior:smooth }
 tbody tr { transition:background .15s }
 tbody tr:nth-child(even) { background:rgba(21,27,36,.4) }
@@ -1552,23 +1559,24 @@ a:hover{opacity:.85}
 /* ═══ TOP BAR (standalone mode) ═══ */
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; height: 56px;
-  background: linear-gradient(180deg, #0d1117 0%, #080b10 100%);
+  background: linear-gradient(180deg, #0c1017 0%, #07090d 100%);
   border-bottom: 1px solid rgba(212,160,23,.12);
-  box-shadow: 0 1px 12px rgba(0,0,0,.4);
+  box-shadow: 0 1px 16px rgba(0,0,0,.5);
+  backdrop-filter: blur(12px);
   display: flex; align-items: center; padding: 0 20px; z-index: 1000; gap: 16px;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
 .topbar-logo {
   display: flex; align-items: center; gap: 10px; text-decoration: none;
   color: var(--gold); font-weight: 800; font-size: 18px; letter-spacing: -.02em;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
 }
 .topbar-logo svg { flex-shrink: 0 }
 .topbar-nav { display: flex; gap: 4px; margin-left: auto; margin-right: auto }
 .topbar-link {
   color: var(--t3); text-decoration: none; font-size: 13px; font-weight: 600;
   padding: 8px 16px; border-radius: var(--radius-sm); transition: var(--transition);
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
 .topbar-link:hover { color: var(--t1); background: var(--bg3) }
 .topbar-link.active { color: var(--gold); background: rgba(212,160,23,.08) }
@@ -1597,7 +1605,7 @@ a:hover{opacity:.85}
   color: var(--t1); text-decoration: none; font-size: 16px; font-weight: 600;
   padding: 14px 16px; border-radius: var(--radius); background: none; border: none;
   text-align: left; cursor: pointer; transition: var(--transition);
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
 .mobile-menu a:hover, .mobile-menu button:hover { background: var(--bg2) }
 
@@ -1607,14 +1615,14 @@ a:hover{opacity:.85}
   background: var(--bg); border-bottom: 1px solid rgba(212,160,23,.08);
   display: flex; align-items: center; padding: 0 16px; gap: 2px;
   z-index: 998; overflow: visible;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
 .subtabs::-webkit-scrollbar { display: none }
 .subtab-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; flex-shrink: 0 }
 .subtab {
   background: none; border: none; color: var(--t3); font-size: 12px; font-weight: 600;
   padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;
-  transition: var(--transition); white-space: nowrap; font-family: 'Inter', sans-serif;
+  transition: var(--transition); white-space: nowrap; font-family: 'DM Sans', system-ui, sans-serif;
   min-height: 32px;
 }
 .subtab:hover { color: var(--t1); background: var(--bg3) }
