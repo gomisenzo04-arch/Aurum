@@ -92,7 +92,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 .kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
 .kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;transition:border-color .2s}
 .kpi-card:hover{border-color:rgba(212,160,23,.2)}
-.kpi-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.kpi-label{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
 .kpi-value{font-size:22px;font-weight:800;font-family:'Bricolage Grotesque',system-ui,sans-serif;color:var(--t1)}
 
 /* ═══ APPS GRID ═══ */
@@ -643,7 +643,7 @@ function renderGreeting(){
     if(streakEl){
       var streak=getStreak();
       var emoji=streak>=30?'🔥':streak>=7?'⚡':streak>=1?'✦':'—';
-      streakEl.innerHTML='<div style="font-size:24px;font-weight:800;font-family:\'JetBrains Mono\',monospace;color:var(--gold)">'+streak+'</div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">'+emoji+' Streak</div>';
+      streakEl.innerHTML='<div style="font-size:24px;font-weight:800;font-family:\'JetBrains Mono\',monospace;color:var(--gold)">'+streak+'</div><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">'+emoji+' Streak</div>';
     }
   }catch(e){}
 }

@@ -102,7 +102,7 @@ canvas{display:block;max-width:100%}
 .subtabs::-webkit-scrollbar { display: none }
 .subtab-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; flex-shrink: 0 }
 .subtab {
-  background: none; border: none; color: var(--t3); font-size: 12px; font-weight: 600;
+  background: none; border: none; color: var(--t3); font-size: 13px; font-weight: 600;
   padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;
   transition: var(--transition); white-space: nowrap; font-family: 'DM Sans', sans-serif;
   min-height: 32px;
@@ -114,11 +114,11 @@ canvas{display:block;max-width:100%}
 .nav-dropdown { position:relative; display:inline-block; }
 .nav-dropdown-trigger { padding:10px 16px; background:none; border:none; color:var(--t2); font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; border-radius:8px; display:flex; align-items:center; gap:4px; min-height:44px; }
 .nav-dropdown-trigger:hover, .nav-dropdown-trigger.active { color:var(--gold); background:rgba(212,160,23,.06); }
-.nav-dropdown-trigger .arrow { font-size:8px; transition:transform .2s; }
+.nav-dropdown-trigger .arrow { font-size:9px; transition:transform .2s; }
 .nav-dropdown:hover .arrow { transform:rotate(180deg); }
 .nav-dropdown-menu { position:absolute; top:100%; left:0; min-width:180px; background:var(--bg2); border:1px solid var(--border2); border-radius:10px; padding:6px; box-shadow:0 8px 32px rgba(0,0,0,.5); opacity:0; visibility:hidden; transform:translateY(-4px); transition:all .15s; z-index:100; }
 .nav-dropdown:hover .nav-dropdown-menu { opacity:1; visibility:visible; transform:translateY(0); }
-.nav-dropdown-item { display:block; width:100%; padding:10px 14px; border:none; background:none; color:var(--t2); font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; border-radius:6px; text-align:left; transition:all .12s; min-height:40px; }
+.nav-dropdown-item { display:block; width:100%; padding:10px 14px; border:none; background:none; color:var(--t2); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; border-radius:6px; text-align:left; transition:all .12s; min-height:40px; }
 .nav-dropdown-item:hover { background:rgba(212,160,23,.08); color:var(--gold); }
 .nav-dropdown-item.active { color:var(--gold); background:rgba(212,160,23,.06); }
 
@@ -135,12 +135,12 @@ canvas{display:block;max-width:100%}
 /* ─── COMPONENTS ─── */
 .crd{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:border-color var(--duration-fast)}
 .crd:hover{border-color:var(--gold-border)}
-.crd .lb{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.crd .lb{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
 .crd .vl{font-size:20px;font-weight:800;font-family:'Bricolage Grotesque',system-ui,sans-serif}
 .sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:20px}
 .tw{overflow-x:auto;margin:10px 0}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{text-align:left;padding:8px 10px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg3)}
+th{text-align:left;padding:8px 10px;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg3)}
 td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--t2);white-space:nowrap}
 tbody tr{transition:background var(--duration-fast)}
 tbody tr:hover{background:var(--gold-surface)!important}
@@ -148,10 +148,10 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
 .mn{font-family:'JetBrains Mono',monospace;font-weight:600}.ps{color:var(--green)}.ng{color:var(--red)}
 .fr{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .fd{flex:1;min-width:140px}
-.fd label{display:block;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
-.fd input,.fd select{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 10px;color:var(--t1);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;transition:border var(--transition)}
+.fd label{display:block;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.fd input,.fd select{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 10px;color:var(--t1);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border var(--transition)}
 .fd input:focus,.fd select:focus{border-color:var(--gold)}.fd input[type="number"]{font-family:'JetBrains Mono',monospace}
-.btn{padding:8px 16px;border-radius:var(--radius-sm);border:none;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all var(--transition)}
+.btn{padding:8px 16px;border-radius:var(--radius-sm);border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all var(--transition)}
 .bp{background:rgba(212,160,23,.12);border:1px solid rgba(212,160,23,.3);color:var(--gold)}.bp:hover{background:rgba(212,160,23,.2);border-color:var(--gold);box-shadow:none}.bg{background:rgba(212,160,23,.12);border:1px solid rgba(212,160,23,.3);color:var(--gold)}.bg:hover{background:rgba(212,160,23,.2);border-color:var(--gold)}.bo{background:transparent;border:1.5px solid var(--border2);color:var(--t2)}.bo:hover{border-color:var(--t3)}.br{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--red)}.bs{padding:5px 10px;font-size:10px}
 .cb{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px}
 .ct{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
@@ -161,7 +161,7 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
 .obh{display:flex;justify-content:space-between;margin-bottom:6px}.obn{font-size:13px;font-weight:700}.obp{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--purple)}
 .obb{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}.obf{height:100%;background:linear-gradient(90deg,var(--purple),var(--gold));border-radius:3px;transition:width .5s}
 .tip{background:rgba(212,160,23,.04);border:1px solid rgba(212,160,23,.15);border-left:3px solid var(--gold);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;font-size:12px;color:var(--t2);line-height:1.7}
-.tip b{color:var(--t1)}.tip .tt2{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.tip b{color:var(--t1)}.tip .tt2{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
 .ec{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;transition:border-color .2s}.ec:hover{border-color:rgba(212,160,23,.2)}
 .et{margin-left:20px;border-left:2px solid var(--border);padding-left:14px}
 .tc{position:fixed;bottom:20px;right:20px;z-index:999}.ts{background:var(--bg4);border:1px solid var(--border2);color:var(--t1);padding:8px 16px;border-radius:var(--radius);font-size:11px;font-weight:600;margin-top:6px;animation:fi .3s}
@@ -270,12 +270,12 @@ Une société qui te prête du capital pour trader. Tu gardes un % des gains (le
 <div class="fd"><label>Type de challenge</label><select id="pf-t"><option>1-Step</option><option>2-Step Stellar</option><option>2-Step Evaluation</option><option>Instant</option></select></div>
 <div class="fd"><label>Taille du compte ($)</label><input type="number" id="pf-s" placeholder="6000" min="0"></div>
 <div class="fd"><label>Coût du challenge ($)</label><input type="number" id="pf-c" placeholder="60" min="0"></div>
-<div class="fd"><label>Split profit (%)</label><input type="number" id="pf-sp" value="80"><div style="font-size:9px;color:var(--t3);margin-top:2px">Ton % si tu gagnes</div></div>
-<div class="fd"><label>Objectif profit ($)</label><input type="number" id="pf-obj" placeholder="ex: 600" min="0"><div style="font-size:9px;color:var(--t3);margin-top:2px">Profit pour passer funded</div></div>
+<div class="fd"><label>Split profit (%)</label><input type="number" id="pf-sp" value="80"><div style="font-size:10px;color:var(--t3);margin-top:2px">Ton % si tu gagnes</div></div>
+<div class="fd"><label>Objectif profit ($)</label><input type="number" id="pf-obj" placeholder="ex: 600" min="0"><div style="font-size:10px;color:var(--t3);margin-top:2px">Profit pour passer funded</div></div>
 <div class="fd"><label>DD max jour ($)</label><input type="number" id="pf-dd" placeholder="ex: 240" min="0"></div>
 <div class="fd"><label>DD max total ($)</label><input type="number" id="pf-ddt" placeholder="ex: 600" min="0"></div>
 <div class="fd"><label>Jours min</label><input type="number" id="pf-jmin" placeholder="ex: 5" min="0"></div>
-<div class="fd"><label>Compte Journal lié</label><select id="pf-acc"><option value="">— Aucun —</option></select><div style="font-size:9px;color:var(--t3);margin-top:2px">Lie le challenge à un compte du Journal</div></div>
+<div class="fd"><label>Compte Journal lié</label><select id="pf-acc"><option value="">— Aucun —</option></select><div style="font-size:10px;color:var(--t3);margin-top:2px">Lie le challenge à un compte du Journal</div></div>
 <div class="fd"><label>Statut actuel</label><select id="pf-st"><option>En cours</option><option>Phase 2</option><option>Réussi</option><option>Funded</option><option>Échoué</option><option>Perdu</option></select></div>
 </div>
 <div style="display:flex;gap:6px"><button class="btn bp bs" onclick="aPF()">Ajouter le challenge</button><button class="btn bo bs" onclick="tg('pfF')">Annuler</button></div>
@@ -579,7 +579,7 @@ document.addEventListener('click', function(e) {
 function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA();else if(p==='bank')rBank();else if(p==='goals')rGoals();else if(p==='yir')rYIR()}catch(e){console.error(e)}}
 /* ─── TOOLTIP HELPER ─── */
 function tip(text){
-  try{return ' <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--t3);font-size:9px;cursor:help;font-weight:700;vertical-align:middle" title="'+text.replace(/"/g,'&quot;')+'">?</span>'}catch(e){return''}
+  try{return ' <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--t3);font-size:10px;cursor:help;font-weight:700;vertical-align:middle" title="'+text.replace(/"/g,'&quot;')+'">?</span>'}catch(e){return''}
 }
 /* ─── KPI helper ─── */
 function kp(l,v,c,icon){
@@ -652,6 +652,7 @@ j.a.forEach(function(a){
 });
 var propTotal=fundedTotal+challengeTotal;
 console.log('[Capital] Sync Journal:',j.a.length,'comptes,',j.t.length,'trades. Perso:',persoTotal,'Funded:',fundedTotal,'Challenge:',challengeTotal);
+console.log('[Capital] Accounts:', j.a.map(function(a){ return a.name + ' (' + a.type + ') bal:' + a.balance }).join(', '));
 var now=new Date(),cm=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
 var eM=D.expenses.filter(function(e){return e.month===cm}).reduce(function(s,e){return s+(e.amount||0)},0);
 var aM=D.abonnements.reduce(function(s,a){return s+(a.cost||0)},0);
@@ -672,7 +673,7 @@ var liquide=D.bankAccounts.length>0?bankTotal:(pN+eT);
 var nonLiquide=pV+persoTotal;
 /* ── PRIORITY 1: Patrimoine net — always visible hero card ── */
 document.getElementById('dH').innerHTML='<div style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(212,160,23,.04));border:1px solid rgba(167,139,250,.18);border-radius:12px;padding:20px 24px;margin-bottom:4px">'
-+'<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Patrimoine net'+tip('Tout ce que tu possèdes moins tout ce que tu dois')+'</div>'
++'<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Patrimoine net'+tip('Tout ce que tu possèdes moins tout ce que tu dois')+'</div>'
 +'<div style="font-size:32px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+(nw>=0?'var(--purple)':'var(--red)')+'">'+fm(nw)+'</div>'
 +'<div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:12px">'
 +'<span style="color:var(--t2)">Liquidité'+tip('L\u0027argent disponible immédiatement sur tes comptes bancaires')+' <b style="color:'+(liquide>0?'var(--green)':'var(--red)')+'">'+fm(liquide)+'</b></span>'
@@ -681,9 +682,9 @@ document.getElementById('dH').innerHTML='<div style="background:linear-gradient(
 +'</div>'
 +'<details style="margin-top:12px"><summary style="font-size:11px;color:var(--gold);cursor:pointer;font-weight:600;user-select:none">Voir le détail ▾</summary>'
 +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">'
-+'<div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--t3)">👤 Personnel</div><div style="font-size:15px;font-weight:700;color:var(--green);font-family:JetBrains Mono,monospace">'+fm(persoTotal)+'</div><div style="font-size:9px;color:var(--green);opacity:.7">✓ Dans le patrimoine</div></div>'
-+'<div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--t3)">✓ Funded</div><div style="font-size:15px;font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace">'+fm(fundedTotal)+'</div><div style="font-size:9px;color:var(--t3)">Revenus via payouts</div></div>'
-+'<div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--t3)">🏆 Challenge</div><div style="font-size:15px;font-weight:700;color:var(--t3);font-family:JetBrains Mono,monospace">'+fm(challengeTotal)+'</div><div style="font-size:9px;color:var(--t3)">Non compté</div></div>'
++'<div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--t3)">👤 Personnel</div><div style="font-size:16px;font-weight:700;color:var(--green);font-family:JetBrains Mono,monospace">'+fm(persoTotal)+'</div><div style="font-size:10px;color:var(--green);opacity:.7">✓ Dans le patrimoine</div></div>'
++'<div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--t3)">✓ Funded</div><div style="font-size:16px;font-weight:700;color:var(--gold);font-family:JetBrains Mono,monospace">'+fm(fundedTotal)+'</div><div style="font-size:10px;color:var(--t3)">Revenus via payouts</div></div>'
++'<div style="background:var(--bg2);border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--t3)">🏆 Challenge</div><div style="font-size:16px;font-weight:700;color:var(--t3);font-family:JetBrains Mono,monospace">'+fm(challengeTotal)+'</div><div style="font-size:10px;color:var(--t3)">Non compté</div></div>'
 +'</div>'
 +'<div style="text-align:right;font-size:10px;color:var(--t3);opacity:.6;margin-top:4px">Sync Journal · Live uniquement</div>'
 +'</details>'
@@ -916,7 +917,7 @@ var curIdx=ML.indexOf(cur);
 var doneCount=prev.length;
 h+='<div style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(212,160,23,.04));border:1px solid rgba(167,139,250,.18);border-radius:12px;padding:18px 20px;margin-bottom:18px">';
 h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">';
-h+='<div><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">📍 OÙ TU EN ES</div>';
+h+='<div><div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">📍 OÙ TU EN ES</div>';
 h+='<div style="font-size:24px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--purple)">'+fm(nw)+'</div></div>';
 h+='<div style="text-align:right"><div style="font-size:12px;color:var(--t2);font-weight:600">Progression vers</div>';
 h+='<div style="font-size:14px;font-weight:700;color:var(--gold)">'+pl+' → '+cur.l+'</div></div></div>';
@@ -930,7 +931,7 @@ ML.forEach(function(m,i){
   h+='<div style="flex:1;height:'+ht+';border-radius:4px;background:'+bg+';transition:all .3s" title="'+m.l+(done?' ✓':isCur?' ← Tu es ici':'')+'"></div>';
 });
 h+='</div>';
-h+='<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t3)">';
+h+='<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)">';
 h+='<span>'+ML[0].l+'</span>';
 h+='<span style="color:var(--gold);font-weight:700">'+doneCount+'/'+ML.length+' paliers</span>';
 h+='<span>'+ML[ML.length-1].l+'</span>';
@@ -963,7 +964,7 @@ var isNext=!ok&&(cur.t===m.t);
 var bg=isNext?'background:rgba(167,139,250,.06);border-color:var(--purple)':'';
 var barGrad=ok?'background:linear-gradient(90deg,var(--green),var(--green2))':'background:linear-gradient(90deg,var(--purple),var(--gold))';
 var card='<div class="ob" style="'+bg+'">';
-if(isNext){card+='<div style="font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold);animation:sessDot 2s infinite"></span> Tu es ici</div>';}
+if(isNext){card+='<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold);animation:sessDot 2s infinite"></span> Tu es ici</div>';}
 card+='<div class="obh"><div class="obn">'+m.e+' '+m.l+'</div><div class="obp">'+pc.toFixed(1)+'%</div></div>';
 card+='<div class="obb"><div class="obf" style="width:'+pc+'%;'+barGrad+';transition:width .6s ease-out"></div></div>';
 if(ok){
@@ -975,7 +976,7 @@ card+='<div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.6
 /* Expert tips */
 if(m.expert&&m.expert.length){
 card+='<div style="margin-top:10px;padding:10px 12px;background:linear-gradient(135deg,rgba(212,160,23,.06),rgba(167,139,250,.04));border:1px solid rgba(212,160,23,.15);border-radius:8px">';
-card+='<div style="font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Conseils experts</div>';
+card+='<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Conseils experts</div>';
 card+=m.expert.map(function(tip){return'<div style="font-size:10px;color:var(--t2);line-height:1.5;padding:3px 0;display:flex;gap:6px"><span style="color:var(--gold);flex-shrink:0">\u2192</span><span>'+tip+'</span></div>'}).join('');
 card+='</div>';
 }
@@ -1005,7 +1006,7 @@ function importPFFromJournal(){try{var j=rJ();if(!j||!j.a||!j.a.length){toast('A
 function rPF(){try{
 /* Populate linked account select */
 try{var j=rJ();var accSel=document.getElementById('pf-acc');if(accSel&&j.a.length){var opts='<option value="">— Aucun —</option>';j.a.forEach(function(a){opts+='<option value="'+a.name+'">'+a.name+' ('+a.type+' · $'+Math.round(a.balance)+')</option>'});accSel.innerHTML=opts}}catch(pe){}
-if(!D.propfirms.length){document.getElementById('pfS').innerHTML='';document.getElementById('pfT').innerHTML='<tr><td colspan="7"><div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(212,160,23,.05),rgba(167,139,250,.03));border-left:3px solid var(--gold);border-radius:10px;padding:20px 24px;text-align:center"><div style="font-size:32px;margin-bottom:10px">🏆</div><div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Lance ton premier challenge</div><div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Les prop firms te donnent du capital pour trader. Suis ton parcours ici.</div><div style="display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;color:var(--t3);margin-bottom:16px;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700">1</span> Choisis une firm</span><span style="color:var(--t3)">→</span><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700">2</span> Passe le challenge</span><span style="color:var(--t3)">→</span><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700">3</span> Funded account</span></div><button class="btn bp bs" onclick="tg(\'pfF\')">+ Ajouter un challenge</button></div></td></tr>';return}var tc=0,fd=0,fl=0,ac=0;D.propfirms.forEach(function(p){tc+=p.cost||0;if(p.status==='Funded')fd++;if(p.status==='Échoué'||p.status==='Perdu')fl++;if(p.status==='En cours'||p.status==='Phase 2')ac++});var po=D.payouts.filter(function(p){return p.source==='Prop Firm'}).reduce(function(s,p){return s+(p.net||0)},0);var roi=tc>0?Math.round(((po-tc)/tc)*100):0;document.getElementById('pfS').innerHTML=kp('Dépensé',fm(tc),'var(--red)')+kp('Payouts PF',fm(po),'var(--green)')+kp('ROI',roi+'%',roi>=0?'var(--green)':'var(--red)')+kp('Funded/Fail',fd+'/'+fl,'var(--t2)')+kp('En cours',ac,'var(--gold)');var sIco={'En cours':'⏳','Phase 2':'🔄','Réussi':'✅','Funded':'🎉','Échoué':'❌','Perdu':'⛔'};var sBg={'En cours':'rgba(212,160,23,.06)','Phase 2':'rgba(91,141,239,.06)','Réussi':'rgba(0,214,143,.06)','Funded':'rgba(0,214,143,.1)','Échoué':'rgba(255,71,87,.06)','Perdu':'rgba(255,71,87,.08)'};document.getElementById('pfT').innerHTML=D.propfirms.map(function(p){var s=p.status==='Funded'?'ps':(p.status==='Échoué'||p.status==='Perdu')?'ng':'';return'<tr style="background:'+(sBg[p.status]||'transparent')+'"><td style="font-weight:600;color:var(--t1)">'+p.firm+'</td><td>'+p.type+(p.rules&&p.rules.profitTarget?' <span style="font-size:9px;color:var(--t3)">obj:$'+p.rules.profitTarget+'</span>':'')+'</td><td class="mn">'+fm(p.size)+'</td><td class="mn ng">'+fm(p.cost)+'</td><td class="mn">'+p.split+'%</td><td class="'+s+'" style="font-weight:700">'+(sIco[p.status]||'')+' '+p.status+(p.fundedAt?' <span style="font-size:9px;color:var(--t3)">'+p.fundedAt+'</span>':'')+(p.linkedAccountId?' <span style="font-size:9px;color:var(--blue)">🔗</span>':'')+'</td><td><button class="btn br bs" onclick="dPF(\''+p.id+'\')">×</button></td></tr>'}).join('')}catch(e){console.error(e)}}
+if(!D.propfirms.length){document.getElementById('pfS').innerHTML='';document.getElementById('pfT').innerHTML='<tr><td colspan="7"><div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(212,160,23,.05),rgba(167,139,250,.03));border-left:3px solid var(--gold);border-radius:10px;padding:20px 24px;text-align:center"><div style="font-size:32px;margin-bottom:10px">🏆</div><div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Lance ton premier challenge</div><div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Les prop firms te donnent du capital pour trader. Suis ton parcours ici.</div><div style="display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;color:var(--t3);margin-bottom:16px;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700">1</span> Choisis une firm</span><span style="color:var(--t3)">→</span><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700">2</span> Passe le challenge</span><span style="color:var(--t3)">→</span><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700">3</span> Funded account</span></div><button class="btn bp bs" onclick="tg(\'pfF\')">+ Ajouter un challenge</button></div></td></tr>';return}var tc=0,fd=0,fl=0,ac=0;D.propfirms.forEach(function(p){tc+=p.cost||0;if(p.status==='Funded')fd++;if(p.status==='Échoué'||p.status==='Perdu')fl++;if(p.status==='En cours'||p.status==='Phase 2')ac++});var po=D.payouts.filter(function(p){return p.source==='Prop Firm'}).reduce(function(s,p){return s+(p.net||0)},0);var roi=tc>0?Math.round(((po-tc)/tc)*100):0;document.getElementById('pfS').innerHTML=kp('Dépensé',fm(tc),'var(--red)')+kp('Payouts PF',fm(po),'var(--green)')+kp('ROI',roi+'%',roi>=0?'var(--green)':'var(--red)')+kp('Funded/Fail',fd+'/'+fl,'var(--t2)')+kp('En cours',ac,'var(--gold)');var sIco={'En cours':'⏳','Phase 2':'🔄','Réussi':'✅','Funded':'🎉','Échoué':'❌','Perdu':'⛔'};var sBg={'En cours':'rgba(212,160,23,.06)','Phase 2':'rgba(91,141,239,.06)','Réussi':'rgba(0,214,143,.06)','Funded':'rgba(0,214,143,.1)','Échoué':'rgba(255,71,87,.06)','Perdu':'rgba(255,71,87,.08)'};document.getElementById('pfT').innerHTML=D.propfirms.map(function(p){var s=p.status==='Funded'?'ps':(p.status==='Échoué'||p.status==='Perdu')?'ng':'';return'<tr style="background:'+(sBg[p.status]||'transparent')+'"><td style="font-weight:600;color:var(--t1)">'+p.firm+'</td><td>'+p.type+(p.rules&&p.rules.profitTarget?' <span style="font-size:10px;color:var(--t3)">obj:$'+p.rules.profitTarget+'</span>':'')+'</td><td class="mn">'+fm(p.size)+'</td><td class="mn ng">'+fm(p.cost)+'</td><td class="mn">'+p.split+'%</td><td class="'+s+'" style="font-weight:700">'+(sIco[p.status]||'')+' '+p.status+(p.fundedAt?' <span style="font-size:10px;color:var(--t3)">'+p.fundedAt+'</span>':'')+(p.linkedAccountId?' <span style="font-size:10px;color:var(--blue)">🔗</span>':'')+'</td><td><button class="btn br bs" onclick="dPF(\''+p.id+'\')">×</button></td></tr>'}).join('')}catch(e){console.error(e)}}
 /* ─── AUTO-DETECT FUNDED ─── */
 function checkPropFirmStatus(){try{
   var j=rJ();
@@ -1076,7 +1077,7 @@ if(D.entities.length>=2){var cH2='<table><thead><tr><th>Entit\u00e9</th><th>Form
 document.getElementById('stCo').innerHTML='<div style="display:grid;gap:12px">'
     /* ── Micro-entreprise ── */
     +'<div class="crd" style="padding:16px;border-left:4px solid var(--green)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--green);font-size:13px">\ud83d\udfe2 Micro-entreprise</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(0,214,143,.1);color:var(--green);font-weight:700">SIMPLE</span></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--green);font-size:13px">\ud83d\udfe2 Micro-entreprise</b><span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(0,214,143,.1);color:var(--green);font-weight:700">SIMPLE</span></div>'
       +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>Fiscalit\u00e9 :</b> Micro-BNC abattement forfaitaire 34%, puis IR au bar\u00e8me progressif.<br><b>Cotisations :</b> 22% du CA (URSSAF) — pas de bulletin de paie, pas de charges patronales.<br><b>Plafond :</b> 77\u202f700\u20ac/an (BNC & BIC services) \u2022 188\u202f700\u20ac (BIC vente).</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
         +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Simplicit\u00e9 maximale, pas de bilan comptable<br>\u2022 Cr\u00e9ation gratuite en ligne (URSSAF)<br>\u2022 CFE ~500-1\u202f500\u20ac/an<br>\u2022 Franchise TVA si CA &lt; 36\u202f800\u20ac<br>\u2022 Pas de comptable obligatoire</div>'
@@ -1086,7 +1087,7 @@ document.getElementById('stCo').innerHTML='<div style="display:grid;gap:12px">'
     +'</div>'
     /* ── SASU ── */
     +'<div class="crd" style="padding:16px;border-left:4px solid var(--purple)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--purple);font-size:13px">\ud83d\udfe3 SASU / SAS</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(167,139,250,.1);color:var(--purple);font-weight:700">RECOMMAND\u00c9</span></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--purple);font-size:13px">\ud83d\udfe3 SASU / SAS</b><span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(167,139,250,.1);color:var(--purple);font-weight:700">RECOMMAND\u00c9</span></div>'
       +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>Fiscalit\u00e9 :</b> IS 15% \u2264 42\u202f500\u20ac, puis 25%. Dividendes flat tax 30% (PFU).<br><b>Cotisations :</b> ~65% sur r\u00e9mun\u00e9ration du pr\u00e9sident. <b>0\u20ac si pas de salaire</b> (dividendes uniquement).<br><b>Avantage cl\u00e9 :</b> optimisation salaire/dividendes pour minimiser l\u2019imposition totale.</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
         +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Responsabilit\u00e9 limit\u00e9e au capital<br>\u2022 D\u00e9duction de toutes les charges r\u00e9elles<br>\u2022 Optimisation salaire + dividendes<br>\u2022 Compatible holding (r\u00e9gime m\u00e8re-fille)<br>\u2022 Z\u00e9ro cotisations sur dividendes</div>'
@@ -1096,7 +1097,7 @@ document.getElementById('stCo').innerHTML='<div style="display:grid;gap:12px">'
     +'</div>'
     /* ── EURL ── */
     +'<div class="crd" style="padding:16px;border-left:4px solid var(--blue)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--blue);font-size:13px">\ud83d\udfe1 EURL / SARL</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(91,141,239,.1);color:var(--blue);font-weight:700">ALTERNATIF</span></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--blue);font-size:13px">\ud83d\udfe1 EURL / SARL</b><span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(91,141,239,.1);color:var(--blue);font-weight:700">ALTERNATIF</span></div>'
       +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>Fiscalit\u00e9 :</b> IS ou IR au choix (IR possible 5 premi\u00e8res ann\u00e9es).<br><b>Cotisations :</b> TNS ~45% (moins cher que salari\u00e9, mais protection moindre).<br><b>Attention :</b> dividendes &gt; 10% du capital = soumis aux cotisations TNS.</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
         +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Responsabilit\u00e9 limit\u00e9e<br>\u2022 Cotisations TNS moins ch\u00e8res (~45% vs ~65%)<br>\u2022 Meilleure protection retraite TNS<br>\u2022 Choix IR ou IS<br>\u2022 Souplesse de gestion</div>'
@@ -1106,7 +1107,7 @@ document.getElementById('stCo').innerHTML='<div style="display:grid;gap:12px">'
     +'</div>'
     /* ── Holding ── */
     +'<div class="crd" style="padding:16px;border-left:4px solid var(--gold)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--gold);font-size:13px">\ud83c\udfdb Holding SAS</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(255,71,87,.1);color:var(--red);font-weight:700">AVANC\u00c9</span></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--gold);font-size:13px">\ud83c\udfdb Holding SAS</b><span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,71,87,.1);color:var(--red);font-weight:700">AVANC\u00c9</span></div>'
       +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>R\u00e9gime m\u00e8re-fille :</b> 95% des dividendes remontent exon\u00e9r\u00e9s d\u2019imp\u00f4t. Imp\u00f4t effectif : ~1,25%.<br><b>Convention de tr\u00e9sorerie :</b> pr\u00eats intra-groupe (cash pooling).<br><b>Transmission :</b> d\u00e9membrement de parts, pacte Dutreil, donation progressive.</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
         +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Optimisation fiscale du groupe<br>\u2022 R\u00e9investissement sans imp\u00f4t perso<br>\u2022 Protection des actifs<br>\u2022 Multi-filiales (trading, immo, conseil)<br>\u2022 Transmission optimis\u00e9e</div>'
@@ -1116,7 +1117,7 @@ document.getElementById('stCo').innerHTML='<div style="display:grid;gap:12px">'
     +'</div>'
     /* ── SCI ── */
     +'<div class="crd" style="padding:16px;border-left:4px solid var(--green)">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--green);font-size:13px">\ud83c\udfe0 SCI</b><span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:700">IMMOBILIER</span></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><b style="color:var(--green);font-size:13px">\ud83c\udfe0 SCI</b><span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold);font-weight:700">IMMOBILIER</span></div>'
       +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:10px"><b>Fiscalit\u00e9 :</b> IR ou IS au choix. L\u2019IS permet d\u2019amortir le bien (r\u00e9duit l\u2019imp\u00f4t).<br><b>Transmission :</b> donation de parts avec d\u00e9cote (~15-20%). D\u00e9membrement possible.<br><b>Gestion :</b> s\u00e9paration patrimoine perso/professionnel. Multi-associ\u00e9s.</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
         +'<div style="padding:8px 10px;background:rgba(0,214,143,.05);border-radius:6px;font-size:10px;line-height:1.7"><b style="color:var(--green)">\u2713 Avantages</b><br>\u2022 Gestion patrimoine immobilier<br>\u2022 Transmission facilit\u00e9e<br>\u2022 Amortissement si IS<br>\u2022 S\u00e9paration des patrimoines<br>\u2022 Multi-biens dans une structure</div>'
@@ -1159,8 +1160,8 @@ if(hH){
     +'<div style="font-size:10px;color:var(--t2);line-height:1.7;margin-top:4px">'
     +'<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="padding:4px 8px;background:rgba(212,160,23,.1);border-radius:4px;color:var(--gold);font-weight:700;font-size:10px">\ud83c\udfdb Holding SAS</span><span style="color:var(--t3)">\u2190 d\u00e9tient les parts</span></div>'
     +'<div style="margin-left:20px;border-left:2px solid var(--border);padding-left:12px;display:grid;gap:4px">'
-    +'<div style="display:flex;align-items:center;gap:6px"><span style="padding:3px 7px;background:rgba(167,139,250,.1);border-radius:4px;color:var(--purple);font-weight:600;font-size:9px">\ud83c\udfe2 SASU op\u00e9rationnelle</span><span style="color:var(--t3);font-size:9px">trading + conseil</span></div>'
-    +'<div style="display:flex;align-items:center;gap:6px"><span style="padding:3px 7px;background:rgba(91,141,239,.1);border-radius:4px;color:var(--blue);font-weight:600;font-size:9px">\ud83c\udfe0 SCI (optionnelle)</span><span style="color:var(--t3);font-size:9px">immobilier locatif</span></div>'
+    +'<div style="display:flex;align-items:center;gap:6px"><span style="padding:3px 7px;background:rgba(167,139,250,.1);border-radius:4px;color:var(--purple);font-weight:600;font-size:10px">\ud83c\udfe2 SASU op\u00e9rationnelle</span><span style="color:var(--t3);font-size:10px">trading + conseil</span></div>'
+    +'<div style="display:flex;align-items:center;gap:6px"><span style="padding:3px 7px;background:rgba(91,141,239,.1);border-radius:4px;color:var(--blue);font-weight:600;font-size:10px">\ud83c\udfe0 SCI (optionnelle)</span><span style="color:var(--t3);font-size:10px">immobilier locatif</span></div>'
     +'</div></div></div>'
     +'</div>';
 }else{
@@ -1169,7 +1170,7 @@ if(hH){
 document.getElementById('enHoldAdv').innerHTML=adv;
 }catch(e){console.error('rEN:',e)}}
 function rEC2(e){var ih=e.forme==='Holding'||e.forme==='SA';var ico=ih?'\ud83c\udfdb':e.forme==='SCI'?'\ud83c\udfe0':'\ud83c\udfe2';var stC=e.status==='Active'?'rgba(0,214,143,.1);color:var(--green)':e.status==='En cr\u00e9ation'?'rgba(212,160,23,.1);color:var(--gold)':'rgba(255,71,87,.1);color:var(--red)';var mg=e.ca>0?Math.round((e.resultat/e.ca)*100):0;
-return'<div class="ec"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-size:16px">'+ico+'</span><b style="color:var(--t1);font-size:14px">'+e.name+'</b></div><div style="display:flex;flex-wrap:wrap;gap:4px;font-size:10px"><span style="padding:2px 7px;border-radius:4px;background:rgba(167,139,250,.1);color:var(--purple)">'+e.forme+'</span><span style="padding:2px 7px;border-radius:4px;background:rgba(91,141,239,.1);color:var(--blue)">'+e.regime+'</span><span style="padding:2px 7px;border-radius:4px;background:'+stC+'">'+e.status+'</span>'+(e.detention<100?'<span style="padding:2px 7px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold)">'+e.detention+'%</span>':'')+'</div>'+(e.siret?'<div style="font-size:9px;color:var(--t3);margin-top:2px">SIRET '+e.siret+'</div>':'')+(e.activite?'<div style="font-size:9px;color:var(--t3)">'+e.activite+'</div>':'')+(e.gerant?'<div style="font-size:9px;color:var(--t3)">G\u00e9rant: '+e.gerant+'</div>':'')+'</div><div style="display:flex;gap:4px"><button class="btn bo bs" onclick="eENotes(\''+e.id+'\')">\ud83d\udcdd</button><button class="btn br bs" onclick="dEN(\''+e.id+'\')">\u00d7</button></div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px"><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'ca\',\'CA\')"><div style="color:var(--t3)">CA</div><b class="mn" style="color:var(--green);font-size:11px">'+fm(e.ca)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'charges\',\'Charges\')"><div style="color:var(--t3)">Charges</div><b class="mn" style="color:var(--red);font-size:11px">'+fm(e.charges)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'chargesSociales\',\'Ch.sociales\')"><div style="color:var(--t3)">Ch.soc</div><b class="mn" style="color:var(--red);font-size:11px">'+fm(e.chargesSociales||0)+'</b></div><div style="padding:5px;background:var(--bg3);border-radius:5px;text-align:center"><div style="color:var(--t3)">R\u00e9sultat</div><b class="mn" style="color:'+(e.resultat>=0?'var(--green)':'var(--red)')+';font-size:11px">'+fm(e.resultat)+'</b><div style="font-size:8px;color:var(--t3)">'+mg+'%</div></div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px;margin-top:5px"><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'tresorerie\',\'Tr\u00e9so\')"><div style="color:var(--t3)">Tr\u00e9so</div><b class="mn" style="color:var(--blue);font-size:11px">'+fm(e.tresorerie)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'dividendes\',\'Dividendes\')"><div style="color:var(--t3)">Dividendes</div><b class="mn" style="color:var(--gold);font-size:11px">'+fm(e.dividendes)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'remuneration\',\'R\u00e9mun\')"><div style="color:var(--t3)">R\u00e9mun</div><b class="mn" style="color:var(--purple);font-size:11px">'+fm(e.remuneration)+'</b></div><div style="padding:5px;background:var(--bg3);border-radius:5px;text-align:center"><div style="color:var(--t3)">Capital</div><b class="mn" style="color:var(--t2);font-size:11px">'+fm(e.capitalSocial||0)+'</b></div></div>'+(e.notes?'<div style="margin-top:5px;font-size:9px;color:var(--t3);font-style:italic;padding:4px 6px;background:var(--bg3);border-radius:4px;cursor:pointer" onclick="eENotes(\''+e.id+'\')">\ud83d\udcdd '+e.notes+'</div>':'')+'</div>'}
+return'<div class="ec"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-size:16px">'+ico+'</span><b style="color:var(--t1);font-size:14px">'+e.name+'</b></div><div style="display:flex;flex-wrap:wrap;gap:4px;font-size:10px"><span style="padding:2px 7px;border-radius:4px;background:rgba(167,139,250,.1);color:var(--purple)">'+e.forme+'</span><span style="padding:2px 7px;border-radius:4px;background:rgba(91,141,239,.1);color:var(--blue)">'+e.regime+'</span><span style="padding:2px 7px;border-radius:4px;background:'+stC+'">'+e.status+'</span>'+(e.detention<100?'<span style="padding:2px 7px;border-radius:4px;background:rgba(212,160,23,.1);color:var(--gold)">'+e.detention+'%</span>':'')+'</div>'+(e.siret?'<div style="font-size:10px;color:var(--t3);margin-top:2px">SIRET '+e.siret+'</div>':'')+(e.activite?'<div style="font-size:10px;color:var(--t3)">'+e.activite+'</div>':'')+(e.gerant?'<div style="font-size:10px;color:var(--t3)">G\u00e9rant: '+e.gerant+'</div>':'')+'</div><div style="display:flex;gap:4px"><button class="btn bo bs" onclick="eENotes(\''+e.id+'\')">\ud83d\udcdd</button><button class="btn br bs" onclick="dEN(\''+e.id+'\')">\u00d7</button></div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px"><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'ca\',\'CA\')"><div style="color:var(--t3)">CA</div><b class="mn" style="color:var(--green);font-size:11px">'+fm(e.ca)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'charges\',\'Charges\')"><div style="color:var(--t3)">Charges</div><b class="mn" style="color:var(--red);font-size:11px">'+fm(e.charges)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'chargesSociales\',\'Ch.sociales\')"><div style="color:var(--t3)">Ch.soc</div><b class="mn" style="color:var(--red);font-size:11px">'+fm(e.chargesSociales||0)+'</b></div><div style="padding:5px;background:var(--bg3);border-radius:5px;text-align:center"><div style="color:var(--t3)">R\u00e9sultat</div><b class="mn" style="color:'+(e.resultat>=0?'var(--green)':'var(--red)')+';font-size:11px">'+fm(e.resultat)+'</b><div style="font-size:10px;color:var(--t3)">'+mg+'%</div></div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;font-size:10px;margin-top:5px"><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'tresorerie\',\'Tr\u00e9so\')"><div style="color:var(--t3)">Tr\u00e9so</div><b class="mn" style="color:var(--blue);font-size:11px">'+fm(e.tresorerie)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'dividendes\',\'Dividendes\')"><div style="color:var(--t3)">Dividendes</div><b class="mn" style="color:var(--gold);font-size:11px">'+fm(e.dividendes)+'</b></div><div style="cursor:pointer;padding:5px;background:var(--bg3);border-radius:5px;text-align:center" onclick="eEF(\''+e.id+'\',\'remuneration\',\'R\u00e9mun\')"><div style="color:var(--t3)">R\u00e9mun</div><b class="mn" style="color:var(--purple);font-size:11px">'+fm(e.remuneration)+'</b></div><div style="padding:5px;background:var(--bg3);border-radius:5px;text-align:center"><div style="color:var(--t3)">Capital</div><b class="mn" style="color:var(--t2);font-size:11px">'+fm(e.capitalSocial||0)+'</b></div></div>'+(e.notes?'<div style="margin-top:5px;font-size:10px;color:var(--t3);font-style:italic;padding:4px 6px;background:var(--bg3);border-radius:4px;cursor:pointer" onclick="eENotes(\''+e.id+'\')">\ud83d\udcdd '+e.notes+'</div>':'')+'</div>'}
 
 /* ─── FISCAL ─── */
 function sFi(){try{
@@ -1273,21 +1274,21 @@ function renderFiscalComparison(revenu, charges) {
     /* Micro */
     h += '<div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;border:1px solid var(--border)">';
     h += '<div style="font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px">Micro-BNC</div>';
-    h += '<div style="font-size:9px;color:var(--t3);margin-bottom:6px">Abattement 34% + URSSAF</div>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-bottom:6px">Abattement 34% + URSSAF</div>';
     h += '<div style="font-size:18px;font-weight:800;color:var(--green);font-family:JetBrains Mono,monospace">' + fE(net_ir_micro) + '</div>';
-    h += '<div style="font-size:9px;color:var(--t3);margin-top:2px">Net en poche</div></div>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-top:2px">Net en poche</div></div>';
     /* IR reel */
     h += '<div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;border:1px solid ' + (winner === 'IR bar\u00e8me' ? 'var(--green)' : 'var(--border)') + '">';
     h += '<div style="font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px">IR bar\u00e8me</div>';
-    h += '<div style="font-size:9px;color:var(--t3);margin-bottom:6px">Charges d\u00e9duites au r\u00e9el</div>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-bottom:6px">Charges d\u00e9duites au r\u00e9el</div>';
     h += '<div style="font-size:18px;font-weight:800;color:' + (winner === 'IR bar\u00e8me' ? 'var(--green)' : 'var(--t2)') + ';font-family:JetBrains Mono,monospace">' + fE(net_ir_reel) + '</div>';
-    h += '<div style="font-size:9px;color:var(--t3);margin-top:2px">Net en poche</div></div>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-top:2px">Net en poche</div></div>';
     /* IS + Flat */
     h += '<div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;border:1px solid ' + (winner !== 'IR bar\u00e8me' ? 'var(--green)' : 'var(--border)') + '">';
     h += '<div style="font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px">IS + Flat Tax</div>';
-    h += '<div style="font-size:9px;color:var(--t3);margin-bottom:6px">IS 15/25% + dividendes 30%</div>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-bottom:6px">IS 15/25% + dividendes 30%</div>';
     h += '<div style="font-size:18px;font-weight:800;color:' + (winner !== 'IR bar\u00e8me' ? 'var(--green)' : 'var(--t2)') + ';font-family:JetBrains Mono,monospace">' + fE(net_is_final) + '</div>';
-    h += '<div style="font-size:9px;color:var(--t3);margin-top:2px">Net en poche</div></div>';
+    h += '<div style="font-size:10px;color:var(--t3);margin-top:2px">Net en poche</div></div>';
     h += '</div>';
     /* Verdict */
     h += '<div style="margin-top:10px;padding:8px 12px;border-radius:6px;background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.15);font-size:11px;text-align:center">';
@@ -1304,8 +1305,8 @@ function rFi(){try{var c=gFC();document.getElementById('fiC').innerHTML='<div st
   var urgLbl=x.d<=30?'URGENT':x.d<=60?'BIENT\u00d4T':'';
   var ico=x.n.indexOf('TVA')>=0||x.n.indexOf('cl.')>=0||x.n.indexOf('IR')>=0?'\ud83d\udcc5':x.n.indexOf('Acompte')>=0||x.n.indexOf('CFE')>=0?'\ud83d\udcb0':'\ud83d\udcca';
   return'<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:'+urgBg+';border:1px solid '+urgBdr+';border-left:3px solid '+urgBdr+';border-radius:8px">'
-    +'<div style="min-width:50px;text-align:center"><div style="font-size:20px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+urgCol+'">'+x.d+'</div><div style="font-size:8px;font-weight:700;text-transform:uppercase;color:'+urgCol+'">jours</div></div>'
-    +'<div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:14px">'+ico+'</span><b style="color:var(--t1);font-size:12px">'+x.n+'</b>'+(urgLbl?'<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:'+urgCol+';color:#fff;text-transform:uppercase;letter-spacing:.5px">'+urgLbl+'</span>':'')+'</div><div style="font-size:10px;color:var(--t3);margin-top:2px">'+x.date+'</div></div>'
+    +'<div style="min-width:50px;text-align:center"><div style="font-size:20px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+urgCol+'">'+x.d+'</div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:'+urgCol+'">jours</div></div>'
+    +'<div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:14px">'+ico+'</span><b style="color:var(--t1);font-size:12px">'+x.n+'</b>'+(urgLbl?'<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:'+urgCol+';color:#fff;text-transform:uppercase;letter-spacing:.5px">'+urgLbl+'</span>':'')+'</div><div style="font-size:10px;color:var(--t3);margin-top:2px">'+x.date+'</div></div>'
     +'</div>'}).join('')+'</div>'}catch(e){console.error('rFi:',e)}}
 /* ─── PORTFOLIO ─── */
 function aIV(){try{var n=document.getElementById('iv-n').value,c=document.getElementById('iv-c').value,i=parseFloat(document.getElementById('iv-i').value)||0,v=parseFloat(document.getElementById('iv-v').value)||0;if(!n||i<=0){toast('Requis');return}D.portfolio.push({id:uid(),name:n,cat:c,invested:i,current:v});D.history.unshift({type:'portfolio',text:n+' : '+fm(i),date:new Date().toISOString().slice(0,10)});save();rIV();tg('ivF');toast('OK');document.getElementById('iv-n').value='';document.getElementById('iv-i').value='';document.getElementById('iv-v').value=''}catch(e){console.error(e)}}
@@ -1668,7 +1669,7 @@ function rGoals(){try{
     h+='</div>';
     h+='<div style="display:flex;align-items:center;gap:6px">';
     if(daysLeft!==null)h+='<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:' + (daysLeft<=30?'rgba(255,71,87,.1)':'rgba(212,160,23,.08)') + ';color:' + (daysLeft<=30?'var(--red)':'var(--gold)') + '">' + (daysLeft>0?daysLeft+'j':'Expiré') + '</span>';
-    h+='<button class="btn bo" style="font-size:9px;padding:3px 6px;color:var(--red)" onclick="delGoal(\'' + g.id + '\')">×</button>';
+    h+='<button class="btn bo" style="font-size:10px;padding:3px 6px;color:var(--red)" onclick="delGoal(\'' + g.id + '\')">×</button>';
     h+='</div></div>';
 
     h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">';
@@ -1793,9 +1794,9 @@ function rYIR() {
       h += '</div>';
     });
     h += '<div style="border-top:1px solid var(--border);margin:12px 0;padding-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">';
-    h += '<div><div style="font-size:9px;color:var(--t3);text-transform:uppercase">Total revenus</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--green)">$' + totalRevenu.toLocaleString('en-US') + '</div></div>';
-    h += '<div><div style="font-size:9px;color:var(--t3);text-transform:uppercase">Total charges</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--red)">$' + totalCharges.toLocaleString('en-US') + '</div></div>';
-    h += '<div><div style="font-size:9px;color:var(--t3);text-transform:uppercase">Résultat net</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + (deltaAnnuel >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (deltaAnnuel >= 0 ? '+' : '') + '$' + deltaAnnuel.toLocaleString('en-US') + '</div></div>';
+    h += '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase">Total revenus</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--green)">$' + totalRevenu.toLocaleString('en-US') + '</div></div>';
+    h += '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase">Total charges</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--red)">$' + totalCharges.toLocaleString('en-US') + '</div></div>';
+    h += '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase">Résultat net</div><div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + (deltaAnnuel >= 0 ? 'var(--green)' : 'var(--red)') + '">' + (deltaAnnuel >= 0 ? '+' : '') + '$' + deltaAnnuel.toLocaleString('en-US') + '</div></div>';
     h += '</div></div>';
 
     /* Section 4 — Entités */
@@ -1808,7 +1809,7 @@ function rYIR() {
         h += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">';
         h += '<div style="flex:1"><b style="color:var(--t1);font-size:12px">' + (ent.name || 'Sans nom') + '</b>';
         h += '<div style="font-size:10px;color:var(--t3)">' + (ent.forme || '') + ' · ' + (ent.regime || '') + ' · ' + ent.status + '</div></div>';
-        h += '<div style="text-align:right"><div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--purple)">$' + (ent.tresorerie || 0).toLocaleString('en-US') + '</div><div style="font-size:9px;color:var(--t3)">trésorerie</div></div>';
+        h += '<div style="text-align:right"><div style="font-size:14px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--purple)">$' + (ent.tresorerie || 0).toLocaleString('en-US') + '</div><div style="font-size:10px;color:var(--t3)">trésorerie</div></div>';
         h += '</div>';
       });
       h += '</div></div>';
