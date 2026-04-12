@@ -6961,7 +6961,8 @@ function dlPDF() {
 // ─── LOGIN ───
 function tryLogin() {
   var code = document.getElementById('codeInput').value;
-  var stored = localStorage.getItem('aurum_code') || '2928';
+  var stored = localStorage.getItem('aurum_code');
+  if (!stored) { localStorage.setItem('aurum_code', code); sessionStorage.setItem('enz_role','user'); unlock(true); return }
   if (code === stored) { sessionStorage.setItem('enz_role','user'); unlock(true) }
   else { document.getElementById('loginErr').textContent = 'Code incorrect'; document.getElementById('codeInput').value = '' }
 }
