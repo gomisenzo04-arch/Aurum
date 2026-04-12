@@ -6961,10 +6961,22 @@ function dlPDF() {
 // ─── LOGIN ───
 function tryLogin() {
   var code = document.getElementById('codeInput').value;
+  if (!code || code.length < 1) return;
   var stored = localStorage.getItem('aurum_code');
-  if (!stored) { localStorage.setItem('aurum_code', code); sessionStorage.setItem('enz_role','user'); unlock(true); return }
-  if (code === stored) { sessionStorage.setItem('enz_role','user'); unlock(true) }
-  else { document.getElementById('loginErr').textContent = 'Code incorrect'; document.getElementById('codeInput').value = '' }
+  if (!stored) {
+    localStorage.setItem('aurum_code', code);
+    localStorage.setItem('aurum_setup', '1');
+    sessionStorage.setItem('enz_role','a');
+    unlock(true);
+    return;
+  }
+  if (code === stored) {
+    sessionStorage.setItem('enz_role','a');
+    unlock(true);
+  } else {
+    document.getElementById('loginErr').textContent = 'Code incorrect';
+    document.getElementById('codeInput').value = '';
+  }
 }
 // ─── AUTO-PAYOUTS FOR FUNDED ACCOUNTS ───
 function checkAutoPayouts() {
@@ -7048,9 +7060,11 @@ function unlock(isAdmin) {
 function checkSession() {
   /* Si dans une iframe (SPA shell), skip le login — le shell a déjà authentifié */
   try { if (window.self !== window.top) { unlock(true); return; } } catch(e) { unlock(true); return; }
-  const role = sessionStorage.getItem('enz_role');
-  if (role) unlock(true);
-  else if (role === 'user') unlock(false);
+  var role = sessionStorage.getItem('enz_role');
+  if (role) { unlock(true); return; }
+  /* Si aurum_auth est set par le shell PWA, on accepte aussi */
+  var auth = sessionStorage.getItem('aurum_auth');
+  if (auth) { unlock(true); return; }
 }
 
 // ─── ADMIN TRACKING ───
