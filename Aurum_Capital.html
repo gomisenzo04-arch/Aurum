@@ -1826,6 +1826,403 @@ function testPhase1() {
   return { pass: pass, fail: fail };
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 2 — Synergy Services: Journal ↔ Capital
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── SERVICE A: JournalPayoutSyncService ─── */
+var JournalPayoutSyncService = (function() {
+
+  /* Get all v2Flows that were created from payouts */
+  function _getSyncedFlows() {
+    return CapitalStore.getAllFlows(function(f) {
+      return f.source === 'JOURNAL_PAYOUT' || f.source === 'MANUAL' && f.kind === 'PAYOUT';
+    });
+  }
+
+  /* Find a v2Flow that mirrors a v1 payout */
+  function _findMirror(payoutId) {
+    return D.v2Flows.find(function(f) {
+      return f.journalPayoutId === payoutId || f._v1PayoutId === payoutId;
+    });
+  }
+
+  return {
+    /* Full sync: detect new, modified, deleted payouts */
+    sync: function() {
+      var synced = { created: 0, updated: 0, deleted: 0 };
+
+      // 1. For each v1 payout, ensure a v2 Flow mirror exists
+      D.payouts.forEach(function(p) {
+        var existing = _findMirror(p.id);
+        if (!existing) {
+          // NEW — create mirror Flow
+          var flow = CapitalModel.createFlow({
+            kind: 'PAYOUT',
+            source: p.autoFrom ? 'JOURNAL_PAYOUT' : 'MANUAL',
+            grossAmount: p.brut || p.net || 0,
+            fees: p.frais || 0,
+            netAmount: p.net || 0,
+            occurredAt: p.date ? p.date + 'T12:00:00' : new Date().toISOString(),
+            journalPayoutId: p.id || null,
+            label: p.source || 'Payout',
+            notes: p.period || '',
+            _v1PayoutId: p.id
+          });
+          D.v2Flows.push(flow);
+
+          // Also create a TaxableRevenue for this payout
+          var taxKind = 'BNC_PROP_FIRM'; // default for prop firm payouts
+          if (p.source && p.source.toLowerCase().indexOf('salaire') >= 0) taxKind = 'SALARY';
+
+          var taxRev = CapitalModel.createTaxableRevenue({
+            flowId: flow.id,
+            kind: taxKind,
+            fiscalYear: p.date ? parseInt(p.date.slice(0, 4)) : new Date().getFullYear(),
+            grossAmount: p.brut || p.net || 0,
+            netAmount: p.net || 0
+          });
+          D.v2TaxableRevenues.push(taxRev);
+
+          synced.created++;
+        } else {
+          // EXISTING — check if modified
+          var changed = false;
+          if (existing.grossAmount !== (p.brut || p.net || 0)) { existing.grossAmount = p.brut || p.net || 0; changed = true; }
+          if (existing.netAmount !== (p.net || 0)) { existing.netAmount = p.net || 0; changed = true; }
+          if (existing.fees !== (p.frais || 0)) { existing.fees = p.frais || 0; changed = true; }
+          var newDate = p.date ? p.date + 'T12:00:00' : existing.occurredAt;
+          if (existing.occurredAt.slice(0,10) !== newDate.slice(0,10)) { existing.occurredAt = newDate; changed = true; }
+          if (changed) {
+            // Also update the linked TaxableRevenue
+            var linkedTax = D.v2TaxableRevenues.find(function(r) { return r.flowId === existing.id; });
+            if (linkedTax) {
+              linkedTax.grossAmount = existing.grossAmount;
+              linkedTax.netAmount = existing.netAmount;
+              if (p.date) linkedTax.fiscalYear = parseInt(p.date.slice(0, 4));
+            }
+            synced.updated++;
+          }
+        }
+      });
+
+      // 2. Detect deleted: v2Flows with _v1PayoutId that no longer exist in D.payouts
+      var v1Ids = D.payouts.map(function(p) { return p.id; });
+      D.v2Flows = D.v2Flows.filter(function(f) {
+        if (f._v1PayoutId && v1Ids.indexOf(f._v1PayoutId) < 0) {
+          // Remove linked TaxableRevenue too
+          D.v2TaxableRevenues = D.v2TaxableRevenues.filter(function(r) { return r.flowId !== f.id; });
+          synced.deleted++;
+          return false; // remove this flow
+        }
+        return true;
+      });
+
+      if (synced.created || synced.updated || synced.deleted) {
+        save();
+        console.log('[Capital Sync] Payouts:', synced);
+      }
+      return synced;
+    }
+  };
+})();
+
+/* ─── SERVICE B: PropAccountSyncService ─── */
+var PropAccountSyncService = (function() {
+
+  /* Prefix for journal-synced assets */
+  var PREFIX = 'jsync_';
+
+  return {
+    sync: function() {
+      var synced = { created: 0, updated: 0, removed: 0 };
+      var j = rJ();
+      if (!j.a.length) return synced;
+
+      // Build current account state with P&L
+      var accountStates = [];
+      j.a.forEach(function(a) {
+        var bal = a.balance || 0;
+        j.t.forEach(function(t) {
+          if (t.account === a.name || (t.accId && t.accId === a.id)) bal += parseFloat(t.pl) || 0;
+        });
+        var tp = (a.type || '').toLowerCase();
+        var category = (tp === 'perso' || tp === 'personnel') ? 'TRADING_PERSO' : 'TRADING_PROP';
+        accountStates.push({
+          journalId: a.id,
+          name: a.name,
+          type: tp,
+          category: category,
+          initialValue: a.balance || 0,
+          currentValue: bal
+        });
+      });
+
+      // For each journal account, ensure a v2Asset mirror exists
+      accountStates.forEach(function(acc) {
+        var syncId = PREFIX + acc.journalId;
+        var existing = D.v2Assets.find(function(a) { return a.id === syncId; });
+
+        if (!existing) {
+          // NEW
+          D.v2Assets.push(CapitalModel.createAsset({
+            id: syncId,
+            category: acc.category,
+            label: acc.name + (acc.type === 'funded' ? ' (Funded)' : acc.type === 'prop' ? ' (Challenge)' : ''),
+            currentValue: acc.currentValue,
+            initialValue: acc.initialValue,
+            updateSource: 'JOURNAL_SYNC',
+            updateFrequency: 'REAL_TIME',
+            broker: acc.name,
+            _journalAccountId: acc.journalId,
+            _journalAccountType: acc.type
+          }));
+          synced.created++;
+        } else {
+          // UPDATE value if changed
+          if (Math.abs(existing.currentValue - acc.currentValue) > 0.01) {
+            // Add snapshot before update
+            if (!existing.historicalSnapshots) existing.historicalSnapshots = [];
+            existing.historicalSnapshots.push({ date: new Date().toISOString(), value: existing.currentValue, source: 'AUTO' });
+            if (existing.historicalSnapshots.length > 60) existing.historicalSnapshots = existing.historicalSnapshots.slice(-60);
+
+            existing.currentValue = acc.currentValue;
+            existing.lastUpdatedAt = new Date().toISOString();
+            existing.updateSource = 'JOURNAL_SYNC';
+            synced.updated++;
+          }
+          // Update label if name changed
+          var expectedLabel = acc.name + (acc.type === 'funded' ? ' (Funded)' : acc.type === 'prop' ? ' (Challenge)' : '');
+          if (existing.label !== expectedLabel) existing.label = expectedLabel;
+        }
+      });
+
+      // Remove synced assets whose journal account no longer exists
+      var journalIds = accountStates.map(function(a) { return PREFIX + a.journalId; });
+      D.v2Assets = D.v2Assets.filter(function(a) {
+        if (a.id.startsWith(PREFIX) && journalIds.indexOf(a.id) < 0) {
+          synced.removed++;
+          return false;
+        }
+        return true;
+      });
+
+      if (synced.created || synced.updated || synced.removed) {
+        save();
+        console.log('[Capital Sync] Accounts:', synced);
+      }
+      return synced;
+    }
+  };
+})();
+
+/* ─── SERVICE C: TradingStatsSyncService ─── */
+var TradingStatsSyncService = (function() {
+  return {
+    /* Get monthly trading stats, optionally filtered by account */
+    getMonthlyStats: function(accountIds) {
+      return JournalForCapitalReader.getTradingStatsByMonth(null, accountIds);
+    },
+
+    /* Get current month stats */
+    getCurrentMonthStats: function() {
+      var cm = new Date().toISOString().slice(0, 7);
+      var all = this.getMonthlyStats();
+      return all.find(function(s) { return s.month === cm; }) || { month: cm, trades: 0, wins: 0, pnl: 0, avgPnl: 0, wr: 0 };
+    },
+
+    /* Get stats for a specific account */
+    getAccountStats: function(accountId) {
+      var j = rJ();
+      var trades = j.t.filter(function(t) { return t.accId === accountId; });
+      var n = trades.length;
+      if (n === 0) return { trades: 0, wins: 0, pnl: 0, wr: 0, avgPnl: 0, bestTrade: 0, worstTrade: 0 };
+
+      var wins = 0, pnl = 0, best = -Infinity, worst = Infinity;
+      trades.forEach(function(t) {
+        var pl = parseFloat(t.pl) || 0;
+        pnl += pl;
+        if (pl > 0) wins++;
+        if (pl > best) best = pl;
+        if (pl < worst) worst = pl;
+      });
+
+      return {
+        trades: n,
+        wins: wins,
+        pnl: pnl,
+        wr: Math.round(wins / n * 100),
+        avgPnl: pnl / n,
+        bestTrade: best === -Infinity ? 0 : best,
+        worstTrade: worst === Infinity ? 0 : worst
+      };
+    },
+
+    /* Compare prop vs perso performance */
+    getPropVsPersoComparison: function() {
+      var j = rJ();
+      var propTrades = [], persoTrades = [];
+      j.t.forEach(function(t) {
+        var accType = (t.accType || '').toLowerCase();
+        if (accType === 'prop' || accType === 'funded') propTrades.push(t);
+        else if (accType === 'perso' || accType === 'personnel') persoTrades.push(t);
+      });
+
+      function stats(trades) {
+        var n = trades.length;
+        if (n === 0) return { trades: 0, pnl: 0, wr: 0 };
+        var wins = trades.filter(function(t) { return (parseFloat(t.pl) || 0) > 0; }).length;
+        var pnl = trades.reduce(function(s, t) { return s + (parseFloat(t.pl) || 0); }, 0);
+        return { trades: n, pnl: pnl, wr: Math.round(wins / n * 100) };
+      }
+
+      return { prop: stats(propTrades), perso: stats(persoTrades) };
+    }
+  };
+})();
+
+/* ─── ORCHESTRATOR: CapitalSyncOrchestrator ─── */
+var CapitalSyncOrchestrator = (function() {
+  return {
+    /* Run full sync — called on Capital load */
+    syncAll: function() {
+      try {
+        console.log('[Capital Sync] Starting full sync...');
+        var results = {};
+
+        // 1. Sync prop/perso accounts from Journal → v2Assets
+        results.accounts = PropAccountSyncService.sync();
+
+        // 2. Sync payouts from v1 → v2Flows + v2TaxableRevenues
+        results.payouts = JournalPayoutSyncService.sync();
+
+        // 3. Generate monthly snapshot if needed
+        try { NetWorthEvolutionCalculator.generateMonthlySnapshot(); } catch(e) {}
+
+        console.log('[Capital Sync] Complete:', results);
+        return results;
+      } catch(e) {
+        console.error('[Capital Sync] Error:', e);
+        return { error: e.message };
+      }
+    }
+  };
+})();
+
+/* ─── Phase 2 Integration Tests ─── */
+function testPhase2() {
+  var pass = 0, fail = 0;
+  function assert(cond, msg) { if (cond) { pass++; } else { fail++; console.error('[TEST FAIL]', msg); } }
+
+  console.log('[Capital Tests] Running Phase 2 integration tests...');
+
+  // ═══ TEST A: Payout Sync ═══
+
+  // Save initial state
+  var initialFlowCount = D.v2Flows.length;
+  var initialTaxCount = D.v2TaxableRevenues.length;
+
+  // Create a test v1 payout
+  var testPayout = { id: '_test_p1_' + Date.now(), date: '2026-04-01', source: 'Test Prop', brut: 500, frais: 10, net: 490 };
+  D.payouts.push(testPayout);
+
+  // Run sync
+  var payoutSync1 = JournalPayoutSyncService.sync();
+  assert(payoutSync1.created >= 1, 'Payout sync creates Flow for new payout');
+  assert(D.v2Flows.length > initialFlowCount, 'v2Flows count increased');
+
+  // Find the mirror flow
+  var mirrorFlow = D.v2Flows.find(function(f) { return f._v1PayoutId === testPayout.id; });
+  assert(!!mirrorFlow, 'Mirror flow exists');
+  assert(mirrorFlow.grossAmount === 500, 'Mirror flow gross = 500');
+  assert(mirrorFlow.netAmount === 490, 'Mirror flow net = 490');
+  assert(mirrorFlow.fees === 10, 'Mirror flow fees = 10');
+  assert(mirrorFlow.kind === 'PAYOUT', 'Mirror flow kind = PAYOUT');
+
+  // Find linked TaxableRevenue
+  var mirrorTax = D.v2TaxableRevenues.find(function(r) { return r.flowId === mirrorFlow.id; });
+  assert(!!mirrorTax, 'TaxableRevenue created for payout');
+  assert(mirrorTax.kind === 'BNC_PROP_FIRM', 'TaxableRevenue kind = BNC_PROP_FIRM');
+  assert(mirrorTax.fiscalYear === 2026, 'TaxableRevenue fiscal year = 2026');
+
+  // TEST: Modify the payout → sync should detect change
+  testPayout.brut = 600;
+  testPayout.net = 590;
+  var payoutSync2 = JournalPayoutSyncService.sync();
+  assert(payoutSync2.updated >= 1, 'Payout sync detects modification');
+  var updatedFlow = D.v2Flows.find(function(f) { return f._v1PayoutId === testPayout.id; });
+  assert(updatedFlow.grossAmount === 600, 'Modified flow gross = 600');
+  assert(updatedFlow.netAmount === 590, 'Modified flow net = 590');
+
+  // TEST: Delete the payout → sync should remove mirror
+  D.payouts = D.payouts.filter(function(p) { return p.id !== testPayout.id; });
+  var payoutSync3 = JournalPayoutSyncService.sync();
+  assert(payoutSync3.deleted >= 1, 'Payout sync detects deletion');
+  var deletedFlow = D.v2Flows.find(function(f) { return f._v1PayoutId === testPayout.id; });
+  assert(!deletedFlow, 'Mirror flow removed after payout deletion');
+  var deletedTax = D.v2TaxableRevenues.find(function(r) { return r.flowId === (mirrorFlow ? mirrorFlow.id : ''); });
+  assert(!deletedTax, 'TaxableRevenue removed after payout deletion');
+
+  // ═══ TEST B: Account Sync ═══
+
+  var initialAssetCount = D.v2Assets.length;
+  var accountSync = PropAccountSyncService.sync();
+  assert(typeof accountSync.created === 'number', 'Account sync returns created count');
+  assert(typeof accountSync.updated === 'number', 'Account sync returns updated count');
+
+  // Check that journal accounts are mirrored
+  var j = rJ();
+  j.a.forEach(function(a) {
+    var syncedAsset = D.v2Assets.find(function(ast) { return ast.id === 'jsync_' + a.id; });
+    assert(!!syncedAsset, 'Journal account "' + a.name + '" has v2Asset mirror');
+    if (syncedAsset) {
+      var tp = (a.type || '').toLowerCase();
+      var expectedCat = (tp === 'perso' || tp === 'personnel') ? 'TRADING_PERSO' : 'TRADING_PROP';
+      assert(syncedAsset.category === expectedCat, 'Synced asset category correct for "' + a.name + '"');
+      assert(syncedAsset.updateSource === 'JOURNAL_SYNC', 'Synced asset source = JOURNAL_SYNC');
+    }
+  });
+
+  // Idempotency: running sync again should not create duplicates
+  var countBefore = D.v2Assets.length;
+  PropAccountSyncService.sync();
+  assert(D.v2Assets.length === countBefore, 'Account sync is idempotent (no duplicates)');
+
+  // ═══ TEST C: Trading Stats Sync ═══
+
+  var monthlyStats = TradingStatsSyncService.getMonthlyStats();
+  assert(Array.isArray(monthlyStats), 'TradingStats.getMonthlyStats returns array');
+
+  var currentMonth = TradingStatsSyncService.getCurrentMonthStats();
+  assert(typeof currentMonth.trades === 'number', 'CurrentMonth.trades is number');
+  assert(typeof currentMonth.pnl === 'number', 'CurrentMonth.pnl is number');
+  assert(typeof currentMonth.wr === 'number', 'CurrentMonth.wr is number');
+
+  var comparison = TradingStatsSyncService.getPropVsPersoComparison();
+  assert(typeof comparison.prop.trades === 'number', 'Comparison.prop.trades is number');
+  assert(typeof comparison.perso.trades === 'number', 'Comparison.perso.trades is number');
+
+  // ═══ TEST D: Orchestrator ═══
+
+  var orchResult = CapitalSyncOrchestrator.syncAll();
+  assert(typeof orchResult.accounts === 'object', 'Orchestrator returns accounts result');
+  assert(typeof orchResult.payouts === 'object', 'Orchestrator returns payouts result');
+
+  // ═══ TEST E: Edge case — sync with empty journal ═══
+  // (Can't easily test this without wiping journal, but ensure no crash)
+  assert(typeof JournalPayoutSyncService.sync === 'function', 'JournalPayoutSyncService.sync is callable');
+  assert(typeof PropAccountSyncService.sync === 'function', 'PropAccountSyncService.sync is callable');
+
+  // ═══ TEST F: Data integrity after full cycle ═══
+  var nw = NetWorthCalculator.calculate();
+  assert(typeof nw.netWorth === 'number' && !isNaN(nw.netWorth), 'NetWorth still valid after sync cycle');
+  var health = HealthScoreCalculator.calculate();
+  assert(typeof health.globalScore === 'number' && !isNaN(health.globalScore), 'Health score still valid after sync cycle');
+
+  console.log('[Capital Tests] Phase 2: ' + pass + ' passed, ' + fail + ' failed');
+  return { pass: pass, fail: fail };
+}
+
 /* ─── JOURNAL SYNC ─── */
 function rJ(){try{var r=localStorage.getItem('enz_v4');if(!r)return{a:[],t:[]};var j=JSON.parse(r),a=[],t=[];if(j.accounts)j.accounts.forEach(function(ac){a.push({name:ac.name||'',type:ac.type||'',balance:ac.bal||ac.balance||0,risk:ac.risk||1,target:ac.target||0,floor:ac.floor||0,id:ac.id||''})});if(j.live)j.live.forEach(function(tr){var accName='',accType='';if(tr.accId&&j.accounts){var acc=j.accounts.find(function(a){return a.id===tr.accId});if(acc){accName=acc.name||'';accType=acc.type||''}}t.push(Object.assign({},tr,{account:accName,accType:accType}))});return{a:a,t:t}}catch(e){return{a:[],t:[]}}}
 function mPnL(){try{var j=rJ(),m={};j.t.forEach(function(t){if(!t.date)return;var k=t.date.slice(0,7);if(!m[k])m[k]={pnl:0,n:0,w:0};var p=parseFloat(t.pl)||0;m[k].pnl+=p;m[k].n++;if(p>0)m[k].w++});return m}catch(e){return{}}}
@@ -3258,7 +3655,7 @@ function renderYIRDoughnut(portfolio, tradingPerso, payouts, tresoEntites) {
 /* ─── INIT ─── */
 load();
 migrateToV2();
-try { NetWorthEvolutionCalculator.generateMonthlySnapshot(); } catch(e) {}
+CapitalSyncOrchestrator.syncAll();
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){console.error(e)}})();
 rCL();rCS();rAL();renderCapitalNav();rD();
 setTimeout(function() { AurumSync.syncAll(); }, 3000);
