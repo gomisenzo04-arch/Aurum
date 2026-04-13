@@ -1973,18 +1973,27 @@ a:hover{opacity:.85}
 <div class="fg" style="margin-bottom:14px">
 <div class="f"><label>Solde ($)</label><input type="number" id="cBal" value="6000" oninput="cLot()"></div>
 <div class="f"><label>Risque (%)</label><select id="cRisk" onchange="cLot()"><option value="1">1%</option><option value="0.5">0,5%</option><option value="0.25">0,25%</option></select></div>
-<div class="f"><label>Commission</label>
+<div class="f"><label>Commission par trade</label>
 <div style="display:flex;gap:4px">
-<select id="cComType" onchange="cLot()" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--t1);font-family:inherit;font-size:13px">
-<option value="dollar">$/lot</option>
-<option value="percent">%</option>
+<select id="cComType" onchange="cLot()" style="width:80px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--t1);font-family:inherit;font-size:13px">
+<option value="dollar">$ / lot</option>
+<option value="percent">% du prix</option>
 </select>
-<input type="number" id="cCom" value="5" step="0.0001" oninput="cLot()" style="flex:1">
+<input type="number" id="cCom" value="5" step="0.0001" oninput="cLot()" style="flex:1" placeholder="Valeur de la commission">
+</div>
+<div style="font-size:10px;color:var(--t3);margin-top:3px">FundedNext : 1-Step/2-Step/Instant = <b style="color:var(--gold)">0.0016%</b> · Stellar Lite = <b style="color:var(--gold)">0.018%</b></div>
+</div>
+<div class="f"><label>Prix XAUUSD actuel <span style="font-weight:400;color:var(--t3)">(utile si commission en %)</span></label>
+<input type="number" id="cGoldPrice" value="3300" step="1" oninput="cLot();localStorage.setItem('aurum_gold_price',this.value)" placeholder="ex: 3235">
+<div style="font-size:10px;color:var(--t3);margin-top:3px">Mets le prix approximatif du gold. Se sauvegarde automatiquement. Mets-le à jour 1 fois par semaine suffit.</div>
 </div>
 </div>
-<div class="f"><label>Prix XAUUSD <span style="font-weight:400;color:var(--t3)">(auto-sauvé)</span></label><input type="number" id="cGoldPrice" value="3300" step="1" oninput="cLot();localStorage.setItem('aurum_gold_price',this.value)" placeholder="Prix actuel du gold"></div>
+<div style="font-size:11px;color:var(--t2);margin-bottom:14px;line-height:1.8;padding:10px 12px;background:var(--bg3);border-radius:8px">
+<div style="font-weight:600;color:var(--t1);margin-bottom:4px">Comment ça marche ?</div>
+<div><b style="color:var(--gold)">Lot</b> = Risque ($) ÷ (SL en pts + Commission/lot)</div>
+<div>Sur XAUUSD : 1 point = $1 par lot. Arrondi au centième inférieur (sécurité).</div>
+<div style="margin-top:4px;font-size:10px;color:var(--t3)">Ex : Balance $6000, risque 1% = $60. SL 500 pts. → Lot = 60 ÷ 500 = <b>0.12</b></div>
 </div>
-<div style="font-size:11px;color:var(--t3);margin-bottom:14px;line-height:1.6">Formule : Lot = Risque ÷ (SL + Commission). XAUUSD : 1 pt = $1/lot. Arrondi au centième inférieur.</div>
 <div id="lotTables"></div>
 </div>
 </details>
@@ -6342,15 +6351,22 @@ function renderAccountForm(acc) {
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px">
       <div class="f"><label>Solde initial ($)</label><input type="number" id="afBal" value="${a.bal}" min="0"></div>
       <div class="f"><label>Risque (%)</label><input type="number" id="afRisk" step="0.25" value="${a.risk}" min="0.1" max="5"></div>
-      <div class="f"><label>Commission</label>
+      <div class="f"><label>Commission par trade</label>
         <div style="display:flex;gap:4px">
-          <select id="afCommType" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--t1);font-family:inherit;font-size:13px">
-            <option value="dollar" ${(a.commType||'dollar')==='dollar'?'selected':''}>$/lot</option>
-            <option value="percent" ${(a.commType||'')==='percent'?'selected':''}>%</option>
+          <select id="afCommType" onchange="var p=document.getElementById('afComm');if(this.value==='percent'){p.placeholder='ex: 0.0016';p.step='0.0001'}else{p.placeholder='ex: 5';p.step='0.5'}" style="width:80px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--t1);font-family:inherit;font-size:13px">
+            <option value="dollar" ${(a.commType||'dollar')==='dollar'?'selected':''}>$ / lot</option>
+            <option value="percent" ${(a.commType||'')==='percent'?'selected':''}>% du prix</option>
           </select>
-          <input type="number" id="afComm" step="0.0001" value="${a.comm}" style="flex:1" placeholder="${(a.commType||'dollar')==='percent'?'ex: 0.0016':'ex: 5'}">
+          <input type="number" id="afComm" step="${(a.commType||'dollar')==='percent'?'0.0001':'0.5'}" value="${a.comm}" style="flex:1" placeholder="${(a.commType||'dollar')==='percent'?'ex: 0.0016':'ex: 5'}">
         </div>
-        <div style="font-size:10px;color:var(--t3);margin-top:3px">FundedNext: 1-Step/2-Step/Instant = 0.0016% · Stellar Lite = 0.018%</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:6px;line-height:1.6;padding:8px 10px;background:var(--bg3);border-radius:6px">
+          <div style="font-weight:600;color:var(--gold);margin-bottom:3px">Comment trouver ta commission ?</div>
+          <div>Va dans les conditions de ta prop firm ou ton broker. Cherche "commission" ou "spread".</div>
+          <div style="margin-top:4px"><b style="color:var(--t1)">FundedNext :</b></div>
+          <div>• 1-Step, 2-Step, Instant → choisir <b>% du prix</b> et taper <b style="color:var(--gold)">0.0016</b></div>
+          <div>• Stellar Lite → choisir <b>% du prix</b> et taper <b style="color:var(--gold)">0.018</b></div>
+          <div style="margin-top:4px"><b style="color:var(--t1)">Autre broker :</b> Si la commission est en dollars par lot (ex: $5), choisir <b>$ / lot</b></div>
+        </div>
       </div>
       <div class="f"><label>Target ($)</label><input type="number" id="afTarget" value="${a.target}"></div>
       <div class="f"><label>Plancher ($)</label><input type="number" id="afFloor" value="${a.floor}"></div>
