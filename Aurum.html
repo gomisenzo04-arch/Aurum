@@ -1973,7 +1973,16 @@ a:hover{opacity:.85}
 <div class="fg" style="margin-bottom:14px">
 <div class="f"><label>Solde ($)</label><input type="number" id="cBal" value="6000" oninput="cLot()"></div>
 <div class="f"><label>Risque (%)</label><select id="cRisk" onchange="cLot()"><option value="1">1%</option><option value="0.5">0,5%</option><option value="0.25">0,25%</option></select></div>
-<div class="f"><label>Commission/lot ($)</label><input type="number" id="cCom" value="5" step="0.5" oninput="cLot()"></div>
+<div class="f"><label>Commission</label>
+<div style="display:flex;gap:4px">
+<select id="cComType" onchange="cLot()" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--t1);font-family:inherit;font-size:13px">
+<option value="dollar">$/lot</option>
+<option value="percent">%</option>
+</select>
+<input type="number" id="cCom" value="5" step="0.0001" oninput="cLot()" style="flex:1">
+</div>
+</div>
+<div class="f"><label>Prix XAUUSD</label><input type="number" id="cGoldPrice" value="3300" step="1" oninput="cLot()" placeholder="Prix actuel du gold"></div>
 </div>
 <div style="font-size:11px;color:var(--t3);margin-bottom:14px;line-height:1.6">Formule : Lot = Risque ÷ (SL + Commission). XAUUSD : 1 pt = $1/lot. Arrondi au centième inférieur.</div>
 <div id="lotTables"></div>
@@ -2694,6 +2703,8 @@ function go(id) {
     document.getElementById('cBal').value = _gs.bal;
     document.getElementById('cRisk').value = _gs.risk;
     document.getElementById('cCom').value = _gs.comm;
+    var _ct = document.getElementById('cComType');
+    if (_ct) _ct.value = _gs.commType || 'dollar';
     if (lastSL) document.getElementById('cSL').value = lastSL;
     var _gslider = document.getElementById('cSlider');
     if (_gslider) _gslider.value = Math.min(800, Math.max(200, lastSL || 350));
@@ -2721,6 +2732,8 @@ function R() {
     document.getElementById('cBal').value = cs.bal;
     document.getElementById('cRisk').value = cs.risk;
     document.getElementById('cCom').value = cs.comm;
+    var _ct2 = document.getElementById('cComType');
+    if (_ct2) _ct2.value = cs.commType || 'dollar';
     cLot();
   }
   else if (pg === 'review') { rReview() }
@@ -4510,7 +4523,7 @@ function autoCalcPL(res) {
   const lotText = document.getElementById('fLo').value || document.getElementById('lotDisplay').textContent;
   const lot = parseFloat(lotText) || 0;
   const s = S();
-  const comm = lot * s.comm;
+  const comm = lot * getCommPerLot(s);
   const plEl = document.getElementById('fPL');
   const msgEl = document.getElementById('plAutoMsg');
   const ptsWrap = document.getElementById('ptsRealWrap');
@@ -4545,7 +4558,7 @@ function calcFromPts() {
   const lotText = document.getElementById('fLo').value || document.getElementById('lotDisplay').textContent;
   const lot = parseFloat(lotText) || 0;
   const s = S();
-  const comm = lot * s.comm;
+  const comm = lot * getCommPerLot(s);
   const isLive = aT === 'live';
   const realREl = document.getElementById('fRealR');
   const plEl = document.getElementById('fPL');
@@ -4637,7 +4650,7 @@ function aLot() {
   const lotBox = document.getElementById('lotBox');
   const lotDisp = document.getElementById('lotDisplay');
   if (!sl || sl < 100) { lotDisp.textContent = '—'; lotBox.classList.remove('has-val'); return }
-  const s = S(), r = s.bal*s.risk/100, lot = Math.floor(r/(sl+s.comm)*100)/100;
+  const s = S(), lot = calcLotSize(s.bal, s.risk, sl, s);
   lotDisp.textContent = lot.toFixed(2);
   lotBox.classList.add('has-val');
   document.getElementById('sn3').className = 'step-num done';
@@ -4886,10 +4899,10 @@ function rQuickGrid() {
   try {
   const el = document.getElementById('quickGrid');
   if (!el) return;
-  const co = parseFloat(document.getElementById('cCom').value) || 0;
   const b = parseFloat(document.getElementById('cBal').value) || 0;
   const r = parseFloat(document.getElementById('cRisk').value) || 1;
   const ra = b * r / 100;
+  const co = getCommPerLot(S());
   const activeSL = parseInt(document.getElementById('cSL').value) || 350;
   const accName = document.getElementById('calcGridAccName');
   if (accName) accName.textContent = S().name || 'Compte actif';
@@ -4910,15 +4923,41 @@ function rQuickGrid() {
   } catch(e) { console.error('[Aurum] rQuickGrid:', e) }
 }
 
+/* ─── Commission helper — handles both $/lot and % ─── */
+function getCommPerLot(acc) {
+  if (!acc) acc = S();
+  var coVal = acc.comm || 0;
+  var coType = acc.commType || 'dollar';
+  if (coType === 'percent') {
+    var goldPrice = parseFloat((document.getElementById('cGoldPrice')||{}).value) || 3300;
+    return goldPrice * coVal / 100;
+  }
+  return coVal;
+}
+function calcLotSize(balance, riskPct, slPts, acc) {
+  var ra = balance * riskPct / 100;
+  var cpl = getCommPerLot(acc);
+  return (slPts + cpl) > 0 ? Math.floor(ra / (slPts + cpl) * 100) / 100 : 0;
+}
+
 function cLot() {
   try {
   const b = parseFloat(document.getElementById('cBal').value) || 0;
   const r = parseFloat(document.getElementById('cRisk').value) || 1;
   const sl = parseFloat(document.getElementById('cSL').value) || 250;
-  const co = parseFloat(document.getElementById('cCom').value) || 0;
+  const coVal = parseFloat(document.getElementById('cCom').value) || 0;
+  const coType = (document.getElementById('cComType') || {}).value || 'dollar';
+  const goldPrice = parseFloat((document.getElementById('cGoldPrice') || {}).value) || 3300;
   const ra = b * r / 100;
-  const lot = Math.floor(ra / (sl + co) * 100) / 100;
-  const loss = lot * sl, com = lot * co;
+
+  /* Commission effective par lot :
+     - dollar: co = coVal (ex: $5/lot)
+     - percent: co = goldPrice × coVal / 100 (ex: 3300 × 0.0016 / 100 = $0.053/lot) */
+  var commPerLot = coType === 'percent' ? (goldPrice * coVal / 100) : coVal;
+
+  const lot = sl + commPerLot > 0 ? Math.floor(ra / (sl + commPerLot) * 100) / 100 : 0;
+  const loss = lot * sl;
+  const com = lot * commPerLot;
   const totalLoss = loss + com;
   const usage = ra > 0 ? Math.min(100, Math.round(totalLoss / ra * 100)) : 0;
 
@@ -4938,7 +4977,8 @@ function cLot() {
   if (accInfo) {
     const s = S();
     const typeIcon = { prop:'🏆', funded:'✓', perso:'👤', demo:'◎' };
-    accInfo.innerHTML = `${typeIcon[s.type]||''} <b style="color:var(--t1)">${s.name||'Compte'}</b> · ${r > 2 ? '<span style="color:var(--red)">⚠ ' + r + '%</span>' : r + '%'} · $${co}/lot`;
+    var commLabel = coType === 'percent' ? coVal + '% ($' + commPerLot.toFixed(2) + '/lot)' : '$' + coVal + '/lot';
+    accInfo.innerHTML = `${typeIcon[s.type]||''} <b style="color:var(--t1)">${s.name||'Compte'}</b> · ${r > 2 ? '<span style="color:var(--red)">⚠ ' + r + '%</span>' : r + '%'} · ${commLabel}`;
   }
 
   rSlQuickBtns();
@@ -6296,7 +6336,16 @@ function renderAccountForm(acc) {
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px">
       <div class="f"><label>Solde initial ($)</label><input type="number" id="afBal" value="${a.bal}" min="0"></div>
       <div class="f"><label>Risque (%)</label><input type="number" id="afRisk" step="0.25" value="${a.risk}" min="0.1" max="5"></div>
-      <div class="f"><label>Commission/lot ($)</label><input type="number" id="afComm" step="0.5" value="${a.comm}"></div>
+      <div class="f"><label>Commission</label>
+        <div style="display:flex;gap:4px">
+          <select id="afCommType" style="width:70px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--t1);font-family:inherit;font-size:13px">
+            <option value="dollar" ${(a.commType||'dollar')==='dollar'?'selected':''}>$/lot</option>
+            <option value="percent" ${(a.commType||'')==='percent'?'selected':''}>%</option>
+          </select>
+          <input type="number" id="afComm" step="0.0001" value="${a.comm}" style="flex:1" placeholder="${(a.commType||'dollar')==='percent'?'ex: 0.0016':'ex: 5'}">
+        </div>
+        <div style="font-size:10px;color:var(--t3);margin-top:3px">FundedNext: 1-Step/2-Step/Instant = 0.0016% · Stellar Lite = 0.018%</div>
+      </div>
       <div class="f"><label>Target ($)</label><input type="number" id="afTarget" value="${a.target}"></div>
       <div class="f"><label>Plancher ($)</label><input type="number" id="afFloor" value="${a.floor}"></div>
       <div class="f"><label>Garde-fou daily (%)</label><input type="number" id="afDaily" step="0.5" value="${a.daily}"></div>
@@ -6325,6 +6374,7 @@ function saveAccount(editId) {
     bal: +document.getElementById('afBal').value || 6000,
     risk: +document.getElementById('afRisk').value || 1,
     comm: +document.getElementById('afComm').value || 5,
+    commType: document.getElementById('afCommType').value || 'dollar',
     target: +document.getElementById('afTarget').value || 6480,
     floor: +document.getElementById('afFloor').value || 5400,
     daily: +document.getElementById('afDaily').value || 4,
@@ -8608,10 +8658,13 @@ function rSessionCalc(s) {
 
     /* Big lot result */
     var ra = acc.bal * (acc.risk || 1) / 100;
-    var co = acc.comm || 0;
-    var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+    var coVal = acc.comm || 0;
+    var coType = acc.commType || 'dollar';
+    var goldPrice = parseFloat((document.getElementById('cGoldPrice')||{}).value) || 3300;
+    var commPerLot = coType === 'percent' ? (goldPrice * coVal / 100) : coVal;
+    var lot = (currentSL + commPerLot) > 0 ? Math.floor(ra / (currentSL + commPerLot) * 100) / 100 : 0;
     var loss = lot * currentSL;
-    var com = lot * co;
+    var com = lot * commPerLot;
 
     h += '<div style="text-align:center;padding:12px 0">';
     h += '<div style="font-size:56px;font-weight:800;color:var(--gold);font-family:JetBrains Mono,monospace;line-height:1">' + lot.toFixed(2) + '</div>';
@@ -8937,10 +8990,13 @@ function rSessCockpitCalc(s, acc, config) {
 
     /* BIG LOT RESULT */
     var ra = acc.bal * (acc.risk || 1) / 100;
-    var co = acc.comm || 0;
-    var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+    var coVal = acc.comm || 0;
+    var coType = acc.commType || 'dollar';
+    var goldPrice = parseFloat((document.getElementById('cGoldPrice')||{}).value) || 3300;
+    var commPerLot = coType === 'percent' ? (goldPrice * coVal / 100) : coVal;
+    var lot = (currentSL + commPerLot) > 0 ? Math.floor(ra / (currentSL + commPerLot) * 100) / 100 : 0;
     var loss = lot * currentSL;
-    var com = lot * co;
+    var com = lot * commPerLot;
 
     h += '<div style="text-align:center;padding:8px 0;cursor:pointer" onclick="sessCockpitCopyLot(\'' + lot.toFixed(2) + '\')" title="Cliquer pour copier">';
     h += '<div class="sess-lot-big' + (_sessCalcTriggered ? ' pulse' : '') + '" id="sessLotBig">' + lot.toFixed(2) + '</div>';
@@ -8998,8 +9054,8 @@ function rSessCockpitQuickTrade(s, blocked, sessTrades, config) {
     var currentSL = parseInt(document.getElementById('cSL').value) || 350;
     var acc = S();
     var ra = acc.bal * (acc.risk || 1) / 100;
-    var co = acc.comm || 0;
-    var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+    var co = getCommPerLot(acc);
+    var lot = calcLotSize(acc.bal, acc.risk || 1, currentSL, acc);
 
     h += '<div class="sess-quick-trade">';
     h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
@@ -9078,8 +9134,8 @@ function sessCockpitSaveTrade() {
     var setup = _sessQTForm.setup || 'QM';
     var acc = S();
     var ra = acc.bal * (acc.risk || 1) / 100;
-    var co = acc.comm || 0;
-    var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+    var co = getCommPerLot(acc);
+    var lot = calcLotSize(acc.bal, acc.risk || 1, currentSL, acc);
 
     var dirMap = { buy: 'Buy', sell: 'Sell' };
     var resMap = { tp: 'TP', sl: 'SL', trail: 'Trail', '21h': '21h', be: 'BE' };
@@ -9292,8 +9348,8 @@ function renderTFMStep() {
 
       /* Big lot result */
       var ra = s.bal * (s.risk || 1) / 100;
-      var co = s.comm || 0;
-      var lot = Math.floor(ra / (currentSL + co) * 100) / 100;
+      var co = getCommPerLot(s);
+      var lot = calcLotSize(s.bal, s.risk || 1, currentSL, s);
       var loss = lot * currentSL;
       var com = lot * co;
 
@@ -9324,8 +9380,8 @@ function renderTFMStep() {
       var dirLabel = (_tfmChecks.dir ? config.directions.find(function(d) { return d.id === _tfmChecks.dir }) : null);
       var s = S();
       var ra = s.bal * (s.risk || 1) / 100;
-      var co = s.comm || 0;
-      var lot = Math.floor(ra / (_tfmSL + co) * 100) / 100;
+      var co = getCommPerLot(s);
+      var lot = calcLotSize(s.bal, s.risk || 1, _tfmSL, s);
 
       var h3 = '';
       /* Résumé pré-rempli */
@@ -9388,8 +9444,8 @@ function submitTFM() {
     var s = S();
     var now = new Date();
     var ra = s.bal * (s.risk || 1) / 100;
-    var co = s.comm || 0;
-    var lot = Math.floor(ra / (_tfmSL + co) * 100) / 100;
+    var co = getCommPerLot(s);
+    var lot = calcLotSize(s.bal, s.risk || 1, _tfmSL, s);
     var pct = s.bal > 0 ? (pl / s.bal * 100).toFixed(2) : '0';
 
     /* Créer le trade directement */
