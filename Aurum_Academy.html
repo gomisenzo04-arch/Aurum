@@ -394,170 +394,6 @@ html{scroll-behavior:smooth}
 </div>
 <canvas class="confetti-cv" id="confetti"></canvas>
 <script>
-/* ═══ AurumDB — IndexedDB wrapper with localStorage fallback ═══ */
-var AurumDB = (function() {
-  var DB_NAME = 'AurumData';
-  var DB_VERSION = 1;
-  var STORE = 'kv';
-  var _db = null;
-  var _ready = false;
-  var _cache = {};
-
-  function open() {
-    return new Promise(function(resolve, reject) {
-      if (_db) { resolve(_db); return; }
-      try {
-        var req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = function(e) {
-          var db = e.target.result;
-          if (!db.objectStoreNames.contains(STORE)) {
-            db.createObjectStore(STORE);
-          }
-        };
-        req.onsuccess = function(e) {
-          _db = e.target.result;
-          resolve(_db);
-        };
-        req.onerror = function() { reject(req.error); };
-      } catch(e) { reject(e); }
-    });
-  }
-
-  function idbGet(key) {
-    return open().then(function(db) {
-      return new Promise(function(resolve, reject) {
-        var tx = db.transaction(STORE, 'readonly');
-        var req = tx.objectStore(STORE).get(key);
-        req.onsuccess = function() { resolve(req.result !== undefined ? req.result : null); };
-        req.onerror = function() { reject(req.error); };
-      });
-    });
-  }
-
-  function idbSet(key, value) {
-    _cache[key] = value;
-    return open().then(function(db) {
-      return new Promise(function(resolve, reject) {
-        var tx = db.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).put(value, key);
-        tx.oncomplete = function() { resolve(); };
-        tx.onerror = function() { reject(tx.error); };
-      });
-    });
-  }
-
-  function idbRemove(key) {
-    delete _cache[key];
-    return open().then(function(db) {
-      return new Promise(function(resolve, reject) {
-        var tx = db.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).delete(key);
-        tx.oncomplete = function() { resolve(); };
-        tx.onerror = function() { reject(tx.error); };
-      });
-    });
-  }
-
-  function idbGetAll() {
-    return open().then(function(db) {
-      return new Promise(function(resolve, reject) {
-        var tx = db.transaction(STORE, 'readonly');
-        var store = tx.objectStore(STORE);
-        var allKeys = store.getAllKeys();
-        var allVals = store.getAll();
-        tx.oncomplete = function() {
-          var result = {};
-          for (var i = 0; i < allKeys.result.length; i++) {
-            result[allKeys.result[i]] = allVals.result[i];
-          }
-          resolve(result);
-        };
-        tx.onerror = function() { reject(tx.error); };
-      });
-    });
-  }
-
-  function migrate() {
-    return open().then(function(db) {
-      return new Promise(function(resolve) {
-        var tx = db.transaction(STORE, 'readonly');
-        var countReq = tx.objectStore(STORE).count();
-        countReq.onsuccess = function() {
-          if (countReq.result > 0) { resolve(false); return; }
-          var keys = ['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist','aurum_ff_news','aurum_gold_price','enz_stats','enz_lastBackup','aurum_draft_trade','aurum_sessions'];
-          var promises = [];
-          keys.forEach(function(k) {
-            var val = AurumDB.getItem(k);
-            if (val !== null) {
-              _cache[k] = val;
-              promises.push(idbSet(k, val));
-            }
-          });
-          /* Also migrate any enz_milestones_* keys */
-          try {
-            for (var i = 0; i < localStorage.length; i++) {
-              var lk = localStorage.key(i);
-              if (lk && lk.indexOf('enz_milestones') === 0) {
-                var v = AurumDB.getItem(lk);
-                if (v !== null) { _cache[lk] = v; promises.push(idbSet(lk, v)); }
-              }
-            }
-          } catch(e) {}
-          Promise.all(promises).then(function() {
-            console.log('[AurumDB] Migrated ' + promises.length + ' keys from localStorage to IndexedDB');
-            resolve(true);
-          }).catch(function() { resolve(false); });
-        };
-      });
-    });
-  }
-
-  function loadCache() {
-    return idbGetAll().then(function(all) {
-      Object.keys(all).forEach(function(k) { _cache[k] = all[k]; });
-      _ready = true;
-      return all;
-    });
-  }
-
-  function init() {
-    return open()
-      .then(function() { return migrate(); })
-      .then(function() { return loadCache(); })
-      .catch(function(e) {
-        console.warn('[AurumDB] IndexedDB failed, using localStorage fallback:', e);
-        _ready = true;
-        return {};
-      });
-  }
-
-  return {
-    init: init,
-    getItem: function(key) {
-      if (_cache[key] !== undefined) return _cache[key];
-      return AurumDB.getItem(key);
-    },
-    setItem: function(key, value) {
-      _cache[key] = value;
-      try { AurumDB.setItem(key, value); } catch(e) {}
-      idbSet(key, value).catch(function(e) {
-        console.warn('[AurumDB] Write failed for', key, e);
-      });
-    },
-    removeItem: function(key) {
-      delete _cache[key];
-      try { AurumDB.removeItem(key); } catch(e) {}
-      idbRemove(key).catch(function() {});
-    },
-    getAllData: function() {
-      return idbGetAll();
-    },
-    keys: function() {
-      return Object.keys(_cache);
-    },
-    isReady: function() { return _ready; }
-  };
-})();
 /* ═══ MOBILE MENU TOGGLE ═══ */
 function toggleMobileMenu() {
   try {
@@ -873,8 +709,8 @@ var TOTAL_MODS = ALL_MODS.length;
 /* ═══ STATE ═══ */
 var S = {c:-1, d:[], a:{}, el:0, ev:'l', ea:{}, es:0};
 var _showLanding = false;
-function sv(){try{AurumDB.setItem('aurum_formation_v1',JSON.stringify(S))}catch(e){}}
-function ld(){try{var r=JSON.parse(AurumDB.getItem('aurum_formation_v1'));if(r){S.c=(typeof r.c==='number')?r.c:-1;S.d=r.d||[];S.a=r.a||{}}}catch(e){}}
+function sv(){try{localStorage.setItem('aurum_formation_v1',JSON.stringify(S))}catch(e){}}
+function ld(){try{var r=JSON.parse(localStorage.getItem('aurum_formation_v1'));if(r){S.c=(typeof r.c==='number')?r.c:-1;S.d=r.d||[];S.a=r.a||{}}}catch(e){}}
 
 /* Scoring */
 function att(i){if(!S.a[i])S.a[i]=0;S.a[i]++;sv()}
@@ -2227,13 +2063,11 @@ function doConfetti(){
 }
 
 /* ═══ INIT ═══ */
-AurumDB.init().then(function() {
 ld();
 drawNav();
 drawProg();
 render();
 try{if(window.self!==window.top){document.body.classList.add('in-iframe')}}catch(e){document.body.classList.add('in-iframe')}
-});
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(function(reg){reg.update()}).catch(function(){})}</script>
 </body>

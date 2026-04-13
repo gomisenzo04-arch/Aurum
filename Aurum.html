@@ -2003,7 +2003,7 @@ a:hover{opacity:.85}
 <div style="font-size:10px;color:var(--t3);margin-top:3px">FundedNext : 1-Step/2-Step/Instant = <b style="color:var(--gold)">0.0016%</b> · Stellar Lite = <b style="color:var(--gold)">0.018%</b></div>
 </div>
 <div class="f"><label>Prix XAUUSD actuel <span style="font-weight:400;color:var(--t3)">(utile si commission en %)</span></label>
-<input type="number" id="cGoldPrice" value="3300" step="1" oninput="cLot();AurumDB.setItem('aurum_gold_price',this.value)" placeholder="ex: 3235">
+<input type="number" id="cGoldPrice" value="3300" step="1" oninput="cLot();localStorage.setItem('aurum_gold_price',this.value)" placeholder="ex: 3235">
 <div style="font-size:10px;color:var(--t3);margin-top:3px">Mets le prix approximatif du gold. Se sauvegarde automatiquement. Mets-le à jour 1 fois par semaine suffit.</div>
 </div>
 </div>
@@ -2441,170 +2441,6 @@ a:hover{opacity:.85}
 <div id="editModal" style="display:none"></div>
 
 <script>
-/* ═══ AurumDB — IndexedDB wrapper with localStorage fallback ═══ */
-var AurumDB = (function() {
-  var DB_NAME = 'AurumData';
-  var DB_VERSION = 1;
-  var STORE = 'kv';
-  var _db = null;
-  var _ready = false;
-  var _cache = {};
-
-  function open() {
-    return new Promise(function(resolve, reject) {
-      if (_db) { resolve(_db); return; }
-      try {
-        var req = indexedDB.open(DB_NAME, DB_VERSION);
-        req.onupgradeneeded = function(e) {
-          var db = e.target.result;
-          if (!db.objectStoreNames.contains(STORE)) {
-            db.createObjectStore(STORE);
-          }
-        };
-        req.onsuccess = function(e) {
-          _db = e.target.result;
-          resolve(_db);
-        };
-        req.onerror = function() { reject(req.error); };
-      } catch(e) { reject(e); }
-    });
-  }
-
-  function idbGet(key) {
-    return open().then(function(db) {
-      return new Promise(function(resolve, reject) {
-        var tx = db.transaction(STORE, 'readonly');
-        var req = tx.objectStore(STORE).get(key);
-        req.onsuccess = function() { resolve(req.result !== undefined ? req.result : null); };
-        req.onerror = function() { reject(req.error); };
-      });
-    });
-  }
-
-  function idbSet(key, value) {
-    _cache[key] = value;
-    return open().then(function(db) {
-      return new Promise(function(resolve, reject) {
-        var tx = db.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).put(value, key);
-        tx.oncomplete = function() { resolve(); };
-        tx.onerror = function() { reject(tx.error); };
-      });
-    });
-  }
-
-  function idbRemove(key) {
-    delete _cache[key];
-    return open().then(function(db) {
-      return new Promise(function(resolve, reject) {
-        var tx = db.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).delete(key);
-        tx.oncomplete = function() { resolve(); };
-        tx.onerror = function() { reject(tx.error); };
-      });
-    });
-  }
-
-  function idbGetAll() {
-    return open().then(function(db) {
-      return new Promise(function(resolve, reject) {
-        var tx = db.transaction(STORE, 'readonly');
-        var store = tx.objectStore(STORE);
-        var allKeys = store.getAllKeys();
-        var allVals = store.getAll();
-        tx.oncomplete = function() {
-          var result = {};
-          for (var i = 0; i < allKeys.result.length; i++) {
-            result[allKeys.result[i]] = allVals.result[i];
-          }
-          resolve(result);
-        };
-        tx.onerror = function() { reject(tx.error); };
-      });
-    });
-  }
-
-  function migrate() {
-    return open().then(function(db) {
-      return new Promise(function(resolve) {
-        var tx = db.transaction(STORE, 'readonly');
-        var countReq = tx.objectStore(STORE).count();
-        countReq.onsuccess = function() {
-          if (countReq.result > 0) { resolve(false); return; }
-          var keys = ['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist','aurum_ff_news','aurum_gold_price','enz_stats','enz_lastBackup','aurum_draft_trade','aurum_sessions'];
-          var promises = [];
-          keys.forEach(function(k) {
-            var val = AurumDB.getItem(k);
-            if (val !== null) {
-              _cache[k] = val;
-              promises.push(idbSet(k, val));
-            }
-          });
-          /* Also migrate any enz_milestones_* keys */
-          try {
-            for (var i = 0; i < localStorage.length; i++) {
-              var lk = localStorage.key(i);
-              if (lk && lk.indexOf('enz_milestones') === 0) {
-                var v = AurumDB.getItem(lk);
-                if (v !== null) { _cache[lk] = v; promises.push(idbSet(lk, v)); }
-              }
-            }
-          } catch(e) {}
-          Promise.all(promises).then(function() {
-            console.log('[AurumDB] Migrated ' + promises.length + ' keys from localStorage to IndexedDB');
-            resolve(true);
-          }).catch(function() { resolve(false); });
-        };
-      });
-    });
-  }
-
-  function loadCache() {
-    return idbGetAll().then(function(all) {
-      Object.keys(all).forEach(function(k) { _cache[k] = all[k]; });
-      _ready = true;
-      return all;
-    });
-  }
-
-  function init() {
-    return open()
-      .then(function() { return migrate(); })
-      .then(function() { return loadCache(); })
-      .catch(function(e) {
-        console.warn('[AurumDB] IndexedDB failed, using localStorage fallback:', e);
-        _ready = true;
-        return {};
-      });
-  }
-
-  return {
-    init: init,
-    getItem: function(key) {
-      if (_cache[key] !== undefined) return _cache[key];
-      return AurumDB.getItem(key);
-    },
-    setItem: function(key, value) {
-      _cache[key] = value;
-      try { AurumDB.setItem(key, value); } catch(e) {}
-      idbSet(key, value).catch(function(e) {
-        console.warn('[AurumDB] Write failed for', key, e);
-      });
-    },
-    removeItem: function(key) {
-      delete _cache[key];
-      try { AurumDB.removeItem(key); } catch(e) {}
-      idbRemove(key).catch(function() {});
-    },
-    getAllData: function() {
-      return idbGetAll();
-    },
-    keys: function() {
-      return Object.keys(_cache);
-    },
-    isReady: function() { return _ready; }
-  };
-})();
 /* ═══════════════════════════════════════════════
    AURUM — COMPLETE JAVASCRIPT ENGINE
    ═══════════════════════════════════════════════ */
@@ -2623,7 +2459,7 @@ function _s() {
       console.warn(`[Aurum] Données: ${sizeMB}MB — Données volumineuses. Exporte un backup JSON.`);
       toast(`Données : ${sizeMB}MB — Pense à exporter un backup`, 'error');
     }
-    AurumDB.setItem(LS, data);
+    localStorage.setItem(LS, data);
   } catch(e) {
     console.warn('[Aurum] Save failed:', e.message);
     if (e.name === 'QuotaExceededError' || e.code === 22) {
@@ -2633,7 +2469,7 @@ function _s() {
 }
 function _l() {
   try {
-    const d = JSON.parse(AurumDB.getItem(LS));
+    const d = JSON.parse(localStorage.getItem(LS));
     if (d) {
       D = d;
       ['live','replay','insights','reviews'].forEach(k => { if (!D[k]) D[k] = [] });
@@ -3060,7 +2896,7 @@ function rAlert() {
   /* Backup reminder */
   try {
     var bbr = document.getElementById('backupBar');
-    var lbk = AurumDB.getItem('aurum_backup_journal');
+    var lbk = localStorage.getItem('aurum_backup_journal');
     if (!lbk) { bbr.textContent = '💾 Aucun backup Journal. Pense à exporter tes données → Backup'; bbr.style.display = 'block'; }
     else {
       var daysAgo = Math.floor((new Date() - new Date(lbk)) / (1000*60*60*24));
@@ -3764,13 +3600,13 @@ var FF_TYPES = {
 var FF_RED_NEWS = {};
 function loadFFNews() {
   try {
-    var raw = AurumDB.getItem('aurum_ff_news');
+    var raw = localStorage.getItem('aurum_ff_news');
     if (raw) FF_RED_NEWS = JSON.parse(raw);
     else FF_RED_NEWS = {};
   } catch(e) { FF_RED_NEWS = {}; }
 }
 function saveFFNews() {
-  try { AurumDB.setItem('aurum_ff_news', JSON.stringify(FF_RED_NEWS)); } catch(e) {}
+  try { localStorage.setItem('aurum_ff_news', JSON.stringify(FF_RED_NEWS)); } catch(e) {}
 }
 function addFFNewsEntry(dateStr, time, name, desc) {
   try {
@@ -5007,17 +4843,17 @@ function saveDraft() {
       ts: Date.now()
     };
     if (draft.date || draft.sl || draft.dir) {
-      AurumDB.setItem('aurum_draft_trade', JSON.stringify(draft));
+      localStorage.setItem('aurum_draft_trade', JSON.stringify(draft));
     }
   } catch(e) {}
 }
 
 function loadDraft() {
   try {
-    var raw = AurumDB.getItem('aurum_draft_trade');
+    var raw = localStorage.getItem('aurum_draft_trade');
     if (!raw) return;
     var draft = JSON.parse(raw);
-    if (Date.now() - draft.ts > 12 * 3600 * 1000) { AurumDB.removeItem('aurum_draft_trade'); return; } // Expire après 12h
+    if (Date.now() - draft.ts > 12 * 3600 * 1000) { localStorage.removeItem('aurum_draft_trade'); return; } // Expire après 12h
     var hasData = draft.date || draft.sl;
     if (!hasData) return;
     if (document.getElementById('fD').value || document.getElementById('fSL').value) return; // Ne pas écraser si déjà rempli
@@ -5035,7 +4871,7 @@ function loadDraft() {
 }
 
 function clearDraft() {
-  try { AurumDB.removeItem('aurum_draft_trade'); } catch(e) {}
+  try { localStorage.removeItem('aurum_draft_trade'); } catch(e) {}
 }
 
 function buildSummary() {
@@ -5252,7 +5088,7 @@ function rQuickGrid() {
 function getGoldPrice() {
   var el = document.getElementById('cGoldPrice');
   if (el && el.value) return parseFloat(el.value);
-  var saved = AurumDB.getItem('aurum_gold_price');
+  var saved = localStorage.getItem('aurum_gold_price');
   if (saved) return parseFloat(saved) || 3300;
   return 3300;
 }
@@ -6885,10 +6721,10 @@ function selectTarget(id) {
     _currentSession = null;
     D.activeAcc = id;
     try {
-      var raw = AurumDB.getItem('enz_v4');
+      var raw = localStorage.getItem('enz_v4');
       var data = raw ? JSON.parse(raw) : {};
       data.lastTarget = id;
-      AurumDB.setItem('enz_v4', JSON.stringify(data));
+      localStorage.setItem('enz_v4', JSON.stringify(data));
     } catch(e2) {}
     _s();
     R();
@@ -7082,19 +6918,17 @@ function exJSON() {
     var ALL_KEYS=['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist','aurum_ff_news'];
     /* Save current journal state first */
     _s();
-    AurumDB.getAllData().then(function(allData) {
-      var backup={ _version:3, _date:new Date().toISOString(), _storage:'indexeddb', keys:{} };
-      ALL_KEYS.forEach(function(k){
-        var raw=allData[k]!==undefined?allData[k]:AurumDB.getItem(k);
-        if(raw!==null&&raw!==undefined){ try{ backup.keys[k]=JSON.parse(raw) }catch(e){ backup.keys[k]=raw } }
-      });
-      dl(JSON.stringify(backup,null,2), 'aurum_backup_'+new Date().toISOString().slice(0,10)+'.json', 'application/json');
-      AurumDB.setItem('enz_lastBackup', new Date().toISOString());
-      AurumDB.setItem('aurum_backup_journal', new Date().toISOString());
-      AurumDB.setItem('aurum_backup_capital', new Date().toISOString());
-      toast('Backup complet exporté');
-      rBackupStats();
+    var backup={ _version:3, _date:new Date().toISOString(), _storage:'localStorage', keys:{} };
+    ALL_KEYS.forEach(function(k){
+      var raw=localStorage.getItem(k);
+      if(raw!==null&&raw!==undefined){ try{ backup.keys[k]=JSON.parse(raw) }catch(e){ backup.keys[k]=raw } }
     });
+    dl(JSON.stringify(backup,null,2), 'aurum_backup_'+new Date().toISOString().slice(0,10)+'.json', 'application/json');
+    localStorage.setItem('enz_lastBackup', new Date().toISOString());
+    localStorage.setItem('aurum_backup_journal', new Date().toISOString());
+    localStorage.setItem('aurum_backup_capital', new Date().toISOString());
+    toast('Backup complet exporté');
+    rBackupStats();
   } catch(e) { console.error('exJSON:', e) }
 }
 function dl(c, f, m) { const b = new Blob([c],{type:m}), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = f; a.click() }
@@ -7119,7 +6953,7 @@ function imJSON(inp) {
           ALL_KEYS.forEach(k => {
             if (data.keys[k] !== undefined) {
               const val = typeof data.keys[k] === 'string' ? data.keys[k] : JSON.stringify(data.keys[k]);
-              AurumDB.setItem(k, val);
+              localStorage.setItem(k, val);
               restoredCount++;
             }
           });
@@ -7153,9 +6987,9 @@ function imJSON(inp) {
           }
           /* Restore non-journal keys that are missing */
           ALL_KEYS.filter(k => k !== 'enz_v4').forEach(k => {
-            if (data.keys[k] !== undefined && !AurumDB.getItem(k)) {
+            if (data.keys[k] !== undefined && !localStorage.getItem(k)) {
               const val = typeof data.keys[k] === 'string' ? data.keys[k] : JSON.stringify(data.keys[k]);
-              AurumDB.setItem(k, val);
+              localStorage.setItem(k, val);
               restoredCount++;
             }
           });
@@ -7196,8 +7030,8 @@ function imJSON(inp) {
         _s(); _l(); R();
       }
 
-      AurumDB.setItem('aurum_backup_journal', new Date().toISOString());
-      AurumDB.setItem('aurum_backup_capital', new Date().toISOString());
+      localStorage.setItem('aurum_backup_journal', new Date().toISOString());
+      localStorage.setItem('aurum_backup_capital', new Date().toISOString());
 
       const resultEl = document.getElementById('importResult');
       if (resultEl) {
@@ -7226,11 +7060,11 @@ function resetAll() {
 function fullReset() {
   D = { accounts:[], activeAcc:'', live:[], replay:[], insights:[], reviews:[] };
   try {
-    AurumDB.removeItem('enz_v4');
-    AurumDB.removeItem('enz_stats');
-    AurumDB.removeItem('enz_lastBackup');
+    localStorage.removeItem('enz_v4');
+    localStorage.removeItem('enz_stats');
+    localStorage.removeItem('enz_lastBackup');
     // Clear all milestones
-    Object.keys(localStorage).filter(k => k.startsWith('enz_milestones')).forEach(k => AurumDB.removeItem(k));
+    Object.keys(localStorage).filter(k => k.startsWith('enz_milestones')).forEach(k => localStorage.removeItem(k));
   } catch(e) {}
   location.reload();
 }
@@ -7240,7 +7074,7 @@ function resetAllData() {
     if (!confirm('ATTENTION : Cela va supprimer TOUTES tes donnees (trades, formation, capital, sessions). Cette action est irreversible.\n\nEs-tu sur ?')) return;
     if (!confirm('Derniere chance. Toutes les donnees seront perdues. Continuer ?')) return;
     ['enz_v4', 'aurum_formation_v1', 'aurum_capital_v1', 'aurum_streak', 'aurum_checklist', 'aurum_backup_journal', 'aurum_backup_capital', 'aurum_draft_trade', 'aurum_ff_news'].forEach(function(k) {
-      AurumDB.removeItem(k);
+      localStorage.removeItem(k);
     });
     toast('Donnees reinitialisees');
     setTimeout(function() { location.reload(); }, 1000);
@@ -7253,7 +7087,7 @@ function rBackupStats() {
   if (!el) return;
 
   const dataSize = (JSON.stringify(D).length / 1024).toFixed(0);
-  const lastBackup = AurumDB.getItem('enz_lastBackup');
+  const lastBackup = localStorage.getItem('enz_lastBackup');
   const daysSince = lastBackup ? Math.floor((Date.now() - new Date(lastBackup).getTime()) / 86400000) : null;
   const lastLabel = lastBackup ? new Date(lastBackup).toLocaleDateString('fr-FR') : 'Jamais';
 
@@ -7357,13 +7191,13 @@ function tryLogin() {
     /* Lire le code depuis localStorage directement (fiable, sync, pas besoin d'IndexedDB) */
     var stored = null;
     try { stored = localStorage.getItem('aurum_code'); } catch(e) {}
-    if (!stored) { try { stored = AurumDB.getItem('aurum_code'); } catch(e) {} }
+    if (!stored) { try { stored = localStorage.getItem('aurum_code'); } catch(e) {} }
     /* Pas de code stocké → premier lancement, accepter et sauver */
     if (!stored) {
       try { localStorage.setItem('aurum_code', code); } catch(e) {}
-      try { AurumDB.setItem('aurum_code', code); } catch(e) {}
+      try { localStorage.setItem('aurum_code', code); } catch(e) {}
       try { localStorage.setItem('aurum_setup', '1'); } catch(e) {}
-      try { AurumDB.setItem('aurum_setup', '1'); } catch(e) {}
+      try { localStorage.setItem('aurum_setup', '1'); } catch(e) {}
       sessionStorage.setItem('enz_role','a');
       unlock(true);
       return;
@@ -7376,7 +7210,7 @@ function tryLogin() {
       _loginAttempts++;
       var errEl = document.getElementById('loginErr');
       if (_loginAttempts >= 3) {
-        errEl.innerHTML = 'Code incorrect (' + _loginAttempts + ' essais) · <a href="#" onclick="if(confirm(\'Réinitialiser le code ? Tu pourras en créer un nouveau.\')){try{localStorage.removeItem(\'aurum_code\')}catch(e){}try{AurumDB.removeItem(\'aurum_code\')}catch(e){}location.reload()}return false" style="color:var(--gold);text-decoration:underline">Réinitialiser le code</a>';
+        errEl.innerHTML = 'Code incorrect (' + _loginAttempts + ' essais) · <a href="#" onclick="if(confirm(\'Réinitialiser le code ? Tu pourras en créer un nouveau.\')){try{localStorage.removeItem(\'aurum_code\')}catch(e){}try{localStorage.removeItem(\'aurum_code\')}catch(e){}location.reload()}return false" style="color:var(--gold);text-decoration:underline">Réinitialiser le code</a>';
       } else {
         errEl.textContent = 'Code incorrect';
       }
@@ -7407,7 +7241,7 @@ function checkAutoPayouts() {
       if (now < eligibleDate) return;
 
       // Get existing auto-payouts for this account from Capital data
-      var capRaw = AurumDB.getItem('aurum_capital_v1');
+      var capRaw = localStorage.getItem('aurum_capital_v1');
       var cap = capRaw ? JSON.parse(capRaw) : {};
       var payouts = cap.payouts || [];
       var autoPayouts = payouts.filter(function(p) { return p.autoFrom === acc.id; });
@@ -7445,7 +7279,7 @@ function checkAutoPayouts() {
 
       if (!cap.payouts) cap.payouts = [];
       cap.payouts.push(newPayout);
-      AurumDB.setItem('aurum_capital_v1', JSON.stringify(cap));
+      localStorage.setItem('aurum_capital_v1', JSON.stringify(cap));
       toast('Payout auto: ' + acc.name + ' +$' + newPayout.net.toFixed(0));
     });
   } catch(e) { console.error('checkAutoPayouts:', e); }
@@ -7464,7 +7298,7 @@ function unlock(isAdmin) {
   document.getElementById('journalTabs').style.display = '';
   renderJournalTabs();
   /* Restore gold price */
-  var savedGP = AurumDB.getItem('aurum_gold_price');
+  var savedGP = localStorage.getItem('aurum_gold_price');
   var gpEl = document.getElementById('cGoldPrice');
   if (savedGP && gpEl) gpEl.value = savedGP;
   trackOpen(); R();
@@ -7484,12 +7318,12 @@ function checkSession() {
 // ─── ADMIN TRACKING ───
 function trackOpen() {
   try {
-  let stats = JSON.parse(AurumDB.getItem('enz_stats')||'{}');
+  let stats = JSON.parse(localStorage.getItem('enz_stats')||'{}');
   if (!stats.count) stats.count = 0;
   if (!stats.first) stats.first = new Date().toISOString().slice(0,10);
   stats.count++;
   stats.last = new Date().toISOString().slice(0,10);
-  try { AurumDB.setItem('enz_stats', JSON.stringify(stats)) } catch(e) {}
+  try { localStorage.setItem('enz_stats', JSON.stringify(stats)) } catch(e) {}
   } catch(e) { console.warn('[Aurum] trackOpen:', e.message) }
 }
 function rAdmin() { /* removed */ }
@@ -7690,18 +7524,18 @@ function updCkProgress() {
       ckState.push(cb.checked);
     });
     var today = new Date().toISOString().slice(0,10);
-    AurumDB.setItem('aurum_checklist', JSON.stringify({date: today, checks: ckState, trades: ckValidatedTrades || []}));
+    localStorage.setItem('aurum_checklist', JSON.stringify({date: today, checks: ckState, trades: ckValidatedTrades || []}));
   } catch(e) {}
 }
 
 // Charger l'état checklist au démarrage
 function loadChecklist() {
   try {
-    var raw = AurumDB.getItem('aurum_checklist');
+    var raw = localStorage.getItem('aurum_checklist');
     if (!raw) return;
     var state = JSON.parse(raw);
     var today = new Date().toISOString().slice(0,10);
-    if (state.date !== today) { AurumDB.removeItem('aurum_checklist'); return; } // Reset si pas aujourd'hui
+    if (state.date !== today) { localStorage.removeItem('aurum_checklist'); return; } // Reset si pas aujourd'hui
     var cbs = document.querySelectorAll('#checkContent .ck input[type=checkbox]');
     if (state.checks && state.checks.length === cbs.length) {
       cbs.forEach(function(cb, i) { cb.checked = state.checks[i]; });
@@ -7873,7 +7707,7 @@ function checkMilestones() {
   const tr = getTr();
   const n = tr.length;
   const key = 'enz_milestones_' + D.activeAcc;
-  const seen = JSON.parse(AurumDB.getItem(key) || '[]');
+  const seen = JSON.parse(localStorage.getItem(key) || '[]');
 
   const milestones = [
     { id: 't10', check: () => n >= 10, msg: '10 trades enregistrés — les premières données arrivent.' },
@@ -7887,7 +7721,7 @@ function checkMilestones() {
   milestones.forEach(m => {
     if (!seen.includes(m.id) && m.check()) {
       seen.push(m.id);
-      try { AurumDB.setItem(key, JSON.stringify(seen)) } catch(e) {}
+      try { localStorage.setItem(key, JSON.stringify(seen)) } catch(e) {}
       setTimeout(() => toast('🏆 ' + m.msg, 'success'), 500);
     }
   });
@@ -7961,9 +7795,7 @@ function _startApp() {
   try { adaptForm(); } catch(e) {}
   try { loadDraft(); } catch(e) {}
 }
-/* Try IndexedDB first, fallback to direct start after 2s */
-AurumDB.init().then(_startApp).catch(_startApp);
-setTimeout(function() { if (!_initDone) { console.warn('[Aurum] IndexedDB timeout — starting with localStorage fallback'); _startApp(); } }, 2000);
+_startApp();
 /* ═══════════════════════════════════════════════════════
    SESSION SERVICES — Phase 0 (lecture seule)
    ═══════════════════════════════════════════════════════ */
@@ -10187,12 +10019,12 @@ function lockCurrentSession() {
 var SESS_KEY = 'aurum_sessions';
 
 function loadSessions() {
-  try { var r = AurumDB.getItem(SESS_KEY); return r ? JSON.parse(r) : [] }
+  try { var r = localStorage.getItem(SESS_KEY); return r ? JSON.parse(r) : [] }
   catch(e) { return [] }
 }
 
 function saveSessions(sessions) {
-  try { AurumDB.setItem(SESS_KEY, JSON.stringify(sessions)) }
+  try { localStorage.setItem(SESS_KEY, JSON.stringify(sessions)) }
   catch(e) { console.error('saveSessions:', e) }
 }
 
@@ -10543,7 +10375,7 @@ function testPhase1() {
 /* ─── Store CRUD (stockage dans enz_v4.accountGroups) ─── */
 function loadAccountGroups() {
   try {
-    var raw = AurumDB.getItem('enz_v4');
+    var raw = localStorage.getItem('enz_v4');
     if (!raw) return [];
     var data = JSON.parse(raw);
     return data.accountGroups || [];
@@ -10552,25 +10384,25 @@ function loadAccountGroups() {
 
 function saveAccountGroups(groups) {
   try {
-    var raw = AurumDB.getItem('enz_v4');
+    var raw = localStorage.getItem('enz_v4');
     var data = raw ? JSON.parse(raw) : {};
     data.accountGroups = groups;
-    AurumDB.setItem('enz_v4', JSON.stringify(data));
+    localStorage.setItem('enz_v4', JSON.stringify(data));
   } catch(e) { console.error('saveAccountGroups:', e) }
 }
 
 /* Migration ancienne clé aurum_account_groups → enz_v4 */
 (function migrateAccountGroups() {
   try {
-    var old = AurumDB.getItem('aurum_account_groups');
+    var old = localStorage.getItem('aurum_account_groups');
     if (!old) return;
     var oldGroups = JSON.parse(old);
-    if (!oldGroups.length) { AurumDB.removeItem('aurum_account_groups'); return; }
+    if (!oldGroups.length) { localStorage.removeItem('aurum_account_groups'); return; }
     var current = loadAccountGroups();
     if (current.length === 0) {
       saveAccountGroups(oldGroups);
     }
-    AurumDB.removeItem('aurum_account_groups');
+    localStorage.removeItem('aurum_account_groups');
   } catch(e) { console.error('migrateAccountGroups:', e) }
 })();
 
@@ -10774,7 +10606,7 @@ function testPhase05() {
     var found = groups.some(function(x) { return x.name === 'MigTest' });
     if (!found) throw new Error('not found in enz_v4');
     /* Vérifier que c'est bien dans enz_v4 */
-    var raw = JSON.parse(AurumDB.getItem('enz_v4'));
+    var raw = JSON.parse(localStorage.getItem('enz_v4'));
     if (!raw.accountGroups) throw new Error('no accountGroups in enz_v4');
     deleteAccountGroup(g.id);
   });
@@ -10801,7 +10633,7 @@ function testPhase05() {
   test('selectTarget persiste dans enz_v4.lastTarget', function() {
     var origAcc = D.activeAcc;
     selectTarget(D.accounts[0].id);
-    var raw = JSON.parse(AurumDB.getItem('enz_v4'));
+    var raw = JSON.parse(localStorage.getItem('enz_v4'));
     if (raw.lastTarget !== D.accounts[0].id) throw new Error('lastTarget not persisted');
     D.activeAcc = origAcc;
   });
