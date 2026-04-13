@@ -7198,29 +7198,42 @@ function dlPDF() {
 // ─── LOGIN ───
 var _loginAttempts = 0;
 function tryLogin() {
-  var code = document.getElementById('codeInput').value;
-  if (!code || code.length < 1) return;
-  var stored = AurumDB.getItem('aurum_code');
-  /* Pas de code stocké → premier lancement, accepter et sauver */
-  if (!stored) {
-    AurumDB.setItem('aurum_code', code);
-    AurumDB.setItem('aurum_setup', '1');
-    sessionStorage.setItem('enz_role','a');
-    unlock(true);
-    return;
-  }
-  if (code === stored) {
-    _loginAttempts = 0;
-    sessionStorage.setItem('enz_role','a');
-    unlock(true);
-  } else {
-    _loginAttempts++;
-    var errEl = document.getElementById('loginErr');
-    if (_loginAttempts >= 3) {
-      errEl.innerHTML = 'Code incorrect (' + _loginAttempts + ' essais) · <a href="#" onclick="if(confirm(\'Réinitialiser le code ? Tu pourras en créer un nouveau.\')){AurumDB.removeItem(\'aurum_code\');location.reload()}return false" style="color:var(--gold);text-decoration:underline">Réinitialiser le code</a>';
-    } else {
-      errEl.textContent = 'Code incorrect';
+  try {
+    var code = document.getElementById('codeInput').value;
+    if (!code || code.length < 1) return;
+    /* Lire le code depuis localStorage directement (fiable, sync, pas besoin d'IndexedDB) */
+    var stored = null;
+    try { stored = localStorage.getItem('aurum_code'); } catch(e) {}
+    if (!stored) { try { stored = AurumDB.getItem('aurum_code'); } catch(e) {} }
+    /* Pas de code stocké → premier lancement, accepter et sauver */
+    if (!stored) {
+      try { localStorage.setItem('aurum_code', code); } catch(e) {}
+      try { AurumDB.setItem('aurum_code', code); } catch(e) {}
+      try { localStorage.setItem('aurum_setup', '1'); } catch(e) {}
+      try { AurumDB.setItem('aurum_setup', '1'); } catch(e) {}
+      sessionStorage.setItem('enz_role','a');
+      unlock(true);
+      return;
     }
+    if (code === stored) {
+      _loginAttempts = 0;
+      sessionStorage.setItem('enz_role','a');
+      unlock(true);
+    } else {
+      _loginAttempts++;
+      var errEl = document.getElementById('loginErr');
+      if (_loginAttempts >= 3) {
+        errEl.innerHTML = 'Code incorrect (' + _loginAttempts + ' essais) · <a href="#" onclick="if(confirm(\'Réinitialiser le code ? Tu pourras en créer un nouveau.\')){try{localStorage.removeItem(\'aurum_code\')}catch(e){}try{AurumDB.removeItem(\'aurum_code\')}catch(e){}location.reload()}return false" style="color:var(--gold);text-decoration:underline">Réinitialiser le code</a>';
+      } else {
+        errEl.textContent = 'Code incorrect';
+      }
+    }
+  } catch(e) {
+    console.error('[Aurum] tryLogin error:', e);
+    /* Fallback: si tout plante, laisser entrer */
+    sessionStorage.setItem('enz_role','a');
+    unlock(true);
+  }
     document.getElementById('codeInput').value = '';
   }
 }
