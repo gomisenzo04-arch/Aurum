@@ -7945,15 +7945,25 @@ function loadDemoData() {
 }
 
 // ─── INIT ───
-AurumDB.init().then(function() {
-_l();
-document.getElementById('fD').valueAsDate = new Date();
-{ const _n = new Date(); document.getElementById('fT').value = _n.getHours().toString().padStart(2,'0') + ':' + _n.getMinutes().toString().padStart(2,'0') }
-cLot();
-checkSession();
-adaptForm();
-loadDraft();
-});
+var _initDone = false;
+function _startApp() {
+  if (_initDone) return;
+  _initDone = true;
+  try { _l(); } catch(e) { console.error('[Aurum] _l() error:', e); }
+  try {
+    var fD = document.getElementById('fD');
+    var fT = document.getElementById('fT');
+    if (fD) fD.valueAsDate = new Date();
+    if (fT) { var _n = new Date(); fT.value = _n.getHours().toString().padStart(2,'0') + ':' + _n.getMinutes().toString().padStart(2,'0'); }
+  } catch(e) {}
+  try { cLot(); } catch(e) {}
+  try { checkSession(); } catch(e) { console.error('[Aurum] checkSession error:', e); }
+  try { adaptForm(); } catch(e) {}
+  try { loadDraft(); } catch(e) {}
+}
+/* Try IndexedDB first, fallback to direct start after 2s */
+AurumDB.init().then(_startApp).catch(_startApp);
+setTimeout(function() { if (!_initDone) { console.warn('[Aurum] IndexedDB timeout — starting with localStorage fallback'); _startApp(); } }, 2000);
 /* ═══════════════════════════════════════════════════════
    SESSION SERVICES — Phase 0 (lecture seule)
    ═══════════════════════════════════════════════════════ */
