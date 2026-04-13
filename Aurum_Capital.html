@@ -466,6 +466,170 @@ Tout ce que tu dois rembourser : crédit auto, prêt immobilier, dette perso, et
 <div class="tc" id="toC"></div>
 
 <script>
+/* ═══ AurumDB — IndexedDB wrapper with localStorage fallback ═══ */
+var AurumDB = (function() {
+  var DB_NAME = 'AurumData';
+  var DB_VERSION = 1;
+  var STORE = 'kv';
+  var _db = null;
+  var _ready = false;
+  var _cache = {};
+
+  function open() {
+    return new Promise(function(resolve, reject) {
+      if (_db) { resolve(_db); return; }
+      try {
+        var req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = function(e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE)) {
+            db.createObjectStore(STORE);
+          }
+        };
+        req.onsuccess = function(e) {
+          _db = e.target.result;
+          resolve(_db);
+        };
+        req.onerror = function() { reject(req.error); };
+      } catch(e) { reject(e); }
+    });
+  }
+
+  function idbGet(key) {
+    return open().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction(STORE, 'readonly');
+        var req = tx.objectStore(STORE).get(key);
+        req.onsuccess = function() { resolve(req.result !== undefined ? req.result : null); };
+        req.onerror = function() { reject(req.error); };
+      });
+    });
+  }
+
+  function idbSet(key, value) {
+    _cache[key] = value;
+    return open().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(value, key);
+        tx.oncomplete = function() { resolve(); };
+        tx.onerror = function() { reject(tx.error); };
+      });
+    });
+  }
+
+  function idbRemove(key) {
+    delete _cache[key];
+    return open().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).delete(key);
+        tx.oncomplete = function() { resolve(); };
+        tx.onerror = function() { reject(tx.error); };
+      });
+    });
+  }
+
+  function idbGetAll() {
+    return open().then(function(db) {
+      return new Promise(function(resolve, reject) {
+        var tx = db.transaction(STORE, 'readonly');
+        var store = tx.objectStore(STORE);
+        var allKeys = store.getAllKeys();
+        var allVals = store.getAll();
+        tx.oncomplete = function() {
+          var result = {};
+          for (var i = 0; i < allKeys.result.length; i++) {
+            result[allKeys.result[i]] = allVals.result[i];
+          }
+          resolve(result);
+        };
+        tx.onerror = function() { reject(tx.error); };
+      });
+    });
+  }
+
+  function migrate() {
+    return open().then(function(db) {
+      return new Promise(function(resolve) {
+        var tx = db.transaction(STORE, 'readonly');
+        var countReq = tx.objectStore(STORE).count();
+        countReq.onsuccess = function() {
+          if (countReq.result > 0) { resolve(false); return; }
+          var keys = ['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist','aurum_ff_news','aurum_gold_price','enz_stats','enz_lastBackup','aurum_draft_trade','aurum_sessions'];
+          var promises = [];
+          keys.forEach(function(k) {
+            var val = AurumDB.getItem(k);
+            if (val !== null) {
+              _cache[k] = val;
+              promises.push(idbSet(k, val));
+            }
+          });
+          /* Also migrate any enz_milestones_* keys */
+          try {
+            for (var i = 0; i < localStorage.length; i++) {
+              var lk = localStorage.key(i);
+              if (lk && lk.indexOf('enz_milestones') === 0) {
+                var v = AurumDB.getItem(lk);
+                if (v !== null) { _cache[lk] = v; promises.push(idbSet(lk, v)); }
+              }
+            }
+          } catch(e) {}
+          Promise.all(promises).then(function() {
+            console.log('[AurumDB] Migrated ' + promises.length + ' keys from localStorage to IndexedDB');
+            resolve(true);
+          }).catch(function() { resolve(false); });
+        };
+      });
+    });
+  }
+
+  function loadCache() {
+    return idbGetAll().then(function(all) {
+      Object.keys(all).forEach(function(k) { _cache[k] = all[k]; });
+      _ready = true;
+      return all;
+    });
+  }
+
+  function init() {
+    return open()
+      .then(function() { return migrate(); })
+      .then(function() { return loadCache(); })
+      .catch(function(e) {
+        console.warn('[AurumDB] IndexedDB failed, using localStorage fallback:', e);
+        _ready = true;
+        return {};
+      });
+  }
+
+  return {
+    init: init,
+    getItem: function(key) {
+      if (_cache[key] !== undefined) return _cache[key];
+      return AurumDB.getItem(key);
+    },
+    setItem: function(key, value) {
+      _cache[key] = value;
+      try { AurumDB.setItem(key, value); } catch(e) {}
+      idbSet(key, value).catch(function(e) {
+        console.warn('[AurumDB] Write failed for', key, e);
+      });
+    },
+    removeItem: function(key) {
+      delete _cache[key];
+      try { AurumDB.removeItem(key); } catch(e) {}
+      idbRemove(key).catch(function() {});
+    },
+    getAllData: function() {
+      return idbGetAll();
+    },
+    keys: function() {
+      return Object.keys(_cache);
+    },
+    isReady: function() { return _ready; }
+  };
+})();
 /* ═══ AURUM CAPITAL v2 ═══ */
 var K='aurum_capital_v1';
 var D={payouts:[],portfolio:[],passifs:[],expenses:[],propfirms:[],entities:[],abonnements:[],categories:['Logement','Transport','Alimentaire','Outils Trading','Challenges','Abos','Santé','Loisirs','Impôts'],history:[],envelopes:{},goals:[],bankAccounts:[]};
@@ -474,10 +638,10 @@ function uid(){try{return Date.now().toString(36)+Math.random().toString(36).sub
 function fm(n){try{return'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}catch(e){return'$0.00'}}
 function toast(m){try{var e=document.createElement('div');e.className='ts';e.textContent=m;document.getElementById('toC').appendChild(e);setTimeout(function(){e.remove()},2500)}catch(e){console.error(e)}}
 function tg(id){try{var e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none'}catch(e){console.error(e)}}
-function save(){try{var c=JSON.parse(JSON.stringify(D));c.netWorth=cNW();var data=JSON.stringify(c);if(data.length>4*1024*1024){toast('Données > 4MB — exporte un backup !')}localStorage.setItem(K,data)}catch(e){if(e.name==='QuotaExceededError'||e.code===22){toast('Stockage plein — exporte un backup JSON')}console.error('save:',e)}}
-function load(){try{var r=localStorage.getItem(K);if(!r)return;var p=JSON.parse(r);['payouts','portfolio','passifs','expenses','propfirms','entities','abonnements','history'].forEach(function(k){if(p[k])D[k]=p[k]});if(p.categories&&p.categories.length)D.categories=p.categories;if(p.envelopes)D.envelopes=p.envelopes;if(p.goals)D.goals=p.goals;if(p.bankAccounts)D.bankAccounts=p.bankAccounts}catch(e){console.error('load:',e)}}
+function save(){try{var c=JSON.parse(JSON.stringify(D));c.netWorth=cNW();var data=JSON.stringify(c);if(data.length>4*1024*1024){toast('Données > 4MB — exporte un backup !')}AurumDB.setItem(K,data)}catch(e){if(e.name==='QuotaExceededError'||e.code===22){toast('Stockage plein — exporte un backup JSON')}console.error('save:',e)}}
+function load(){try{var r=AurumDB.getItem(K);if(!r)return;var p=JSON.parse(r);['payouts','portfolio','passifs','expenses','propfirms','entities','abonnements','history'].forEach(function(k){if(p[k])D[k]=p[k]});if(p.categories&&p.categories.length)D.categories=p.categories;if(p.envelopes)D.envelopes=p.envelopes;if(p.goals)D.goals=p.goals;if(p.bankAccounts)D.bankAccounts=p.bankAccounts}catch(e){console.error('load:',e)}}
 /* ─── JOURNAL SYNC ─── */
-function rJ(){try{var r=localStorage.getItem('enz_v4');if(!r)return{a:[],t:[]};var j=JSON.parse(r),a=[],t=[];if(j.accounts)j.accounts.forEach(function(ac){a.push({name:ac.name||'',type:ac.type||'',balance:ac.bal||ac.balance||0,risk:ac.risk||1,target:ac.target||0,floor:ac.floor||0,id:ac.id||''})});if(j.live)j.live.forEach(function(tr){var accName='',accType='';if(tr.accId&&j.accounts){var acc=j.accounts.find(function(a){return a.id===tr.accId});if(acc){accName=acc.name||'';accType=acc.type||''}}t.push(Object.assign({},tr,{account:accName,accType:accType}))});return{a:a,t:t}}catch(e){return{a:[],t:[]}}}
+function rJ(){try{var r=AurumDB.getItem('enz_v4');if(!r)return{a:[],t:[]};var j=JSON.parse(r),a=[],t=[];if(j.accounts)j.accounts.forEach(function(ac){a.push({name:ac.name||'',type:ac.type||'',balance:ac.bal||ac.balance||0,risk:ac.risk||1,target:ac.target||0,floor:ac.floor||0,id:ac.id||''})});if(j.live)j.live.forEach(function(tr){var accName='',accType='';if(tr.accId&&j.accounts){var acc=j.accounts.find(function(a){return a.id===tr.accId});if(acc){accName=acc.name||'';accType=acc.type||''}}t.push(Object.assign({},tr,{account:accName,accType:accType}))});return{a:a,t:t}}catch(e){return{a:[],t:[]}}}
 function mPnL(){try{var j=rJ(),m={};j.t.forEach(function(t){if(!t.date)return;var k=t.date.slice(0,7);if(!m[k])m[k]={pnl:0,n:0,w:0};var p=parseFloat(t.pl)||0;m[k].pnl+=p;m[k].n++;if(p>0)m[k].w++});return m}catch(e){return{}}}
 function cNW(){try{var pV=D.portfolio.reduce(function(s,p){return s+(p.current||0)},0);var pN=D.payouts.reduce(function(s,p){return s+(p.net||0)},0);var db=D.passifs.reduce(function(s,p){return s+(p.remaining||0)},0);var j=rJ(),tc=0;j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel'){var bal=a.balance||0;j.t.forEach(function(t){if(t.account===a.name||(t.accId&&t.accId===a.id))bal+=parseFloat(t.pl)||0});tc+=bal}});var eT=D.entities.reduce(function(s,e){return s+((e.status==='Active'||e.status==='En création')?(e.tresorerie||0):0)},0);var bankTotal=D.bankAccounts.reduce(function(s,ba){return s+(ba.balance||0)},0);if(D.bankAccounts.length>0){return pV+bankTotal+tc-db}return pV+pN+tc+eT-db}catch(e){return 0}}
 /* ─── NAV ─── */
@@ -1336,10 +1500,12 @@ function gWT(){try{var t=[],nw=cNW(),n=new Date(),d=n.getDay(),cm=n.getFullYear(
 function xport(){try{
   var ALL_KEYS=['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist'];
   save();
-  var backup={_version:2,_date:new Date().toISOString(),keys:{}};
-  ALL_KEYS.forEach(function(k){var raw=localStorage.getItem(k);if(raw!==null){try{backup.keys[k]=JSON.parse(raw)}catch(e){backup.keys[k]=raw}}});
-  var b=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='aurum_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();
-  localStorage.setItem('aurum_backup_capital',new Date().toISOString());localStorage.setItem('aurum_backup_journal',new Date().toISOString());toast('Backup complet exporté')
+  AurumDB.getAllData().then(function(allData){
+    var backup={_version:3,_date:new Date().toISOString(),_storage:'indexeddb',keys:{}};
+    ALL_KEYS.forEach(function(k){var raw=allData[k]!==undefined?allData[k]:AurumDB.getItem(k);if(raw!==null&&raw!==undefined){try{backup.keys[k]=JSON.parse(raw)}catch(e){backup.keys[k]=raw}}});
+    var b=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='aurum_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+    AurumDB.setItem('aurum_backup_capital',new Date().toISOString());AurumDB.setItem('aurum_backup_journal',new Date().toISOString());toast('Backup complet exporté');
+  });
 }catch(e){console.error(e)}}
 function mport(ev){try{var f=ev.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){try{
   var data=JSON.parse(e.target.result);
@@ -1347,7 +1513,7 @@ function mport(ev){try{var f=ev.target.files[0];if(!f)return;var r=new FileReade
   var count=0;
   /* Format v2 */
   if(data._version>=2&&data.keys){
-    ALL_KEYS.forEach(function(k){if(data.keys[k]!==undefined){var val=typeof data.keys[k]==='string'?data.keys[k]:JSON.stringify(data.keys[k]);localStorage.setItem(k,val);count++}});
+    ALL_KEYS.forEach(function(k){if(data.keys[k]!==undefined){var val=typeof data.keys[k]==='string'?data.keys[k]:JSON.stringify(data.keys[k]);AurumDB.setItem(k,val);count++}});
     load();rP(cP);toast(count+' éléments restaurés');
   }
   /* Legacy capital-only */
@@ -1356,11 +1522,11 @@ function mport(ev){try{var f=ev.target.files[0];if(!f)return;var r=new FileReade
   }
   /* Legacy journal-only — store it */
   else if(data.accounts||data.live){
-    localStorage.setItem('enz_v4',JSON.stringify(data));toast('Journal restauré');
+    AurumDB.setItem('enz_v4',JSON.stringify(data));toast('Journal restauré');
   }
-  localStorage.setItem('aurum_backup_capital',new Date().toISOString());localStorage.setItem('aurum_backup_journal',new Date().toISOString());
+  AurumDB.setItem('aurum_backup_capital',new Date().toISOString());AurumDB.setItem('aurum_backup_journal',new Date().toISOString());
 }catch(err){toast('Fichier invalide')}};r.readAsText(f);ev.target.value=''}catch(e){console.error(e)}}
-function xreset(){try{if(!confirm('⚠ TOUT SUPPRIMER ?'))return;if(!confirm('Dernière chance ?'))return;D={payouts:[],portfolio:[],passifs:[],expenses:[],propfirms:[],entities:[],abonnements:[],categories:['Logement','Transport','Alimentaire','Outils Trading','Challenges','Abos','Santé','Loisirs','Impôts'],history:[],envelopes:{},goals:[],bankAccounts:[]};localStorage.removeItem(K);rP(cP);toast('Effacé')}catch(e){console.error(e)}}
+function xreset(){try{if(!confirm('⚠ TOUT SUPPRIMER ?'))return;if(!confirm('Dernière chance ?'))return;D={payouts:[],portfolio:[],passifs:[],expenses:[],propfirms:[],entities:[],abonnements:[],categories:['Logement','Transport','Alimentaire','Outils Trading','Challenges','Abos','Santé','Loisirs','Impôts'],history:[],envelopes:{},goals:[],bankAccounts:[]};AurumDB.removeItem(K);rP(cP);toast('Effacé')}catch(e){console.error(e)}}
 /* ═══════════════════════════════════════════════════════
    TRÉSORERIE BANCAIRE
    ═══════════════════════════════════════════════════════ */
@@ -1906,9 +2072,11 @@ function renderYIRDoughnut(portfolio, tradingPerso, payouts, tresoEntites) {
 }
 
 /* ─── INIT ─── */
+AurumDB.init().then(function() {
 load();
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){console.error(e)}})();
 rCL();rCS();rAL();renderCapitalNav();rD();
+});
 /* ─── Détection iframe + création navigation 2 niveaux ─── */
 try{if(window.self!==window.top){
   document.body.classList.add('in-iframe');
