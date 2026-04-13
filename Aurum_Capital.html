@@ -227,6 +227,75 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 .itabs+.itabs{padding:4px 14px;background:#09090b;border-bottom-color:rgba(255,255,255,.04)}
 .itabs+.itabs .itab{font-size:12px;font-weight:600;padding:8px 14px;min-height:34px}
 .itabs+.itabs .itab.on::after{background:var(--gold3)}
+
+/* ═══ PHASE 3 — UX COMPONENTS ═══ */
+
+/* ValueExplainer Drawer */
+.vx-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:2000; display:flex; justify-content:flex-end; opacity:0; visibility:hidden; transition:all 150ms; }
+.vx-overlay.open { opacity:1; visibility:visible; }
+.vx-drawer { width:380px; max-width:90vw; height:100%; background:var(--bg2); border-left:1px solid rgba(255,255,255,.06); overflow-y:auto; transform:translateX(100%); transition:transform 250ms cubic-bezier(.2,0,0,1); padding:24px; }
+.vx-overlay.open .vx-drawer { transform:translateX(0); }
+.vx-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.vx-title { font-size:11px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.05em; }
+.vx-close { background:none; border:none; color:var(--t3); font-size:20px; cursor:pointer; padding:4px 8px; border-radius:4px; transition:all 150ms; }
+.vx-close:hover { color:var(--t1); background:rgba(255,255,255,.04); }
+.vx-kpi-name { font-size:13px; color:var(--t2); margin-bottom:4px; }
+.vx-kpi-value { font-size:28px; font-weight:800; font-family:'Bricolage Grotesque',system-ui; color:var(--t1); margin-bottom:20px; }
+.vx-section { margin-bottom:16px; }
+.vx-label { font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+.vx-formula { font-size:12px; color:var(--t2); background:var(--bg3); padding:10px 12px; border-radius:6px; font-family:'JetBrains Mono',monospace; line-height:1.6; }
+.vx-source-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:12px; }
+.vx-source-sign { color:var(--t3); font-family:'JetBrains Mono',monospace; width:14px; text-align:center; }
+.vx-source-label { flex:1; color:var(--t2); }
+.vx-source-val { font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--t1); }
+.vx-source-tag { font-size:9px; color:var(--t3); background:var(--bg3); padding:2px 6px; border-radius:3px; }
+.vx-meta { font-size:11px; color:var(--t3); margin-top:16px; padding-top:12px; border-top:1px solid rgba(255,255,255,.04); }
+.vx-trigger { font-size:12px; color:var(--t2); padding:3px 0; }
+.vx-icon { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:none; border:1px solid rgba(255,255,255,.1); color:var(--t3); font-size:9px; font-weight:700; font-style:italic; font-family:serif; cursor:pointer; transition:all 150ms; vertical-align:middle; margin-left:4px; padding:0; }
+.vx-icon:hover { border-color:var(--gold); color:var(--gold); background:rgba(201,162,39,.06); }
+
+/* NextStepsPanel */
+.nsp-container { }
+.nsp-header { font-size:11px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; }
+.nsp-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg2); border:1px solid rgba(255,255,255,.04); border-radius:8px; margin-bottom:6px; transition:border-color 150ms; }
+.nsp-item:hover { border-color:rgba(255,255,255,.08); }
+.nsp-priority { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; flex-shrink:0; background:rgba(255,255,255,.03); }
+.nsp-content { flex:1; min-width:0; }
+.nsp-title { font-size:13px; font-weight:600; color:var(--t1); }
+.nsp-desc { font-size:11px; color:var(--t3); margin-top:2px; }
+.nsp-cta { background:rgba(201,162,39,.08); border:1px solid rgba(201,162,39,.15); color:var(--gold); font-size:11px; font-weight:600; padding:6px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:all 150ms; white-space:nowrap; }
+.nsp-cta:hover { background:rgba(201,162,39,.15); border-color:rgba(201,162,39,.25); }
+
+/* AnimatedCounter flash */
+.ac-flash { animation:acFlash 800ms ease; }
+@keyframes acFlash { 0%{background:transparent} 15%{background:rgba(201,162,39,.12)} 100%{background:transparent} }
+
+/* InlineEditableCell */
+.iec-cell { cursor:pointer; transition:all 150ms; border-radius:4px; padding:2px 4px; margin:-2px -4px; }
+.iec-cell:hover { background:rgba(255,255,255,.04); }
+.iec-input { background:var(--bg3); border:1px solid rgba(201,162,39,.3); border-radius:4px; color:var(--t1); font-family:'JetBrains Mono',monospace; font-size:inherit; font-weight:inherit; padding:4px 8px; width:100%; box-sizing:border-box; outline:none; }
+.iec-input:focus { box-shadow:0 0 0 2px rgba(201,162,39,.1); }
+.iec-saved { animation:iecFlash 800ms ease; }
+@keyframes iecFlash { 0%{background:transparent} 15%{background:rgba(201,162,39,.15)} 100%{background:transparent} }
+
+/* EntityContextSelector */
+.ecs-bar { display:flex; align-items:center; gap:6px; padding:8px 12px; background:var(--bg2); border:1px solid rgba(255,255,255,.04); border-radius:8px; position:sticky; top:48px; z-index:100; margin-bottom:12px; flex-wrap:wrap; }
+.ecs-label { font-size:11px; color:var(--t3); font-weight:600; margin-right:4px; }
+.ecs-btn { background:none; border:1px solid rgba(255,255,255,.06); color:var(--t3); font-size:11px; font-weight:600; padding:5px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:all 150ms; }
+.ecs-btn:hover { border-color:rgba(255,255,255,.1); color:var(--t1); }
+.ecs-btn.active { background:rgba(201,162,39,.1); border-color:rgba(201,162,39,.2); color:var(--gold); }
+
+/* ProgressiveDisclosure */
+.pd-section { margin-bottom:12px; }
+.pd-level2 { animation:pdReveal 250ms cubic-bezier(.2,0,0,1); }
+@keyframes pdReveal { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+.pd-toggle { background:none; border:none; color:var(--t3); font-size:11px; font-weight:600; cursor:pointer; padding:6px 0; font-family:inherit; transition:color 150ms; display:block; width:100%; text-align:center; }
+.pd-toggle:hover { color:var(--gold); }
+
+@media(max-width:768px) {
+  .vx-drawer { width:100%; max-width:100vw; }
+  .ecs-bar { flex-wrap:wrap; gap:4px; }
+}
 </style>
 </head>
 <body>
@@ -2223,6 +2292,319 @@ function testPhase2() {
   return { pass: pass, fail: fail };
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 3 — Reusable UX Components (6 components)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── COMPONENT 1: ValueExplainer (Drawer) ─── */
+var ValueExplainer = (function() {
+  var _drawerId = 'valueExplainerDrawer';
+
+  function _createDrawerHTML() {
+    try {
+      if (document.getElementById(_drawerId)) return;
+      var div = document.createElement('div');
+      div.id = _drawerId;
+      div.className = 'vx-overlay';
+      div.innerHTML = '<div class="vx-drawer"><div class="vx-header"><span class="vx-title">Comment est calcule ce chiffre ?</span><button class="vx-close" onclick="ValueExplainer.close()">&times;</button></div><div class="vx-body" id="vxBody"></div></div>';
+      div.addEventListener('click', function(e) { if (e.target === div) ValueExplainer.close(); });
+      document.body.appendChild(div);
+    } catch(e) { console.error('ValueExplainer._createDrawerHTML:', e); }
+  }
+
+  return {
+    /* Show the drawer with explanation content */
+    show: function(config) {
+      try {
+        // config: { title, value, formula, sources: [{label, value, source}], lastUpdated, autoTriggers: [] }
+        _createDrawerHTML();
+        var el = document.getElementById('vxBody');
+        if (!el) return;
+
+        var h = '';
+        h += '<div class="vx-kpi-name">' + (config.title || '') + '</div>';
+        h += '<div class="vx-kpi-value">' + (config.value || '') + '</div>';
+
+        if (config.formula) {
+          h += '<div class="vx-section"><div class="vx-label">Formule</div><div class="vx-formula">' + config.formula + '</div></div>';
+        }
+
+        if (config.sources && config.sources.length) {
+          h += '<div class="vx-section"><div class="vx-label">Detail</div>';
+          config.sources.forEach(function(s) {
+            var sign = s.sign || '+';
+            h += '<div class="vx-source-row"><span class="vx-source-sign">' + sign + '</span><span class="vx-source-label">' + s.label + '</span><span class="vx-source-val">' + (typeof s.value === 'number' ? '$' + s.value.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : s.value) + '</span><span class="vx-source-tag">' + (s.source || '') + '</span></div>';
+          });
+          h += '</div>';
+        }
+
+        if (config.lastUpdated) {
+          h += '<div class="vx-meta">Derniere mise a jour : ' + config.lastUpdated + '</div>';
+        }
+
+        if (config.autoTriggers && config.autoTriggers.length) {
+          h += '<div class="vx-section"><div class="vx-label">Mis a jour automatiquement quand</div>';
+          config.autoTriggers.forEach(function(t) { h += '<div class="vx-trigger">• ' + t + '</div>'; });
+          h += '</div>';
+        }
+
+        el.innerHTML = h;
+        document.getElementById(_drawerId).classList.add('open');
+      } catch(e) { console.error('ValueExplainer.show:', e); }
+    },
+
+    close: function() {
+      try {
+        var el = document.getElementById(_drawerId);
+        if (el) el.classList.remove('open');
+      } catch(e) { console.error('ValueExplainer.close:', e); }
+    },
+
+    /* Helper: generate an info icon button that opens the drawer */
+    icon: function(onclickCode) {
+      return '<button class="vx-icon" onclick="' + onclickCode + '" title="Comment est calcule ce chiffre ?">i</button>';
+    }
+  };
+})();
+
+/* ─── COMPONENT 2: NextStepsPanel ─── */
+var NextStepsPanel = (function() {
+  var PRIORITY_COLORS = { HIGH: 'var(--red)', MEDIUM: 'var(--gold)', LOW: 'var(--green)' };
+  var PRIORITY_ICONS = { HIGH: '!', MEDIUM: '~', LOW: '\u2713' };
+
+  return {
+    render: function(containerId) {
+      try {
+        var el = document.getElementById(containerId);
+        if (!el) return;
+        var steps = NextStepsGenerator.generate();
+
+        var h = '<div class="nsp-container">';
+        h += '<div class="nsp-header">Prochaines etapes</div>';
+
+        steps.forEach(function(step) {
+          var col = PRIORITY_COLORS[step.priority] || 'var(--t3)';
+          var ico = PRIORITY_ICONS[step.priority] || '\u2022';
+          h += '<div class="nsp-item" style="border-left:3px solid ' + col + '">';
+          h += '<div class="nsp-priority" style="color:' + col + '">' + ico + '</div>';
+          h += '<div class="nsp-content">';
+          h += '<div class="nsp-title">' + step.label + '</div>';
+          h += '<div class="nsp-desc">' + step.description + '</div>';
+          h += '</div>';
+          if (step.cta) {
+            h += '<button class="nsp-cta" onclick="goCapital(\'' + step.cta.target + '\')">' + step.cta.label + '</button>';
+          }
+          h += '</div>';
+        });
+
+        h += '</div>';
+        el.innerHTML = h;
+      } catch(e) { console.error('NextStepsPanel.render:', e); }
+    }
+  };
+})();
+
+/* ─── COMPONENT 3: AnimatedCounter ─── */
+var AnimatedCounter = (function() {
+  return {
+    /* Animate a number from oldVal to newVal on element */
+    animate: function(element, newVal, options) {
+      try {
+        if (!element) return;
+        options = options || {};
+        var duration = options.duration || 700;
+        var prefix = options.prefix || '';
+        var suffix = options.suffix || '';
+        var decimals = options.decimals != null ? options.decimals : 0;
+        var color = options.color || null;
+
+        var text = element.textContent || '0';
+        var oldVal = parseFloat(text.replace(/[^0-9.\-]/g, '')) || 0;
+        if (Math.abs(oldVal - newVal) < 0.01) return; // no change
+
+        var startTime = null;
+        var easing = function(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }; // ease in-out quad
+
+        // Flash effect
+        element.classList.add('ac-flash');
+        setTimeout(function() { element.classList.remove('ac-flash'); }, duration + 200);
+
+        if (color) element.style.color = color;
+
+        function step(timestamp) {
+          if (!startTime) startTime = timestamp;
+          var elapsed = timestamp - startTime;
+          var progress = Math.min(1, elapsed / duration);
+          var easedProgress = easing(progress);
+          var current = oldVal + (newVal - oldVal) * easedProgress;
+
+          element.textContent = prefix + current.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + suffix;
+
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          }
+        }
+
+        requestAnimationFrame(step);
+      } catch(e) { console.error('AnimatedCounter.animate:', e); }
+    }
+  };
+})();
+
+/* ─── COMPONENT 4: InlineEditableCell ─── */
+var InlineEditableCell = (function() {
+  return {
+    /* Make an element inline-editable */
+    make: function(element, options) {
+      try {
+        if (!element || element.dataset.editable === 'true') return;
+        options = options || {};
+        // options: { onSave: function(newVal), type: 'number'|'text', prefix: '$', suffix: '' }
+
+        element.dataset.editable = 'true';
+        element.classList.add('iec-cell');
+        element.title = 'Cliquer pour modifier';
+
+        element.addEventListener('click', function() {
+          try {
+            if (element.querySelector('input')) return; // already editing
+            var currentText = element.textContent || '';
+            var currentVal = currentText.replace(/[^0-9.\-]/g, '');
+
+            var input = document.createElement('input');
+            input.type = options.type || 'number';
+            input.value = currentVal;
+            input.className = 'iec-input';
+            input.step = options.step || '0.01';
+
+            var originalHTML = element.innerHTML;
+            element.innerHTML = '';
+            element.appendChild(input);
+            input.focus();
+            input.select();
+
+            function save() {
+              var newVal = parseFloat(input.value);
+              if (isNaN(newVal)) { cancel(); return; }
+              var formatted = (options.prefix || '') + newVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (options.suffix || '');
+              element.innerHTML = formatted;
+              element.classList.add('iec-saved');
+              setTimeout(function() { element.classList.remove('iec-saved'); }, 800);
+
+              if (options.onSave) {
+                options.onSave(newVal);
+                // Toast with undo
+                var undoId = 'undo_' + Date.now();
+                toast('Valeur mise a jour \u00b7 <a href="#" onclick="document.getElementById(\'' + undoId + '\')&&document.getElementById(\'' + undoId + '\').click();return false" style="color:var(--gold);text-decoration:underline">Annuler</a>');
+              }
+            }
+
+            function cancel() {
+              element.innerHTML = originalHTML;
+            }
+
+            input.addEventListener('keydown', function(e) {
+              if (e.key === 'Enter') { e.preventDefault(); save(); }
+              if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+            });
+            input.addEventListener('blur', function() {
+              setTimeout(function() { if (element.querySelector('input')) save(); }, 100);
+            });
+          } catch(e) { console.error('InlineEditableCell click handler:', e); }
+        });
+      } catch(e) { console.error('InlineEditableCell.make:', e); }
+    }
+  };
+})();
+
+/* ─── COMPONENT 5: EntityContextSelector ─── */
+var EntityContextSelector = (function() {
+  var STORAGE_KEY = 'aurum_capital_entity_filter';
+  var _currentEntityId = null;
+
+  return {
+    init: function() {
+      try {
+        _currentEntityId = localStorage.getItem(STORAGE_KEY) || 'ALL';
+      } catch(e) { _currentEntityId = 'ALL'; console.error('EntityContextSelector.init:', e); }
+    },
+    getCurrent: function() { return _currentEntityId; },
+    setCurrent: function(entityId) {
+      try {
+        _currentEntityId = entityId;
+        localStorage.setItem(STORAGE_KEY, entityId);
+      } catch(e) { console.error('EntityContextSelector.setCurrent:', e); }
+    },
+    /* Render the selector into a container */
+    render: function(containerId) {
+      try {
+        var el = document.getElementById(containerId);
+        if (!el) return;
+        var entities = CapitalDataReader.getAllEntities();
+        var current = _currentEntityId || 'ALL';
+
+        var h = '<div class="ecs-bar">';
+        h += '<span class="ecs-label">Voir :</span>';
+
+        // "Tout" option
+        h += '<button class="ecs-btn' + (current === 'ALL' ? ' active' : '') + '" onclick="EntityContextSelector.setCurrent(\'ALL\');EntityContextSelector.render(\'' + containerId + '\');if(typeof rP===\'function\')rP(cP)">Tout</button>';
+
+        entities.forEach(function(e) {
+          var isActive = current === e.id;
+          var kindLabel = e.kind === 'PERSO' ? 'Perso' : e.name;
+          h += '<button class="ecs-btn' + (isActive ? ' active' : '') + '" onclick="EntityContextSelector.setCurrent(\'' + e.id + '\');EntityContextSelector.render(\'' + containerId + '\');if(typeof rP===\'function\')rP(cP)">' + kindLabel + '</button>';
+        });
+
+        h += '</div>';
+        el.innerHTML = h;
+      } catch(e) { console.error('EntityContextSelector.render:', e); }
+    },
+    /* Filter helper: returns true if an item matches current context */
+    matches: function(entityId) {
+      try {
+        if (!_currentEntityId || _currentEntityId === 'ALL') return true;
+        return entityId === _currentEntityId;
+      } catch(e) { return true; }
+    }
+  };
+})();
+
+/* ─── COMPONENT 6: ProgressiveDisclosure ─── */
+var ProgressiveDisclosure = (function() {
+  return {
+    /* Wrap content in a progressive disclosure section
+       Returns HTML string */
+    section: function(config) {
+      try {
+        // config: { id, level1Html, level2Html, expandLabel, collapseLabel }
+        var id = config.id || 'pd_' + Date.now();
+        var expandLabel = config.expandLabel || 'Plus de details';
+        var collapseLabel = config.collapseLabel || 'Moins de details';
+
+        var h = '<div class="pd-section" id="' + id + '">';
+        h += '<div class="pd-level1">' + (config.level1Html || '') + '</div>';
+        h += '<div class="pd-level2" id="' + id + '_l2" style="display:none">' + (config.level2Html || '') + '</div>';
+        h += '<button class="pd-toggle" id="' + id + '_btn" data-expand="' + expandLabel + '" data-collapse="' + collapseLabel + '" onclick="ProgressiveDisclosure.toggle(\'' + id + '\')">' + expandLabel + ' \u25be</button>';
+        h += '</div>';
+        return h;
+      } catch(e) { console.error('ProgressiveDisclosure.section:', e); return ''; }
+    },
+
+    toggle: function(id) {
+      try {
+        var l2 = document.getElementById(id + '_l2');
+        var btn = document.getElementById(id + '_btn');
+        if (!l2 || !btn) return;
+        var isOpen = l2.style.display !== 'none';
+        l2.style.display = isOpen ? 'none' : '';
+        btn.textContent = isOpen ? (btn.dataset.expand || 'Plus de details') + ' \u25be' : (btn.dataset.collapse || 'Moins de details') + ' \u25b4';
+      } catch(e) { console.error('ProgressiveDisclosure.toggle:', e); }
+    }
+  };
+})();
+
+/* ═══ END PHASE 3 — UX Components ═══ */
+
 /* ─── JOURNAL SYNC ─── */
 function rJ(){try{var r=localStorage.getItem('enz_v4');if(!r)return{a:[],t:[]};var j=JSON.parse(r),a=[],t=[];if(j.accounts)j.accounts.forEach(function(ac){a.push({name:ac.name||'',type:ac.type||'',balance:ac.bal||ac.balance||0,risk:ac.risk||1,target:ac.target||0,floor:ac.floor||0,id:ac.id||''})});if(j.live)j.live.forEach(function(tr){var accName='',accType='';if(tr.accId&&j.accounts){var acc=j.accounts.find(function(a){return a.id===tr.accId});if(acc){accName=acc.name||'';accType=acc.type||''}}t.push(Object.assign({},tr,{account:accName,accType:accType}))});return{a:a,t:t}}catch(e){return{a:[],t:[]}}}
 function mPnL(){try{var j=rJ(),m={};j.t.forEach(function(t){if(!t.date)return;var k=t.date.slice(0,7);if(!m[k])m[k]={pnl:0,n:0,w:0};var p=parseFloat(t.pl)||0;m[k].pnl+=p;m[k].n++;if(p>0)m[k].w++});return m}catch(e){return{}}}
@@ -3656,6 +4038,7 @@ function renderYIRDoughnut(portfolio, tradingPerso, payouts, tresoEntites) {
 load();
 migrateToV2();
 CapitalSyncOrchestrator.syncAll();
+EntityContextSelector.init();
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){console.error(e)}})();
 rCL();rCS();rAL();renderCapitalNav();rD();
 setTimeout(function() { AurumSync.syncAll(); }, 3000);
