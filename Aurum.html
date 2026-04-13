@@ -1982,7 +1982,7 @@ a:hover{opacity:.85}
 <input type="number" id="cCom" value="5" step="0.0001" oninput="cLot()" style="flex:1">
 </div>
 </div>
-<div class="f"><label>Prix XAUUSD</label><input type="number" id="cGoldPrice" value="3300" step="1" oninput="cLot()" placeholder="Prix actuel du gold"></div>
+<div class="f"><label>Prix XAUUSD <span style="font-weight:400;color:var(--t3)">(auto-sauvé)</span></label><input type="number" id="cGoldPrice" value="3300" step="1" oninput="cLot();localStorage.setItem('aurum_gold_price',this.value)" placeholder="Prix actuel du gold"></div>
 </div>
 <div style="font-size:11px;color:var(--t3);margin-bottom:14px;line-height:1.6">Formule : Lot = Risque ÷ (SL + Commission). XAUUSD : 1 pt = $1/lot. Arrondi au centième inférieur.</div>
 <div id="lotTables"></div>
@@ -4924,13 +4924,19 @@ function rQuickGrid() {
 }
 
 /* ─── Commission helper — handles both $/lot and % ─── */
+function getGoldPrice() {
+  var el = document.getElementById('cGoldPrice');
+  if (el && el.value) return parseFloat(el.value);
+  var saved = localStorage.getItem('aurum_gold_price');
+  if (saved) return parseFloat(saved) || 3300;
+  return 3300;
+}
 function getCommPerLot(acc) {
   if (!acc) acc = S();
   var coVal = acc.comm || 0;
   var coType = acc.commType || 'dollar';
   if (coType === 'percent') {
-    var goldPrice = parseFloat((document.getElementById('cGoldPrice')||{}).value) || 3300;
-    return goldPrice * coVal / 100;
+    return getGoldPrice() * coVal / 100;
   }
   return coVal;
 }
@@ -4947,7 +4953,7 @@ function cLot() {
   const sl = parseFloat(document.getElementById('cSL').value) || 250;
   const coVal = parseFloat(document.getElementById('cCom').value) || 0;
   const coType = (document.getElementById('cComType') || {}).value || 'dollar';
-  const goldPrice = parseFloat((document.getElementById('cGoldPrice') || {}).value) || 3300;
+  const goldPrice = getGoldPrice();
   const ra = b * r / 100;
 
   /* Commission effective par lot :
@@ -7103,6 +7109,10 @@ function unlock(isAdmin) {
   }
   document.getElementById('journalTabs').style.display = '';
   renderJournalTabs();
+  /* Restore gold price */
+  var savedGP = localStorage.getItem('aurum_gold_price');
+  var gpEl = document.getElementById('cGoldPrice');
+  if (savedGP && gpEl) gpEl.value = savedGP;
   trackOpen(); R();
   setTimeout(() => { if(ch.eq) ch.eq.resize(); if(ch.pi) ch.pi.resize(); if(ch.ba) ch.ba.resize(); updCkProgress(); checkMilestones() }, 100);
   setTimeout(checkAutoPayouts, 500);
@@ -8660,7 +8670,7 @@ function rSessionCalc(s) {
     var ra = acc.bal * (acc.risk || 1) / 100;
     var coVal = acc.comm || 0;
     var coType = acc.commType || 'dollar';
-    var goldPrice = parseFloat((document.getElementById('cGoldPrice')||{}).value) || 3300;
+    var goldPrice = getGoldPrice();
     var commPerLot = coType === 'percent' ? (goldPrice * coVal / 100) : coVal;
     var lot = (currentSL + commPerLot) > 0 ? Math.floor(ra / (currentSL + commPerLot) * 100) / 100 : 0;
     var loss = lot * currentSL;
@@ -8992,7 +9002,7 @@ function rSessCockpitCalc(s, acc, config) {
     var ra = acc.bal * (acc.risk || 1) / 100;
     var coVal = acc.comm || 0;
     var coType = acc.commType || 'dollar';
-    var goldPrice = parseFloat((document.getElementById('cGoldPrice')||{}).value) || 3300;
+    var goldPrice = getGoldPrice();
     var commPerLot = coType === 'percent' ? (goldPrice * coVal / 100) : coVal;
     var lot = (currentSL + commPerLot) > 0 ? Math.floor(ra / (currentSL + commPerLot) * 100) / 100 : 0;
     var loss = lot * currentSL;
