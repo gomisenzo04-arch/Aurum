@@ -789,6 +789,20 @@ function renderKPI(){
     var cap=capRaw?JSON.parse(capRaw):{};
     var today=new Date().toISOString().slice(0,10);
 
+    /* Pre-compute P&L per account (once, for all KPIs) */
+    var pnlByAcc={};
+    j.trades.forEach(function(t){
+      var key=t.accId||t.account||'unknown';
+      if(!pnlByAcc[key])pnlByAcc[key]=0;
+      pnlByAcc[key]+=parseFloat(t.pl)||0;
+    });
+    /* Helper: get account current balance */
+    function accCurBal(a){
+      var bal=a.balance||0;
+      var pnl=pnlByAcc[a.id]||pnlByAcc[a.name]||0;
+      return bal+pnl;
+    }
+
     /* --- P&L Jour --- */
     try{
       var dayPnl=0;
@@ -844,7 +858,10 @@ function renderKPI(){
       if(cap.payouts)cap.payouts.forEach(function(p){nw+=(p.net||0)});
       if(cap.passifs)cap.passifs.forEach(function(p){nw-=(p.remaining||0)});
       if(cap.entities)cap.entities.forEach(function(e){if(e.status==='Active'||e.status==='En création')nw+=(e.tresorerie||0)});
-      j.accounts.forEach(function(a){var t=(a.type||'').toLowerCase();if(t==='perso'||t==='personnel')nw+=(a.balance||0)});
+      j.accounts.forEach(function(a){
+        var tp=(a.type||'').toLowerCase();
+        if(tp==='perso'||tp==='personnel') nw+=accCurBal(a);
+      });
       var patEl=document.querySelector('#kpiPatrimoine .kpi-value');
       if(patEl){
         patEl.textContent='$'+Math.round(nw).toLocaleString('en-US');
@@ -964,7 +981,13 @@ function renderUniverses(){
     var capRaw=localStorage.getItem('aurum_capital_v1');
     var nw=0;
     if(capRaw){try{var cap=JSON.parse(capRaw);nw=(cap.portfolio||[]).reduce(function(s,p){return s+(p.current||0)},0)+(cap.payouts||[]).reduce(function(s,p){return s+(p.net||0)},0)-(cap.passifs||[]).reduce(function(s,p){return s+(p.remaining||0)},0)}catch(e){}}
-    j.accounts.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel')nw+=a.balance||0});
+    var j2=readJournal();
+    var pnlByAcc2={};
+    j2.trades.forEach(function(t){var k=t.accId||t.account||'x';if(!pnlByAcc2[k])pnlByAcc2[k]=0;pnlByAcc2[k]+=parseFloat(t.pl)||0});
+    j2.accounts.forEach(function(a){
+      var tp=(a.type||'').toLowerCase();
+      if(tp==='perso'||tp==='personnel') nw+=(a.balance||0)+(pnlByAcc2[a.id]||pnlByAcc2[a.name]||0);
+    });
     var cCard=document.getElementById('uniCapital');
     if(cCard){
       var cStat=cCard.querySelector('.app-stat');
@@ -1091,8 +1114,13 @@ function readJournal(){
     if(!raw)return{accounts:[],trades:[]};
     var j=JSON.parse(raw),a=[],t=[];
     if(j.accounts)j.accounts.forEach(function(ac){
-      a.push({name:ac.name||'',type:ac.type||'',balance:ac.balance||0});
-      if(ac.trades)ac.trades.forEach(function(tr){t.push(tr)});
+      a.push({name:ac.name||'',type:ac.type||'',balance:ac.bal||ac.balance||0,id:ac.id||''});
+    });
+    /* Trades are in j.live, j.replay, j.insights — NOT in accounts[].trades */
+    if(j.live)j.live.forEach(function(tr){
+      var accName='',accType='';
+      if(tr.accId&&j.accounts){var acc=j.accounts.find(function(x){return x.id===tr.accId});if(acc){accName=acc.name||'';accType=acc.type||''}}
+      t.push(Object.assign({},tr,{account:accName,accType:accType}));
     });
     return{accounts:a,trades:t};
   }catch(e){return{accounts:[],trades:[]}}
