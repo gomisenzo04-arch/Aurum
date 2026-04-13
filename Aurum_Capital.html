@@ -577,16 +577,564 @@ AurumSync.recover(AURUM_KEYS, function(recovered) {
   if (recovered) { console.log('[AurumSync] Data recovered — reloading'); location.reload(); }
 });
 
+/* ═══ CAPITAL DATA MODEL v2 — Phase 0 ═══ */
+var CapitalModel = (function() {
+
+  /* ─── ID generator ─── */
+  function genId(prefix) {
+    return (prefix || '') + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+  }
+
+  /* ─── ENTITY KINDS ─── */
+  var ENTITY_KINDS = ['PERSO','MICRO_ENTREPRISE','EURL','SASU','SAS','SARL','HOLDING','SCI','LMNP','OTHER'];
+  var FISCAL_REGIMES = ['MICRO_BNC','MICRO_BIC','IS','IR','OTHER'];
+
+  /* ─── ASSET CATEGORIES ─── */
+  var ASSET_CATEGORIES = ['BANK_ACCOUNT','TRADING_PERSO','TRADING_PROP','ETF_STOCKS','PEA','ASSURANCE_VIE','PER','CRYPTO','REAL_ESTATE','SAVINGS','OTHER'];
+  var LIQUID_CATEGORIES = ['BANK_ACCOUNT','SAVINGS'];
+  var NON_LIQUID_CATEGORIES = ['TRADING_PERSO','TRADING_PROP','ETF_STOCKS','PEA','ASSURANCE_VIE','PER','CRYPTO','REAL_ESTATE','OTHER'];
+
+  /* ─── LIABILITY KINDS ─── */
+  var LIABILITY_KINDS = ['LOAN_PERSONAL','LOAN_REAL_ESTATE','LOAN_CAR','CREDIT_CARD','OTHER'];
+
+  /* ─── FLOW KINDS ─── */
+  var FLOW_KINDS = ['PAYOUT','EXPENSE','INTER_ENTITY_TRANSFER','INTER_ACCOUNT_TRANSFER','DIVIDEND','CAPITAL_GAIN','OTHER'];
+  var FLOW_SOURCES = ['JOURNAL_PAYOUT','JOURNAL_TRADE_PNL','MANUAL','RECURRING'];
+
+  /* ─── TAXABLE REVENUE KINDS ─── */
+  var TAXABLE_KINDS = ['BNC_PROP_FIRM','BNC_OTHER','BIC','DIVIDENDS_PFU','DIVIDENDS_IR','CAPITAL_GAINS_PFU','RENTAL_INCOME','SALARY','OTHER'];
+
+  /* ─── FACTORY: PatrimonialEntity ─── */
+  function createEntity(data) {
+    return {
+      id: data.id || genId('ent_'),
+      name: data.name || '',
+      kind: ENTITY_KINDS.indexOf(data.kind) >= 0 ? data.kind : 'PERSO',
+      fiscalRegime: {
+        type: (data.fiscalRegime && data.fiscalRegime.type) || 'OTHER',
+        options: (data.fiscalRegime && data.fiscalRegime.options) || []
+      },
+      caAnnualDeclared: data.caAnnualDeclared || null,
+      resultAnnualDeclared: data.resultAnnualDeclared || null,
+      parentEntityId: data.parentEntityId || null,
+      createdAt: data.createdAt || new Date().toISOString(),
+      siret: data.siret || '',
+      notes: data.notes || ''
+    };
+  }
+
+  /* ─── FACTORY: Asset ─── */
+  function createAsset(data) {
+    return {
+      id: data.id || genId('ast_'),
+      category: ASSET_CATEGORIES.indexOf(data.category) >= 0 ? data.category : 'OTHER',
+      label: data.label || '',
+      entityId: data.entityId || 'PERSO_DEFAULT',
+      currentValue: parseFloat(data.currentValue) || 0,
+      initialValue: data.initialValue != null ? parseFloat(data.initialValue) : null,
+      currency: data.currency || 'USD',
+      lastUpdatedAt: data.lastUpdatedAt || new Date().toISOString(),
+      updateSource: data.updateSource || 'MANUAL',
+      updateFrequency: data.updateFrequency || 'MANUAL',
+      bankName: data.bankName || null,
+      broker: data.broker || null,
+      tickerSymbol: data.tickerSymbol || null,
+      address: data.address || null,
+      historicalSnapshots: data.historicalSnapshots || [],
+      allocationTargetPercent: data.allocationTargetPercent || null,
+      notes: data.notes || ''
+    };
+  }
+
+  /* ─── FACTORY: Liability ─── */
+  function createLiability(data) {
+    var start = data.startDate || new Date().toISOString();
+    var end = data.endDate || null;
+    var monthsRem = 0;
+    if (end && data.monthlyPayment > 0) {
+      monthsRem = Math.ceil((parseFloat(data.remainingAmount) || 0) / parseFloat(data.monthlyPayment));
+    }
+    return {
+      id: data.id || genId('lia_'),
+      kind: LIABILITY_KINDS.indexOf(data.kind) >= 0 ? data.kind : 'OTHER',
+      label: data.label || '',
+      entityId: data.entityId || 'PERSO_DEFAULT',
+      initialAmount: parseFloat(data.initialAmount) || 0,
+      remainingAmount: parseFloat(data.remainingAmount) || 0,
+      monthlyPayment: parseFloat(data.monthlyPayment) || 0,
+      interestRate: parseFloat(data.interestRate) || 0,
+      startDate: start,
+      endDate: end,
+      monthsRemaining: monthsRem,
+      currency: data.currency || 'USD',
+      notes: data.notes || ''
+    };
+  }
+
+  /* ─── FACTORY: Flow ─── */
+  function createFlow(data) {
+    var gross = parseFloat(data.grossAmount) || 0;
+    var fees = parseFloat(data.fees) || 0;
+    return {
+      id: data.id || genId('flw_'),
+      kind: FLOW_KINDS.indexOf(data.kind) >= 0 ? data.kind : 'OTHER',
+      source: FLOW_SOURCES.indexOf(data.source) >= 0 ? data.source : 'MANUAL',
+      grossAmount: gross,
+      fees: fees,
+      netAmount: data.netAmount != null ? parseFloat(data.netAmount) : (gross - fees),
+      currency: data.currency || 'USD',
+      occurredAt: data.occurredAt || new Date().toISOString(),
+      recordedAt: data.recordedAt || new Date().toISOString(),
+      fromEntityId: data.fromEntityId || null,
+      toEntityId: data.toEntityId || null,
+      fromAssetId: data.fromAssetId || null,
+      toAssetId: data.toAssetId || null,
+      journalPayoutId: data.journalPayoutId || null,
+      journalTradeId: data.journalTradeId || null,
+      expenseCategoryId: data.expenseCategoryId || null,
+      taxableRevenueKind: data.taxableRevenueKind || null,
+      label: data.label || '',
+      notes: data.notes || ''
+    };
+  }
+
+  /* ─── FACTORY: TaxableRevenue ─── */
+  function createTaxableRevenue(data) {
+    return {
+      id: data.id || genId('tax_'),
+      flowId: data.flowId || '',
+      kind: TAXABLE_KINDS.indexOf(data.kind) >= 0 ? data.kind : 'OTHER',
+      entityId: data.entityId || 'PERSO_DEFAULT',
+      fiscalYear: data.fiscalYear || new Date().getFullYear(),
+      grossAmount: parseFloat(data.grossAmount) || 0,
+      netAmount: parseFloat(data.netAmount) || 0,
+      declarationCase: data.declarationCase || null,
+      notes: data.notes || ''
+    };
+  }
+
+  /* ─── FACTORY: ExpenseCategory ─── */
+  function createExpenseCategory(data) {
+    return {
+      id: data.id || genId('cat_'),
+      label: data.label || '',
+      icon: data.icon || null,
+      color: data.color || null,
+      entityId: data.entityId || null,
+      isArchived: !!data.isArchived
+    };
+  }
+
+  /* ─── FACTORY: PatrimonialMilestone ─── */
+  function createMilestone(data) {
+    return {
+      id: data.id || genId('ms_'),
+      targetAmount: parseFloat(data.targetAmount) || 0,
+      label: data.label || '',
+      order: data.order || 0,
+      objective: data.objective || '',
+      actions: data.actions || [],
+      expertAdvice: data.expertAdvice || [],
+      ctas: data.ctas || []
+    };
+  }
+
+  /* ─── FACTORY: NetWorthSnapshot ─── */
+  function createSnapshot(data) {
+    return {
+      id: data.id || genId('snap_'),
+      date: data.date || new Date().toISOString(),
+      totalAssets: parseFloat(data.totalAssets) || 0,
+      totalLiabilities: parseFloat(data.totalLiabilities) || 0,
+      netWorth: parseFloat(data.netWorth) || 0,
+      byCategory: data.byCategory || {},
+      byEntity: data.byEntity || {},
+      byLiquidity: data.byLiquidity || { liquid: 0, nonLiquid: 0 },
+      generatedAutomatically: !!data.generatedAutomatically
+    };
+  }
+
+  /* ─── VALIDATORS ─── */
+  function validateEntity(e) {
+    var errors = [];
+    if (!e.name || !e.name.trim()) errors.push('Nom requis');
+    if (ENTITY_KINDS.indexOf(e.kind) < 0) errors.push('Type invalide');
+    return { valid: errors.length === 0, errors: errors };
+  }
+  function validateAsset(a) {
+    var errors = [];
+    if (!a.label || !a.label.trim()) errors.push('Label requis');
+    if (ASSET_CATEGORIES.indexOf(a.category) < 0) errors.push('Catégorie invalide');
+    if (isNaN(a.currentValue)) errors.push('Valeur invalide');
+    return { valid: errors.length === 0, errors: errors };
+  }
+  function validateLiability(l) {
+    var errors = [];
+    if (!l.label || !l.label.trim()) errors.push('Label requis');
+    if (isNaN(l.remainingAmount) || l.remainingAmount < 0) errors.push('Montant invalide');
+    return { valid: errors.length === 0, errors: errors };
+  }
+  function validateFlow(f) {
+    var errors = [];
+    if (!f.label || !f.label.trim()) errors.push('Label requis');
+    if (isNaN(f.grossAmount)) errors.push('Montant invalide');
+    return { valid: errors.length === 0, errors: errors };
+  }
+
+  /* ─── CLASSIFICATION HELPERS ─── */
+  function isLiquid(category) { return LIQUID_CATEGORIES.indexOf(category) >= 0; }
+  function isNonLiquid(category) { return NON_LIQUID_CATEGORIES.indexOf(category) >= 0; }
+
+  return {
+    genId: genId,
+    ENTITY_KINDS: ENTITY_KINDS,
+    FISCAL_REGIMES: FISCAL_REGIMES,
+    ASSET_CATEGORIES: ASSET_CATEGORIES,
+    LIABILITY_KINDS: LIABILITY_KINDS,
+    FLOW_KINDS: FLOW_KINDS,
+    FLOW_SOURCES: FLOW_SOURCES,
+    TAXABLE_KINDS: TAXABLE_KINDS,
+    LIQUID_CATEGORIES: LIQUID_CATEGORIES,
+    NON_LIQUID_CATEGORIES: NON_LIQUID_CATEGORIES,
+    createEntity: createEntity,
+    createAsset: createAsset,
+    createLiability: createLiability,
+    createFlow: createFlow,
+    createTaxableRevenue: createTaxableRevenue,
+    createExpenseCategory: createExpenseCategory,
+    createMilestone: createMilestone,
+    createSnapshot: createSnapshot,
+    validateEntity: validateEntity,
+    validateAsset: validateAsset,
+    validateLiability: validateLiability,
+    validateFlow: validateFlow,
+    isLiquid: isLiquid,
+    isNonLiquid: isNonLiquid
+  };
+})();
+
 /* ═══ AURUM CAPITAL v2 ═══ */
 var K='aurum_capital_v1';
-var D={payouts:[],portfolio:[],passifs:[],expenses:[],propfirms:[],entities:[],abonnements:[],categories:['Logement','Transport','Alimentaire','Outils Trading','Challenges','Abos','Santé','Loisirs','Impôts'],history:[],envelopes:{},goals:[],bankAccounts:[]};
+var D={payouts:[],portfolio:[],passifs:[],expenses:[],propfirms:[],entities:[],abonnements:[],categories:['Logement','Transport','Alimentaire','Outils Trading','Challenges','Abos','Santé','Loisirs','Impôts'],history:[],envelopes:{},goals:[],bankAccounts:[],v2Entities:[],v2Assets:[],v2Liabilities:[],v2Flows:[],v2TaxableRevenues:[],v2ExpenseCategories:[],v2Milestones:[],v2Snapshots:[],v2Version:0};
 function esc(s){try{var d=document.createElement('div');d.textContent=s;return d.innerHTML}catch(e){return''}}
 function uid(){try{return Date.now().toString(36)+Math.random().toString(36).substr(2,5)}catch(e){return''+Date.now()}}
 function fm(n){try{return'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}catch(e){return'$0.00'}}
 function toast(m){try{var e=document.createElement('div');e.className='ts';e.textContent=m;document.getElementById('toC').appendChild(e);setTimeout(function(){e.remove()},2500)}catch(e){console.error(e)}}
 function tg(id){try{var e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none'}catch(e){console.error(e)}}
 function save(){try{var c=JSON.parse(JSON.stringify(D));c.netWorth=cNW();var data=JSON.stringify(c);if(data.length>4*1024*1024){toast('Données > 4MB — exporte un backup !')}localStorage.setItem(K,data)}catch(e){if(e.name==='QuotaExceededError'||e.code===22){toast('Stockage plein — exporte un backup JSON');AurumSync.mirror(K,data);console.warn('[AurumSync] localStorage full — saved to IndexedDB')}console.error('save:',e)}}
-function load(){try{var r=localStorage.getItem(K);if(!r)return;var p=JSON.parse(r);['payouts','portfolio','passifs','expenses','propfirms','entities','abonnements','history'].forEach(function(k){if(p[k])D[k]=p[k]});if(p.categories&&p.categories.length)D.categories=p.categories;if(p.envelopes)D.envelopes=p.envelopes;if(p.goals)D.goals=p.goals;if(p.bankAccounts)D.bankAccounts=p.bankAccounts}catch(e){console.error('load:',e)}}
+function load(){try{var r=localStorage.getItem(K);if(!r)return;var p=JSON.parse(r);['payouts','portfolio','passifs','expenses','propfirms','entities','abonnements','history'].forEach(function(k){if(p[k])D[k]=p[k]});if(p.categories&&p.categories.length)D.categories=p.categories;if(p.envelopes)D.envelopes=p.envelopes;if(p.goals)D.goals=p.goals;if(p.bankAccounts)D.bankAccounts=p.bankAccounts;['v2Entities','v2Assets','v2Liabilities','v2Flows','v2TaxableRevenues','v2ExpenseCategories','v2Milestones','v2Snapshots'].forEach(function(k){if(p[k])D[k]=p[k]});if(p.v2Version)D.v2Version=p.v2Version}catch(e){console.error('load:',e)}}
+/* ═══ CAPITAL STORE — CRUD for v2 data model ═══ */
+var CapitalStore = (function() {
+
+  function _add(collection, item) { D[collection].push(item); save(); return item; }
+  function _update(collection, id, changes) {
+    var item = D[collection].find(function(x) { return x.id === id; });
+    if (!item) return null;
+    Object.keys(changes).forEach(function(k) { item[k] = changes[k]; });
+    save();
+    return item;
+  }
+  function _remove(collection, id) {
+    var idx = D[collection].findIndex(function(x) { return x.id === id; });
+    if (idx < 0) return false;
+    D[collection].splice(idx, 1);
+    save();
+    return true;
+  }
+  function _getAll(collection) { return D[collection] || []; }
+  function _getById(collection, id) { return D[collection].find(function(x) { return x.id === id; }) || null; }
+  function _findWhere(collection, predicate) { return D[collection].filter(predicate); }
+
+  return {
+    /* Entities */
+    addEntity: function(data) { return _add('v2Entities', CapitalModel.createEntity(data)); },
+    updateEntity: function(id, ch) { return _update('v2Entities', id, ch); },
+    removeEntity: function(id) { return _remove('v2Entities', id); },
+    getEntity: function(id) { return _getById('v2Entities', id); },
+    getAllEntities: function() { return _getAll('v2Entities'); },
+
+    /* Assets */
+    addAsset: function(data) { return _add('v2Assets', CapitalModel.createAsset(data)); },
+    updateAsset: function(id, ch) { return _update('v2Assets', id, ch); },
+    updateAssetValue: function(id, newValue, source) {
+      var asset = _getById('v2Assets', id);
+      if (!asset) return null;
+      asset.historicalSnapshots.push({ date: new Date().toISOString(), value: asset.currentValue, source: 'AUTO' });
+      if (asset.historicalSnapshots.length > 60) asset.historicalSnapshots = asset.historicalSnapshots.slice(-60);
+      asset.currentValue = parseFloat(newValue) || 0;
+      asset.lastUpdatedAt = new Date().toISOString();
+      asset.updateSource = source || 'MANUAL';
+      save();
+      return asset;
+    },
+    removeAsset: function(id) { return _remove('v2Assets', id); },
+    getAsset: function(id) { return _getById('v2Assets', id); },
+    getAllAssets: function(filter) { return filter ? _findWhere('v2Assets', filter) : _getAll('v2Assets'); },
+
+    /* Liabilities */
+    addLiability: function(data) { return _add('v2Liabilities', CapitalModel.createLiability(data)); },
+    updateLiability: function(id, ch) { return _update('v2Liabilities', id, ch); },
+    removeLiability: function(id) { return _remove('v2Liabilities', id); },
+    getLiability: function(id) { return _getById('v2Liabilities', id); },
+    getAllLiabilities: function() { return _getAll('v2Liabilities'); },
+
+    /* Flows */
+    addFlow: function(data) { return _add('v2Flows', CapitalModel.createFlow(data)); },
+    updateFlow: function(id, ch) { return _update('v2Flows', id, ch); },
+    removeFlow: function(id) { return _remove('v2Flows', id); },
+    getFlow: function(id) { return _getById('v2Flows', id); },
+    getAllFlows: function(filter) { return filter ? _findWhere('v2Flows', filter) : _getAll('v2Flows'); },
+
+    /* Taxable Revenues */
+    addTaxableRevenue: function(data) { return _add('v2TaxableRevenues', CapitalModel.createTaxableRevenue(data)); },
+    updateTaxableRevenue: function(id, ch) { return _update('v2TaxableRevenues', id, ch); },
+    removeTaxableRevenue: function(id) { return _remove('v2TaxableRevenues', id); },
+    getAllTaxableRevenues: function(filter) { return filter ? _findWhere('v2TaxableRevenues', filter) : _getAll('v2TaxableRevenues'); },
+
+    /* Expense Categories */
+    addExpenseCategory: function(data) { return _add('v2ExpenseCategories', CapitalModel.createExpenseCategory(data)); },
+    updateExpenseCategory: function(id, ch) { return _update('v2ExpenseCategories', id, ch); },
+    removeExpenseCategory: function(id) { return _remove('v2ExpenseCategories', id); },
+    getAllExpenseCategories: function() { return _getAll('v2ExpenseCategories'); },
+
+    /* Milestones */
+    addMilestone: function(data) { return _add('v2Milestones', CapitalModel.createMilestone(data)); },
+    updateMilestone: function(id, ch) { return _update('v2Milestones', id, ch); },
+    removeMilestone: function(id) { return _remove('v2Milestones', id); },
+    getAllMilestones: function() { return _getAll('v2Milestones').sort(function(a,b) { return a.order - b.order; }); },
+
+    /* Snapshots */
+    addSnapshot: function(data) { return _add('v2Snapshots', CapitalModel.createSnapshot(data)); },
+    getAllSnapshots: function() { return _getAll('v2Snapshots').sort(function(a,b) { return a.date.localeCompare(b.date); }); },
+    getLatestSnapshot: function() { var all = _getAll('v2Snapshots'); return all.length ? all.sort(function(a,b) { return b.date.localeCompare(a.date); })[0] : null; }
+  };
+})();
+
+/* ═══ MIGRATION v1 → v2 ═══ */
+function migrateToV2() {
+  try {
+    if (D.v2Version >= 1) return;
+    console.log('[Capital] Starting migration v1 → v2...');
+    var migrated = { entities: 0, assets: 0, liabilities: 0, flows: 0, categories: 0 };
+
+    /* 1. Create default PERSO entity if none exists */
+    if (D.v2Entities.length === 0) {
+      CapitalStore.addEntity({ name: 'Personnel', kind: 'PERSO', fiscalRegime: { type: 'IR' } });
+      migrated.entities++;
+    }
+    var persoEntity = D.v2Entities.find(function(e) { return e.kind === 'PERSO'; });
+    var persoEntityId = persoEntity ? persoEntity.id : 'PERSO_DEFAULT';
+
+    /* 2. Migrate entities (old D.entities → v2Entities) */
+    D.entities.forEach(function(old) {
+      if (D.v2Entities.some(function(e) { return e.siret === old.siret && old.siret; })) return;
+      var kindMap = { 'Micro-entreprise':'MICRO_ENTREPRISE', 'EURL':'EURL', 'SASU':'SASU', 'SAS':'SAS', 'SARL':'SARL', 'Holding':'HOLDING', 'SCI':'SCI', 'LMNP':'LMNP' };
+      var regimeMap = { 'Micro-BNC':'MICRO_BNC', 'Micro-BIC':'MICRO_BIC', 'IS':'IS', 'IR':'IR' };
+      CapitalStore.addEntity({
+        id: old.id,
+        name: old.name || old.nom || '',
+        kind: kindMap[old.forme] || 'OTHER',
+        fiscalRegime: { type: regimeMap[old.regime] || 'OTHER' },
+        caAnnualDeclared: old.ca || null,
+        resultAnnualDeclared: old.resultat || null,
+        parentEntityId: old.parentId || old.holdingId || null,
+        siret: old.siret || '',
+        notes: old.notes || ''
+      });
+      migrated.entities++;
+    });
+
+    /* 3. Migrate bank accounts (old D.bankAccounts → v2Assets BANK_ACCOUNT) */
+    D.bankAccounts.forEach(function(old) {
+      CapitalStore.addAsset({
+        id: old.id,
+        category: 'BANK_ACCOUNT',
+        label: old.name || 'Compte bancaire',
+        entityId: old.entityId || persoEntityId,
+        currentValue: old.balance || 0,
+        currency: 'USD',
+        updateSource: 'MANUAL',
+        bankName: old.bank || ''
+      });
+      migrated.assets++;
+    });
+
+    /* 4. Migrate portfolio (old D.portfolio → v2Assets by category) */
+    D.portfolio.forEach(function(old) {
+      var catMap = { 'ETF':'ETF_STOCKS', 'Actions':'ETF_STOCKS', 'Crypto':'CRYPTO', 'Immobilier':'REAL_ESTATE', 'Epargne':'SAVINGS', 'PEA':'PEA', 'AV':'ASSURANCE_VIE', 'PER':'PER' };
+      CapitalStore.addAsset({
+        id: old.id,
+        category: catMap[old.cat] || 'OTHER',
+        label: old.name || old.label || '',
+        entityId: persoEntityId,
+        currentValue: old.current || 0,
+        initialValue: old.invested || null,
+        currency: 'USD',
+        updateSource: 'MANUAL',
+        allocationTargetPercent: old.target || null,
+        notes: old.notes || ''
+      });
+      migrated.assets++;
+    });
+
+    /* 5. Migrate passifs (old D.passifs → v2Liabilities) */
+    D.passifs.forEach(function(old) {
+      CapitalStore.addLiability({
+        id: old.id,
+        kind: 'LOAN_PERSONAL',
+        label: old.name || old.label || 'Dette',
+        entityId: persoEntityId,
+        initialAmount: old.initial || old.remaining || 0,
+        remainingAmount: old.remaining || 0,
+        monthlyPayment: old.monthly || 0,
+        interestRate: old.rate || 0,
+        currency: 'USD'
+      });
+      migrated.liabilities++;
+    });
+
+    /* 6. Migrate payouts (old D.payouts → v2Flows PAYOUT) */
+    D.payouts.forEach(function(old) {
+      CapitalStore.addFlow({
+        id: old.id ? 'flw_' + old.id : undefined,
+        kind: 'PAYOUT',
+        source: old.autoFrom ? 'JOURNAL_PAYOUT' : 'MANUAL',
+        grossAmount: old.brut || old.net || 0,
+        fees: old.frais || 0,
+        netAmount: old.net || 0,
+        occurredAt: old.date || new Date().toISOString(),
+        journalPayoutId: old.autoFrom || null,
+        label: old.source || 'Payout',
+        notes: old.period || ''
+      });
+      migrated.flows++;
+    });
+
+    /* 7. Migrate expense categories (old D.categories strings → v2ExpenseCategories) */
+    var defaultIcons = { 'Logement':'\u{1F3E0}', 'Transport':'\u{1F697}', 'Alimentaire':'\u{1F6D2}', 'Outils Trading':'\u{1F4CA}', 'Challenges':'\u{1F3C6}', 'Abos':'\u{1F4F1}', 'Sant\u00e9':'\u{1F3E5}', 'Loisirs':'\u{1F3AE}', 'Imp\u00f4ts':'\u{1F4CB}' };
+    D.categories.forEach(function(cat) {
+      if (typeof cat === 'string') {
+        CapitalStore.addExpenseCategory({
+          label: cat,
+          icon: defaultIcons[cat] || null,
+          entityId: null,
+          isArchived: false
+        });
+        migrated.categories++;
+      }
+    });
+
+    /* 8. Migrate expenses as flows */
+    D.expenses.forEach(function(old) {
+      CapitalStore.addFlow({
+        kind: 'EXPENSE',
+        source: 'MANUAL',
+        grossAmount: old.amount || 0,
+        fees: 0,
+        netAmount: old.amount || 0,
+        occurredAt: (old.month || '') + '-01',
+        expenseCategoryId: old.cat || null,
+        label: old.note || old.cat || 'D\u00e9pense'
+      });
+    });
+
+    /* 9. Seed default milestones if empty */
+    if (D.v2Milestones.length === 0) {
+      var defaultMilestones = [
+        { targetAmount: 5000, label: '$5K \u2014 Fonds d\'urgence', order: 1, objective: 'Constituer un fonds d\'urgence de 3 mois de d\u00e9penses', actions: ['Calculer tes d\u00e9penses mensuelles', 'Mettre de c\u00f4t\u00e9 chaque payout', 'Ne pas investir avant d\'avoir ce filet'], expertAdvice: ['Le fonds d\'urgence est la priorit\u00e9 #1 absolue'] },
+        { targetAmount: 10000, label: '$10K \u2014 Premiers investissements', order: 2, objective: 'Commencer \u00e0 investir une partie des revenus', actions: ['Ouvrir un PEA ou CTO', 'Investir 20% des payouts en ETF', 'Garder 80% en cash trading'], expertAdvice: ['Un ETF World diversifi\u00e9 est le plus simple pour commencer'] },
+        { targetAmount: 25000, label: '$25K \u2014 Acc\u00e9l\u00e9ration', order: 3, objective: 'Diversifier les sources de revenus', actions: ['Diversifier les prop firms', 'Explorer les comptes perso', 'Structurer fiscalement si n\u00e9cessaire'], expertAdvice: ['\u00c0 ce stade, consulte un comptable pour optimiser'] },
+        { targetAmount: 50000, label: '$50K \u2014 Structuration', order: 4, objective: 'Cr\u00e9er une structure juridique si pertinent', actions: ['\u00c9valuer SASU vs micro', 'Calculer l\'avantage IS vs IR', 'Pr\u00e9voir la tr\u00e9sorerie'], expertAdvice: ['La SASU est souvent pertinente au-dessus de 30-40K\u20ac de b\u00e9n\u00e9fice'] },
+        { targetAmount: 100000, label: '$100K \u2014 Patrimoine solide', order: 5, objective: 'Patrimoine diversifi\u00e9 et r\u00e9silient', actions: ['Allocation cible 60/30/10', 'Assurance-vie pour la transmission', 'R\u00e9duire l\'exposition au trading'], expertAdvice: ['Ne mets jamais plus de 30% sur une seule classe d\'actif'] },
+        { targetAmount: 250000, label: '$250K \u2014 Libert\u00e9 financi\u00e8re en vue', order: 6, objective: 'Les revenus passifs couvrent une partie des d\u00e9penses', actions: ['Calcule ton taux de couverture', 'Optimise les enveloppes fiscales', 'Cr\u00e9e un plan de succession'], expertAdvice: ['Pense holding si tu as 2+ entit\u00e9s'] },
+        { targetAmount: 500000, label: '$500K \u2014 Demi-million', order: 7, objective: 'Patrimoine \u00e0 6 chiffres', actions: ['Immobilier ?', 'Private equity ?', 'Angel investing ?'], expertAdvice: ['Diversification g\u00e9ographique \u00e0 consid\u00e9rer'] },
+        { targetAmount: 1000000, label: '$1M \u2014 Millionnaire', order: 8, objective: 'Le cap symbolique', actions: ['Revue compl\u00e8te de la strat\u00e9gie patrimoniale', 'Optimisation de la transmission', 'Philanthropie ?'], expertAdvice: ['Un bon gestionnaire de patrimoine vaut son co\u00fbt \u00e0 ce stade'] }
+      ];
+      defaultMilestones.forEach(function(m) { CapitalStore.addMilestone(m); });
+    }
+
+    /* Mark as migrated */
+    D.v2Version = 1;
+    save();
+    console.log('[Capital] Migration v1 \u2192 v2 complete:', migrated);
+  } catch(e) { console.error('[Capital] Migration error:', e); }
+}
+
+/* ═══ TESTS — Phase 0 ═══ */
+function testCapitalModel() {
+  try {
+    var pass = 0, fail = 0;
+    function assert(cond, msg) { if (cond) { pass++; } else { fail++; console.error('[TEST FAIL]', msg); } }
+
+    console.log('[Capital Tests] Running Phase 0 tests...');
+
+    /* Test factories */
+    var e = CapitalModel.createEntity({ name: 'Test SASU', kind: 'SASU' });
+    assert(e.id.startsWith('ent_'), 'Entity ID prefix');
+    assert(e.name === 'Test SASU', 'Entity name');
+    assert(e.kind === 'SASU', 'Entity kind');
+
+    var a = CapitalModel.createAsset({ label: 'Mon CTO', category: 'ETF_STOCKS', currentValue: 5000 });
+    assert(a.id.startsWith('ast_'), 'Asset ID prefix');
+    assert(a.currentValue === 5000, 'Asset value');
+    assert(a.category === 'ETF_STOCKS', 'Asset category');
+
+    var l = CapitalModel.createLiability({ label: 'Cr\u00e9dit', remainingAmount: 10000, monthlyPayment: 500 });
+    assert(l.id.startsWith('lia_'), 'Liability ID prefix');
+    assert(l.remainingAmount === 10000, 'Liability remaining');
+
+    var f = CapitalModel.createFlow({ kind: 'PAYOUT', grossAmount: 1000, fees: 50, label: 'FundedNext' });
+    assert(f.id.startsWith('flw_'), 'Flow ID prefix');
+    assert(f.netAmount === 950, 'Flow net = gross - fees');
+    assert(f.kind === 'PAYOUT', 'Flow kind');
+
+    var t = CapitalModel.createTaxableRevenue({ kind: 'BNC_PROP_FIRM', grossAmount: 1000, fiscalYear: 2026 });
+    assert(t.kind === 'BNC_PROP_FIRM', 'TaxableRevenue kind');
+    assert(t.fiscalYear === 2026, 'TaxableRevenue year');
+
+    var c = CapitalModel.createExpenseCategory({ label: 'Test', icon: '\u{1F9EA}' });
+    assert(c.label === 'Test', 'ExpenseCategory label');
+    assert(!c.isArchived, 'ExpenseCategory not archived');
+
+    var m = CapitalModel.createMilestone({ targetAmount: 5000, label: 'Test', order: 1 });
+    assert(m.targetAmount === 5000, 'Milestone target');
+
+    var s = CapitalModel.createSnapshot({ totalAssets: 10000, totalLiabilities: 2000, netWorth: 8000 });
+    assert(s.netWorth === 8000, 'Snapshot net worth');
+
+    /* Test validators */
+    var v1 = CapitalModel.validateEntity({ name: '', kind: 'SASU' });
+    assert(!v1.valid, 'Entity validation: empty name fails');
+    var v2 = CapitalModel.validateAsset({ label: 'OK', category: 'PEA', currentValue: 100 });
+    assert(v2.valid, 'Asset validation: valid passes');
+    var v3 = CapitalModel.validateFlow({ label: '', grossAmount: 100 });
+    assert(!v3.valid, 'Flow validation: empty label fails');
+
+    /* Test classification */
+    assert(CapitalModel.isLiquid('BANK_ACCOUNT'), 'Bank account is liquid');
+    assert(!CapitalModel.isLiquid('CRYPTO'), 'Crypto is not liquid');
+    assert(CapitalModel.isNonLiquid('REAL_ESTATE'), 'Real estate is non-liquid');
+
+    /* Test Store CRUD (using temp data, cleanup after) */
+    var tempEntity = CapitalStore.addEntity({ name: 'Test Store', kind: 'EURL' });
+    assert(D.v2Entities.some(function(x) { return x.id === tempEntity.id; }), 'Store addEntity');
+    CapitalStore.updateEntity(tempEntity.id, { name: 'Updated' });
+    assert(CapitalStore.getEntity(tempEntity.id).name === 'Updated', 'Store updateEntity');
+    CapitalStore.removeEntity(tempEntity.id);
+    assert(!D.v2Entities.some(function(x) { return x.id === tempEntity.id; }), 'Store removeEntity');
+
+    var tempAsset = CapitalStore.addAsset({ label: 'Test Asset', category: 'SAVINGS', currentValue: 1000 });
+    CapitalStore.updateAssetValue(tempAsset.id, 1500, 'MANUAL');
+    var updated = CapitalStore.getAsset(tempAsset.id);
+    assert(updated.currentValue === 1500, 'Store updateAssetValue');
+    assert(updated.historicalSnapshots.length === 1, 'Store creates snapshot on value update');
+    CapitalStore.removeAsset(tempAsset.id);
+
+    console.log('[Capital Tests] Phase 0: ' + pass + ' passed, ' + fail + ' failed');
+    return { pass: pass, fail: fail };
+  } catch(e) { console.error('[Capital Tests] Error:', e); return { pass: 0, fail: -1 }; }
+}
+
 /* ─── JOURNAL SYNC ─── */
 function rJ(){try{var r=localStorage.getItem('enz_v4');if(!r)return{a:[],t:[]};var j=JSON.parse(r),a=[],t=[];if(j.accounts)j.accounts.forEach(function(ac){a.push({name:ac.name||'',type:ac.type||'',balance:ac.bal||ac.balance||0,risk:ac.risk||1,target:ac.target||0,floor:ac.floor||0,id:ac.id||''})});if(j.live)j.live.forEach(function(tr){var accName='',accType='';if(tr.accId&&j.accounts){var acc=j.accounts.find(function(a){return a.id===tr.accId});if(acc){accName=acc.name||'';accType=acc.type||''}}t.push(Object.assign({},tr,{account:accName,accType:accType}))});return{a:a,t:t}}catch(e){return{a:[],t:[]}}}
 function mPnL(){try{var j=rJ(),m={};j.t.forEach(function(t){if(!t.date)return;var k=t.date.slice(0,7);if(!m[k])m[k]={pnl:0,n:0,w:0};var p=parseFloat(t.pl)||0;m[k].pnl+=p;m[k].n++;if(p>0)m[k].w++});return m}catch(e){return{}}}
@@ -2018,6 +2566,7 @@ function renderYIRDoughnut(portfolio, tradingPerso, payouts, tresoEntites) {
 
 /* ─── INIT ─── */
 load();
+migrateToV2();
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){console.error(e)}})();
 rCL();rCS();rAL();renderCapitalNav();rD();
 setTimeout(function() { AurumSync.syncAll(); }, 3000);
