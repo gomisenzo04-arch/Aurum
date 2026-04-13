@@ -1093,7 +1093,7 @@ td.n { color: var(--red); font-weight: 600; text-shadow: none }
   .type-sw button { padding: 5px 10px; font-size: 11px }
   .scroll { padding: 12px }
   .grid2 { grid-template-columns: 1fr }
-  #dash > div[style*="grid-template-columns:2fr 1fr 1fr"] { grid-template-columns: 1fr !important }
+  .dash-grid { grid-template-columns: 1fr !important }
   .cards { grid-template-columns: repeat(2, 1fr) }
   .fg { grid-template-columns: 1fr 1fr }
   .sg { grid-template-columns: 1fr 1fr }
@@ -1444,6 +1444,58 @@ body::before {
 .tfm-step.active{background:var(--gold)}
 .tfm-body{min-height:200px}
 .tfm-nav{display:flex;justify-content:space-between;margin-top:16px;gap:8px}
+/* ─── DASHBOARD GRID LAYOUT ─── */
+.dash-grid { display:grid; grid-template-columns:1fr 380px; gap:10px; align-items:start }
+.dash-left { display:flex; flex-direction:column; gap:10px }
+.dash-right { display:flex; flex-direction:column; gap:10px; position:sticky; top:100px; align-self:start }
+.dash-grid .box { padding:12px; margin-bottom:0 }
+.dash-grid .card { padding:10px 12px }
+.dash-grid .card .l { font-size:9px }
+.dash-grid .card .v { font-size:16px; margin-top:2px }
+#dashCards { display:grid; grid-template-columns:repeat(3,1fr); gap:6px }
+#dashCards .card { text-align:center }
+/* Compact calendar for dashboard */
+.dash-right .calendar-grid { gap:2px; margin-bottom:6px }
+.dash-right .cal-day { min-height:28px; font-size:11px; padding:2px; aspect-ratio:auto }
+.dash-right .cal-day .cal-num { font-size:11px }
+.dash-right .cal-day .cal-pl { font-size:8px }
+.dash-right .cal-day .cal-count { font-size:8px }
+.dash-right .cal-day.today .cal-num { font-size:12px }
+.dash-right .cal-header { font-size:9px; padding:3px }
+.dash-right .cal-news-dot { min-width:12px; height:12px; font-size:7px; bottom:1px; left:1px }
+.dash-right .cal-holiday-icon { font-size:7px }
+/* GO/NO-GO compact strip */
+.gng-strip { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:8px; font-size:12px; border-left:3px solid }
+.gng-strip .gng-icon { font-size:16px; flex-shrink:0 }
+.gng-strip .gng-title { font-weight:700; font-size:13px }
+.gng-strip .gng-msg { color:var(--t2); font-size:11px }
+.gng-strip .gng-cta { font-size:10px; padding:5px 10px; white-space:nowrap }
+/* Hero KPIs compact */
+.dash-hero { display:grid; grid-template-columns:repeat(3,1fr); gap:8px }
+.dash-hero-item { text-align:center; background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:12px 8px }
+.dash-hero-item .dh-label { font-size:9px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px }
+.dash-hero-item .dh-value { font-size:26px; font-weight:800; font-family:'JetBrains Mono',monospace; line-height:1 }
+.dash-hero-item .dh-sub { font-size:10px; color:var(--t3); margin-top:3px }
+/* Convergence compact */
+.conv-compact table { font-size:11px }
+.conv-compact th, .conv-compact td { padding:4px 6px }
+/* Monthly objective compact */
+.monthly-compact { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:10px 14px; cursor:pointer; transition:all .15s }
+.monthly-compact:hover { border-color:var(--gold) }
+/* Breakdown compact */
+.bd-compact { font-size:11px }
+.bd-compact .bd-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border) }
+@media (max-width:1024px) {
+  .dash-grid { grid-template-columns:1fr }
+  .dash-right { position:static }
+}
+@media (max-width:768px) {
+  .dash-grid { grid-template-columns:1fr }
+  .dash-right { position:static }
+  .dash-hero { grid-template-columns:1fr }
+  #dashCards { grid-template-columns:repeat(2,1fr) }
+  .dash-right .cal-day { min-height:24px }
+}
 /* ─── POLISH UNIFIE ─── */
 .card { position:relative; overflow:hidden; transition:border-color 150ms var(--ease) }
 .card::before { content:''; position:absolute; top:0; left:0; right:0; height:0; background:none; opacity:0 }
@@ -1745,75 +1797,43 @@ a:hover{opacity:.85}
 
 <!-- DASHBOARD -->
 <div class="panel active" id="dash">
-<div id="dashSessionWidget" style="margin-bottom:12px"></div>
-
-<!-- Zone 1 : Filtres -->
+<div id="dashSessionWidget" style="margin-bottom:8px"></div>
 <div class="filter-bar" id="dashFilters"></div>
 <div class="filter-summary" id="dashFilterSum" style="display:none"></div>
-
-<!-- Zone 2 : Bandeau GO/NO-GO -->
-<div id="goNoGo" style="margin-bottom:10px"></div>
-
-<!-- Zone 3 : Hero KPIs (3 cartes) -->
-<div id="heroKpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px"></div>
-
-<!-- Zone 4 : Secondary KPIs (5 cartes) -->
-<div id="cards" style="grid-template-columns:repeat(5,1fr)"></div>
-
-<!-- Zone 5 : Equity Curve + Win/Loss + Doughnut -->
-<div id="dashFinancial" style="display:none"></div>
-<div id="dashMonthly" style="display:none"></div>
-<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:10px">
-<div class="box"><div class="box-title">Equity Curve</div><div style="position:relative"><canvas id="eqC"></canvas></div></div>
-<div class="box"><div class="box-title">Win / Loss</div><div style="position:relative"><canvas id="piC"></canvas></div></div>
-<div class="box"><div class="box-title">Breakdown</div><div id="bd"></div></div>
+<div class="dash-grid">
+  <div class="dash-left">
+    <div id="goNoGo"></div>
+    <div id="heroKpis"></div>
+    <div id="dashEquity" style="position:relative;height:180px;max-height:180px;overflow:hidden"><canvas id="eqC"></canvas></div>
+    <div id="dashCards"></div>
+    <div id="dashFinancial" style="display:none"></div>
+  </div>
+  <div class="dash-right">
+    <div id="dashCalendarBox">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Calendrier</span>
+        <div style="display:flex;gap:4px;align-items:center">
+          <button class="btn btn-o" style="padding:2px 8px;font-size:10px" onclick="calNav(-1)">&larr;</button>
+          <span id="calMonth" style="font-size:10px;color:var(--t1);min-width:100px;text-align:center"></span>
+          <button class="btn btn-o" style="padding:2px 8px;font-size:10px" onclick="calNav(1)">&rarr;</button>
+          <button class="btn btn-o" style="padding:2px 6px;font-size:9px" onclick="calMonth=new Date().getMonth();calYear=new Date().getFullYear();rCalendar()">Auj.</button>
+        </div>
+      </div>
+      <div class="calendar-grid" id="calGrid"></div>
+      <div id="calSummary" style="display:none;font-size:10px;padding:4px 0;text-align:center"></div>
+      <div style="display:flex;gap:8px;justify-content:center;font-size:8px;color:var(--t3);margin-top:4px;flex-wrap:wrap">
+        <span>&#x1F7E2; Positif</span><span>&#x1F534; N&eacute;gatif</span><span style="color:var(--purple)">&#x1F7E3; F&eacute;ri&eacute;</span><span style="color:var(--red)">&bull; News</span>
+      </div>
+      <div id="calDayDetail" class="cal-day-detail"></div>
+    </div>
+    <div id="convergence"></div>
+    <div id="dashMonthly" style="display:none"></div>
+    <div id="dashBreakdown"></div>
+  </div>
 </div>
-
-<!-- Zone 6 : P&L par trade -->
-<div class="box" style="margin-bottom:10px"><div class="box-title">P&L par trade</div><div style="position:relative"><canvas id="baC"></canvas></div></div>
-
-<!-- Per-account breakdown (all mode) -->
+<!-- Hidden canvases for removed charts -->
+<div style="display:none"><canvas id="piC"></canvas><canvas id="baC"></canvas></div>
 <div id="dashAccBreakdown" style="display:none"></div>
-
-<!-- Zone 7 : Convergence Live/Replay ⭐ -->
-<div id="convergence" class="box" style="margin-bottom:10px;border:1px solid rgba(212,160,23,.15)"></div>
-<!-- Calendar -->
-<div class="box" style="margin-bottom:10px">
-<div class="box-title" style="display:flex;align-items:center;justify-content:space-between">
-<span>Calendrier</span>
-<div style="display:flex;gap:8px;align-items:center">
-<button class="btn btn-o" style="padding:4px 10px;font-size:11px" onclick="calNav(-1)">←</button>
-<span id="calMonth" style="font-size:12px;color:var(--t1);min-width:120px;text-align:center"></span>
-<button class="btn btn-o" style="padding:4px 10px;font-size:11px" onclick="calNav(1)">→</button>
-<button class="btn btn-o" style="padding:4px 10px;font-size:10px;margin-left:4px" onclick="calMonth=new Date().getMonth();calYear=new Date().getFullYear();rCalendar()">Auj.</button>
-</div>
-</div>
-<div class="calendar-grid" id="calGrid"></div>
-<div id="calSummary" style="display:none;font-size:12px;padding:8px 0;text-align:center"></div>
-<div style="display:flex;gap:12px;justify-content:center;font-size:9px;color:var(--t3);margin-top:6px;flex-wrap:wrap">
-  <span>🟢 Jour positif</span>
-  <span>🔴 Jour négatif</span>
-  <span style="color:var(--purple)">🟣 Jour férié</span>
-  <span style="color:var(--red)">● News rouge USD</span>
-</div>
-<div id="calDayDetail" class="cal-day-detail"></div>
-</div>
-<!-- Glossaire rapide -->
-<div class="box" style="margin-bottom:10px">
-<div class="box-title" style="cursor:pointer" onclick="var g=document.getElementById('glossBody');g.style.display=g.style.display==='none'?'block':'none'">📖 Glossaire des termes <span style="font-size:10px;color:var(--t3);font-weight:400">cliquer pour ouvrir</span></div>
-<div id="glossBody" style="display:none;font-size:12px;color:var(--t2);line-height:1.8;columns:2;column-gap:20px">
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">WR (Win Rate)</b> — Pourcentage de trades gagnants. Ex: 60% = 6 trades sur 10 sont positifs.</div>
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">SL (Stop Loss)</b> — Niveau de prix où ta perte est coupée automatiquement. Protège ton capital.</div>
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">TP (Take Profit)</b> — Niveau de prix où ton gain est pris automatiquement. Toujours = 2x le SL.</div>
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">QM (Quasimodo)</b> — Pattern de retournement. Le signal d'entrée principal de la stratégie Aurum.</div>
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">R:R (Risk:Reward)</b> — Ratio risque/récompense. 1:2 = tu risques 1 pour gagner 2.</div>
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">Trailing</b> — Le SL se déplace pour protéger les gains quand le trade va dans ton sens.</div>
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">P&L</b> — Profit & Loss. Le résultat financier d'un trade ou d'une période.</div>
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">Lot</b> — Taille de ta position. Calculée selon ton risque et ton SL.</div>
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">DD (Drawdown)</b> — Perte maximale depuis un pic. Mesure la "douleur" de ta stratégie.</div>
-<div style="break-inside:avoid;margin-bottom:8px"><b style="color:var(--gold)">Profit Factor</b> — Gains totaux ÷ Pertes totales. >1.5 = bon, >2 = excellent.</div>
-</div>
-</div>
 </div>
 
 <!-- SESSIONS HISTORY -->
@@ -2894,7 +2914,7 @@ function R() {
     rDashSessionWidget();
     renderFilterBar('dashFilters');
     const dispTr = getTr(); renderFilterSummary('dashFilterSum', dispTr, applyFilters(dispTr), aT==='live');
-    rGoNoGo(); rHeroKpis(); rCards(); rDashFinancial(); rDashMonthly(); rCharts(); rBd(); rDashAccBreakdown(); rConvergence(); rCalendar();
+    rGoNoGo(); rHeroKpis(); rDashCards(); rDashFinancial(); rDashMonthly(); rDashEquity(); rDashBreakdown(); rDashAccBreakdown(); rConvergence(); rCalendar();
   }
   else if (pg === 'hist') { rHist() }
   else if (pg === 'time') { rHours() }
@@ -3091,7 +3111,7 @@ function rGoNoGo() {
       cta = '<button class="btn btn-o" onclick="go(\'viab\')" style="font-size:11px;padding:8px 14px">Voir Viabilité →</button>';
     }
 
-    el.innerHTML = '<div style="background:' + bg + ';border:1px solid var(--border);border-left:3px solid ' + border + ';border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:20px">' + icon + '</span><div style="flex:1;min-width:150px"><div style="font-size:14px;font-weight:700;color:' + border + '">' + title + '</div><div style="font-size:12px;color:var(--t2)">' + msg + '</div></div>' + cta + '</div>';
+    el.innerHTML = '<div class="gng-strip" style="background:' + bg + ';border-color:' + border + '"><span class="gng-icon">' + icon + '</span><span class="gng-title" style="color:' + border + '">' + title + '</span><span class="gng-msg">' + msg + '</span><span style="flex:1"></span>' + cta.replace(/class="btn btn-[go]"/g, 'class="btn btn-o gng-cta"') + '</div>';
   } catch(e) { console.error('rGoNoGo:', e) }
 }
 
@@ -3133,16 +3153,16 @@ function rHeroKpis() {
     var pfCol = parseFloat(pf) < 1 ? 'var(--red)' : parseFloat(pf) < 1.5 ? 'var(--gold)' : 'var(--green)';
 
     function heroCard(label, value, sub, col) {
-      return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center">' +
-        '<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">' + label + '</div>' +
-        '<div style="font-size:32px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + col + ';line-height:1">' + value + '</div>' +
-        '<div style="font-size:11px;color:var(--t3);margin-top:4px">' + sub + '</div></div>';
+      return '<div class="dash-hero-item">' +
+        '<div class="dh-label">' + label + '</div>' +
+        '<div class="dh-value" style="color:' + col + '">' + value + '</div>' +
+        '<div class="dh-sub">' + sub + '</div></div>';
     }
 
-    el.innerHTML =
+    el.innerHTML = '<div class="dash-hero">' +
       heroCard('P&L Période', isLive ? (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(0) : pnlLabel, n + ' trades', pnl >= 0 ? 'var(--green)' : 'var(--red)') +
       heroCard('Winrate', wr + '%', w + ' W / ' + l + ' L', parseFloat(wr) >= 50 ? 'var(--green)' : 'var(--red)') +
-      heroCard('Profit Factor', pf, pfAdj, pfCol);
+      heroCard('Profit Factor', pf, pfAdj, pfCol) + '</div>';
   } catch(e) { console.error('rHeroKpis:', e) }
 }
 
@@ -3395,26 +3415,23 @@ function rConvergence() {
       return cells;
     }
 
-    el.innerHTML = '<div class="box-title" style="display:flex;align-items:center;justify-content:space-between">' +
-      '<span>⭐ Convergence Live / Replay' + (hasInsights ? ' / Insights' : '') + '</span>' +
-      '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:var(--gold);border:1px solid rgba(212,160,23,.2);padding:2px 8px;border-radius:4px;font-weight:600">Signature Aurum</span><span style="font-size:12px;font-weight:700;color:'+convCol+'">'+conv+'%</span></div></div>' +
-      '<div style="font-size:11px;color:var(--t3);margin-bottom:10px">Ton edge tient-il entre entraînement, insights et argent réel ?</div>' +
-      '<table style="width:100%;font-size:12px"><thead><tr>' +
-      '<th style="text-align:left;color:var(--t3)">Métrique</th>' +
-      '<th style="color:var(--gold)">Live ($)</th>' +
-      '<th style="color:var(--blue)">Replay (R)</th>' +
-      (hasInsights ? '<th style="color:var(--purple)">Insights ($)</th>' : '') +
-      '<th style="color:var(--t3);text-align:center">Match</th></tr></thead><tbody>' +
-      row('Trades', lS.n, rS.n, iS.n, '') +
-      row('Win Rate', lS.wr, rS.wr, iS.wr, '%') +
-      row('Profit Factor', lS.pf, rS.pf, iS.pf, '') +
-      row('Moyenne', lS.avg, rS.avg, iS.avg, '') +
+    el.innerHTML = '<div class="box conv-compact" style="padding:10px 12px;border:1px solid rgba(212,160,23,.15);border-radius:8px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+      '<span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Convergence</span>' +
+      '<span style="font-size:12px;font-weight:700;color:'+convCol+'">'+conv+'%</span></div>' +
+      '<table style="width:100%;font-size:11px"><thead><tr>' +
+      '<th style="text-align:left;color:var(--t3);padding:3px 4px">Métrique</th>' +
+      '<th style="color:var(--gold);padding:3px 4px">Live</th>' +
+      '<th style="color:var(--blue);padding:3px 4px">Replay</th>' +
+      (hasInsights ? '<th style="color:var(--purple);padding:3px 4px">Insights</th>' : '') +
+      '<th style="color:var(--t3);text-align:center;padding:3px 4px">&#10003;</th></tr></thead><tbody>' +
+      row('WR', lS.wr, rS.wr, iS.wr, '%') +
+      row('PF', lS.pf, rS.pf, iS.pf, '') +
+      row('Moy', lS.avg, rS.avg, iS.avg, '') +
       '</tbody></table>' +
-      '<div style="margin-top:10px;padding:10px 12px;border-radius:8px;border-left:3px solid '+convCol+';background:rgba(212,160,23,.04);font-size:11px;color:var(--t2);line-height:1.6">' +
-      (conv >= 70 ? '✅ <b>Tes résultats sont cohérents entre les modes.</b> Ton edge fonctionne.' :
-       conv >= 40 ? '⚠️ <b>Écart modéré.</b> Vérifie si tu respectes les mêmes règles dans chaque mode.' :
-       '🔴 <b>Écart important.</b> Tes performances divergent entre les modes. Causes possibles : émotions, taille de position, sélection de setups.') +
-      '</div>';
+      '<div style="margin-top:6px;padding:6px 8px;border-radius:6px;border-left:2px solid '+convCol+';background:rgba(212,160,23,.04);font-size:10px;color:var(--t2);line-height:1.4">' +
+      (conv >= 70 ? '&#10004; Cohérent.' : conv >= 40 ? '&#9888; Écart modéré.' : '&#x1F534; Divergence.') +
+      '</div></div>';
   } catch(e) { console.error("[Aurum] rConvergence:", e) }
 }
 
@@ -3568,6 +3585,132 @@ function rBd() {
       <span>21h:${tr.filter(t=>t.res==='21h').length}</span>
     </div>`;
 } catch(e) { console.error("[Aurum] rBd:", e) }
+}
+
+// ─── DASHBOARD COMPACT CARDS (2x3 grid) ───
+function rDashCards() {
+  try {
+    var el = document.getElementById('dashCards');
+    if (!el) return;
+    var trAll = getTr(), isLive = aT === 'live';
+    var tr = applyFilters(trAll), n = tr.length;
+    if (n === 0) {
+      el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--t3);font-size:12px">Aucun trade</div>';
+      return;
+    }
+    var w = tr.filter(function(t){return isLive?t.pl>0:(t.rr||0)>0}).length;
+    var l = n - w;
+    var wr = n ? ((w/n)*100).toFixed(0) : '-';
+    var str = '-';
+    if (n) { var s=0; var last = isLive ? tr[n-1].pl>0 : (tr[n-1].rr||0)>0; for(var i=n-1;i>=0;i--){ if((isLive?tr[i].pl>0:(tr[i].rr||0)>0)===last)s++;else break } str=(last?'+':'-')+s }
+    var cards;
+    if (isLive) {
+      var tot = tr.reduce(function(a,t){return a+t.pl},0);
+      var avgW = w ? tr.filter(function(t){return t.pl>0}).reduce(function(a,t){return a+t.pl},0)/w : 0;
+      var avgL = l ? Math.abs(tr.filter(function(t){return t.pl<0}).reduce(function(a,t){return a+t.pl},0)/l) : 0;
+      var rr = avgL ? (avgW/avgL).toFixed(2) : '-';
+      var cum=0, pk=0, mdd=0; tr.forEach(function(t){ cum+=t.pl; if(cum>pk)pk=cum; if(cum-pk<mdd)mdd=cum-pk });
+      var bal = (typeof S === 'function' ? S() : {bal:1}).bal || 1;
+      cards = [
+        {l:'WR',v:wr+'%',c:parseFloat(wr)>=50?'g':'r'},
+        {l:'Espérance',v:'$'+(tot/n).toFixed(1),c:tot>=0?'g':'r'},
+        {l:'PF',v:rr,c:'go'},
+        {l:'Trades',v:n,c:''},
+        {l:'Max DD',v:'$'+mdd.toFixed(0),c:'r'},
+        {l:'Série',v:str,c:str[0]==='+'?'g':'r'}
+      ];
+    } else {
+      var totR = tr.reduce(function(a,t){return a+(t.rr||0)},0);
+      var avgR = n ? (totR/n).toFixed(2) : '-';
+      var cum2=0, pk2=0, mdd2=0; tr.forEach(function(t){ cum2+=(t.rr||0); if(cum2>pk2)pk2=cum2; if(cum2-pk2<mdd2)mdd2=cum2-pk2 });
+      cards = [
+        {l:'WR',v:wr+'%',c:parseFloat(wr)>=50?'g':'r'},
+        {l:'R Moyen',v:avgR+'R',c:'go'},
+        {l:'Total R',v:(totR>=0?'+':'')+totR.toFixed(1)+'R',c:totR>=0?'g':'r'},
+        {l:'Trades',v:n,c:''},
+        {l:'Max DD',v:mdd2.toFixed(1)+'R',c:'r'},
+        {l:'Série',v:str,c:str[0]==='+'?'g':'r'}
+      ];
+    }
+    el.innerHTML = cards.map(function(c){
+      return '<div class="card"><div class="l">'+c.l+'</div><div class="v '+(c.c||'')+'">'+c.v+'</div></div>';
+    }).join('');
+  } catch(e) { console.error("[Aurum] rDashCards:", e) }
+}
+
+// ─── DASHBOARD EQUITY CURVE ONLY ───
+function rDashEquity() {
+  try {
+    var tr = applyFilters(getTr()), isLive = aT === 'live';
+    var cd = [], c = 0;
+    tr.forEach(function(t){ c += isLive ? t.pl : (t.rr||0); cd.push(c) });
+    if (cd.length < 2) return;
+
+    function downsample(arr, maxPoints) {
+      if (arr.length <= maxPoints) return { data: arr, labels: arr.map(function(_,i){return i+1}) };
+      var step = Math.ceil(arr.length / maxPoints);
+      var data = [], labels = [];
+      for (var i = 0; i < arr.length; i += step) { data.push(arr[i]); labels.push(i+1) }
+      if (labels[labels.length-1] !== arr.length) { data.push(arr[arr.length-1]); labels.push(arr.length) }
+      return { data: data, labels: labels };
+    }
+    var eqSampled = downsample(cd, 500);
+    var eqCanvas = document.getElementById('eqC');
+    if (!eqCanvas) return;
+    var eqCtx = eqCanvas.getContext('2d');
+    var eqGrad = eqCtx.createLinearGradient(0, 0, 0, 180);
+    eqGrad.addColorStop(0, 'rgba(212,160,23,.15)');
+    eqGrad.addColorStop(1, 'rgba(212,160,23,0)');
+    if (ch.eq) ch.eq.destroy();
+    ch.eq = new Chart(eqCanvas, {
+      type: 'line',
+      data: { labels: eqSampled.labels, datasets: [{
+        data: eqSampled.data, borderColor: '#d4a017',
+        backgroundColor: eqGrad, fill: true,
+        tension: .35, pointRadius: eqSampled.data.length > 50 ? 0 : 2, borderWidth: 2,
+        pointBackgroundColor: '#d4a017', pointBorderColor: '#d4a017',
+        pointHoverRadius: 4, pointHoverBackgroundColor: '#f5d060'
+      }]},
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(13,17,23,.9)', borderColor: 'rgba(212,160,23,.3)', borderWidth: 1, titleColor: '#d4a017', bodyColor: '#edf2f7', padding: 8, cornerRadius: 6 } },
+        scales: {
+          x: { display: false },
+          y: { ticks: { color: '#7b8fb0', font: { size: 9, family: 'JetBrains Mono' } }, grid: { color: 'rgba(60,80,110,.3)' } }
+        }
+      }
+    });
+    /* Doughnut and bar charts — render hidden to avoid errors but don't display */
+    if (ch.pi) ch.pi.destroy();
+    ch.pi = null;
+    if (ch.ba) ch.ba.destroy();
+    ch.ba = null;
+  } catch(e) { console.error("[Aurum] rDashEquity:", e) }
+}
+
+// ─── DASHBOARD COMPACT BREAKDOWN ───
+function rDashBreakdown() {
+  try {
+    var el = document.getElementById('dashBreakdown');
+    if (!el) return;
+    var tr = applyFilters(getTr()), isLive = aT === 'live';
+    if (tr.length === 0) { el.innerHTML = ''; return }
+    function wr(a) { var w = a.filter(function(t){return isLive?t.pl>0:(t.rr||0)>0}).length; return a.length ? (w/a.length*100).toFixed(0)+'%' : '-' }
+    function wrCol(a) { var w = a.filter(function(t){return isLive?t.pl>0:(t.rr||0)>0}).length; var r = a.length ? w/a.length*100 : 0; return r >= 50 ? 'var(--green)' : r > 0 ? 'var(--red)' : 'var(--t3)' }
+    var qm=tr.filter(function(t){return t.type==='QM'}), ga=tr.filter(function(t){return t.type==='Gaps'});
+    var bu=tr.filter(function(t){return t.dir==='Buy'}), se=tr.filter(function(t){return t.dir==='Sell'});
+    function mkRow(label, arr, icon) {
+      return '<div class="bd-row"><span>'+icon+' '+label+'</span><span><b style="color:var(--t1)">'+arr.length+'</b>t WR <b style="color:'+wrCol(arr)+'">'+wr(arr)+'</b></span></div>';
+    }
+    var resLine = '<div style="display:flex;gap:10px;justify-content:center;padding:4px 0;font-size:10px;color:var(--t3)">' +
+      '<span>TP:'+tr.filter(function(t){return t.res==='TP'}).length+'</span>' +
+      '<span>SL:'+tr.filter(function(t){return t.res==='SL'}).length+'</span>' +
+      '<span>Trail:'+tr.filter(function(t){return t.res==='Trail'}).length+'</span>' +
+      '<span>21h:'+tr.filter(function(t){return t.res==='21h'}).length+'</span></div>';
+    el.innerHTML = '<div class="box bd-compact" style="padding:10px 12px">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Breakdown</div>' +
+      mkRow('QM',qm,'&#x25C6;') + mkRow('Gaps',ga,'&#x26A1;') + mkRow('Buy',bu,'&#x2191;') + mkRow('Sell',se,'&#x2193;') +
+      resLine + '</div>';
+  } catch(e) { console.error("[Aurum] rDashBreakdown:", e) }
 }
 
 // ─── DASHBOARD SESSION WIDGET ───
@@ -10681,14 +10824,20 @@ function rDashMonthly() {
     var pnlCol = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
 
     el.style.display = 'block';
-    el.innerHTML = '<div onclick="go(\'monthly\')" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
-      '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">📅 Ce mois · ' + monthLabel(ym) + '</div>' +
-      '<span style="font-size:10px;color:var(--gold)">Voir le détail →</span></div>' +
-      '<div style="display:flex;gap:16px;font-size:13px">' +
-      '<div>P&L <b style="color:' + pnlCol + ';font-family:JetBrains Mono,monospace">' + (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(0) + '</b></div>' +
-      '<div>WR <b style="color:var(--t1);font-family:JetBrains Mono,monospace">' + wr + '%</b></div>' +
-      '<div>Trades <b style="color:var(--t1);font-family:JetBrains Mono,monospace">' + trades.length + '</b></div>' +
+    /* Progress bar: estimate target as 15% monthly */
+    var bal = 0;
+    if (D.activeAcc === 'all') { D.accounts.forEach(function(a){bal+=a.bal}) } else { var sa = D.accounts.find(function(a){return a.id===D.activeAcc}); if(sa) bal=sa.bal; }
+    var target15 = bal * 0.15;
+    var pctDone = target15 > 0 ? Math.min(100, Math.round(totalPnl / target15 * 100)) : 0;
+    el.innerHTML = '<div class="monthly-compact" onclick="go(\'monthly\')">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+      '<span style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">' + monthLabel(ym) + '</span>' +
+      '<span style="font-size:10px;color:var(--gold)">D\u00e9tail \u2192</span></div>' +
+      '<div style="height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:'+pctDone+'%;background:linear-gradient(90deg,var(--gold),#f5d060);border-radius:3px"></div></div>' +
+      '<div style="display:flex;gap:12px;font-size:11px">' +
+      '<span>P&L <b style="color:' + pnlCol + ';font-family:JetBrains Mono,monospace">' + (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(0) + '</b></span>' +
+      '<span>WR <b style="font-family:JetBrains Mono,monospace">' + wr + '%</b></span>' +
+      '<span>' + trades.length + ' trades</span>' +
       '</div></div>';
   } catch(e) { console.error('rDashMonthly:', e) }
 }
