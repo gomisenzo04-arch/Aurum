@@ -7196,10 +7196,12 @@ function dlPDF() {
 }
 
 // ─── LOGIN ───
+var _loginAttempts = 0;
 function tryLogin() {
   var code = document.getElementById('codeInput').value;
   if (!code || code.length < 1) return;
   var stored = AurumDB.getItem('aurum_code');
+  /* Pas de code stocké → premier lancement, accepter et sauver */
   if (!stored) {
     AurumDB.setItem('aurum_code', code);
     AurumDB.setItem('aurum_setup', '1');
@@ -7208,10 +7210,17 @@ function tryLogin() {
     return;
   }
   if (code === stored) {
+    _loginAttempts = 0;
     sessionStorage.setItem('enz_role','a');
     unlock(true);
   } else {
-    document.getElementById('loginErr').textContent = 'Code incorrect';
+    _loginAttempts++;
+    var errEl = document.getElementById('loginErr');
+    if (_loginAttempts >= 3) {
+      errEl.innerHTML = 'Code incorrect (' + _loginAttempts + ' essais) · <a href="#" onclick="if(confirm(\'Réinitialiser le code ? Tu pourras en créer un nouveau.\')){AurumDB.removeItem(\'aurum_code\');location.reload()}return false" style="color:var(--gold);text-decoration:underline">Réinitialiser le code</a>';
+    } else {
+      errEl.textContent = 'Code incorrect';
+    }
     document.getElementById('codeInput').value = '';
   }
 }
