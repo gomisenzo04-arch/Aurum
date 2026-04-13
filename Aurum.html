@@ -2441,6 +2441,106 @@ a:hover{opacity:.85}
 <div id="editModal" style="display:none"></div>
 
 <script>
+/* ═══ AurumSync — Background IndexedDB mirror (non-blocking) ═══ */
+var AurumSync = (function() {
+  var DB = 'AurumData', VER = 1, STORE = 'kv', _db = null;
+
+  function open(cb) {
+    if (_db) { cb(_db); return; }
+    try {
+      var req = indexedDB.open(DB, VER);
+      req.onupgradeneeded = function(e) {
+        if (!e.target.result.objectStoreNames.contains(STORE)) e.target.result.createObjectStore(STORE);
+      };
+      req.onsuccess = function(e) { _db = e.target.result; cb(_db); };
+      req.onerror = function() { /* silent fail */ };
+    } catch(e) { /* IndexedDB unavailable — silent */ }
+  }
+
+  function mirror(key, value) {
+    open(function(db) {
+      try {
+        var tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(value, key);
+      } catch(e) {}
+    });
+  }
+
+  function read(key, cb) {
+    open(function(db) {
+      try {
+        var tx = db.transaction(STORE, 'readonly');
+        var req = tx.objectStore(STORE).get(key);
+        req.onsuccess = function() { cb(req.result !== undefined ? req.result : null); };
+        req.onerror = function() { cb(null); };
+      } catch(e) { cb(null); }
+    });
+  }
+
+  function syncAll() {
+    open(function(db) {
+      try {
+        var keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && (k.startsWith('enz_') || k.startsWith('aurum_'))) keys.push(k);
+        }
+        if (!keys.length) return;
+        var tx = db.transaction(STORE, 'readwrite');
+        var store = tx.objectStore(STORE);
+        keys.forEach(function(k) { store.put(localStorage.getItem(k), k); });
+      } catch(e) {}
+    });
+  }
+
+  function recover(keys, cb) {
+    var hasLocal = keys.some(function(k) { return localStorage.getItem(k) !== null; });
+    if (hasLocal) { cb(false); return; }
+
+    open(function(db) {
+      try {
+        var tx = db.transaction(STORE, 'readonly');
+        var store = tx.objectStore(STORE);
+        var restored = 0;
+        var remaining = keys.length;
+        keys.forEach(function(k) {
+          var req = store.get(k);
+          req.onsuccess = function() {
+            if (req.result !== null && req.result !== undefined) {
+              try { localStorage.setItem(k, req.result); restored++; } catch(e) {}
+            }
+            remaining--;
+            if (remaining <= 0) {
+              if (restored > 0) { console.log('[AurumSync] Recovered ' + restored + ' keys from IndexedDB'); cb(true); }
+              else cb(false);
+            }
+          };
+          req.onerror = function() { remaining--; if (remaining <= 0) cb(false); };
+        });
+      } catch(e) { cb(false); }
+    });
+  }
+
+  return { mirror: mirror, read: read, syncAll: syncAll, recover: recover };
+})();
+
+/* Intercept localStorage writes for aurum keys → mirror to IndexedDB */
+(function() {
+  var _origSet = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(key, value) {
+    _origSet(key, value);
+    if (key && (key.startsWith('enz_') || key.startsWith('aurum_'))) {
+      AurumSync.mirror(key, value);
+    }
+  };
+})();
+
+/* Try to recover from IndexedDB if localStorage is empty */
+var AURUM_KEYS = ['enz_v4','aurum_formation_v1','aurum_capital_v1','aurum_code','aurum_setup','aurum_streak','aurum_backup_journal','aurum_backup_capital','aurum_checklist','aurum_ff_news','aurum_gold_price'];
+AurumSync.recover(AURUM_KEYS, function(recovered) {
+  if (recovered) { console.log('[AurumSync] Data recovered — reloading'); location.reload(); }
+});
+
 /* ═══════════════════════════════════════════════
    AURUM — COMPLETE JAVASCRIPT ENGINE
    ═══════════════════════════════════════════════ */
@@ -2464,6 +2564,9 @@ function _s() {
     console.warn('[Aurum] Save failed:', e.message);
     if (e.name === 'QuotaExceededError' || e.code === 22) {
       toast('Stockage plein — Exporte un backup JSON et supprime les anciens trades', 'error');
+      /* Fallback: save to IndexedDB directly */
+      AurumSync.mirror(LS, data);
+      console.warn('[AurumSync] localStorage full — saved to IndexedDB');
     }
   }
 }
@@ -7796,6 +7899,7 @@ function _startApp() {
   try { loadDraft(); } catch(e) {}
 }
 _startApp();
+setTimeout(function() { AurumSync.syncAll(); }, 3000);
 /* ═══════════════════════════════════════════════════════
    SESSION SERVICES — Phase 0 (lecture seule)
    ═══════════════════════════════════════════════════════ */
