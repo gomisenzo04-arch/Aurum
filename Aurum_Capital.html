@@ -1135,6 +1135,697 @@ function testCapitalModel() {
   } catch(e) { console.error('[Capital Tests] Error:', e); return { pass: 0, fail: -1 }; }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   PHASE 1 — Readers & Calculateurs (10 services)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── SERVICE 1: JournalForCapitalReader ─── */
+var JournalForCapitalReader = (function() {
+  return {
+    /* Get all payouts-like data from Journal (currently not stored in Journal,
+       but we read existing Capital payouts that were synced from Journal) */
+    getPayouts: function(filters) {
+      var flows = CapitalStore.getAllFlows(function(f) { return f.source === 'JOURNAL_PAYOUT'; });
+      if (filters && filters.entityId) flows = flows.filter(function(f) { return f.toEntityId === filters.entityId; });
+      if (filters && filters.fromDate) flows = flows.filter(function(f) { return f.occurredAt >= filters.fromDate; });
+      if (filters && filters.toDate) flows = flows.filter(function(f) { return f.occurredAt <= filters.toDate; });
+      return flows;
+    },
+
+    /* Trading stats by month from Journal */
+    getTradingStatsByMonth: function(entityId, accountIds) {
+      var j = rJ();
+      var trades = j.t;
+      if (accountIds && accountIds.length) {
+        trades = trades.filter(function(t) { return accountIds.indexOf(t.accId) >= 0; });
+      }
+      var months = {};
+      trades.forEach(function(t) {
+        if (!t.date) return;
+        var m = t.date.slice(0, 7);
+        if (!months[m]) months[m] = { month: m, trades: 0, wins: 0, pnl: 0, avgPnl: 0 };
+        months[m].trades++;
+        var pl = parseFloat(t.pl) || 0;
+        months[m].pnl += pl;
+        if (pl > 0) months[m].wins++;
+      });
+      Object.keys(months).forEach(function(m) {
+        months[m].avgPnl = months[m].trades > 0 ? months[m].pnl / months[m].trades : 0;
+        months[m].wr = months[m].trades > 0 ? (months[m].wins / months[m].trades * 100) : 0;
+      });
+      return Object.keys(months).sort().map(function(m) { return months[m]; });
+    },
+
+    /* Get prop accounts as v2 Assets */
+    getPropAccountsAsAssets: function() {
+      var j = rJ();
+      return j.a.filter(function(a) {
+        var tp = (a.type || '').toLowerCase();
+        return tp === 'prop' || tp === 'funded';
+      }).map(function(a) {
+        var bal = a.balance || 0;
+        // Add P&L
+        j.t.forEach(function(t) { if (t.account === a.name || (t.accId && t.accId === a.id)) bal += parseFloat(t.pl) || 0; });
+        return CapitalModel.createAsset({
+          id: 'jprop_' + (a.id || a.name),
+          category: 'TRADING_PROP',
+          label: a.name + ' (' + a.type + ')',
+          currentValue: bal,
+          initialValue: a.balance || 0,
+          updateSource: 'JOURNAL_SYNC',
+          broker: a.name
+        });
+      });
+    },
+
+    /* Get perso accounts as v2 Assets */
+    getPersoAccountsAsAssets: function() {
+      var j = rJ();
+      return j.a.filter(function(a) {
+        var tp = (a.type || '').toLowerCase();
+        return tp === 'perso' || tp === 'personnel';
+      }).map(function(a) {
+        var bal = a.balance || 0;
+        j.t.forEach(function(t) { if (t.account === a.name || (t.accId && t.accId === a.id)) bal += parseFloat(t.pl) || 0; });
+        return CapitalModel.createAsset({
+          id: 'jperso_' + (a.id || a.name),
+          category: 'TRADING_PERSO',
+          label: a.name,
+          currentValue: bal,
+          initialValue: a.balance || 0,
+          updateSource: 'JOURNAL_SYNC'
+        });
+      });
+    },
+
+    /* Total open positions value = 0 for now (no open position tracking in Journal) */
+    getOpenPositionsValue: function() { return 0; }
+  };
+})();
+
+/* ─── SERVICE 2: CapitalDataReader ─── */
+var CapitalDataReader = (function() {
+  return {
+    getAllAssets: function(filters) {
+      var assets = CapitalStore.getAllAssets();
+      // Add Journal trading accounts as virtual assets
+      var journalPerso = JournalForCapitalReader.getPersoAccountsAsAssets();
+      var journalProp = JournalForCapitalReader.getPropAccountsAsAssets();
+      assets = assets.concat(journalPerso).concat(journalProp);
+      if (filters) {
+        if (filters.entityId) assets = assets.filter(function(a) { return a.entityId === filters.entityId; });
+        if (filters.category) assets = assets.filter(function(a) { return a.category === filters.category; });
+        if (filters.liquidOnly) assets = assets.filter(function(a) { return CapitalModel.isLiquid(a.category); });
+      }
+      return assets;
+    },
+    getAllLiabilities: function(filters) {
+      var liabs = CapitalStore.getAllLiabilities();
+      if (filters && filters.entityId) liabs = liabs.filter(function(l) { return l.entityId === filters.entityId; });
+      return liabs;
+    },
+    getAllFlows: function(filters) {
+      var flows = CapitalStore.getAllFlows();
+      if (filters) {
+        if (filters.kind) flows = flows.filter(function(f) { return f.kind === filters.kind; });
+        if (filters.fromDate) flows = flows.filter(function(f) { return f.occurredAt >= filters.fromDate; });
+        if (filters.toDate) flows = flows.filter(function(f) { return f.occurredAt <= filters.toDate; });
+        if (filters.entityId) flows = flows.filter(function(f) { return f.fromEntityId === filters.entityId || f.toEntityId === filters.entityId; });
+      }
+      return flows;
+    },
+    getAllTaxableRevenues: function(fiscalYear, entityId) {
+      return CapitalStore.getAllTaxableRevenues(function(r) {
+        var match = true;
+        if (fiscalYear) match = match && r.fiscalYear === fiscalYear;
+        if (entityId) match = match && r.entityId === entityId;
+        return match;
+      });
+    },
+    getAllEntities: function() { return CapitalStore.getAllEntities(); }
+  };
+})();
+
+/* ─── SERVICE 3: NetWorthCalculator ─── */
+var NetWorthCalculator = (function() {
+  return {
+    calculate: function(filters) {
+      var assets = CapitalDataReader.getAllAssets(filters);
+      var liabilities = CapitalDataReader.getAllLiabilities(filters);
+
+      var totalAssets = 0;
+      var byCategory = {};
+      var byEntity = {};
+      var liquid = 0, nonLiquid = 0;
+
+      assets.forEach(function(a) {
+        var val = a.currentValue || 0;
+        totalAssets += val;
+        byCategory[a.category] = (byCategory[a.category] || 0) + val;
+        byEntity[a.entityId || 'unknown'] = (byEntity[a.entityId || 'unknown'] || 0) + val;
+        if (CapitalModel.isLiquid(a.category)) liquid += val;
+        else nonLiquid += val;
+      });
+
+      var totalLiabilities = liabilities.reduce(function(s, l) { return s + (l.remainingAmount || 0); }, 0);
+
+      return {
+        totalAssets: totalAssets,
+        totalLiabilities: totalLiabilities,
+        netWorth: totalAssets - totalLiabilities,
+        byCategory: byCategory,
+        byEntity: byEntity,
+        byLiquidity: { liquid: liquid, nonLiquid: nonLiquid }
+      };
+    }
+  };
+})();
+
+/* ─── SERVICE 4: NetWorthEvolutionCalculator ─── */
+var NetWorthEvolutionCalculator = (function() {
+  return {
+    getHistoricalCurve: function(months) {
+      var snapshots = CapitalStore.getAllSnapshots();
+      if (months && snapshots.length > months) {
+        snapshots = snapshots.slice(-months);
+      }
+      return snapshots;
+    },
+    /* Auto-generate a snapshot for the current month if not already done */
+    generateMonthlySnapshot: function() {
+      var today = new Date().toISOString().slice(0, 7); // YYYY-MM
+      var existing = CapitalStore.getAllSnapshots();
+      var alreadyDone = existing.some(function(s) { return s.date.slice(0, 7) === today; });
+      if (alreadyDone) return null;
+
+      var nw = NetWorthCalculator.calculate();
+      return CapitalStore.addSnapshot({
+        date: new Date().toISOString(),
+        totalAssets: nw.totalAssets,
+        totalLiabilities: nw.totalLiabilities,
+        netWorth: nw.netWorth,
+        byCategory: nw.byCategory,
+        byEntity: nw.byEntity,
+        byLiquidity: nw.byLiquidity,
+        generatedAutomatically: true
+      });
+    }
+  };
+})();
+
+/* ─── SERVICE 5: ProjectionEngine ─── */
+var ProjectionEngine = (function() {
+  return {
+    project: function(params) {
+      var nw = params.currentNetWorth || 0;
+      var save = params.monthlySavingRate || 0;
+      var ret = params.assumedYearlyReturn || 0.05; // 5% default
+      var years = params.yearsHorizon || 10;
+      var sims = params.simulations || 100;
+      var monthlyReturn = Math.pow(1 + ret, 1/12) - 1;
+      var volatility = ret * 0.4; // rough approximation
+      var monthlyVol = volatility / Math.sqrt(12);
+      var totalMonths = years * 12;
+
+      var results = [];
+      for (var s = 0; s < sims; s++) {
+        var path = [{ month: 0, value: nw }];
+        var val = nw;
+        for (var m = 1; m <= totalMonths; m++) {
+          // Normal-ish random via Box-Muller
+          var u1 = Math.random(), u2 = Math.random();
+          var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+          var monthRet = monthlyReturn + monthlyVol * z;
+          val = val * (1 + monthRet) + save;
+          if (val < 0) val = 0;
+          path.push({ month: m, value: Math.round(val) });
+        }
+        results.push(path);
+      }
+
+      // Sort final values to extract percentiles
+      var finalValues = results.map(function(p) { return p[p.length - 1].value; }).sort(function(a, b) { return a - b; });
+      var p10Idx = Math.floor(sims * 0.1);
+      var p50Idx = Math.floor(sims * 0.5);
+      var p90Idx = Math.floor(sims * 0.9);
+
+      // Build percentile paths (pick the simulation closest to each percentile)
+      function closestSim(targetFinal) {
+        var best = results[0], bestDiff = Infinity;
+        results.forEach(function(p) {
+          var diff = Math.abs(p[p.length - 1].value - targetFinal);
+          if (diff < bestDiff) { bestDiff = diff; best = p; }
+        });
+        return best;
+      }
+
+      var median = closestSim(finalValues[p50Idx]);
+      var p10 = closestSim(finalValues[p10Idx]);
+      var p90 = closestSim(finalValues[p90Idx]);
+
+      // Milestone dates from median path
+      var milestones = CapitalStore.getAllMilestones();
+      var milestoneDates = [];
+      milestones.forEach(function(ms) {
+        if (ms.targetAmount <= nw) {
+          milestoneDates.push({ milestone: ms.label, estimatedDate: null, reached: true });
+        } else {
+          for (var i = 0; i < median.length; i++) {
+            if (median[i].value >= ms.targetAmount) {
+              var d = new Date();
+              d.setMonth(d.getMonth() + median[i].month);
+              milestoneDates.push({ milestone: ms.label, estimatedDate: d.toISOString(), reached: false });
+              break;
+            }
+          }
+        }
+      });
+
+      return {
+        median: median,
+        p10: p10,
+        p90: p90,
+        milestoneDates: milestoneDates
+      };
+    }
+  };
+})();
+
+/* ─── SERVICE 6: HealthScoreCalculator ─── */
+var HealthScoreCalculator = (function() {
+  return {
+    calculate: function() {
+      var nwData = NetWorthCalculator.calculate();
+      var flows = CapitalDataReader.getAllFlows();
+      var liabilities = CapitalDataReader.getAllLiabilities();
+      var assets = CapitalDataReader.getAllAssets();
+
+      // Monthly expenses (last 3 months avg)
+      var now = new Date();
+      var threeMonthsAgo = new Date(now); threeMonthsAgo.setMonth(now.getMonth() - 3);
+      var recentExpenses = flows.filter(function(f) {
+        return f.kind === 'EXPENSE' && f.occurredAt >= threeMonthsAgo.toISOString();
+      });
+      var monthlyExpenses = recentExpenses.length > 0 ? recentExpenses.reduce(function(s, f) { return s + Math.abs(f.netAmount || 0); }, 0) / 3 : 0;
+      // Add recurring from v1
+      monthlyExpenses += (D.abonnements || []).reduce(function(s, a) { return s + (a.cost || 0); }, 0);
+
+      // Monthly income (last 3 months avg)
+      var recentIncome = flows.filter(function(f) {
+        return f.kind === 'PAYOUT' && f.occurredAt >= threeMonthsAgo.toISOString();
+      });
+      var monthlyIncome = recentIncome.length > 0 ? recentIncome.reduce(function(s, f) { return s + (f.netAmount || 0); }, 0) / 3 : 0;
+      // Add trading PnL
+      var mp = mPnL(); var mKeys = Object.keys(mp).sort().slice(-3);
+      if (mKeys.length) { var tradingMonthly = mKeys.reduce(function(s, k) { return s + mp[k].pnl; }, 0) / mKeys.length; monthlyIncome += Math.max(0, tradingMonthly); }
+
+      // 1. Emergency fund (25%) — liquid assets cover 3 months expenses?
+      var emergencyFund = 0;
+      if (monthlyExpenses > 0) {
+        var monthsCovered = nwData.byLiquidity.liquid / monthlyExpenses;
+        emergencyFund = monthsCovered >= 6 ? 100 : monthsCovered >= 3 ? 75 : monthsCovered >= 1 ? 40 : 10;
+      } else { emergencyFund = nwData.byLiquidity.liquid > 0 ? 60 : 30; }
+
+      // 2. Diversification (20%) — how spread are assets across categories?
+      var diversification = 0;
+      var cats = Object.keys(nwData.byCategory).filter(function(c) { return nwData.byCategory[c] > 0; });
+      var maxPct = 0;
+      if (nwData.totalAssets > 0) {
+        cats.forEach(function(c) { var pct = nwData.byCategory[c] / nwData.totalAssets * 100; if (pct > maxPct) maxPct = pct; });
+      }
+      if (cats.length >= 5) diversification = 100;
+      else if (cats.length >= 3) diversification = 70;
+      else if (cats.length >= 2) diversification = 40;
+      else diversification = 15;
+      if (maxPct > 70) diversification = Math.max(0, diversification - 30); // over-concentrated
+
+      // 3. Debt ratio (15%) — monthly payments / monthly income < 33%
+      var debtRatio = 100;
+      var monthlyDebt = liabilities.reduce(function(s, l) { return s + (l.monthlyPayment || 0); }, 0);
+      if (monthlyIncome > 0) {
+        var ratio = monthlyDebt / monthlyIncome;
+        debtRatio = ratio <= 0 ? 100 : ratio <= 0.2 ? 90 : ratio <= 0.33 ? 60 : ratio <= 0.5 ? 30 : 10;
+      } else if (monthlyDebt > 0) { debtRatio = 10; }
+
+      // 4. Saving rate (20%)
+      var savingRate = 0;
+      if (monthlyIncome > 0) {
+        var rate = (monthlyIncome - monthlyExpenses) / monthlyIncome;
+        savingRate = rate >= 0.5 ? 100 : rate >= 0.3 ? 80 : rate >= 0.15 ? 50 : rate >= 0 ? 25 : 5;
+      } else { savingRate = 20; }
+
+      // 5. Tax optimization (20%) — uses PEA, AV, PER?
+      var taxOptimization = 20; // base
+      var assetCats = assets.map(function(a) { return a.category; });
+      if (assetCats.indexOf('PEA') >= 0) taxOptimization += 30;
+      if (assetCats.indexOf('ASSURANCE_VIE') >= 0) taxOptimization += 25;
+      if (assetCats.indexOf('PER') >= 0) taxOptimization += 25;
+      taxOptimization = Math.min(100, taxOptimization);
+
+      var globalScore = Math.round(
+        emergencyFund * 0.25 +
+        diversification * 0.20 +
+        debtRatio * 0.15 +
+        savingRate * 0.20 +
+        taxOptimization * 0.20
+      );
+      globalScore = Math.max(0, Math.min(100, globalScore));
+
+      // Recommendations (top 3)
+      var recs = [];
+      if (emergencyFund < 50) recs.push('Constitue un fonds d\'urgence de 3 mois minimum sur un compte bancaire');
+      if (diversification < 50) recs.push('Diversifie tes actifs — ne mets pas tout sur une seule classe');
+      if (debtRatio < 50 && monthlyDebt > 0) recs.push('Réduis tes dettes — le ratio mensualités/revenus est trop élevé');
+      if (savingRate < 50) recs.push('Augmente ton taux d\'épargne — vise 20% minimum');
+      if (taxOptimization < 50) recs.push('Ouvre un PEA ou une Assurance-vie pour optimiser ta fiscalité');
+      recs = recs.slice(0, 3);
+
+      return {
+        globalScore: globalScore,
+        breakdown: {
+          emergencyFund: Math.round(emergencyFund),
+          diversification: Math.round(diversification),
+          debtRatio: Math.round(debtRatio),
+          savingRate: Math.round(savingRate),
+          taxOptimization: Math.round(taxOptimization)
+        },
+        recommendations: recs,
+        _debug: { monthlyExpenses: monthlyExpenses, monthlyIncome: monthlyIncome, monthlyDebt: monthlyDebt, liquid: nwData.byLiquidity.liquid }
+      };
+    }
+  };
+})();
+
+/* ─── SERVICE 7: NextStepsGenerator ─── */
+var NextStepsGenerator = (function() {
+  return {
+    generate: function() {
+      var steps = [];
+      var nwData = NetWorthCalculator.calculate();
+      var nw = nwData.netWorth;
+      var health = HealthScoreCalculator.calculate();
+      var entities = CapitalDataReader.getAllEntities();
+      var assets = CapitalDataReader.getAllAssets();
+      var liabilities = CapitalDataReader.getAllLiabilities();
+      var bankAccounts = assets.filter(function(a) { return a.category === 'BANK_ACCOUNT'; });
+      var hasPEA = assets.some(function(a) { return a.category === 'PEA'; });
+      var hasAV = assets.some(function(a) { return a.category === 'ASSURANCE_VIE'; });
+      var hasEntity = entities.some(function(e) { return e.kind !== 'PERSO'; });
+
+      // No bank account
+      if (bankAccounts.length === 0) {
+        steps.push({ priority: 'HIGH', label: 'Ajoute un compte bancaire', description: 'Pour suivre ta liquidité réelle et ton patrimoine net.', cta: { label: 'Ajouter', target: 'bank' } });
+      }
+
+      // Emergency fund
+      if (health.breakdown.emergencyFund < 50) {
+        steps.push({ priority: 'HIGH', label: 'Constitue un fonds d\'urgence', description: '3 mois de dépenses sur un compte accessible (Livret A).', cta: { label: 'Voir trésorerie', target: 'bank' } });
+      }
+
+      // Debt
+      if (liabilities.length > 0 && health.breakdown.debtRatio < 50) {
+        steps.push({ priority: 'HIGH', label: 'Réduis tes dettes', description: 'Le ratio dette/revenus est élevé. Priorise le remboursement.', cta: { label: 'Voir dettes', target: 'pas' } });
+      }
+
+      // Tax optimization
+      if (!hasPEA && nw >= 5000) {
+        steps.push({ priority: 'MEDIUM', label: 'Ouvre un PEA', description: 'Fiscalité allégée après 5 ans. Idéal pour les ETF.', cta: { label: 'En savoir plus', target: 'fis' } });
+      }
+      if (!hasAV && nw >= 10000) {
+        steps.push({ priority: 'MEDIUM', label: 'Ouvre une Assurance-vie', description: 'Abattement après 8 ans. Parfait pour du long terme.', cta: { label: 'En savoir plus', target: 'fis' } });
+      }
+
+      // Entity
+      if (!hasEntity && nw >= 25000) {
+        steps.push({ priority: 'MEDIUM', label: 'Pense à créer une entité', description: 'SASU ou micro-entreprise pour optimiser la fiscalité.', cta: { label: 'Voir entités', target: 'ent' } });
+      }
+
+      // Diversification
+      if (health.breakdown.diversification < 50) {
+        steps.push({ priority: 'MEDIUM', label: 'Diversifie tes actifs', description: 'Trop concentré sur une seule classe. Explore ETF, immo, crypto.', cta: { label: 'Voir portfolio', target: 'inv' } });
+      }
+
+      // Budget
+      var hasExpenses = CapitalStore.getAllFlows(function(f) { return f.kind === 'EXPENSE'; }).length > 0;
+      if (!hasExpenses) {
+        steps.push({ priority: 'LOW', label: 'Configure ton budget', description: 'Suis tes dépenses pour connaître ton taux d\'épargne.', cta: { label: 'Configurer', target: 'bud' } });
+      }
+
+      // All good
+      if (steps.length === 0) {
+        steps.push({ priority: 'LOW', label: 'Tout est en ordre', description: 'Continue ta routine. Reviens chaque mois vérifier ta progression.', cta: { label: 'Voir la roadmap', target: 'coach' } });
+      }
+
+      return steps.slice(0, 5); // max 5
+    }
+  };
+})();
+
+/* ─── SERVICE 8: MilestoneTracker ─── */
+var MilestoneTracker = (function() {
+  return {
+    getCurrentMilestone: function() {
+      var nw = NetWorthCalculator.calculate().netWorth;
+      var milestones = CapitalStore.getAllMilestones();
+      if (!milestones.length) return null;
+
+      var current = null, next = null;
+      for (var i = 0; i < milestones.length; i++) {
+        if (nw >= milestones[i].targetAmount) {
+          current = milestones[i];
+        } else {
+          next = milestones[i];
+          break;
+        }
+      }
+
+      // If past all milestones
+      if (!next && current) {
+        return { currentMilestone: current, nextMilestone: null, progressPercent: 100, amountRemaining: 0 };
+      }
+
+      // If not even at first milestone
+      if (!current && next) {
+        var pct = next.targetAmount > 0 ? Math.round(nw / next.targetAmount * 100) : 0;
+        return { currentMilestone: null, nextMilestone: next, progressPercent: Math.min(99, pct), amountRemaining: next.targetAmount - nw };
+      }
+
+      // Between milestones
+      if (current && next) {
+        var range = next.targetAmount - current.targetAmount;
+        var progress = nw - current.targetAmount;
+        var pct2 = range > 0 ? Math.round(progress / range * 100) : 0;
+        return { currentMilestone: current, nextMilestone: next, progressPercent: Math.min(99, pct2), amountRemaining: next.targetAmount - nw };
+      }
+
+      return null;
+    }
+  };
+})();
+
+/* ─── SERVICE 9: FiscalDeadlineTracker ─── */
+var FiscalDeadlineTracker = (function() {
+  /* Standard French fiscal deadlines */
+  function getDeadlinesForYear(year) {
+    return [
+      { date: year + '-01-15', kind: 'URSSAF', label: 'URSSAF trimestriel (Q4)' },
+      { date: year + '-02-15', kind: 'IS_ACOMPTE', label: 'Acompte IS (1er)' },
+      { date: year + '-04-15', kind: 'URSSAF', label: 'URSSAF trimestriel (Q1)' },
+      { date: year + '-05-15', kind: 'IS_ACOMPTE', label: 'Acompte IS (2ème)' },
+      { date: year + '-05-31', kind: 'IR', label: 'Déclaration IR (date limite)' },
+      { date: year + '-06-15', kind: 'TVA', label: 'TVA semestrielle (si applicable)' },
+      { date: year + '-07-15', kind: 'URSSAF', label: 'URSSAF trimestriel (Q2)' },
+      { date: year + '-08-15', kind: 'IS_ACOMPTE', label: 'Acompte IS (3ème)' },
+      { date: year + '-10-15', kind: 'URSSAF', label: 'URSSAF trimestriel (Q3)' },
+      { date: year + '-11-15', kind: 'IS_ACOMPTE', label: 'Acompte IS (4ème)' },
+      { date: year + '-12-15', kind: 'OTHER', label: 'CFE (Cotisation Foncière)' },
+      { date: year + '-12-31', kind: 'TVA', label: 'TVA annuelle (si applicable)' }
+    ];
+  }
+
+  return {
+    getUpcoming: function(horizonDays) {
+      horizonDays = horizonDays || 90;
+      var now = new Date();
+      var horizon = new Date(now); horizon.setDate(now.getDate() + horizonDays);
+      var nowStr = now.toISOString().slice(0, 10);
+      var horizonStr = horizon.toISOString().slice(0, 10);
+      var year = now.getFullYear();
+
+      var allDeadlines = getDeadlinesForYear(year).concat(getDeadlinesForYear(year + 1));
+
+      var entities = CapitalDataReader.getAllEntities();
+      var hasIS = entities.some(function(e) { return e.fiscalRegime && e.fiscalRegime.type === 'IS'; });
+      var hasMicro = entities.some(function(e) { return e.fiscalRegime && (e.fiscalRegime.type === 'MICRO_BNC' || e.fiscalRegime.type === 'MICRO_BIC'); });
+      var hasTVA = entities.some(function(e) { return e.fiscalRegime && e.fiscalRegime.options && e.fiscalRegime.options.indexOf('franchise TVA') < 0; });
+
+      return allDeadlines.filter(function(d) {
+        if (d.date < nowStr || d.date > horizonStr) return false;
+        // Filter by relevance
+        if (d.kind === 'IS_ACOMPTE' && !hasIS) return false;
+        if (d.kind === 'TVA' && !hasTVA) return false;
+        if (d.kind === 'URSSAF' && !hasMicro) return false;
+        return true;
+      }).map(function(d) {
+        var daysUntil = Math.ceil((new Date(d.date) - now) / 86400000);
+        // Estimate amount for IS acomptes
+        var estimatedAmount = null;
+        if (d.kind === 'IS_ACOMPTE') {
+          var taxRevs = CapitalDataReader.getAllTaxableRevenues(year - 1);
+          var isRevenue = taxRevs.filter(function(r) { return r.kind === 'BNC_PROP_FIRM' || r.kind === 'BNC_OTHER'; }).reduce(function(s, r) { return s + r.netAmount; }, 0);
+          if (isRevenue > 0) estimatedAmount = Math.round(isRevenue * 0.15 / 4); // rough quarterly
+        }
+        return {
+          deadline: d.date,
+          kind: d.kind,
+          label: d.label,
+          daysUntil: daysUntil,
+          estimatedAmount: estimatedAmount,
+          preparationCompleteness: 0 // V1: no tracking yet
+        };
+      }).sort(function(a, b) { return a.daysUntil - b.daysUntil; });
+    }
+  };
+})();
+
+/* ─── SERVICE 10: InterEntityFlowTracker ─── */
+var InterEntityFlowTracker = (function() {
+  return {
+    getFlowsBetween: function(fromEntityId, toEntityId, period) {
+      return CapitalStore.getAllFlows(function(f) {
+        var match = f.kind === 'INTER_ENTITY_TRANSFER' && f.fromEntityId === fromEntityId && f.toEntityId === toEntityId;
+        if (period && period.from) match = match && f.occurredAt >= period.from;
+        if (period && period.to) match = match && f.occurredAt <= period.to;
+        return match;
+      });
+    },
+    getSummaryByEntity: function(entityId) {
+      var allFlows = CapitalStore.getAllFlows();
+      var outgoing = { total: 0, count: 0, byKind: {} };
+      var incoming = { total: 0, count: 0, byKind: {} };
+
+      allFlows.forEach(function(f) {
+        if (f.fromEntityId === entityId) {
+          outgoing.total += Math.abs(f.netAmount || 0);
+          outgoing.count++;
+          outgoing.byKind[f.kind] = (outgoing.byKind[f.kind] || 0) + Math.abs(f.netAmount || 0);
+        }
+        if (f.toEntityId === entityId) {
+          incoming.total += Math.abs(f.netAmount || 0);
+          incoming.count++;
+          incoming.byKind[f.kind] = (incoming.byKind[f.kind] || 0) + Math.abs(f.netAmount || 0);
+        }
+      });
+
+      return { outgoing: outgoing, incoming: incoming };
+    }
+  };
+})();
+
+/* ─── TESTS Phase 1 ─── */
+function testPhase1() {
+  var pass = 0, fail = 0;
+  function assert(cond, msg) { if (cond) { pass++; } else { fail++; console.error('[TEST FAIL]', msg); } }
+
+  console.log('[Capital Tests] Running Phase 1 tests...');
+
+  // JournalForCapitalReader
+  var stats = JournalForCapitalReader.getTradingStatsByMonth();
+  assert(Array.isArray(stats), 'JCR.getTradingStatsByMonth returns array');
+  if (stats.length > 0) {
+    assert(stats[0].month && stats[0].trades >= 0, 'JCR stats have month and trades');
+    assert(typeof stats[0].wr === 'number', 'JCR stats have wr');
+  }
+
+  var propAssets = JournalForCapitalReader.getPropAccountsAsAssets();
+  assert(Array.isArray(propAssets), 'JCR.getPropAccountsAsAssets returns array');
+  propAssets.forEach(function(a) { assert(a.category === 'TRADING_PROP', 'JCR prop asset category correct'); });
+
+  var persoAssets = JournalForCapitalReader.getPersoAccountsAsAssets();
+  assert(Array.isArray(persoAssets), 'JCR.getPersoAccountsAsAssets returns array');
+
+  // CapitalDataReader
+  var allAssets = CapitalDataReader.getAllAssets();
+  assert(Array.isArray(allAssets), 'CDR.getAllAssets returns array');
+  var allLiabs = CapitalDataReader.getAllLiabilities();
+  assert(Array.isArray(allLiabs), 'CDR.getAllLiabilities returns array');
+  var allFlows = CapitalDataReader.getAllFlows();
+  assert(Array.isArray(allFlows), 'CDR.getAllFlows returns array');
+  var allEnts = CapitalDataReader.getAllEntities();
+  assert(Array.isArray(allEnts), 'CDR.getAllEntities returns array');
+
+  // NetWorthCalculator
+  var nw = NetWorthCalculator.calculate();
+  assert(typeof nw.totalAssets === 'number', 'NWC.totalAssets is number');
+  assert(typeof nw.totalLiabilities === 'number', 'NWC.totalLiabilities is number');
+  assert(typeof nw.netWorth === 'number', 'NWC.netWorth is number');
+  assert(nw.netWorth === nw.totalAssets - nw.totalLiabilities, 'NWC.netWorth = assets - liabilities');
+  assert(typeof nw.byLiquidity.liquid === 'number', 'NWC.byLiquidity.liquid exists');
+  assert(typeof nw.byLiquidity.nonLiquid === 'number', 'NWC.byLiquidity.nonLiquid exists');
+  assert(typeof nw.byCategory === 'object', 'NWC.byCategory is object');
+
+  // NetWorthEvolutionCalculator
+  var curve = NetWorthEvolutionCalculator.getHistoricalCurve(12);
+  assert(Array.isArray(curve), 'NWEC.getHistoricalCurve returns array');
+
+  // ProjectionEngine
+  var proj = ProjectionEngine.project({ currentNetWorth: 10000, monthlySavingRate: 500, assumedYearlyReturn: 0.07, yearsHorizon: 5, simulations: 20 });
+  assert(Array.isArray(proj.median), 'PE.median is array');
+  assert(proj.median.length === 61, 'PE.median has 61 points (5y*12+1)');
+  assert(proj.median[0].value === 10000, 'PE.median starts at initial NW');
+  assert(proj.median[60].value > 10000, 'PE.median final > initial (with savings)');
+  assert(Array.isArray(proj.p10), 'PE.p10 exists');
+  assert(Array.isArray(proj.p90), 'PE.p90 exists');
+  assert(Array.isArray(proj.milestoneDates), 'PE.milestoneDates exists');
+
+  // HealthScoreCalculator
+  var health = HealthScoreCalculator.calculate();
+  assert(typeof health.globalScore === 'number', 'HSC.globalScore is number');
+  assert(health.globalScore >= 0 && health.globalScore <= 100, 'HSC.globalScore in 0-100');
+  assert(typeof health.breakdown.emergencyFund === 'number', 'HSC.breakdown.emergencyFund exists');
+  assert(typeof health.breakdown.diversification === 'number', 'HSC.breakdown.diversification exists');
+  assert(typeof health.breakdown.debtRatio === 'number', 'HSC.breakdown.debtRatio exists');
+  assert(typeof health.breakdown.savingRate === 'number', 'HSC.breakdown.savingRate exists');
+  assert(typeof health.breakdown.taxOptimization === 'number', 'HSC.breakdown.taxOptimization exists');
+  assert(Array.isArray(health.recommendations), 'HSC.recommendations is array');
+
+  // NextStepsGenerator
+  var steps = NextStepsGenerator.generate();
+  assert(Array.isArray(steps), 'NSG.generate returns array');
+  assert(steps.length > 0, 'NSG.generate returns at least 1 step');
+  assert(steps[0].priority && steps[0].label && steps[0].cta, 'NSG step has priority, label, cta');
+  assert(['HIGH','MEDIUM','LOW'].indexOf(steps[0].priority) >= 0, 'NSG priority is valid');
+
+  // MilestoneTracker
+  var mt = MilestoneTracker.getCurrentMilestone();
+  if (mt) {
+    assert(typeof mt.progressPercent === 'number', 'MT.progressPercent is number');
+    assert(typeof mt.amountRemaining === 'number', 'MT.amountRemaining is number');
+  } else {
+    assert(true, 'MT returns null (no milestones or no NW) — acceptable');
+  }
+
+  // FiscalDeadlineTracker
+  var deadlines = FiscalDeadlineTracker.getUpcoming(180);
+  assert(Array.isArray(deadlines), 'FDT.getUpcoming returns array');
+  if (deadlines.length > 0) {
+    assert(deadlines[0].deadline && deadlines[0].kind, 'FDT deadline has date and kind');
+    assert(typeof deadlines[0].daysUntil === 'number', 'FDT deadline has daysUntil');
+  }
+
+  // InterEntityFlowTracker
+  if (allEnts.length > 0) {
+    var summary = InterEntityFlowTracker.getSummaryByEntity(allEnts[0].id);
+    assert(typeof summary.outgoing.total === 'number', 'IEFT.outgoing.total is number');
+    assert(typeof summary.incoming.total === 'number', 'IEFT.incoming.total is number');
+  } else {
+    assert(true, 'IEFT: no entities to test — acceptable');
+  }
+
+  console.log('[Capital Tests] Phase 1: ' + pass + ' passed, ' + fail + ' failed');
+  return { pass: pass, fail: fail };
+}
+
 /* ─── JOURNAL SYNC ─── */
 function rJ(){try{var r=localStorage.getItem('enz_v4');if(!r)return{a:[],t:[]};var j=JSON.parse(r),a=[],t=[];if(j.accounts)j.accounts.forEach(function(ac){a.push({name:ac.name||'',type:ac.type||'',balance:ac.bal||ac.balance||0,risk:ac.risk||1,target:ac.target||0,floor:ac.floor||0,id:ac.id||''})});if(j.live)j.live.forEach(function(tr){var accName='',accType='';if(tr.accId&&j.accounts){var acc=j.accounts.find(function(a){return a.id===tr.accId});if(acc){accName=acc.name||'';accType=acc.type||''}}t.push(Object.assign({},tr,{account:accName,accType:accType}))});return{a:a,t:t}}catch(e){return{a:[],t:[]}}}
 function mPnL(){try{var j=rJ(),m={};j.t.forEach(function(t){if(!t.date)return;var k=t.date.slice(0,7);if(!m[k])m[k]={pnl:0,n:0,w:0};var p=parseFloat(t.pl)||0;m[k].pnl+=p;m[k].n++;if(p>0)m[k].w++});return m}catch(e){return{}}}
@@ -2567,6 +3258,7 @@ function renderYIRDoughnut(portfolio, tradingPerso, payouts, tresoEntites) {
 /* ─── INIT ─── */
 load();
 migrateToV2();
+try { NetWorthEvolutionCalculator.generateMonthlySnapshot(); } catch(e) {}
 (function(){try{var t=new Date().toISOString().slice(0,10),m=t.slice(0,7);var e=document.getElementById('po-d');if(e)e.value=t;var em=document.getElementById('ex-m');if(em)em.value=m}catch(e){console.error(e)}})();
 rCL();rCS();rAL();renderCapitalNav();rD();
 setTimeout(function() { AurumSync.syncAll(); }, 3000);
