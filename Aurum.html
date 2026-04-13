@@ -2911,10 +2911,20 @@ function R() {
   // Page-specific rendering (only active page)
   const pg = document.querySelector('.panel.active')?.id || 'dash';
   if (pg === 'dash') {
-    rDashSessionWidget();
-    renderFilterBar('dashFilters');
-    const dispTr = getTr(); renderFilterSummary('dashFilterSum', dispTr, applyFilters(dispTr), aT==='live');
-    rGoNoGo(); rHeroKpis(); rDashCards(); rDashFinancial(); rDashMonthly(); rDashEquity(); rDashBreakdown(); rDashAccBreakdown(); rConvergence(); rCalendar();
+    console.log('[Dash] Rendering...', 'accounts:', D.accounts.length, 'live:', D.live.length);
+    try { rDashSessionWidget(); } catch(e) { console.error('rDashSessionWidget:', e); }
+    try { renderFilterBar('dashFilters'); } catch(e) { console.error('renderFilterBar:', e); }
+    try { var dispTr = getTr(); renderFilterSummary('dashFilterSum', dispTr, applyFilters(dispTr), aT==='live'); } catch(e) { console.error('renderFilterSummary:', e); }
+    try { rGoNoGo(); } catch(e) { console.error('rGoNoGo:', e); }
+    try { rHeroKpis(); } catch(e) { console.error('rHeroKpis:', e); }
+    try { rDashCards(); } catch(e) { console.error('rDashCards:', e); }
+    try { rDashFinancial(); } catch(e) { console.error('rDashFinancial:', e); }
+    try { rDashMonthly(); } catch(e) { console.error('rDashMonthly:', e); }
+    try { rDashEquity(); } catch(e) { console.error('rDashEquity:', e); }
+    try { rDashBreakdown(); } catch(e) { console.error('rDashBreakdown:', e); }
+    try { rDashAccBreakdown(); } catch(e) { console.error('rDashAccBreakdown:', e); }
+    try { rConvergence(); } catch(e) { console.error('rConvergence:', e); }
+    try { rCalendar(); } catch(e) { console.error('rCalendar:', e); }
   }
   else if (pg === 'hist') { rHist() }
   else if (pg === 'time') { rHours() }
