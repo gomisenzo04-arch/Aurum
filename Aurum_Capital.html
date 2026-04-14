@@ -401,6 +401,23 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   .vue-chart-wide { grid-column: 1; }
 }
 
+/* ═══ TRADING ACCOUNT CARDS (Page 2 Phase C) ═══ */
+.vue-trading-card {
+  background: var(--bg2);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+.vue-trading-card:hover {
+  border-color: rgba(201,162,39,.15);
+}
+.vue-trading-card:hover .vue-week-arrow,
+.vue-trading-card:hover span[style*="color:var(--gold)"] {
+  opacity: 1;
+}
+
 /* ═══ VUE D'ENSEMBLE V2 — Phase E (Polish) ═══ */
 .vue-banner {
   display: flex;
@@ -4149,7 +4166,86 @@ function rAc() {
     // Phase B: P&L mensuel
     try { rTradingPnlTable(); } catch(eb) { console.error('[Capital] rTradingPnlTable:', eb); }
 
+    // Phase C: Cards par compte
+    try { rTradingAccountCards(accData); } catch(ec) { console.error('[Capital] rTradingAccountCards:', ec); }
+
   } catch(e) { console.error('[Capital] rAc:', e); }
+}
+
+/* ─── Trading Account Cards (Page 2 Phase C) ─── */
+function rTradingAccountCards(accData) {
+  var el = document.getElementById('tradingAccountCards');
+  if (!el || !accData || !accData.length) { if (el) el.innerHTML = ''; return; }
+
+  var h = '';
+  h += '<div class="vue-section" style="margin-top:16px">';
+  h += '<div class="vue-section-header"><span>Detail par compte</span></div>';
+  h += '<div style="display:grid;gap:10px">';
+
+  accData.forEach(function(acc) {
+    var pnlColor = acc.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    var balColor = acc.isPerso ? 'var(--green)' : 'var(--blue)';
+    var typeLabel = acc.isPerso ? 'perso' : (acc.type || 'prop');
+    var typeBadgeBg = acc.isPerso ? 'rgba(34,197,94,.1)' : (typeLabel === 'funded' ? 'rgba(34,197,94,.15)' : 'rgba(59,130,246,.1)');
+    var typeBadgeColor = acc.isPerso ? 'var(--green)' : (typeLabel === 'funded' ? 'var(--green)' : 'var(--blue)');
+
+    // Progress toward target
+    var progressPct = 0;
+    var hasTarget = acc.target && acc.target > acc.balance;
+    if (hasTarget) {
+      progressPct = Math.max(0, Math.min(100, Math.round(acc.pnl / (acc.target - acc.balance) * 100)));
+    }
+
+    // Account stats from TradingStatsSyncService
+    var accStats = null;
+    try { accStats = TradingStatsSyncService.getAccountStats(acc.id); } catch(e) {}
+
+    h += '<div class="vue-trading-card" onclick="window.open(\'Aurum.html\',\'_self\')">';
+
+    // Header row
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">';
+    h += '<div style="display:flex;align-items:center;gap:8px;min-width:0">';
+    h += '<span style="font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(acc.name) + '</span>';
+    h += '<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;background:' + typeBadgeBg + ';color:' + typeBadgeColor + ';white-space:nowrap">' + typeLabel + '</span>';
+    h += '</div>';
+    h += '<span style="font-size:20px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + balColor + '">$' + acc.currentBal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>';
+    h += '</div>';
+
+    // Info row
+    h += '<div style="display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--t3);margin-bottom:10px">';
+    h += '<span>Initial <b style="color:var(--t2)">$' + (acc.balance || 0).toLocaleString('en-US', {minimumFractionDigits: 2}) + '</b></span>';
+    h += '<span>P&L <b style="color:' + pnlColor + '">' + (acc.pnl >= 0 ? '+' : '') + '$' + acc.pnl.toFixed(2) + '</b></span>';
+    h += '<span>Risque <b style="color:var(--t2)">' + (acc.risk || 1) + '%</b></span>';
+    if (accStats && accStats.trades > 0) {
+      h += '<span>Trades <b style="color:var(--t2)">' + accStats.trades + '</b></span>';
+      h += '<span>WR <b style="color:' + (accStats.wr >= 50 ? 'var(--green)' : 'var(--red)') + '">' + accStats.wr + '%</b></span>';
+    }
+    if (acc.target) h += '<span>Target <b style="color:var(--t2)">$' + acc.target.toLocaleString('en-US') + '</b></span>';
+    h += '</div>';
+
+    // Progress bar (if target set)
+    if (hasTarget) {
+      var progColor = progressPct >= 100 ? 'var(--green)' : progressPct >= 50 ? 'var(--gold)' : 'var(--blue)';
+      h += '<div style="margin-bottom:6px">';
+      h += '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-bottom:3px">';
+      h += '<span>Progression</span>';
+      h += '<span style="color:' + progColor + '">' + progressPct + '%</span>';
+      h += '</div>';
+      h += '<div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">';
+      h += '<div style="height:100%;width:' + Math.min(100, progressPct) + '%;background:' + progColor + ';border-radius:2px;transition:width 500ms ease"></div>';
+      h += '</div></div>';
+    }
+
+    // Deep-link hint
+    h += '<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:10px;color:var(--t3);margin-top:4px">';
+    h += '<span>Voir dans Journal</span><span style="color:var(--gold)">→</span>';
+    h += '</div>';
+
+    h += '</div>';
+  });
+
+  h += '</div></div>';
+  el.innerHTML = h;
 }
 
 /* ─── Trading P&L mensuel (Page 2 Phase B) ─── */
