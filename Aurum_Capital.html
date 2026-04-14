@@ -401,6 +401,32 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   .vue-chart-wide { grid-column: 1; }
 }
 
+/* ═══ VUE D'ENSEMBLE V2 — Phase E (Polish) ═══ */
+.vue-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: 12px;
+  animation: vueBannerIn 300ms ease;
+}
+@keyframes vueBannerIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+/* Skeleton loading */
+.vue-skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.06) 50%, rgba(255,255,255,.03) 75%);
+  background-size: 200% 100%;
+  animation: vueSkeleton 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+@keyframes vueSkeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.vue-skeleton-kpi { height: 100px; }
+.vue-skeleton-section { height: 140px; margin-top: 12px; }
+.vue-skeleton-chart { height: 220px; margin-top: 12px; }
+
 /* ═══ VUE D'ENSEMBLE V2 — Phase D (Echeances + Activite + Projection) ═══ */
 .vue-section {
   background: var(--bg2);
@@ -3100,6 +3126,12 @@ function rDashV2() {
     var el = document.getElementById('dashV2');
     if (!el) return;
 
+    // Show skeletons on first render
+    if (!rDashV2._loaded) {
+      el.innerHTML = '<div class="vue-kpis"><div class="vue-skeleton vue-skeleton-kpi"></div><div class="vue-skeleton vue-skeleton-kpi"></div><div class="vue-skeleton vue-skeleton-kpi"></div><div class="vue-skeleton vue-skeleton-kpi"></div></div><div class="vue-skeleton vue-skeleton-section"></div><div class="vue-skeleton vue-skeleton-chart"></div>';
+      rDashV2._loaded = true;
+    }
+
     // Run syncs
     try { checkPropFirmStatus(); } catch(e) {}
     try { CapitalSyncOrchestrator.syncAll(); } catch(e) {}
@@ -3107,7 +3139,9 @@ function rDashV2() {
     // Compute data
     var nw = NetWorthCalculator.calculate();
     var health = HealthScoreCalculator.calculate();
-    var tradingStats = TradingStatsSyncService.getCurrentMonthStats();
+    var tradingStats, _journalError = false;
+    try { tradingStats = TradingStatsSyncService.getCurrentMonthStats(); }
+    catch(je) { tradingStats = { month:'', trades:0, wins:0, pnl:0, avgPnl:0, wr:0 }; _journalError = true; }
     var flows = CapitalDataReader.getAllFlows();
     var now = new Date();
     var cm = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
@@ -3135,6 +3169,15 @@ function rDashV2() {
 
     var h = '';
 
+    // ═══ BANDEAU SANTÉ < 50 ═══
+    if (health && health.globalScore < 50) {
+      var bannerColor = health.globalScore < 30 ? 'var(--red)' : 'var(--gold)';
+      h += '<div class="vue-banner" style="border-color:' + bannerColor + ';background:rgba(' + (health.globalScore<30?'239,68,68':'201,162,39') + ',.06)">';
+      h += '<span style="color:' + bannerColor + ';font-weight:700">Sante patrimoniale : ' + health.globalScore + '/100</span>';
+      h += '<span style="color:var(--t2);margin-left:8px">' + (health.recommendations[0] || 'Plusieurs points d\'attention') + '</span>';
+      h += '</div>';
+    }
+
     // ═══ ZONE 1 — 4 KPI CARDS ═══
     h += '<div class="vue-kpis">';
 
@@ -3151,8 +3194,13 @@ function rDashV2() {
     var tradingColor = tradingPnl >= 0 ? 'var(--green)' : 'var(--red)';
     h += '<div class="vue-kpi" onclick="ValueExplainer.show({title:\'Trading P&L mois\',value:\'' + (tradingPnl>=0?'+':'') + '$' + tradingPnl.toFixed(2) + '\',formula:\'Somme P&L des trades Live du mois en cours\',sources:[{sign:\'+\',label:\'' + tradingStats.trades + ' trades\',value:' + tradingPnl + ',source:\'Journal (auto)\'}],lastUpdated:\'Maintenant\',autoTriggers:[\'Trade enregistre dans Journal\']})">';
     h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Trading P&L mois</span>' + ValueExplainer.icon('') + '</div>';
-    h += '<div class="vue-kpi-value" style="color:' + tradingColor + '" id="kpiTrading">' + (tradingPnl>=0?'+':'') + '$' + tradingPnl.toFixed(2) + '</div>';
-    h += '<div class="vue-kpi-sub">' + tradingStats.trades + ' trades · WR ' + Math.round(tradingStats.wr) + '%</div>';
+    if (_journalError) {
+      h += '<div class="vue-kpi-value" style="color:var(--t3)" id="kpiTrading" title="Donnees Journal indisponibles">—</div>';
+      h += '<div class="vue-kpi-sub" style="color:var(--red)">Donnees indisponibles</div>';
+    } else {
+      h += '<div class="vue-kpi-value" style="color:' + tradingColor + '" id="kpiTrading">' + (tradingPnl>=0?'+':'') + '$' + tradingPnl.toFixed(2) + '</div>';
+      h += '<div class="vue-kpi-sub">' + tradingStats.trades + ' trades · WR ' + Math.round(tradingStats.wr) + '%</div>';
+    }
     h += '</div>';
 
     // KPI 3: Depenses mois
@@ -3218,6 +3266,17 @@ function rDashV2() {
 
     // ═══ ZONE 9 — PROJECTION (Phase D) ═══
     try { rVueProjection(nw); } catch(e7) { console.error('[Capital] Projection:', e7); }
+
+    // ═══ REFRESH AUTO 60s (Phase E) ═══
+    if (rDashV2._refreshTimer) clearInterval(rDashV2._refreshTimer);
+    rDashV2._refreshTimer = setInterval(function() {
+      try {
+        // Only refresh if dashboard is visible
+        var dashPanel = document.getElementById('p-dash');
+        if (!dashPanel || !dashPanel.classList.contains('on')) { clearInterval(rDashV2._refreshTimer); return; }
+        rDashV2();
+      } catch(re) {}
+    }, 60000);
 
   } catch(e) { console.error('[Capital] rDashV2:', e); }
 }
