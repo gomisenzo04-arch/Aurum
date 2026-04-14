@@ -296,6 +296,55 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   .vx-drawer { width:100%; max-width:100vw; }
   .ecs-bar { flex-wrap:wrap; gap:4px; }
 }
+/* ═══ VUE D'ENSEMBLE V2 ═══ */
+.vue-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.vue-kpi {
+  background: var(--bg2);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 150ms;
+  position: relative;
+}
+.vue-kpi:hover {
+  border-color: rgba(255,255,255,.1);
+}
+.vue-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.vue-kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.vue-kpi-value {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: 'Bricolage Grotesque', 'JetBrains Mono', system-ui;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+.vue-kpi-sub {
+  font-size: 11px;
+  color: var(--t3);
+  line-height: 1.4;
+}
+@media (max-width: 1024px) {
+  .vue-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .vue-kpis { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -334,7 +383,14 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 <div class="mw">
 <div class="th"><h1>💎 Aurum Capital</h1></div>
 <!-- PANELS - IDs match data-p attributes -->
-<div class="pnl on" id="p-dash"><div id="dEmpty" style="display:none"></div><div id="dH" style="margin-bottom:16px"></div><div id="dK"></div><div id="dW"></div><!-- Évolution --><div style="margin-top:18px"><div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Évolution</div><div class="cb"><div class="ct">Courbe de patrimoine</div><div style="position:relative;width:100%;height:240px;max-height:240px;overflow:hidden"><canvas id="cE"></canvas></div></div></div><!-- Répartition --><div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Répartition</div><div class="cb"><div class="ct">Allocation</div><div style="position:relative;width:100%;height:240px;max-height:240px;overflow:hidden"><canvas id="cA"></canvas></div></div></div><!-- Revenus vs Dépenses --><div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Revenus vs Dépenses</div><div class="cb"><div style="position:relative;width:100%;height:220px;max-height:220px;overflow:hidden"><canvas id="cR"></canvas></div></div></div><div class="cb" style="margin-top:14px"><div class="ct">Échéances fiscales</div><div id="dF"></div></div><div class="cb"><div class="ct">Activité récente</div><div id="dA" style="font-size:12px;color:var(--t3)"></div></div><div class="cb"><div class="ct">Projection</div><div id="dP" style="font-size:12px;color:var(--t2)"></div></div></div>
+<div class="pnl on" id="p-dash">
+  <!-- Vue d'ensemble v2 -->
+  <div id="dashV2"></div>
+  <!-- Hidden canvases for charts (kept for later phases) -->
+  <div style="display:none"><canvas id="cE"></canvas><canvas id="cA"></canvas><canvas id="cR"></canvas></div>
+  <!-- Legacy elements kept for rD() fallback -->
+  <div id="dEmpty" style="display:none"></div><div id="dH" style="display:none"></div><div id="dK" style="display:none"></div><div id="dW" style="display:none"></div><div id="dF" style="display:none"></div><div id="dA" style="display:none"></div><div id="dP" style="display:none"></div>
+</div>
 <div class="pnl" id="p-coach"><div class="st">Guide étape par étape</div><div id="coC"></div></div>
 <div class="pnl" id="p-health"><div class="st">Santé financière</div><div id="heC"></div></div>
 <div class="pnl" id="p-acc"><div class="st">Comptes trading <span style="font-size:10px;color:var(--t3);font-weight:400">Sync auto depuis Journal</span></div><div id="acC"></div></div>
@@ -2705,7 +2761,7 @@ document.addEventListener('click', function(e) {
     }
   } catch(ex) {}
 });
-function rP(p){try{if(p==='dash')rD();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA();else if(p==='bank')rBank();else if(p==='goals')rGoals();else if(p==='yir')rYIR()}catch(e){console.error(e)}}
+function rP(p){try{if(p==='dash')rDashV2();else if(p==='coach')rCo();else if(p==='health')rHe();else if(p==='acc')rAc();else if(p==='pf')rPF();else if(p==='po')rPO();else if(p==='ent')rEN();else if(p==='fis')rFi();else if(p==='inv')rIV();else if(p==='bud')rBU();else if(p==='pas')rPA();else if(p==='bank')rBank();else if(p==='goals')rGoals();else if(p==='yir')rYIR()}catch(e){console.error(e)}}
 /* ─── TOOLTIP HELPER ─── */
 function tip(text){
   try{return ' <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--t3);font-size:10px;cursor:help;font-weight:700;vertical-align:middle" title="'+text.replace(/"/g,'&quot;')+'">?</span>'}catch(e){return''}
@@ -2860,6 +2916,115 @@ var rec=(D.history||[]).slice(0,10);document.getElementById('dA').innerHTML=rec.
 var ms2=Object.keys(mp).sort();
 if(ms2.length>=2){var tg2=0;for(var i=1;i<ms2.length;i++)tg2+=mp[ms2[i]].pnl;var avg=tg2/(ms2.length-1);var nm=ML.find(function(m){return m.t>nw});if(nm&&avg>0){var mt=Math.ceil((nm.t-nw)/avg);document.getElementById('dP').innerHTML='Rythme <b style="color:var(--green)">'+fm(avg)+'/mois</b> → <b style="color:var(--purple)">'+nm.l+'</b> dans ~<b style="color:var(--gold)">'+mt+' mois</b>.'}else{document.getElementById('dP').innerHTML='Pas assez de données.'}}else{document.getElementById('dP').innerHTML='Ajoute trades/payouts pour la projection.'}
 }catch(e){console.error('rD:',e)}}
+/* ═══ VUE D'ENSEMBLE V2 — Phase A (4 KPIs) ═══ */
+function rDashV2() {
+  try {
+    var el = document.getElementById('dashV2');
+    if (!el) return;
+
+    // Run syncs
+    try { checkPropFirmStatus(); } catch(e) {}
+    try { CapitalSyncOrchestrator.syncAll(); } catch(e) {}
+
+    // Compute data
+    var nw = NetWorthCalculator.calculate();
+    var health = HealthScoreCalculator.calculate();
+    var tradingStats = TradingStatsSyncService.getCurrentMonthStats();
+    var flows = CapitalDataReader.getAllFlows();
+    var now = new Date();
+    var cm = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    var monthExpenses = flows.filter(function(f) {
+      return f.kind === 'EXPENSE' && f.occurredAt && f.occurredAt.slice(0,7) === cm;
+    }).reduce(function(s, f) { return s + Math.abs(f.netAmount || 0); }, 0);
+    // Add v1 expenses + abonnements
+    monthExpenses += (D.expenses || []).filter(function(e) { return e.month === cm; }).reduce(function(s, e) { return s + (e.amount || 0); }, 0);
+    monthExpenses += (D.abonnements || []).reduce(function(s, a) { return s + (a.cost || 0); }, 0);
+
+    // Empty state check
+    var hasAnyData = nw.totalAssets > 0 || tradingStats.trades > 0 || D.payouts.length > 0 || D.bankAccounts.length > 0;
+    if (!hasAnyData) {
+      el.innerHTML = '<div style="text-align:center;padding:48px 20px;max-width:500px;margin:0 auto">' +
+        '<div style="font-size:36px;margin-bottom:12px">💎</div>' +
+        '<div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px;font-family:Bricolage Grotesque,system-ui">Bienvenue dans Capital</div>' +
+        '<div style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:24px">Ton cockpit patrimoine. Les donnees apparaissent automatiquement depuis le Journal, ou tu les saisis ici.</div>' +
+        '<div style="display:grid;gap:8px;max-width:360px;margin:0 auto">' +
+        '<button class="btn" style="background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.15);color:var(--gold);padding:12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;min-height:44px" onclick="goCapital(\'bank\')">Ajouter un compte bancaire</button>' +
+        '<button class="btn" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--t2);padding:12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;min-height:44px" onclick="goCapital(\'po\')">Enregistrer un payout</button>' +
+        '<button class="btn" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--t2);padding:12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;min-height:44px" onclick="goCapital(\'bud\')">Configurer le budget</button>' +
+        '</div></div>';
+      return;
+    }
+
+    var h = '';
+
+    // ═══ ZONE 1 — 4 KPI CARDS ═══
+    h += '<div class="vue-kpis">';
+
+    // KPI 1: Patrimoine net
+    var nwColor = nw.netWorth >= 0 ? 'var(--green)' : 'var(--red)';
+    h += '<div class="vue-kpi" onclick="ValueExplainer.show({title:\'Patrimoine net\',value:\'$' + nw.netWorth.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '\',formula:\'Total actifs - Total passifs\',sources:[{sign:\'+\',label:\'Actifs\',value:' + nw.totalAssets + ',source:\'Capital + Journal\'},{sign:\'-\',label:\'Passifs\',value:' + nw.totalLiabilities + ',source:\'Capital\'}],lastUpdated:\'Maintenant\',autoTriggers:[\'Trade enregistre dans Journal\',\'Payout valide\',\'Actif mis a jour\']})">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Patrimoine net</span>' + ValueExplainer.icon('') + '</div>';
+    h += '<div class="vue-kpi-value" style="color:' + nwColor + '" id="kpiNW">$' + nw.netWorth.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</div>';
+    h += '<div class="vue-kpi-sub">Liquidite <span style="color:var(--green)">$' + nw.byLiquidity.liquid.toLocaleString('en-US', {minimumFractionDigits:0}) + '</span> · Non-liquide <span style="color:var(--blue)">$' + nw.byLiquidity.nonLiquid.toLocaleString('en-US', {minimumFractionDigits:0}) + '</span></div>';
+    h += '</div>';
+
+    // KPI 2: Trading P&L mois
+    var tradingPnl = tradingStats.pnl || 0;
+    var tradingColor = tradingPnl >= 0 ? 'var(--green)' : 'var(--red)';
+    h += '<div class="vue-kpi" onclick="ValueExplainer.show({title:\'Trading P&L mois\',value:\'' + (tradingPnl>=0?'+':'') + '$' + tradingPnl.toFixed(2) + '\',formula:\'Somme P&L des trades Live du mois en cours\',sources:[{sign:\'+\',label:\'' + tradingStats.trades + ' trades\',value:' + tradingPnl + ',source:\'Journal (auto)\'}],lastUpdated:\'Maintenant\',autoTriggers:[\'Trade enregistre dans Journal\']})">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Trading P&L mois</span>' + ValueExplainer.icon('') + '</div>';
+    h += '<div class="vue-kpi-value" style="color:' + tradingColor + '" id="kpiTrading">' + (tradingPnl>=0?'+':'') + '$' + tradingPnl.toFixed(2) + '</div>';
+    h += '<div class="vue-kpi-sub">' + tradingStats.trades + ' trades · WR ' + Math.round(tradingStats.wr) + '%</div>';
+    h += '</div>';
+
+    // KPI 3: Depenses mois
+    var expColor = monthExpenses > 0 ? 'var(--red)' : 'var(--t3)';
+    h += '<div class="vue-kpi" onclick="ValueExplainer.show({title:\'Depenses mois\',value:\'-$' + monthExpenses.toFixed(2) + '\',formula:\'Depenses manuelles + abonnements recurrents du mois\',sources:[],lastUpdated:\'Maintenant\',autoTriggers:[\'Depense ajoutee\',\'Abonnement modifie\']})">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Depenses mois</span>' + ValueExplainer.icon('') + '</div>';
+    h += '<div class="vue-kpi-value" style="color:' + expColor + '" id="kpiExpenses">-$' + monthExpenses.toFixed(2) + '</div>';
+    h += '<div class="vue-kpi-sub">' + (monthExpenses > 0 ? 'Budget actif' : 'Budget : pas defini') + '</div>';
+    h += '</div>';
+
+    // KPI 4: Sante patrimoniale
+    var healthColor = health.globalScore >= 70 ? 'var(--green)' : health.globalScore >= 40 ? 'var(--gold)' : 'var(--red)';
+    h += '<div class="vue-kpi" onclick="ValueExplainer.show({title:\'Sante patrimoniale\',value:\'' + health.globalScore + '/100\',formula:\'Score pondere sur 5 dimensions\',sources:[{sign:\' \',label:\'Fonds urgence (25%)\',value:\'' + health.breakdown.emergencyFund + '/100\',source:\'\'},{sign:\' \',label:\'Diversification (20%)\',value:\'' + health.breakdown.diversification + '/100\',source:\'\'},{sign:\' \',label:\'Ratio dette (15%)\',value:\'' + health.breakdown.debtRatio + '/100\',source:\'\'},{sign:\' \',label:\'Taux epargne (20%)\',value:\'' + health.breakdown.savingRate + '/100\',source:\'\'},{sign:\' \',label:\'Optimisation fiscale (20%)\',value:\'' + health.breakdown.taxOptimization + '/100\',source:\'\'}],lastUpdated:\'Maintenant\',autoTriggers:[\'Actif ajoute\',\'Depense saisie\',\'Payout recu\']})">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Sante patrimoniale</span></div>';
+    h += '<div class="vue-kpi-value" style="color:' + healthColor + '" id="kpiHealth">' + health.globalScore + '<span style="font-size:14px;color:var(--t3)">/100</span></div>';
+    h += '<div class="vue-kpi-sub">5 dimensions · ';
+    if (health.recommendations.length > 0) {
+      h += '<span style="color:' + healthColor + '">' + health.recommendations[0].substring(0, 40) + (health.recommendations[0].length > 40 ? '...' : '') + '</span>';
+    } else {
+      h += '<span style="color:var(--green)">Bonne sante</span>';
+    }
+    h += '</div>';
+    h += '</div>';
+
+    h += '</div>'; // end vue-kpis
+
+    // ═══ ZONES 2-9 — PLACEHOLDERS (Phases B-D) ═══
+    h += '<div id="vueNextSteps" style="margin-top:16px"></div>';
+    h += '<div id="vueThisWeek" style="margin-top:12px"></div>';
+    h += '<div id="vueCharts" style="margin-top:12px"></div>';
+    h += '<div id="vueDeadlines" style="margin-top:12px"></div>';
+    h += '<div id="vueActivity" style="margin-top:12px"></div>';
+    h += '<div id="vueProjection" style="margin-top:12px"></div>';
+
+    el.innerHTML = h;
+
+    // Apply AnimatedCounter to KPI values (on subsequent renders)
+    if (typeof rDashV2._prevNW !== 'undefined') {
+      var kpiNW = document.getElementById('kpiNW');
+      if (kpiNW && Math.abs(rDashV2._prevNW - nw.netWorth) > 0.01) {
+        AnimatedCounter.animate(kpiNW, nw.netWorth, { prefix: '$', decimals: 2, color: nwColor });
+      }
+    }
+    rDashV2._prevNW = nw.netWorth;
+    rDashV2._prevTrading = tradingPnl;
+    rDashV2._prevExpenses = monthExpenses;
+    rDashV2._prevHealth = health.globalScore;
+
+  } catch(e) { console.error('[Capital] rDashV2:', e); }
+}
 function rAC(){try{var ct={};D.portfolio.forEach(function(p){ct[p.cat]=(ct[p.cat]||0)+(p.current||0)});var j=rJ();j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel'){var bal=a.balance||0;j.t.forEach(function(t){if(t.account===a.name)bal+=parseFloat(t.pl)||0});ct['Trading perso']=(ct['Trading perso']||0)+bal}});var lb=Object.keys(ct),vl=lb.map(function(k){return ct[k]});var cl=['#a78bfa','#5b8def','#00d68f','#f5d060','#ff4757','#d4a017','#6b7ea0','#8b5cf6'];if(cA)cA.destroy();var cvA=document.getElementById('cA');if(!lb.length){var ctx=cvA.getContext('2d');ctx.clearRect(0,0,cvA.width,cvA.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Ajoutez des actifs pour voir l\u2019allocation',cvA.width/2,cvA.height/2);return}var tot=vl.reduce(function(a,b){return a+b},0);cA=new Chart(cvA,{type:'doughnut',data:{labels:lb,datasets:[{data:vl,backgroundColor:cl.slice(0,lb.length),borderWidth:2,borderColor:'#0c1018',hoverBorderColor:'#a78bfa',hoverBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#9bafd4',font:{family:'Inter',size:10},padding:10,usePointStyle:true,pointStyle:'circle'}},tooltip:{callbacks:{label:function(c){var v=c.parsed||0;var pct=tot?((v/tot)*100).toFixed(1):'0';return' '+c.label+' : $'+v.toLocaleString('en-US')+' ('+pct+'%)'}}}}}});}catch(e){console.error('rAC:',e)}}
 function rEC(){try{var mp2=mPnL(),pm={};D.payouts.forEach(function(p){var m=p.date.slice(0,7);pm[m]=(pm[m]||0)+(p.net||0)});var am={};Object.keys(mp2).forEach(function(m){am[m]=true});Object.keys(pm).forEach(function(m){am[m]=true});var s=Object.keys(am).sort(),cu=[],r=0;s.forEach(function(m){r+=(mp2[m]?mp2[m].pnl:0)+(pm[m]||0);cu.push(r)});if(cE)cE.destroy();var cvE=document.getElementById('cE');if(!s.length){var ctx=cvE.getContext('2d');ctx.clearRect(0,0,cvE.width,cvE.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Pas encore de donn\u00e9es d\u2019\u00e9volution',cvE.width/2,cvE.height/2);return}cE=new Chart(cvE,{type:'line',data:{labels:s,datasets:[{data:cu,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.1)',fill:true,tension:.4,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#a78bfa',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,scales:{x:{ticks:{color:'#6b7ea0',font:{size:9}},grid:{color:'rgba(29,40,64,.5)'}},y:{beginAtZero:true,ticks:{color:'#6b7ea0',font:{family:'JetBrains Mono',size:9},callback:function(v){return'$'+v.toLocaleString('en-US')}},grid:{color:'rgba(29,40,64,.5)'}}},plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:function(c){var i=c.dataIndex;if(i===0)return'\u25b3 premier mois';var prev=cu[i-1];var diff=cu[i]-prev;var sign=diff>=0?'+':'';var arrow=diff>=0?'\u25b3':'\u25bd';return arrow+' '+sign+'$'+diff.toLocaleString('en-US')}}}}}})}catch(e){console.error('rEC:',e)}}
 function rRC(){try{var mp2=mPnL(),em={},pm={};D.expenses.forEach(function(e){em[e.month]=(em[e.month]||0)+(e.amount||0)});D.payouts.forEach(function(p){var m=p.date.slice(0,7);pm[m]=(pm[m]||0)+(p.net||0)});var am={};Object.keys(mp2).forEach(function(m){am[m]=true});Object.keys(em).forEach(function(m){am[m]=true});Object.keys(pm).forEach(function(m){am[m]=true});var s=Object.keys(am).sort();var rv=s.map(function(m){return(mp2[m]?mp2[m].pnl:0)+(pm[m]||0)});var ex=s.map(function(m){return-(em[m]||0)});if(cR)cR.destroy();var cvR=document.getElementById('cR');if(!s.length){var ctx=cvR.getContext('2d');ctx.clearRect(0,0,cvR.width,cvR.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Aucun revenu ou d\u00e9pense enregistr\u00e9',cvR.width/2,cvR.height/2);return}cR=new Chart(cvR,{type:'bar',data:{labels:s,datasets:[{label:'Revenus',data:rv,backgroundColor:'rgba(0,214,143,.7)',borderRadius:4},{label:'D\u00e9penses',data:ex,backgroundColor:'rgba(255,71,87,.7)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,scales:{x:{ticks:{color:'#6b7ea0',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#6b7ea0',font:{family:'JetBrains Mono',size:9}},grid:{color:'rgba(29,40,64,.5)'}}},plugins:{legend:{labels:{color:'#9bafd4',font:{size:10}}},tooltip:{callbacks:{footer:function(items){var rev=0,dep=0;items.forEach(function(it){if(it.dataset.label==='Revenus')rev=it.parsed.y;else dep=it.parsed.y});var marge=rev+dep;return'Marge : $'+marge.toLocaleString('en-US')}}}}}})}catch(e){console.error('rRC:',e)}}
