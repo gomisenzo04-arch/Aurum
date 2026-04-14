@@ -5079,131 +5079,141 @@ function rBank() {
   try {
     var el = document.getElementById('bankC');
     if (!el) return;
-    var h = '';
-    var totalAll = D.bankAccounts.reduce(function(s, ba) { return s + (ba.balance || 0) }, 0);
-    var totalPerso = D.bankAccounts.filter(function(ba) { return ba.type === 'perso' }).reduce(function(s, ba) { return s + (ba.balance || 0) }, 0);
-    var totalEntite = D.bankAccounts.filter(function(ba) { return ba.type === 'entite' }).reduce(function(s, ba) { return s + (ba.balance || 0) }, 0);
 
-    /* ─── Summary strip ─── */
-    h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px">';
-    h += '<div style="background:linear-gradient(135deg,rgba(0,214,143,.08),rgba(91,141,239,.04));border:1px solid rgba(0,214,143,.15);border-radius:var(--radius);padding:16px;text-align:center">';
-    h += '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Liquidité totale</div>';
-    h += '<div style="font-size:28px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--green)">' + fm(totalAll) + '</div></div>';
-    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center">';
-    h += '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Comptes perso</div>';
-    h += '<div style="font-size:22px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--green)">' + fm(totalPerso) + '</div></div>';
-    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center">';
-    h += '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Comptes entités</div>';
-    h += '<div style="font-size:22px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--purple)">' + fm(totalEntite) + '</div></div>';
+    var totalAll = D.bankAccounts.reduce(function(s, ba) { return s + (ba.balance || 0); }, 0);
+    var totalPerso = D.bankAccounts.filter(function(ba) { return ba.type !== 'entite'; }).reduce(function(s, ba) { return s + (ba.balance || 0); }, 0);
+    var totalEntite = D.bankAccounts.filter(function(ba) { return ba.type === 'entite'; }).reduce(function(s, ba) { return s + (ba.balance || 0); }, 0);
+
+    var h = '';
+
+    // ═══ KPIs ═══
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">';
+
+    h += '<div class="vue-kpi" onclick="ValueExplainer.show({title:\'Liquidite totale\',value:\'$' + totalAll.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '\',formula:\'Somme des soldes de tous les comptes bancaires\',sources:' + JSON.stringify(D.bankAccounts.map(function(ba){return{sign:'+',label:ba.name,value:ba.balance||0,source:ba.type==='entite'?'Entite':'Perso'}})) + ',lastUpdated:\'Maintenant\',autoTriggers:[\'Depot ou retrait enregistre\',\'Payout recu\']})">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Liquidite totale</span>' + ValueExplainer.icon('') + '</div>';
+    h += '<div class="vue-kpi-value" style="color:var(--green)">$' + totalAll.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</div>';
+    h += '<div class="vue-kpi-sub">' + D.bankAccounts.length + ' compte' + (D.bankAccounts.length > 1 ? 's' : '') + '</div>';
     h += '</div>';
 
-    /* ─── Holding suggestion ─── */
-    if (D.entities.length > 0) {
-      var hasHolding = D.entities.some(function(e) { return e.forme === 'Holding' && (e.status === 'Active' || e.status === 'En création') });
+    h += '<div class="vue-kpi">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Comptes perso</span></div>';
+    h += '<div class="vue-kpi-value" style="color:var(--green)">$' + totalPerso.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</div>';
+    h += '<div class="vue-kpi-sub">Personnel</div>';
+    h += '</div>';
+
+    h += '<div class="vue-kpi">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Comptes entites</span></div>';
+    h += '<div class="vue-kpi-value" style="color:var(--purple)">$' + totalEntite.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</div>';
+    h += '<div class="vue-kpi-sub">Structures juridiques</div>';
+    h += '</div>';
+
+    h += '</div>';
+
+    // ═══ Holding suggestion ═══
+    if (D.entities && D.entities.length > 0) {
+      var hasHolding = D.entities.some(function(e) { return (e.forme === 'Holding' || e.kind === 'HOLDING') && (e.status === 'Active' || e.status === 'En création'); });
       if (hasHolding) {
-        var holdingEntity = D.entities.find(function(e) { return e.forme === 'Holding' && (e.status === 'Active' || e.status === 'En création') });
-        var hasHoldingBank = D.bankAccounts.some(function(ba) { return ba.entityId === holdingEntity.id });
+        var holdingEntity = D.entities.find(function(e) { return (e.forme === 'Holding' || e.kind === 'HOLDING') && (e.status === 'Active' || e.status === 'En création'); });
+        var hasHoldingBank = D.bankAccounts.some(function(ba) { return ba.entityId === holdingEntity.id; });
         if (!hasHoldingBank) {
-          h += '<div style="background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.15);border-left:3px solid var(--purple);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
-          h += '<div style="flex:1;font-size:12px;color:var(--t2)"><b style="color:var(--purple)">💡 Holding détectée</b> — Crée un compte bancaire pour <b>' + esc(holdingEntity.name) + '</b></div>';
+          h += '<div style="background:rgba(139,92,246,.04);border:1px solid rgba(139,92,246,.12);border-left:3px solid var(--purple);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--t2)">';
+          h += '<b style="color:var(--purple)">Holding detectee</b> — Cree un compte bancaire pour <b>' + esc(holdingEntity.name || holdingEntity.nom || '') + '</b>';
           h += '</div>';
         }
       }
     }
 
-    /* ─── Bank account cards ─── */
+    // ═══ Tableau des comptes ═══
     if (!D.bankAccounts.length) {
-      h += '<div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(0,214,143,.05),rgba(91,141,239,.03));border-left:3px solid var(--green);border-radius:10px;padding:20px 24px;text-align:center">';
-      h += '<div style="font-size:32px;margin-bottom:10px">🏦</div>';
-      h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Ajoute ton premier compte bancaire</div>';
-      h += '<div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Suis ta liquidité réelle : comptes courants, comptes épargne, comptes d\'entités. Ta liquidité dans le dashboard sera basée sur ces comptes.</div>';
+      h += '<div style="text-align:center;padding:48px 20px;max-width:500px;margin:0 auto">';
+      h += '<div style="font-size:36px;margin-bottom:12px">🏦</div>';
+      h += '<div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px;font-family:Bricolage Grotesque,system-ui">Ajoute ton premier compte bancaire</div>';
+      h += '<div style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:20px">Suis ta liquidite reelle : comptes courants, livrets, comptes d\'entites. Le patrimoine net sera base sur ces soldes.</div>';
       h += '</div>';
     } else {
-      h += '<div style="display:grid;gap:12px;margin-bottom:20px">';
+      h += '<div class="vue-section" style="margin-bottom:16px">';
+      h += '<div class="vue-section-header"><span>Mes comptes</span></div>';
+      h += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">';
+      h += '<thead><tr>';
+      ['Compte','Banque','Type','Entite','Solde','MAJ','Actions'].forEach(function(col) {
+        h += '<th style="text-align:' + (col==='Solde'?'right':col==='Actions'?'right':'left') + ';padding:8px 12px;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">' + col + '</th>';
+      });
+      h += '</tr></thead><tbody>';
+
       D.bankAccounts.forEach(function(ba) {
         var entName = '';
         if (ba.type === 'entite' && ba.entityId) {
-          var ent = D.entities.find(function(e) { return e.id === ba.entityId });
-          if (ent) entName = ent.name;
+          var ent = D.entities.find(function(e) { return e.id === ba.entityId; });
+          if (ent) entName = ent.name || ent.nom || '';
         }
         var badgeColor = ba.type === 'entite' ? 'var(--purple)' : 'var(--green)';
-        var badgeLabel = ba.type === 'entite' ? 'Entité' : 'Perso';
+        var badgeLabel = ba.type === 'entite' ? 'Entite' : 'Perso';
         var balColor = (ba.balance || 0) >= 0 ? 'var(--green)' : 'var(--red)';
 
-        h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;transition:border-color .2s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">';
-        /* Header */
-        h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">';
-        h += '<div style="font-size:14px;font-weight:700;color:var(--t1)">' + esc(ba.name) + '</div>';
-        h += '<div style="font-size:11px;color:var(--t3)">' + esc(ba.bank) + '</div>';
-        h += '<span style="background:' + badgeColor + '22;color:' + badgeColor + ';font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px">' + badgeLabel + '</span>';
-        if (entName) {
-          h += '<span style="font-size:10px;color:var(--purple);font-weight:600">🏢 ' + esc(entName) + '</span>';
+        // Relative time since last update
+        var majText = '—';
+        var txs = ba.transactions || [];
+        if (txs.length > 0) {
+          var lastTx = txs[txs.length - 1];
+          if (lastTx.date) {
+            var daysAgo = Math.floor((Date.now() - new Date(lastTx.date).getTime()) / 86400000);
+            majText = daysAgo === 0 ? "Aujourd'hui" : daysAgo === 1 ? 'Hier' : daysAgo + 'j';
+          }
         }
-        h += '</div>';
-        /* Balance */
-        h += '<div style="font-size:32px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + balColor + ';margin-bottom:14px">' + fm(ba.balance || 0) + '</div>';
-        /* Transactions */
-        var txs = (ba.transactions || []).slice(-5).reverse();
-        if (txs.length) {
-          h += '<div style="margin-bottom:14px">';
-          h += '<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Dernières opérations</div>';
-          txs.forEach(function(tx) {
-            var txColor = tx.amount >= 0 ? 'var(--green)' : 'var(--red)';
-            var txSign = tx.amount >= 0 ? '+' : '';
-            h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">';
-            h += '<span style="color:var(--t3);font-family:JetBrains Mono,monospace;font-size:10px;min-width:70px">' + (tx.date || '') + '</span>';
-            h += '<span style="flex:1;color:var(--t2)">' + esc(tx.label || '') + '</span>';
-            h += '<span style="font-weight:700;font-family:JetBrains Mono,monospace;color:' + txColor + '">' + txSign + fm(Math.abs(tx.amount)) + '</span>';
-            h += '</div>';
-          });
-          h += '</div>';
-        }
-        /* Action buttons */
-        h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
-        h += '<button class="btn" style="background:var(--green);color:#000;font-size:11px;padding:8px 14px;border:none;border-radius:6px;font-weight:700;cursor:pointer;min-height:44px;transition:opacity .2s" onmouseover="this.style.opacity=\'0.85\'" onmouseout="this.style.opacity=\'1\'" onclick="showBankTxModal(\'' + ba.id + '\',\'deposit\')">+ Dépôt</button>';
-        h += '<button class="btn" style="background:var(--red);color:#fff;font-size:11px;padding:8px 14px;border:none;border-radius:6px;font-weight:700;cursor:pointer;min-height:44px;transition:opacity .2s" onmouseover="this.style.opacity=\'0.85\'" onmouseout="this.style.opacity=\'1\'" onclick="showBankTxModal(\'' + ba.id + '\',\'withdrawal\')">- Retrait</button>';
-        h += '<button class="btn bo" style="font-size:11px;padding:8px 14px;border-color:var(--border2);color:var(--t2);min-height:44px" onclick="editBankAccount(\'' + ba.id + '\')">Modifier</button>';
-        h += '<button class="btn bo" style="font-size:11px;padding:8px 14px;border-color:var(--red);color:var(--red);min-height:44px;margin-left:auto" onclick="deleteBankAccount(\'' + ba.id + '\')">Supprimer</button>';
-        h += '</div>';
-        h += '</div>';
+
+        h += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);transition:background 150ms">';
+        h += '<td style="padding:10px 12px;font-weight:600;color:var(--t1)">' + esc(ba.name) + '</td>';
+        h += '<td style="padding:10px 12px;font-size:12px;color:var(--t2)">' + esc(ba.bank || '') + '</td>';
+        h += '<td style="padding:10px 12px"><span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;background:' + badgeColor + '18;color:' + badgeColor + '">' + badgeLabel + '</span></td>';
+        h += '<td style="padding:10px 12px;font-size:12px;color:var(--purple)">' + esc(entName) + '</td>';
+        h += '<td style="padding:10px 12px;text-align:right;font-size:16px;font-weight:700;font-family:JetBrains Mono,monospace;color:' + balColor + '">$' + (ba.balance || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>';
+        h += '<td style="padding:10px 12px;font-size:11px;color:var(--t3)">' + majText + '</td>';
+        h += '<td style="padding:10px 12px;text-align:right">';
+        h += '<div style="display:flex;gap:4px;justify-content:flex-end">';
+        h += '<button style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.15);color:var(--green);font-size:10px;font-weight:600;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;min-height:32px;transition:all 150ms" onclick="showBankTxModal(\'' + ba.id + '\',\'deposit\')">+ Depot</button>';
+        h += '<button style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);color:var(--red);font-size:10px;font-weight:600;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;min-height:32px;transition:all 150ms" onclick="showBankTxModal(\'' + ba.id + '\',\'withdrawal\')">- Retrait</button>';
+        h += '<button style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--t3);font-size:10px;font-weight:600;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;min-height:32px;transition:all 150ms" onclick="editBankAccount(\'' + ba.id + '\')">Modifier</button>';
+        h += '<button style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:4px 6px;border-radius:4px;min-height:32px;transition:background 150ms" onmouseover="this.style.background=\'rgba(239,68,68,.1)\'" onmouseout="this.style.background=\'none\'" onclick="deleteBankAccount(\'' + ba.id + '\')">&times;</button>';
+        h += '</div></td>';
+        h += '</tr>';
       });
-      h += '</div>';
+
+      h += '</tbody></table></div></div>';
     }
 
-    /* ─── Add new account form ─── */
-    h += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-top:10px">';
-    h += '<div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:14px">+ Nouveau compte bancaire</div>';
-    h += '<div style="display:grid;gap:10px">';
-    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    // ═══ Formulaire d'ajout ═══
+    h += '<div class="vue-section">';
+    h += '<div class="vue-section-header"><span>Nouveau compte bancaire</span></div>';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">';
     h += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Nom du compte</label>';
-    h += '<input id="ba-name" placeholder="Ex: Compte courant" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px"></div>';
+    h += '<input id="ba-name" placeholder="Ex: Compte courant" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px;box-sizing:border-box"></div>';
     h += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Banque</label>';
-    h += '<input id="ba-bank" placeholder="Ex: BoursoBank" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px"></div>';
+    h += '<input id="ba-bank" placeholder="Ex: BoursoBank" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px;box-sizing:border-box"></div>';
     h += '</div>';
-    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">';
     h += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Type</label>';
-    h += '<select id="ba-type" onchange="bankTypeChanged()" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px">';
+    h += '<select id="ba-type" onchange="bankTypeChanged()" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px">';
     h += '<option value="perso">Perso</option>';
-    if (D.entities.length > 0) {
-      h += '<option value="entite">Entité</option>';
-    }
+    if (D.entities && D.entities.length > 0) h += '<option value="entite">Entite</option>';
     h += '</select></div>';
-    h += '<div id="ba-entity-wrap" style="display:none"><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Entité</label>';
-    h += '<select id="ba-entity" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px">';
-    D.entities.forEach(function(ent) {
-      if (ent.status === 'Active' || ent.status === 'En création') {
-        h += '<option value="' + ent.id + '">' + esc(ent.name) + ' (' + ent.forme + ')</option>';
+    h += '<div id="ba-entity-wrap" style="display:none"><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Entite</label>';
+    h += '<select id="ba-entity" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px">';
+    (D.entities || []).forEach(function(ent) {
+      if (ent.status === 'Active' || ent.status === 'En création' || !ent.status) {
+        h += '<option value="' + ent.id + '">' + esc(ent.name || ent.nom || '') + '</option>';
       }
     });
     h += '</select></div>';
     h += '</div>';
+    h += '<div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">';
     h += '<div><label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Solde initial ($)</label>';
-    h += '<input type="number" id="ba-balance" placeholder="0" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-family:inherit;font-size:12px;min-height:44px"></div>';
-    h += '<button class="btn bg" style="min-height:44px;font-size:13px;font-weight:700" onclick="addBankAccount()">Ajouter le compte</button>';
-    h += '</div></div>';
+    h += '<input type="number" id="ba-balance" placeholder="0" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:13px;min-height:44px;box-sizing:border-box"></div>';
+    h += '<button style="background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.2);color:var(--gold);padding:10px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;min-height:44px;white-space:nowrap;transition:all 150ms" onmouseover="this.style.background=\'rgba(201,162,39,.18)\'" onmouseout="this.style.background=\'rgba(201,162,39,.1)\'" onclick="addBankAccount()">Ajouter le compte</button>';
+    h += '</div>';
+    h += '</div>';
 
     el.innerHTML = h;
-  } catch(e) { console.error('rBank:', e) }
+  } catch(e) { console.error('[Capital] rBank:', e); }
 }
 
 function bankTypeChanged() {
