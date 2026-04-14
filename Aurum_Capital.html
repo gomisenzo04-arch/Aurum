@@ -4065,16 +4065,88 @@ return card;
 }).join('');
 document.getElementById('coC').innerHTML=h}catch(e){console.error(e)}}
 /* ─── ACCOUNTS ─── */
-function rAc(){try{var j=rJ(),mp2=mPnL(),h='';if(!j.a.length){document.getElementById('acC').innerHTML='<div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(91,141,239,.05),rgba(167,139,250,.03));border-left:3px solid var(--blue);border-radius:10px;padding:20px 24px;text-align:center"><div style="font-size:32px;margin-bottom:10px">🔗</div><div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Tes comptes arrivent automatiquement</div><div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Dès que tu enregistres un trade dans le Journal, tes comptes apparaissent ici avec leur solde, leur type et leur P&L mensuel.</div><div style="display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;color:var(--t3);margin-bottom:16px;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(91,141,239,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--blue);font-weight:700">1</span> Ouvre le Journal</span><span style="color:var(--t3)">→</span><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(91,141,239,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--blue);font-weight:700">2</span> Crée un compte</span><span style="color:var(--t3)">→</span><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(91,141,239,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--blue);font-weight:700">3</span> Synchro auto ici</span></div><a href="Aurum.html" class="btn bp bs" style="text-decoration:none;display:inline-block">Ouvrir le Journal →</a></div>';return}var tp=0,tf=0;
-var accBalances={};
-j.a.forEach(function(a){
-  var bal=a.balance||0;
-  j.t.forEach(function(t){if(t.account===a.name||(t.accId&&t.accId===a.id))bal+=parseFloat(t.pl)||0});
-  accBalances[a.name]=bal;
-  var atp=(a.type||'').toLowerCase();
-  if(atp==='perso'||atp==='personnel')tp+=bal;else tf+=bal;
-});
-h+='<div class="sg">'+kp('Capital perso',fm(tp),'var(--green)')+kp('Capital prop',fm(tf),'var(--blue)')+kp('Comptes',j.a.length,'var(--t2)')+'</div>';var sk=Object.keys(mp2).sort();if(sk.length){h+='<div class="cb"><div class="ct">P&L mensuel (trades live)</div><div class="tw"><table><thead><tr><th>Mois</th><th>Trades</th><th>WR</th><th>P&L</th></tr></thead><tbody>';sk.reverse().forEach(function(m){var d=mp2[m],wr=d.n>0?Math.round(d.w/d.n*100):0;h+='<tr><td>'+m+'</td><td class="mn">'+d.n+'</td><td class="mn '+(wr>=50?'ps':'ng')+'">'+wr+'%</td><td class="mn '+(d.pnl>=0?'ps':'ng')+'">'+fm(d.pnl)+'</td></tr>'});h+='</tbody></table></div></div>'}h+='<div class="st" style="margin-top:14px">Par compte</div>';j.a.forEach(function(a){var ip=(a.type||'').toLowerCase()!=='perso'&&(a.type||'').toLowerCase()!=='personnel';var curBal=accBalances[a.name]||a.balance||0;var pnl=curBal-(a.balance||0);h+='<div class="crd" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between"><div><b style="color:var(--t1)">'+a.name+'</b> <span style="font-size:10px;color:var(--t3)">'+a.type+'</span></div><div class="mn" style="font-size:16px;color:'+(ip?'var(--blue)':'var(--green)')+'">'+fm(curBal)+'</div></div><div style="font-size:10px;color:var(--t3);margin-top:4px">Initial '+fm(a.balance||0)+' · P&L <span style="color:'+(pnl>=0?'var(--green)':'var(--red)') +'">'+(pnl>=0?'+':'')+fm(pnl)+'</span> · Risque '+a.risk+'%'+(a.target?' · Target '+fm(a.target):'')+'</div></div>'});document.getElementById('acC').innerHTML=h}catch(e){console.error(e)}}
+function rAc() {
+  try {
+    var el = document.getElementById('acC');
+    if (!el) return;
+    var j = rJ();
+
+    // Empty state
+    if (!j.a.length) {
+      el.innerHTML = '<div style="text-align:center;padding:48px 20px;max-width:500px;margin:0 auto">' +
+        '<div style="font-size:36px;margin-bottom:12px">🔗</div>' +
+        '<div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px;font-family:Bricolage Grotesque,system-ui">Tes comptes trading</div>' +
+        '<div style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:24px">Les comptes apparaissent automatiquement ici des que tu en ajoutes dans le Journal. Zero saisie manuelle.</div>' +
+        '<div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:var(--t3);margin-bottom:20px">' +
+        '<span style="display:flex;align-items:center;gap:4px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(201,162,39,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold)">1</span>Ouvre le Journal</span>' +
+        '<span>→</span>' +
+        '<span style="display:flex;align-items:center;gap:4px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(201,162,39,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold)">2</span>Cree un compte</span>' +
+        '<span>→</span>' +
+        '<span style="display:flex;align-items:center;gap:4px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(201,162,39,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold)">3</span>Synchro auto ici</span>' +
+        '</div>' +
+        '<a href="Aurum.html" style="display:inline-block;padding:10px 24px;background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.2);color:var(--gold);border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;min-height:44px;line-height:24px">Ouvrir le Journal →</a>' +
+        '</div>';
+      return;
+    }
+
+    // Compute balances with P&L
+    var persoTotal = 0, propTotal = 0;
+    var accData = [];
+    j.a.forEach(function(a) {
+      var bal = a.balance || 0;
+      j.t.forEach(function(t) {
+        if (t.account === a.name || (t.accId && t.accId === a.id)) bal += parseFloat(t.pl) || 0;
+      });
+      var tp = (a.type || '').toLowerCase();
+      var isPerso = tp === 'perso' || tp === 'personnel';
+      if (isPerso) persoTotal += bal; else propTotal += bal;
+      accData.push({ name: a.name, type: a.type, balance: a.balance || 0, currentBal: bal, pnl: bal - (a.balance || 0), risk: a.risk, target: a.target, id: a.id, isPerso: isPerso });
+    });
+
+    var h = '';
+
+    // Sync badge
+    h += '<div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:12px;font-size:11px;color:var(--t3)">';
+    h += '<span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>';
+    h += 'Sync auto depuis Journal · Derniere MAJ : maintenant';
+    h += '</div>';
+
+    // 3 KPI cards
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">';
+
+    // KPI 1: Capital perso
+    var persoSources = accData.filter(function(a){return a.isPerso}).map(function(a){return{sign:'+',label:a.name,value:a.currentBal,source:'Journal'}});
+    h += '<div class="vue-kpi" onclick="ValueExplainer.show({title:\'Capital perso\',value:\'$' + persoTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '\',formula:\'Somme des soldes courants (initial + P&L) des comptes personnels\',sources:' + JSON.stringify(persoSources).replace(/'/g,"\\'") + ',lastUpdated:\'Maintenant\',autoTriggers:[\'Trade enregistre\',\'Compte modifie\']})">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Capital perso</span>' + ValueExplainer.icon('') + '</div>';
+    h += '<div class="vue-kpi-value" style="color:var(--green)" id="kpiCapPerso">$' + persoTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</div>';
+    h += '<div class="vue-kpi-sub">Compte dans le patrimoine</div>';
+    h += '</div>';
+
+    // KPI 2: Capital prop
+    var propSources = accData.filter(function(a){return !a.isPerso}).map(function(a){return{sign:'+',label:a.name+' ('+a.type+')',value:a.currentBal,source:'Journal'}});
+    h += '<div class="vue-kpi" onclick="ValueExplainer.show({title:\'Capital prop firm\',value:\'$' + propTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '\',formula:\'Somme des soldes courants des comptes prop/funded/challenge\',sources:' + JSON.stringify(propSources).replace(/'/g,"\\'") + ',lastUpdated:\'Maintenant\',autoTriggers:[\'Trade enregistre\']})">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Capital prop</span>' + ValueExplainer.icon('') + '</div>';
+    h += '<div class="vue-kpi-value" style="color:var(--blue)" id="kpiCapProp">$' + propTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</div>';
+    h += '<div class="vue-kpi-sub">Non compte dans le patrimoine</div>';
+    h += '</div>';
+
+    // KPI 3: Comptes
+    h += '<div class="vue-kpi">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Comptes</span></div>';
+    h += '<div class="vue-kpi-value" style="color:var(--t1)" id="kpiCapCount">' + j.a.length + '</div>';
+    h += '<div class="vue-kpi-sub">' + accData.filter(function(a){return a.isPerso}).length + ' perso · ' + accData.filter(function(a){return !a.isPerso}).length + ' prop</div>';
+    h += '</div>';
+
+    h += '</div>'; // end KPI grid
+
+    // Placeholders for Phases B-D
+    h += '<div id="tradingPnlTable"></div>';
+    h += '<div id="tradingAccountCards"></div>';
+    h += '<div id="tradingAllocation"></div>';
+
+    el.innerHTML = h;
+  } catch(e) { console.error('[Capital] rAc:', e); }
+}
 /* ─── PROP FIRMS ─── */
 function aPF(){try{var f=esc(document.getElementById('pf-f').value.trim());if(!f){toast('Nom requis');return}D.propfirms.push({id:uid(),firm:f,type:document.getElementById('pf-t').value,size:parseFloat(document.getElementById('pf-s').value)||0,cost:parseFloat(document.getElementById('pf-c').value)||0,split:parseFloat(document.getElementById('pf-sp').value)||80,status:document.getElementById('pf-st').value,rules:{profitTarget:parseFloat(document.getElementById('pf-obj').value)||0,ddMaxDay:parseFloat(document.getElementById('pf-dd').value)||0,ddMaxTotal:parseFloat(document.getElementById('pf-ddt').value)||0,minDays:parseInt(document.getElementById('pf-jmin').value)||0},linkedAccountId:document.getElementById('pf-acc').value||null,fundedAt:null});D.history.unshift({type:'propfirm',text:f+' — '+document.getElementById('pf-st').value,date:new Date().toISOString().slice(0,10)});save();rPF();tg('pfF');toast('Ajouté')}catch(e){console.error(e)}}
 function dPF(id){try{if(!confirm('Supprimer ?'))return;D.propfirms=D.propfirms.filter(function(p){return p.id!==id});save();rPF()}catch(e){console.error(e)}}
