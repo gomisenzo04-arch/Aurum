@@ -1639,10 +1639,15 @@ var CapitalDataReader = (function() {
   return {
     getAllAssets: function(filters) {
       var assets = CapitalStore.getAllAssets();
-      // Add Journal trading accounts as virtual assets
-      var journalPerso = JournalForCapitalReader.getPersoAccountsAsAssets();
-      var journalProp = JournalForCapitalReader.getPropAccountsAsAssets();
-      assets = assets.concat(journalPerso).concat(journalProp);
+      /* Add Journal accounts ONLY if not already synced as jsync_ mirrors.
+         PropAccountSyncService creates jsync_ assets — if those exist, don't add duplicates.
+         If no jsync_ assets exist yet (first load before sync), add Journal assets as fallback. */
+      var hasSyncedMirrors = assets.some(function(a) { return a.id && a.id.indexOf('jsync_') === 0; });
+      if (!hasSyncedMirrors) {
+        var journalPerso = JournalForCapitalReader.getPersoAccountsAsAssets();
+        var journalProp = JournalForCapitalReader.getPropAccountsAsAssets();
+        assets = assets.concat(journalPerso).concat(journalProp);
+      }
       if (filters) {
         if (filters.entityId) assets = assets.filter(function(a) { return a.entityId === filters.entityId; });
         if (filters.category) assets = assets.filter(function(a) { return a.category === filters.category; });
