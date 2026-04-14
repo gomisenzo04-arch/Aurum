@@ -4169,7 +4169,81 @@ function rAc() {
     // Phase C: Cards par compte
     try { rTradingAccountCards(accData); } catch(ec) { console.error('[Capital] rTradingAccountCards:', ec); }
 
+    // Phase D: Allocation trading vs patrimoine
+    try { rTradingAllocation(persoTotal + propTotal); } catch(ed) { console.error('[Capital] rTradingAllocation:', ed); }
+
   } catch(e) { console.error('[Capital] rAc:', e); }
+}
+
+/* ─── Trading Allocation (Page 2 Phase D) ─── */
+function rTradingAllocation(tradingCapital) {
+  var el = document.getElementById('tradingAllocation');
+  if (!el) return;
+
+  var nw = NetWorthCalculator.calculate();
+  var totalPatrimoine = nw.totalAssets;
+
+  if (totalPatrimoine <= 0) {
+    el.innerHTML = '';
+    return;
+  }
+
+  var tradingPct = Math.round(tradingCapital / totalPatrimoine * 100);
+  var otherPct = 100 - tradingPct;
+  var isOverConcentrated = tradingPct > 70;
+
+  var h = '';
+  h += '<div class="vue-section" style="margin-top:16px">';
+  h += '<div class="vue-section-header"><span>Allocation dans le patrimoine</span></div>';
+
+  h += '<div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">';
+
+  // Mini donut via CSS conic-gradient
+  var tradingColor = isOverConcentrated ? '#ef4444' : '#c9a227';
+  h += '<div style="position:relative;width:120px;height:120px;flex-shrink:0">';
+  h += '<div style="width:120px;height:120px;border-radius:50%;background:conic-gradient(' + tradingColor + ' 0% ' + tradingPct + '%, rgba(255,255,255,.06) ' + tradingPct + '% 100%)">';
+  h += '<div style="position:absolute;inset:20px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;flex-direction:column">';
+  h += '<div style="font-size:22px;font-weight:800;font-family:JetBrains Mono,monospace;color:' + tradingColor + '">' + tradingPct + '%</div>';
+  h += '<div style="font-size:9px;color:var(--t3);font-weight:600">TRADING</div>';
+  h += '</div></div></div>';
+
+  // Legend + info
+  h += '<div style="flex:1;min-width:200px">';
+  h += '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px">Le trading represente ' + tradingPct + '% de ton patrimoine</div>';
+
+  h += '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">';
+  h += '<div style="display:flex;align-items:center;gap:8px;font-size:12px">';
+  h += '<span style="width:10px;height:10px;border-radius:2px;background:' + tradingColor + ';flex-shrink:0"></span>';
+  h += '<span style="color:var(--t2)">Capital trading</span>';
+  h += '<span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-weight:600;color:var(--t1)">$' + tradingCapital.toLocaleString('en-US', {minimumFractionDigits: 0}) + '</span>';
+  h += '<span style="color:var(--t3);font-size:10px">' + tradingPct + '%</span>';
+  h += '</div>';
+
+  h += '<div style="display:flex;align-items:center;gap:8px;font-size:12px">';
+  h += '<span style="width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,.1);flex-shrink:0"></span>';
+  h += '<span style="color:var(--t2)">Autres actifs</span>';
+  h += '<span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-weight:600;color:var(--t1)">$' + (totalPatrimoine - tradingCapital).toLocaleString('en-US', {minimumFractionDigits: 0}) + '</span>';
+  h += '<span style="color:var(--t3);font-size:10px">' + otherPct + '%</span>';
+  h += '</div>';
+  h += '</div>';
+
+  // Warning if over-concentrated
+  if (isOverConcentrated) {
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px;font-size:12px">';
+    h += '<span style="color:var(--red);font-weight:700">⚠</span>';
+    h += '<span style="color:var(--t2)"><b style="color:var(--red)">Concentration elevee.</b> Plus de 70% de ton patrimoine est en trading. Diversifier reduit le risque global.</span>';
+    h += '</div>';
+  } else if (tradingPct > 50) {
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(201,162,39,.06);border:1px solid rgba(201,162,39,.12);border-radius:8px;font-size:12px">';
+    h += '<span style="color:var(--gold)">💡</span>';
+    h += '<span style="color:var(--t2)">Le trading represente plus de la moitie de ton patrimoine. Pense a diversifier progressivement.</span>';
+    h += '</div>';
+  }
+
+  h += '</div>'; // end legend
+  h += '</div>'; // end flex
+  h += '</div>'; // end section
+  el.innerHTML = h;
 }
 
 /* ─── Trading Account Cards (Page 2 Phase C) ─── */
