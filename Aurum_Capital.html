@@ -346,6 +346,61 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   .vue-kpis { grid-template-columns: 1fr; }
 }
 
+/* ═══ VUE D'ENSEMBLE V2 — Phase C (Graphiques) ═══ */
+.vue-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.vue-chart-card {
+  background: var(--bg2);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 14px;
+}
+.vue-chart-wide {
+  grid-column: 1 / -1;
+}
+.vue-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.vue-chart-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.vue-chart-toggles {
+  display: flex;
+  gap: 2px;
+  background: rgba(255,255,255,.03);
+  border-radius: 6px;
+  padding: 2px;
+}
+.vue-toggle {
+  background: none;
+  border: none;
+  color: var(--t3);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 150ms;
+}
+.vue-toggle:hover { color: var(--t1); }
+.vue-toggle.active { background: rgba(201,162,39,.12); color: var(--gold); }
+
+@media (max-width: 768px) {
+  .vue-charts-grid { grid-template-columns: 1fr; }
+  .vue-chart-wide { grid-column: 1; }
+}
+
 /* ═══ VUE D'ENSEMBLE V2 — Phase B (NextSteps + Cette semaine) ═══ */
 .vue-week {
   background: var(--bg2);
@@ -3086,6 +3141,9 @@ function rDashV2() {
     // ═══ ZONE 3 — CETTE SEMAINE ═══
     try { rVueThisWeek(health, nw); } catch(e3) { console.error('[Capital] ThisWeek:', e3); }
 
+    // ═══ ZONES 4-6 — GRAPHIQUES (Phase C) ═══
+    try { rVueCharts(nw, flows); } catch(e4) { console.error('[Capital] Charts:', e4); }
+
   } catch(e) { console.error('[Capital] rDashV2:', e); }
 }
 
@@ -3198,6 +3256,269 @@ function rVueThisWeek(health, nw) {
     }
   });
 }
+
+/* ─── Zones 4-6: Graphiques (Phase C) ─── */
+var _vueChartEvo = null, _vueChartAlloc = null, _vueChartRevExp = null;
+var _vueEvoRange = '12m';
+var _vueAllocMode = 'category';
+
+function rVueCharts(nw, flows) {
+  var el = document.getElementById('vueCharts');
+  if (!el) return;
+
+  var h = '<div class="vue-charts-grid">';
+
+  // ─── Zone 4: Évolution patrimoine ───
+  h += '<div class="vue-chart-card vue-chart-wide">';
+  h += '<div class="vue-chart-header">';
+  h += '<span class="vue-chart-title">Evolution du patrimoine</span>';
+  h += '<div class="vue-chart-toggles">';
+  ['12m','6m','YTD','All'].forEach(function(r) {
+    h += '<button class="vue-toggle' + (_vueEvoRange === r ? ' active' : '') + '" onclick="_vueEvoRange=\'' + r + '\';rVueChartEvo()">' + r + '</button>';
+  });
+  h += '</div></div>';
+  h += '<div style="position:relative;height:200px"><canvas id="vueCanvasEvo"></canvas></div>';
+  h += '</div>';
+
+  // ─── Zone 5: Répartition ───
+  h += '<div class="vue-chart-card">';
+  h += '<div class="vue-chart-header">';
+  h += '<span class="vue-chart-title">Repartition</span>';
+  h += '<div class="vue-chart-toggles">';
+  [['category','Classe'],['entity','Entite'],['liquidity','Liquidite']].forEach(function(m) {
+    h += '<button class="vue-toggle' + (_vueAllocMode === m[0] ? ' active' : '') + '" onclick="_vueAllocMode=\'' + m[0] + '\';rVueChartAlloc()">' + m[1] + '</button>';
+  });
+  h += '</div></div>';
+  h += '<div style="position:relative;height:200px"><canvas id="vueCanvasAlloc"></canvas></div>';
+  h += '</div>';
+
+  // ─── Zone 6: Revenus vs Dépenses ───
+  h += '<div class="vue-chart-card">';
+  h += '<div class="vue-chart-header">';
+  h += '<span class="vue-chart-title">Revenus vs Depenses</span>';
+  h += '</div>';
+  h += '<div style="position:relative;height:200px"><canvas id="vueCanvasRevExp"></canvas></div>';
+  h += '</div>';
+
+  h += '</div>';
+  el.innerHTML = h;
+
+  // Render each chart after DOM insertion
+  requestAnimationFrame(function() {
+    try { rVueChartEvo(); } catch(e) { console.error('[Capital] ChartEvo:', e); }
+    try { rVueChartAlloc(); } catch(e) { console.error('[Capital] ChartAlloc:', e); }
+    try { rVueChartRevExp(); } catch(e) { console.error('[Capital] ChartRevExp:', e); }
+  });
+}
+
+/* Zone 4: Évolution patrimoine */
+function rVueChartEvo() {
+  try {
+    if (_vueChartEvo) _vueChartEvo.destroy();
+    var cv = document.getElementById('vueCanvasEvo');
+    if (!cv) return;
+
+    var snapshots = NetWorthEvolutionCalculator.getHistoricalCurve(120);
+    // Also build from monthly P&L if no snapshots
+    if (snapshots.length < 2) {
+      var mp = mPnL();
+      var pm = {};
+      D.payouts.forEach(function(p) { var m = (p.date||'').slice(0,7); if(m) pm[m] = (pm[m]||0) + (p.net||0); });
+      var allM = {};
+      Object.keys(mp).forEach(function(m) { allM[m] = true; });
+      Object.keys(pm).forEach(function(m) { allM[m] = true; });
+      var sorted = Object.keys(allM).sort();
+      var cum = 0;
+      snapshots = sorted.map(function(m) { cum += (mp[m] ? mp[m].pnl : 0) + (pm[m] || 0); return { date: m + '-01', netWorth: cum }; });
+    }
+
+    // Apply range filter
+    var now = new Date();
+    var cutoff = null;
+    if (_vueEvoRange === '6m') { cutoff = new Date(now); cutoff.setMonth(now.getMonth() - 6); }
+    else if (_vueEvoRange === '12m') { cutoff = new Date(now); cutoff.setMonth(now.getMonth() - 12); }
+    else if (_vueEvoRange === 'YTD') { cutoff = new Date(now.getFullYear(), 0, 1); }
+    // 'All' = no cutoff
+
+    if (cutoff) {
+      var cutStr = cutoff.toISOString().slice(0,10);
+      snapshots = snapshots.filter(function(s) { return s.date >= cutStr; });
+    }
+
+    if (snapshots.length < 1) {
+      var ctx2d = cv.getContext('2d');
+      ctx2d.clearRect(0, 0, cv.width, cv.height);
+      ctx2d.fillStyle = '#56585e';
+      ctx2d.font = '12px DM Sans';
+      ctx2d.textAlign = 'center';
+      ctx2d.fillText('Pas encore de donnees', cv.width/2, cv.height/2);
+      return;
+    }
+
+    var labels = snapshots.map(function(s) { return s.date.slice(0,7); });
+    var data = snapshots.map(function(s) { return s.netWorth; });
+
+    _vueChartEvo = new Chart(cv, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          borderColor: '#c9a227',
+          backgroundColor: 'rgba(201,162,39,.08)',
+          fill: true,
+          tension: .4,
+          pointRadius: data.length > 24 ? 0 : 3,
+          pointHoverRadius: 5,
+          pointBackgroundColor: '#c9a227',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: '#56585e', font: { size: 9, family: 'DM Sans' }, maxTicksLimit: 8 }, grid: { color: 'rgba(255,255,255,.03)' } },
+          y: { ticks: { color: '#56585e', font: { size: 9, family: 'JetBrains Mono' }, callback: function(v) { return '$' + v.toLocaleString('en-US'); } }, grid: { color: 'rgba(255,255,255,.03)' } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(c) { return '$' + c.parsed.y.toLocaleString('en-US'); } } }
+        }
+      }
+    });
+  } catch(e) { console.error('[Capital] rVueChartEvo:', e); }
+}
+
+/* Zone 5: Répartition */
+function rVueChartAlloc() {
+  try {
+    if (_vueChartAlloc) _vueChartAlloc.destroy();
+    var cv = document.getElementById('vueCanvasAlloc');
+    if (!cv) return;
+
+    var nw = NetWorthCalculator.calculate();
+    var labelMap = {
+      'BANK_ACCOUNT':'Comptes bancaires','TRADING_PERSO':'Trading perso','TRADING_PROP':'Trading prop',
+      'ETF_STOCKS':'ETF/Actions','PEA':'PEA','ASSURANCE_VIE':'Assurance-vie','PER':'PER',
+      'CRYPTO':'Crypto','REAL_ESTATE':'Immobilier','SAVINGS':'Epargne','OTHER':'Autre'
+    };
+    var colors = ['#c9a227','#22c55e','#3b82f6','#8b5cf6','#ef4444','#f59e0b','#06b6d4','#ec4899','#6b7280','#10b981','#f97316'];
+
+    var breakdown, labels, values;
+    if (_vueAllocMode === 'entity') {
+      breakdown = nw.byEntity;
+      var entities = CapitalDataReader.getAllEntities();
+      labels = Object.keys(breakdown).map(function(id) {
+        var ent = entities.find(function(e) { return e.id === id; });
+        return ent ? ent.name : id;
+      });
+      values = Object.keys(breakdown).map(function(k) { return breakdown[k]; });
+    } else if (_vueAllocMode === 'liquidity') {
+      labels = ['Liquide', 'Non-liquide'];
+      values = [nw.byLiquidity.liquid, nw.byLiquidity.nonLiquid];
+    } else {
+      breakdown = nw.byCategory;
+      labels = Object.keys(breakdown).map(function(k) { return labelMap[k] || k; });
+      values = Object.keys(breakdown).map(function(k) { return breakdown[k]; });
+    }
+
+    // Filter out zeroes
+    var filtered = [];
+    labels.forEach(function(l, i) { if (values[i] > 0) filtered.push({ l: l, v: values[i] }); });
+    if (filtered.length === 0) {
+      var ctx2d = cv.getContext('2d');
+      ctx2d.clearRect(0, 0, cv.width, cv.height);
+      ctx2d.fillStyle = '#56585e';
+      ctx2d.font = '12px DM Sans';
+      ctx2d.textAlign = 'center';
+      ctx2d.fillText('Aucun actif', cv.width/2, cv.height/2);
+      return;
+    }
+
+    var tot = filtered.reduce(function(s, f) { return s + f.v; }, 0);
+    _vueChartAlloc = new Chart(cv, {
+      type: 'doughnut',
+      data: {
+        labels: filtered.map(function(f) { return f.l; }),
+        datasets: [{ data: filtered.map(function(f) { return f.v; }), backgroundColor: colors.slice(0, filtered.length), borderWidth: 2, borderColor: '#09090b' }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: {
+          legend: { position: 'right', labels: { color: '#8b8d94', font: { family: 'DM Sans', size: 10 }, padding: 8, usePointStyle: true, pointStyle: 'circle' } },
+          tooltip: { callbacks: { label: function(c) { var v = c.parsed || 0; var pct = tot ? ((v/tot)*100).toFixed(1) : '0'; return ' ' + c.label + ' : $' + v.toLocaleString('en-US') + ' (' + pct + '%)'; } } }
+        }
+      }
+    });
+  } catch(e) { console.error('[Capital] rVueChartAlloc:', e); }
+}
+
+/* Zone 6: Revenus vs Dépenses */
+function rVueChartRevExp() {
+  try {
+    if (_vueChartRevExp) _vueChartRevExp.destroy();
+    var cv = document.getElementById('vueCanvasRevExp');
+    if (!cv) return;
+
+    var mp = mPnL();
+    var expByMonth = {};
+    D.expenses.forEach(function(e) { expByMonth[e.month] = (expByMonth[e.month] || 0) + (e.amount || 0); });
+    var payByMonth = {};
+    D.payouts.forEach(function(p) { var m = (p.date||'').slice(0,7); if(m) payByMonth[m] = (payByMonth[m] || 0) + (p.net || 0); });
+
+    // Also count v2 flows
+    CapitalStore.getAllFlows().forEach(function(f) {
+      var m = (f.occurredAt||'').slice(0,7);
+      if (!m) return;
+      if (f.kind === 'PAYOUT') payByMonth[m] = (payByMonth[m] || 0) + (f.netAmount || 0);
+      else if (f.kind === 'EXPENSE') expByMonth[m] = (expByMonth[m] || 0) + Math.abs(f.netAmount || 0);
+    });
+
+    var allMonths = {};
+    Object.keys(mp).forEach(function(m) { allMonths[m] = true; });
+    Object.keys(expByMonth).forEach(function(m) { allMonths[m] = true; });
+    Object.keys(payByMonth).forEach(function(m) { allMonths[m] = true; });
+    var sorted = Object.keys(allMonths).sort().slice(-12);
+
+    if (sorted.length === 0) {
+      var ctx2d = cv.getContext('2d');
+      ctx2d.clearRect(0, 0, cv.width, cv.height);
+      ctx2d.fillStyle = '#56585e';
+      ctx2d.font = '12px DM Sans';
+      ctx2d.textAlign = 'center';
+      ctx2d.fillText('Aucune donnee', cv.width/2, cv.height/2);
+      return;
+    }
+
+    var revData = sorted.map(function(m) { return (mp[m] ? mp[m].pnl : 0) + (payByMonth[m] || 0); });
+    var expData = sorted.map(function(m) { return -(expByMonth[m] || 0); });
+    var savData = sorted.map(function(m, i) { return revData[i] + expData[i]; });
+
+    _vueChartRevExp = new Chart(cv, {
+      type: 'bar',
+      data: {
+        labels: sorted,
+        datasets: [
+          { label: 'Revenus', data: revData, backgroundColor: 'rgba(34,197,94,.7)', borderRadius: 4 },
+          { label: 'Depenses', data: expData, backgroundColor: 'rgba(239,68,68,.7)', borderRadius: 4 },
+          { label: 'Epargne', data: savData, type: 'line', borderColor: '#c9a227', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: .3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: '#56585e', font: { size: 9, family: 'DM Sans' } }, grid: { display: false } },
+          y: { ticks: { color: '#56585e', font: { size: 9, family: 'JetBrains Mono' } }, grid: { color: 'rgba(255,255,255,.03)' } }
+        },
+        plugins: {
+          legend: { labels: { color: '#8b8d94', font: { size: 10 } } },
+          tooltip: { callbacks: { footer: function(items) { var r=0,d=0; items.forEach(function(it) { if(it.dataset.label==='Revenus')r=it.parsed.y; else if(it.dataset.label==='Depenses')d=it.parsed.y; }); return 'Marge : $' + (r+d).toLocaleString('en-US'); } } }
+        }
+      }
+    });
+  } catch(e) { console.error('[Capital] rVueChartRevExp:', e); }
+}
+
 function rAC(){try{var ct={};D.portfolio.forEach(function(p){ct[p.cat]=(ct[p.cat]||0)+(p.current||0)});var j=rJ();j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel'){var bal=a.balance||0;j.t.forEach(function(t){if(t.account===a.name)bal+=parseFloat(t.pl)||0});ct['Trading perso']=(ct['Trading perso']||0)+bal}});var lb=Object.keys(ct),vl=lb.map(function(k){return ct[k]});var cl=['#a78bfa','#5b8def','#00d68f','#f5d060','#ff4757','#d4a017','#6b7ea0','#8b5cf6'];if(cA)cA.destroy();var cvA=document.getElementById('cA');if(!lb.length){var ctx=cvA.getContext('2d');ctx.clearRect(0,0,cvA.width,cvA.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Ajoutez des actifs pour voir l\u2019allocation',cvA.width/2,cvA.height/2);return}var tot=vl.reduce(function(a,b){return a+b},0);cA=new Chart(cvA,{type:'doughnut',data:{labels:lb,datasets:[{data:vl,backgroundColor:cl.slice(0,lb.length),borderWidth:2,borderColor:'#0c1018',hoverBorderColor:'#a78bfa',hoverBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#9bafd4',font:{family:'Inter',size:10},padding:10,usePointStyle:true,pointStyle:'circle'}},tooltip:{callbacks:{label:function(c){var v=c.parsed||0;var pct=tot?((v/tot)*100).toFixed(1):'0';return' '+c.label+' : $'+v.toLocaleString('en-US')+' ('+pct+'%)'}}}}}});}catch(e){console.error('rAC:',e)}}
 function rEC(){try{var mp2=mPnL(),pm={};D.payouts.forEach(function(p){var m=p.date.slice(0,7);pm[m]=(pm[m]||0)+(p.net||0)});var am={};Object.keys(mp2).forEach(function(m){am[m]=true});Object.keys(pm).forEach(function(m){am[m]=true});var s=Object.keys(am).sort(),cu=[],r=0;s.forEach(function(m){r+=(mp2[m]?mp2[m].pnl:0)+(pm[m]||0);cu.push(r)});if(cE)cE.destroy();var cvE=document.getElementById('cE');if(!s.length){var ctx=cvE.getContext('2d');ctx.clearRect(0,0,cvE.width,cvE.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Pas encore de donn\u00e9es d\u2019\u00e9volution',cvE.width/2,cvE.height/2);return}cE=new Chart(cvE,{type:'line',data:{labels:s,datasets:[{data:cu,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.1)',fill:true,tension:.4,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#a78bfa',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,scales:{x:{ticks:{color:'#6b7ea0',font:{size:9}},grid:{color:'rgba(29,40,64,.5)'}},y:{beginAtZero:true,ticks:{color:'#6b7ea0',font:{family:'JetBrains Mono',size:9},callback:function(v){return'$'+v.toLocaleString('en-US')}},grid:{color:'rgba(29,40,64,.5)'}}},plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:function(c){var i=c.dataIndex;if(i===0)return'\u25b3 premier mois';var prev=cu[i-1];var diff=cu[i]-prev;var sign=diff>=0?'+':'';var arrow=diff>=0?'\u25b3':'\u25bd';return arrow+' '+sign+'$'+diff.toLocaleString('en-US')}}}}}})}catch(e){console.error('rEC:',e)}}
 function rRC(){try{var mp2=mPnL(),em={},pm={};D.expenses.forEach(function(e){em[e.month]=(em[e.month]||0)+(e.amount||0)});D.payouts.forEach(function(p){var m=p.date.slice(0,7);pm[m]=(pm[m]||0)+(p.net||0)});var am={};Object.keys(mp2).forEach(function(m){am[m]=true});Object.keys(em).forEach(function(m){am[m]=true});Object.keys(pm).forEach(function(m){am[m]=true});var s=Object.keys(am).sort();var rv=s.map(function(m){return(mp2[m]?mp2[m].pnl:0)+(pm[m]||0)});var ex=s.map(function(m){return-(em[m]||0)});if(cR)cR.destroy();var cvR=document.getElementById('cR');if(!s.length){var ctx=cvR.getContext('2d');ctx.clearRect(0,0,cvR.width,cvR.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Aucun revenu ou d\u00e9pense enregistr\u00e9',cvR.width/2,cvR.height/2);return}cR=new Chart(cvR,{type:'bar',data:{labels:s,datasets:[{label:'Revenus',data:rv,backgroundColor:'rgba(0,214,143,.7)',borderRadius:4},{label:'D\u00e9penses',data:ex,backgroundColor:'rgba(255,71,87,.7)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:true,scales:{x:{ticks:{color:'#6b7ea0',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#6b7ea0',font:{family:'JetBrains Mono',size:9}},grid:{color:'rgba(29,40,64,.5)'}}},plugins:{legend:{labels:{color:'#9bafd4',font:{size:10}}},tooltip:{callbacks:{footer:function(items){var rev=0,dep=0;items.forEach(function(it){if(it.dataset.label==='Revenus')rev=it.parsed.y;else dep=it.parsed.y});var marge=rev+dep;return'Marge : $'+marge.toLocaleString('en-US')}}}}}})}catch(e){console.error('rRC:',e)}}
