@@ -4413,9 +4413,97 @@ function dPF(id){try{if(!confirm('Supprimer ?'))return;D.propfirms=D.propfirms.f
 /* ─── IMPORT PROP FIRMS FROM JOURNAL ─── */
 function importPFFromJournal(){try{var j=rJ();if(!j||!j.a||!j.a.length){toast('Aucun compte trouvé dans le Journal');return}var props=j.a.filter(function(a){var t=(a.type||'').toLowerCase();return t!=='perso'&&t!=='personnel'});if(!props.length){toast('Aucun compte prop firm dans le Journal');return}var existNames=D.propfirms.map(function(p){return(p.firm||'').toLowerCase()});var newProps=props.filter(function(a){return existNames.indexOf((a.name||'').toLowerCase())===-1});if(!newProps.length){toast('Tous les comptes prop sont deja importes');return}var names=newProps.map(function(a){return a.name+' '+fm(a.balance)}).join(', ');if(!confirm(newProps.length+' compte(s) prop trouves dans le Journal :\n'+names+'.\n\nImporter ?'))return;newProps.forEach(function(a){D.propfirms.push({id:uid(),firm:a.name||'',type:'',size:a.balance||0,cost:0,split:80,status:'En cours'});D.history.unshift({type:'propfirm',text:a.name+' — importe depuis Journal',date:new Date().toISOString().slice(0,10)})});save();rPF();toast(newProps.length+' compte(s) importe(s)')}catch(e){toast('Erreur lors de l\'import')}}
 function rPF(){try{
-/* Populate linked account select */
-try{var j=rJ();var accSel=document.getElementById('pf-acc');if(accSel&&j.a.length){var opts='<option value="">— Aucun —</option>';j.a.forEach(function(a){opts+='<option value="'+a.name+'">'+a.name+' ('+a.type+' · $'+Math.round(a.balance)+')</option>'});accSel.innerHTML=opts}}catch(pe){}
-if(!D.propfirms.length){document.getElementById('pfS').innerHTML='';document.getElementById('pfT').innerHTML='<tr><td colspan="7"><div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(212,160,23,.05),rgba(167,139,250,.03));border-left:3px solid var(--gold);border-radius:10px;padding:20px 24px;text-align:center"><div style="font-size:32px;margin-bottom:10px">🏆</div><div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Lance ton premier challenge</div><div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Les prop firms te donnent du capital pour trader. Suis ton parcours ici.</div><div style="display:flex;align-items:center;justify-content:center;gap:12px;font-size:11px;color:var(--t3);margin-bottom:16px;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700">1</span> Choisis une firm</span><span style="color:var(--t3)">→</span><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700">2</span> Passe le challenge</span><span style="color:var(--t3)">→</span><span style="display:flex;align-items:center;gap:4px"><span style="width:22px;height:22px;border-radius:50%;background:rgba(212,160,23,.12);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700">3</span> Funded account</span></div><button class="btn bp bs" onclick="tg(\'pfF\')">+ Ajouter un challenge</button></div></td></tr>';return}var tc=0,fd=0,fl=0,ac=0;D.propfirms.forEach(function(p){tc+=p.cost||0;if(p.status==='Funded')fd++;if(p.status==='Échoué'||p.status==='Perdu')fl++;if(p.status==='En cours'||p.status==='Phase 2')ac++});var po=D.payouts.filter(function(p){return p.source==='Prop Firm'}).reduce(function(s,p){return s+(p.net||0)},0);var roi=tc>0?Math.round(((po-tc)/tc)*100):0;document.getElementById('pfS').innerHTML=kp('Dépensé',fm(tc),'var(--red)')+kp('Payouts PF',fm(po),'var(--green)')+kp('ROI',roi+'%',roi>=0?'var(--green)':'var(--red)')+kp('Funded/Fail',fd+'/'+fl,'var(--t2)')+kp('En cours',ac,'var(--gold)');var sIco={'En cours':'⏳','Phase 2':'🔄','Réussi':'✅','Funded':'🎉','Échoué':'❌','Perdu':'⛔'};var sBg={'En cours':'rgba(212,160,23,.06)','Phase 2':'rgba(91,141,239,.06)','Réussi':'rgba(0,214,143,.06)','Funded':'rgba(0,214,143,.1)','Échoué':'rgba(255,71,87,.06)','Perdu':'rgba(255,71,87,.08)'};document.getElementById('pfT').innerHTML=D.propfirms.map(function(p){var s=p.status==='Funded'?'ps':(p.status==='Échoué'||p.status==='Perdu')?'ng':'';return'<tr style="background:'+(sBg[p.status]||'transparent')+'"><td style="font-weight:600;color:var(--t1)">'+p.firm+'</td><td>'+p.type+(p.rules&&p.rules.profitTarget?' <span style="font-size:10px;color:var(--t3)">obj:$'+p.rules.profitTarget+'</span>':'')+'</td><td class="mn">'+fm(p.size)+'</td><td class="mn ng">'+fm(p.cost)+'</td><td class="mn">'+p.split+'%</td><td class="'+s+'" style="font-weight:700">'+(sIco[p.status]||'')+' '+p.status+(p.fundedAt?' <span style="font-size:10px;color:var(--t3)">'+p.fundedAt+'</span>':'')+(p.linkedAccountId?' <span style="font-size:10px;color:var(--blue)">🔗</span>':'')+'</td><td><button class="btn br bs" onclick="dPF(\''+p.id+'\')">×</button></td></tr>'}).join('')}catch(e){console.error(e)}}
+  /* Populate linked account select */
+  try{var j=rJ();var accSel=document.getElementById('pf-acc');if(accSel&&j.a.length){var opts='<option value="">— Aucun —</option>';j.a.forEach(function(a){opts+='<option value="'+a.name+'">'+a.name+' ('+a.type+' · $'+Math.round(a.balance)+')</option>'});accSel.innerHTML=opts}}catch(pe){}
+
+  var pfS = document.getElementById('pfS');
+  var pfT = document.getElementById('pfT');
+  if (!pfS || !pfT) return;
+
+  /* Empty state */
+  if (!D.propfirms.length) {
+    pfS.innerHTML = '';
+    pfT.innerHTML = '<tr><td colspan="7">' +
+      '<div style="text-align:center;padding:48px 20px;max-width:500px;margin:0 auto">' +
+      '<div style="font-size:36px;margin-bottom:12px">🏆</div>' +
+      '<div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px;font-family:Bricolage Grotesque,system-ui">Lance ton premier challenge</div>' +
+      '<div style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:20px">Les prop firms te donnent du capital pour trader. Suis ton ROI ici.</div>' +
+      '<div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:var(--t3);margin-bottom:20px">' +
+      '<span style="display:flex;align-items:center;gap:4px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(201,162,39,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold)">1</span>Choisis</span>' +
+      '<span>→</span>' +
+      '<span style="display:flex;align-items:center;gap:4px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(201,162,39,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold)">2</span>Challenge</span>' +
+      '<span>→</span>' +
+      '<span style="display:flex;align-items:center;gap:4px"><span style="width:20px;height:20px;border-radius:50%;background:rgba(201,162,39,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold)">3</span>Funded</span>' +
+      '</div>' +
+      '<button style="background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.2);color:var(--gold);padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-height:44px" onclick="tg(\'pfF\')">+ Ajouter un challenge</button>' +
+      '</div></td></tr>';
+    return;
+  }
+
+  /* Compute KPIs */
+  var totalCost = 0, funded = 0, failed = 0, active = 0;
+  D.propfirms.forEach(function(p) {
+    totalCost += p.cost || 0;
+    if (p.status === 'Funded') funded++;
+    if (p.status === 'Échoué' || p.status === 'Perdu') failed++;
+    if (p.status === 'En cours' || p.status === 'Phase 2') active++;
+  });
+  var totalPayouts = D.payouts.filter(function(p) {
+    return D.propfirms.some(function(pf) { return p.source && p.source.toLowerCase().indexOf(pf.firm.toLowerCase()) >= 0; });
+  }).reduce(function(s, p) { return s + (p.net || 0); }, 0);
+  /* Also check payouts with source 'Prop Firm' */
+  totalPayouts += D.payouts.filter(function(p) { return p.source === 'Prop Firm'; }).reduce(function(s, p) { return s + (p.net || 0); }, 0);
+  var roi = totalCost > 0 ? Math.round(((totalPayouts - totalCost) / totalCost) * 100) : 0;
+
+  /* Render KPIs */
+  var kh = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+
+  kh += '<div class="vue-kpi">';
+  kh += '<div class="vue-kpi-header"><span class="vue-kpi-label">Depense total</span></div>';
+  kh += '<div class="vue-kpi-value" style="color:var(--red)">$' + totalCost.toLocaleString('en-US') + '</div>';
+  kh += '<div class="vue-kpi-sub">' + D.propfirms.length + ' challenge' + (D.propfirms.length > 1 ? 's' : '') + '</div>';
+  kh += '</div>';
+
+  kh += '<div class="vue-kpi">';
+  kh += '<div class="vue-kpi-header"><span class="vue-kpi-label">Recupere</span></div>';
+  kh += '<div class="vue-kpi-value" style="color:var(--green)">$' + totalPayouts.toLocaleString('en-US') + '</div>';
+  kh += '<div class="vue-kpi-sub">Payouts nets</div>';
+  kh += '</div>';
+
+  var roiColor = roi >= 0 ? 'var(--green)' : 'var(--red)';
+  kh += '<div class="vue-kpi">';
+  kh += '<div class="vue-kpi-header"><span class="vue-kpi-label">ROI net</span></div>';
+  kh += '<div class="vue-kpi-value" style="color:' + roiColor + '">' + (roi >= 0 ? '+' : '') + roi + '%</div>';
+  kh += '<div class="vue-kpi-sub">' + (totalPayouts - totalCost >= 0 ? '+' : '') + '$' + (totalPayouts - totalCost).toLocaleString('en-US') + '</div>';
+  kh += '</div>';
+
+  kh += '<div class="vue-kpi">';
+  kh += '<div class="vue-kpi-header"><span class="vue-kpi-label">Challenges</span></div>';
+  kh += '<div class="vue-kpi-value" style="color:var(--t1)">' + active + '<span style="font-size:14px;color:var(--t3)"> / ' + D.propfirms.length + '</span></div>';
+  kh += '<div class="vue-kpi-sub">' + funded + ' funded · ' + failed + ' echoue' + (failed > 1 ? 's' : '') + '</div>';
+  kh += '</div>';
+
+  kh += '</div>';
+  pfS.innerHTML = kh;
+
+  /* Render table rows */
+  var sIco = {'En cours':'⏳','Phase 2':'🔄','Réussi':'✅','Funded':'🎉','Échoué':'❌','Perdu':'⛔'};
+  var sBg = {'En cours':'rgba(201,162,39,.04)','Phase 2':'rgba(59,130,246,.04)','Réussi':'rgba(34,197,94,.04)','Funded':'rgba(34,197,94,.06)','Échoué':'rgba(239,68,68,.04)','Perdu':'rgba(239,68,68,.06)'};
+
+  pfT.innerHTML = D.propfirms.map(function(p) {
+    var statusColor = p.status === 'Funded' || p.status === 'Réussi' ? 'var(--green)' : (p.status === 'Échoué' || p.status === 'Perdu') ? 'var(--red)' : 'var(--gold)';
+    return '<tr style="background:' + (sBg[p.status] || 'transparent') + ';border-bottom:1px solid rgba(255,255,255,.04);transition:background 150ms">' +
+      '<td style="padding:10px 12px;font-weight:600;color:var(--t1)">' + esc(p.firm) + '</td>' +
+      '<td style="padding:10px 12px;font-size:12px;color:var(--t2)">' + (p.type || '') + (p.rules && p.rules.profitTarget ? ' <span style="font-size:10px;color:var(--t3)">obj:$' + p.rules.profitTarget + '</span>' : '') + '</td>' +
+      '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;color:var(--t1)">' + fm(p.size) + '</td>' +
+      '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;color:var(--red)">' + fm(p.cost) + '</td>' +
+      '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;color:var(--t2)">' + (p.split || 80) + '%</td>' +
+      '<td style="padding:10px 12px;font-weight:600;color:' + statusColor + '">' + (sIco[p.status] || '') + ' ' + p.status + (p.fundedAt ? ' <span style="font-size:10px;color:var(--t3)">' + p.fundedAt + '</span>' : '') + (p.linkedAccountId ? ' <span style="font-size:10px;color:var(--blue)">🔗</span>' : '') + '</td>' +
+      '<td style="padding:10px 12px"><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:4px;transition:background 150ms;min-width:32px;min-height:32px" onmouseover="this.style.background=\'rgba(239,68,68,.1)\'" onmouseout="this.style.background=\'none\'" onclick="dPF(\'' + p.id + '\')">&times;</button></td>' +
+      '</tr>';
+  }).join('');
+
+}catch(e){console.error('[Capital] rPF:',e)}}
 /* ─── AUTO-DETECT FUNDED ─── */
 function checkPropFirmStatus(){try{
   var j=rJ();
