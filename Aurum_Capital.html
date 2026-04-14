@@ -702,7 +702,7 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 <button style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--t3);padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-height:44px;transition:all 150ms" onclick="tg('pfF')">Annuler</button>
 </div>
 </div>
-<div class="sg" id="pfS"></div><div class="tw"><table><thead><tr><th>Firm</th><th>Type</th><th>Taille</th><th>Coût</th><th>Split</th><th>Statut</th><th></th></tr></thead><tbody id="pfT"></tbody></table></div></div>
+<div class="sg" id="pfS"></div><div class="tw"><table><thead><tr><th>Firm</th><th>Type</th><th>Taille</th><th>Coût</th><th>Split</th><th>ROI</th><th>Statut</th><th></th></tr></thead><tbody id="pfT"></tbody></table></div></div>
 <div class="pnl" id="p-po"><div class="st">Payouts (retraits) <button class="btn bp bs" onclick="tg('poF')">+ Payout</button></div>
 <div id="poSum" style="margin-bottom:14px"></div>
 <div id="poF" class="crd" style="display:none;margin-bottom:14px">
@@ -4605,15 +4605,46 @@ function rPF(){try{
   var sIco = {'En cours':'⏳','Phase 2':'🔄','Réussi':'✅','Funded':'🎉','Échoué':'❌','Perdu':'⛔'};
   var sBg = {'En cours':'rgba(201,162,39,.04)','Phase 2':'rgba(59,130,246,.04)','Réussi':'rgba(34,197,94,.04)','Funded':'rgba(34,197,94,.06)','Échoué':'rgba(239,68,68,.04)','Perdu':'rgba(239,68,68,.06)'};
 
+  /* Compute individual ROI from Journal payouts + P&L */
+  var j = rJ();
+  var pfPayoutMap = {};
+  var pfPnlMap = {};
+  D.propfirms.forEach(function(pf) {
+    var firmLower = (pf.firm || '').toLowerCase();
+    /* Payouts matching this firm */
+    var pfPayouts = D.payouts.filter(function(po) {
+      return (po.source || '').toLowerCase().indexOf(firmLower) >= 0;
+    });
+    pfPayoutMap[pf.id] = pfPayouts.reduce(function(s, po) { return s + (po.net || 0); }, 0);
+    /* P&L from linked Journal account */
+    var acc = j.a.find(function(a) { return a.name === pf.linkedAccountId || a.name === pf.firm || a.id === pf.linkedAccountId; });
+    var pnl = 0;
+    if (acc) {
+      j.t.forEach(function(t) { if (t.account === acc.name || (t.accId && t.accId === acc.id)) pnl += parseFloat(t.pl) || 0; });
+    }
+    pfPnlMap[pf.id] = pnl;
+  });
+
   pfT.innerHTML = D.propfirms.map(function(p) {
     var statusColor = p.status === 'Funded' || p.status === 'Réussi' ? 'var(--green)' : (p.status === 'Échoué' || p.status === 'Perdu') ? 'var(--red)' : 'var(--gold)';
+    var indivPayouts = pfPayoutMap[p.id] || 0;
+    var indivPnl = pfPnlMap[p.id] || 0;
+    var indivROI = indivPayouts - (p.cost || 0);
+    var roiColor = indivROI >= 0 ? 'var(--green)' : 'var(--red)';
+    /* Badge "En attente payout" for funded without payouts */
+    var waitingBadge = '';
+    if (p.status === 'Funded' && indivPayouts === 0) {
+      waitingBadge = ' <span style="font-size:9px;background:rgba(201,162,39,.1);color:var(--gold);padding:2px 6px;border-radius:3px;font-weight:600">En attente payout</span>';
+    }
+
     return '<tr style="background:' + (sBg[p.status] || 'transparent') + ';border-bottom:1px solid rgba(255,255,255,.04);transition:background 150ms">' +
       '<td style="padding:10px 12px;font-weight:600;color:var(--t1)">' + esc(p.firm) + '</td>' +
       '<td style="padding:10px 12px;font-size:12px;color:var(--t2)">' + (p.type || '') + (p.rules && p.rules.profitTarget ? ' <span style="font-size:10px;color:var(--t3)">obj:$' + p.rules.profitTarget + '</span>' : '') + '</td>' +
       '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;color:var(--t1)">' + fm(p.size) + '</td>' +
       '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;color:var(--red)">' + fm(p.cost) + '</td>' +
       '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;color:var(--t2)">' + (p.split || 80) + '%</td>' +
-      '<td style="padding:10px 12px;font-weight:600;color:' + statusColor + '">' + (sIco[p.status] || '') + ' ' + p.status + (p.fundedAt ? ' <span style="font-size:10px;color:var(--t3)">' + p.fundedAt + '</span>' : '') + (p.linkedAccountId ? ' <span style="font-size:10px;color:var(--blue)">🔗</span>' : '') + '</td>' +
+      '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600;color:' + roiColor + '">' + (indivROI >= 0 ? '+' : '') + fm(indivROI) + '</td>' +
+      '<td style="padding:10px 12px;font-weight:600;color:' + statusColor + '">' + (sIco[p.status] || '') + ' ' + p.status + (p.fundedAt ? ' <span style="font-size:10px;color:var(--t3)">' + p.fundedAt + '</span>' : '') + waitingBadge + (p.linkedAccountId ? ' <span style="font-size:10px;color:var(--blue)">🔗</span>' : '') + '</td>' +
       '<td style="padding:10px 12px"><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:4px;transition:background 150ms;min-width:32px;min-height:32px" onmouseover="this.style.background=\'rgba(239,68,68,.1)\'" onmouseout="this.style.background=\'none\'" onclick="dPF(\'' + p.id + '\')">&times;</button></td>' +
       '</tr>';
   }).join('');
@@ -4627,10 +4658,10 @@ function checkPropFirmStatus(){try{
     if(pf.status!=='En cours'&&pf.status!=='Phase 2')return;
     if(!pf.linkedAccountId&&!pf.firm)return;
     /* Trouver le compte lié */
-    var acc=j.a.find(function(a){return a.name===pf.linkedAccountId||a.name===pf.firm});
+    var acc=j.a.find(function(a){return a.name===pf.linkedAccountId||a.name===pf.firm||a.id===pf.linkedAccountId});
     if(!acc)return;
     /* Calculer le P&L total sur ce compte */
-    var trades=j.t.filter(function(t){return t.account===acc.name});
+    var trades=j.t.filter(function(t){return t.account===acc.name||(t.accId&&t.accId===acc.id)});
     var totalPnl=trades.reduce(function(s,t){return s+(parseFloat(t.pl)||0)},0);
     /* Vérifier l'objectif */
     if(pf.rules&&pf.rules.profitTarget>0&&totalPnl>=pf.rules.profitTarget){
