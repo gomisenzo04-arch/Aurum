@@ -4145,8 +4145,98 @@ function rAc() {
     h += '<div id="tradingAllocation"></div>';
 
     el.innerHTML = h;
+
+    // Phase B: P&L mensuel
+    try { rTradingPnlTable(); } catch(eb) { console.error('[Capital] rTradingPnlTable:', eb); }
+
   } catch(e) { console.error('[Capital] rAc:', e); }
 }
+
+/* ─── Trading P&L mensuel (Page 2 Phase B) ─── */
+var _tradingPnlRange = '12m';
+
+function rTradingPnlTable() {
+  var el = document.getElementById('tradingPnlTable');
+  if (!el) return;
+
+  var stats = TradingStatsSyncService.getMonthlyStats();
+  if (!stats.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">Aucun trade enregistre</div>';
+    return;
+  }
+
+  // Filter by range
+  var now = new Date();
+  var filtered = stats.slice();
+  if (_tradingPnlRange === '12m') {
+    var cutoff12 = new Date(now); cutoff12.setMonth(now.getMonth() - 12);
+    var cut12Str = cutoff12.toISOString().slice(0, 7);
+    filtered = filtered.filter(function(s) { return s.month >= cut12Str; });
+  } else if (_tradingPnlRange === 'ytd') {
+    var ytdStr = now.getFullYear() + '-01';
+    filtered = filtered.filter(function(s) { return s.month >= ytdStr; });
+  } else if (_tradingPnlRange === 'prev') {
+    var prevYear = String(now.getFullYear() - 1);
+    filtered = filtered.filter(function(s) { return s.month.startsWith(prevYear); });
+  }
+  // 'all' = no filter
+
+  filtered.sort(function(a, b) { return b.month.localeCompare(a.month); });
+
+  // Totals
+  var totalTrades = filtered.reduce(function(s, m) { return s + m.trades; }, 0);
+  var totalPnl = filtered.reduce(function(s, m) { return s + m.pnl; }, 0);
+  var totalWins = filtered.reduce(function(s, m) { return s + m.wins; }, 0);
+  var totalWr = totalTrades > 0 ? Math.round(totalWins / totalTrades * 100) : 0;
+
+  var h = '';
+  h += '<div class="vue-section" style="margin-top:16px">';
+
+  // Header + toggles
+  h += '<div class="vue-section-header">';
+  h += '<span>P&L mensuel</span>';
+  h += '<div class="vue-chart-toggles">';
+  [['12m','12 mois'],['ytd','Annee'],['prev','Precedente'],['all','Tout']].forEach(function(t) {
+    h += '<button class="vue-toggle' + (_tradingPnlRange === t[0] ? ' active' : '') + '" onclick="_tradingPnlRange=\'' + t[0] + '\';rTradingPnlTable()">' + t[1] + '</button>';
+  });
+  h += '</div></div>';
+
+  // Table
+  h += '<div style="overflow-x:auto">';
+  h += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  h += '<thead><tr>';
+  h += '<th style="text-align:left;padding:8px 12px;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">Mois</th>';
+  h += '<th style="text-align:center;padding:8px 12px;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">Trades</th>';
+  h += '<th style="text-align:center;padding:8px 12px;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">WR</th>';
+  h += '<th style="text-align:right;padding:8px 12px;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">P&L</th>';
+  h += '</tr></thead><tbody>';
+
+  filtered.forEach(function(m) {
+    var wrColor = m.wr >= 50 ? 'var(--green)' : 'var(--red)';
+    var plColor = m.pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    h += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);transition:background 150ms">';
+    h += '<td style="padding:10px 12px;font-weight:600;color:var(--t1)">' + m.month + '</td>';
+    h += '<td style="padding:10px 12px;text-align:center;color:var(--t2);font-family:JetBrains Mono,monospace">' + m.trades + '</td>';
+    h += '<td style="padding:10px 12px;text-align:center;color:' + wrColor + ';font-family:JetBrains Mono,monospace;font-weight:600">' + Math.round(m.wr) + '%</td>';
+    h += '<td style="padding:10px 12px;text-align:right;color:' + plColor + ';font-family:JetBrains Mono,monospace;font-weight:700">' + (m.pnl >= 0 ? '+' : '') + '$' + m.pnl.toFixed(2) + '</td>';
+    h += '</tr>';
+  });
+
+  // Footer totals
+  var totalPlColor = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+  var totalWrColor = totalWr >= 50 ? 'var(--green)' : 'var(--red)';
+  h += '<tr style="border-top:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)">';
+  h += '<td style="padding:10px 12px;font-weight:700;color:var(--t1)">Total</td>';
+  h += '<td style="padding:10px 12px;text-align:center;color:var(--t1);font-family:JetBrains Mono,monospace;font-weight:700">' + totalTrades + '</td>';
+  h += '<td style="padding:10px 12px;text-align:center;color:' + totalWrColor + ';font-family:JetBrains Mono,monospace;font-weight:700">' + totalWr + '%</td>';
+  h += '<td style="padding:10px 12px;text-align:right;color:' + totalPlColor + ';font-family:JetBrains Mono,monospace;font-weight:800">' + (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(2) + '</td>';
+  h += '</tr>';
+
+  h += '</tbody></table></div>';
+  h += '</div>';
+  el.innerHTML = h;
+}
+
 /* ─── PROP FIRMS ─── */
 function aPF(){try{var f=esc(document.getElementById('pf-f').value.trim());if(!f){toast('Nom requis');return}D.propfirms.push({id:uid(),firm:f,type:document.getElementById('pf-t').value,size:parseFloat(document.getElementById('pf-s').value)||0,cost:parseFloat(document.getElementById('pf-c').value)||0,split:parseFloat(document.getElementById('pf-sp').value)||80,status:document.getElementById('pf-st').value,rules:{profitTarget:parseFloat(document.getElementById('pf-obj').value)||0,ddMaxDay:parseFloat(document.getElementById('pf-dd').value)||0,ddMaxTotal:parseFloat(document.getElementById('pf-ddt').value)||0,minDays:parseInt(document.getElementById('pf-jmin').value)||0},linkedAccountId:document.getElementById('pf-acc').value||null,fundedAt:null});D.history.unshift({type:'propfirm',text:f+' — '+document.getElementById('pf-st').value,date:new Date().toISOString().slice(0,10)});save();rPF();tg('pfF');toast('Ajouté')}catch(e){console.error(e)}}
 function dPF(id){try{if(!confirm('Supprimer ?'))return;D.propfirms=D.propfirms.filter(function(p){return p.id!==id});save();rPF()}catch(e){console.error(e)}}
