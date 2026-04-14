@@ -401,6 +401,72 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   .vue-chart-wide { grid-column: 1; }
 }
 
+/* ═══ VUE D'ENSEMBLE V2 — Phase D (Echeances + Activite + Projection) ═══ */
+.vue-section {
+  background: var(--bg2);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 14px;
+}
+.vue-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.vue-link {
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  transition: opacity 150ms;
+}
+.vue-link:hover { opacity: .7; }
+.vue-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 2px;
+  transition: background 150ms;
+  cursor: pointer;
+  font-size: 12px;
+}
+.vue-list-row:hover { background: rgba(255,255,255,.03); }
+.vue-list-icon { font-size: 14px; flex-shrink: 0; width: 20px; text-align: center; }
+.vue-list-label { flex: 1; color: var(--t1); font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vue-list-amount { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 12px; flex-shrink: 0; }
+.vue-list-badge { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border: 1px solid; border-radius: 4px; flex-shrink: 0; }
+.vue-list-tag { font-size: 9px; font-weight: 600; color: var(--t3); background: rgba(255,255,255,.04); padding: 2px 6px; border-radius: 3px; flex-shrink: 0; }
+.vue-list-date { font-size: 10px; color: var(--t3); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+
+/* Projection card */
+.vue-projection-card {
+  padding: 14px;
+  background: rgba(201,162,39,.04);
+  border: 1px solid rgba(201,162,39,.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+.vue-projection-card:hover { border-color: rgba(201,162,39,.2); }
+.vue-proj-label { font-size: 10px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+.vue-proj-milestone { font-size: 16px; font-weight: 800; color: var(--t1); font-family: 'Bricolage Grotesque', system-ui; margin-bottom: 10px; }
+.vue-proj-bar { height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+.vue-proj-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width 500ms ease; }
+.vue-proj-info { display: flex; justify-content: space-between; font-size: 11px; color: var(--t3); }
+.vue-projection-empty { font-size: 12px; color: var(--t3); text-align: center; padding: 12px; }
+
 /* ═══ VUE D'ENSEMBLE V2 — Phase B (NextSteps + Cette semaine) ═══ */
 .vue-week {
   background: var(--bg2);
@@ -3144,6 +3210,15 @@ function rDashV2() {
     // ═══ ZONES 4-6 — GRAPHIQUES (Phase C) ═══
     try { rVueCharts(nw, flows); } catch(e4) { console.error('[Capital] Charts:', e4); }
 
+    // ═══ ZONE 7 — ÉCHÉANCES FISCALES (Phase D) ═══
+    try { rVueDeadlines(); } catch(e5) { console.error('[Capital] Deadlines:', e5); }
+
+    // ═══ ZONE 8 — ACTIVITÉ RÉCENTE (Phase D) ═══
+    try { rVueActivity(flows); } catch(e6) { console.error('[Capital] Activity:', e6); }
+
+    // ═══ ZONE 9 — PROJECTION (Phase D) ═══
+    try { rVueProjection(nw); } catch(e7) { console.error('[Capital] Projection:', e7); }
+
   } catch(e) { console.error('[Capital] rDashV2:', e); }
 }
 
@@ -3517,6 +3592,161 @@ function rVueChartRevExp() {
       }
     });
   } catch(e) { console.error('[Capital] rVueChartRevExp:', e); }
+}
+
+/* ─── Zone 7: Échéances fiscales ─── */
+function rVueDeadlines() {
+  var el = document.getElementById('vueDeadlines');
+  if (!el) return;
+
+  var deadlines = [];
+  try { deadlines = FiscalDeadlineTracker.getUpcoming(90); } catch(e) {}
+
+  if (deadlines.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+
+  var shown = deadlines.slice(0, 5);
+  var h = '<div class="vue-section">';
+  h += '<div class="vue-section-header"><span>Echeances fiscales</span><button class="vue-link" onclick="goCapital(\'ech\')">Tout voir →</button></div>';
+
+  shown.forEach(function(d) {
+    var urgColor = d.daysUntil <= 7 ? 'var(--red)' : d.daysUntil <= 30 ? 'var(--gold)' : 'var(--green)';
+    var kindIcons = { 'IS_ACOMPTE':'📋', 'TVA':'📊', 'IR':'📝', 'URSSAF':'🏛', 'OTHER':'📅' };
+    var icon = kindIcons[d.kind] || '📅';
+
+    h += '<div class="vue-list-row" onclick="goCapital(\'ech\')">';
+    h += '<span class="vue-list-icon">' + icon + '</span>';
+    h += '<span class="vue-list-label">' + (d.label || d.kind) + '</span>';
+    if (d.estimatedAmount) h += '<span class="vue-list-amount">~$' + d.estimatedAmount.toLocaleString('en-US') + '</span>';
+    h += '<span class="vue-list-badge" style="color:' + urgColor + ';border-color:' + urgColor + '">' + d.daysUntil + 'j</span>';
+    h += '</div>';
+  });
+
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+/* ─── Zone 8: Activité récente ─── */
+function rVueActivity(flows) {
+  var el = document.getElementById('vueActivity');
+  if (!el) return;
+
+  // Combine v2 flows + v1 history
+  var items = [];
+
+  // v2 flows
+  (flows || []).forEach(function(f) {
+    items.push({
+      date: f.occurredAt || f.recordedAt || '',
+      icon: f.kind === 'PAYOUT' ? '💰' : f.kind === 'EXPENSE' ? '💸' : f.kind === 'INTER_ENTITY_TRANSFER' ? '🔄' : '📄',
+      label: f.label || f.kind,
+      amount: f.netAmount || 0,
+      source: f.source === 'JOURNAL_PAYOUT' ? 'Journal' : f.source === 'RECURRING' ? 'Auto' : 'Manuel'
+    });
+  });
+
+  // v1 history as fallback
+  if (items.length === 0 && D.history && D.history.length) {
+    D.history.slice(0, 10).forEach(function(h) {
+      items.push({
+        date: h.date || '',
+        icon: h.type === 'payout' ? '💰' : h.type === 'portfolio' ? '📈' : h.type === 'propfirm' ? '🏆' : '🔄',
+        label: h.text || '',
+        amount: null,
+        source: ''
+      });
+    });
+  }
+
+  // Sort by date descending, take 10
+  items.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+  items = items.slice(0, 10);
+
+  if (items.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+
+  var h = '<div class="vue-section">';
+  h += '<div class="vue-section-header"><span>Activite recente</span></div>';
+
+  items.forEach(function(item) {
+    var dateLabel = item.date ? item.date.slice(0, 10) : '';
+    var amtColor = (item.amount || 0) >= 0 ? 'var(--green)' : 'var(--red)';
+
+    h += '<div class="vue-list-row">';
+    h += '<span class="vue-list-icon">' + item.icon + '</span>';
+    h += '<span class="vue-list-label">' + item.label + '</span>';
+    if (item.source) h += '<span class="vue-list-tag">' + item.source + '</span>';
+    if (item.amount !== null) h += '<span class="vue-list-amount" style="color:' + amtColor + '">' + (item.amount >= 0 ? '+' : '') + '$' + Math.abs(item.amount).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0}) + '</span>';
+    h += '<span class="vue-list-date">' + dateLabel + '</span>';
+    h += '</div>';
+  });
+
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+/* ─── Zone 9: Projection ─── */
+function rVueProjection(nw) {
+  var el = document.getElementById('vueProjection');
+  if (!el) return;
+
+  var netWorth = nw ? nw.netWorth : 0;
+
+  // Check if enough data for projection
+  var mp = mPnL();
+  var monthKeys = Object.keys(mp).sort();
+  var hasData = monthKeys.length >= 2 || D.payouts.length >= 2;
+
+  if (!hasData) {
+    el.innerHTML = '<div class="vue-section"><div class="vue-projection-empty">Ajoute trades ou payouts pour activer la projection.</div></div>';
+    return;
+  }
+
+  // Get milestone info
+  var milestone = null;
+  try { milestone = MilestoneTracker.getCurrentMilestone(); } catch(e) {}
+
+  // Simple projection: avg monthly gain
+  var totalGain = 0;
+  monthKeys.forEach(function(k) { totalGain += mp[k].pnl; });
+  var avgMonthly = monthKeys.length > 0 ? totalGain / monthKeys.length : 0;
+  // Add average payouts
+  if (D.payouts.length > 0) {
+    var payoutMonths = {};
+    D.payouts.forEach(function(p) { var m = (p.date || '').slice(0, 7); if (m) payoutMonths[m] = true; });
+    var numPayoutMonths = Object.keys(payoutMonths).length || 1;
+    avgMonthly += D.payouts.reduce(function(s, p) { return s + (p.net || 0); }, 0) / numPayoutMonths;
+  }
+
+  var h = '<div class="vue-section">';
+  h += '<div class="vue-section-header"><span>Projection</span><button class="vue-link" onclick="goCapital(\'coach\')">Roadmap complete →</button></div>';
+
+  h += '<div class="vue-projection-card" onclick="goCapital(\'coach\')">';
+
+  if (milestone && milestone.nextMilestone && avgMonthly > 0) {
+    var monthsToNext = Math.ceil(milestone.amountRemaining / avgMonthly);
+    h += '<div class="vue-proj-label">Prochain palier</div>';
+    h += '<div class="vue-proj-milestone">' + milestone.nextMilestone.label + '</div>';
+    h += '<div class="vue-proj-bar"><div class="vue-proj-fill" style="width:' + Math.min(100, milestone.progressPercent) + '%"></div></div>';
+    h += '<div class="vue-proj-info">';
+    h += '<span>' + milestone.progressPercent + '% · reste $' + milestone.amountRemaining.toLocaleString('en-US', {minimumFractionDigits:0}) + '</span>';
+    h += '<span style="color:var(--gold)">~' + monthsToNext + ' mois a ce rythme</span>';
+    h += '</div>';
+  } else if (milestone && !milestone.nextMilestone) {
+    h += '<div class="vue-proj-label">Tous les paliers franchis</div>';
+    h += '<div class="vue-proj-milestone" style="color:var(--gold)">Bravo — continue de construire</div>';
+  } else {
+    h += '<div class="vue-proj-label">Rythme mensuel moyen</div>';
+    h += '<div class="vue-proj-milestone" style="font-size:20px">' + (avgMonthly >= 0 ? '+' : '') + '$' + Math.round(avgMonthly).toLocaleString('en-US') + '/mois</div>';
+  }
+
+  h += '</div>';
+  h += '</div>';
+  el.innerHTML = h;
 }
 
 function rAC(){try{var ct={};D.portfolio.forEach(function(p){ct[p.cat]=(ct[p.cat]||0)+(p.current||0)});var j=rJ();j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel'){var bal=a.balance||0;j.t.forEach(function(t){if(t.account===a.name)bal+=parseFloat(t.pl)||0});ct['Trading perso']=(ct['Trading perso']||0)+bal}});var lb=Object.keys(ct),vl=lb.map(function(k){return ct[k]});var cl=['#a78bfa','#5b8def','#00d68f','#f5d060','#ff4757','#d4a017','#6b7ea0','#8b5cf6'];if(cA)cA.destroy();var cvA=document.getElementById('cA');if(!lb.length){var ctx=cvA.getContext('2d');ctx.clearRect(0,0,cvA.width,cvA.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Ajoutez des actifs pour voir l\u2019allocation',cvA.width/2,cvA.height/2);return}var tot=vl.reduce(function(a,b){return a+b},0);cA=new Chart(cvA,{type:'doughnut',data:{labels:lb,datasets:[{data:vl,backgroundColor:cl.slice(0,lb.length),borderWidth:2,borderColor:'#0c1018',hoverBorderColor:'#a78bfa',hoverBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#9bafd4',font:{family:'Inter',size:10},padding:10,usePointStyle:true,pointStyle:'circle'}},tooltip:{callbacks:{label:function(c){var v=c.parsed||0;var pct=tot?((v/tot)*100).toFixed(1):'0';return' '+c.label+' : $'+v.toLocaleString('en-US')+' ('+pct+'%)'}}}}}});}catch(e){console.error('rAC:',e)}}
