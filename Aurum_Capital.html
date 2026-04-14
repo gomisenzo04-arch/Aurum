@@ -345,6 +345,63 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 @media (max-width: 600px) {
   .vue-kpis { grid-template-columns: 1fr; }
 }
+
+/* ═══ VUE D'ENSEMBLE V2 — Phase B (NextSteps + Cette semaine) ═══ */
+.vue-week {
+  background: var(--bg2);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 16px;
+}
+.vue-week-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 10px;
+}
+.vue-week-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  transition: background 150ms;
+}
+.vue-week-item:hover {
+  background: rgba(255,255,255,.03);
+}
+.vue-week-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+.vue-week-content {
+  flex: 1;
+  min-width: 0;
+}
+.vue-week-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t1);
+}
+.vue-week-detail {
+  font-size: 11px;
+  color: var(--t3);
+  margin-top: 1px;
+}
+.vue-week-arrow {
+  color: var(--t3);
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: color 150ms;
+}
+.vue-week-item:hover .vue-week-arrow {
+  color: var(--gold);
+}
 </style>
 </head>
 <body>
@@ -3023,7 +3080,123 @@ function rDashV2() {
     rDashV2._prevExpenses = monthExpenses;
     rDashV2._prevHealth = health.globalScore;
 
+    // ═══ ZONE 2 — PROCHAINES ÉTAPES ═══
+    try { NextStepsPanel.render('vueNextSteps'); } catch(e2) { console.error('[Capital] NextSteps:', e2); }
+
+    // ═══ ZONE 3 — CETTE SEMAINE ═══
+    try { rVueThisWeek(health, nw); } catch(e3) { console.error('[Capital] ThisWeek:', e3); }
+
   } catch(e) { console.error('[Capital] rDashV2:', e); }
+}
+
+/* ─── Zone 3: Cette semaine ─── */
+function rVueThisWeek(health, nw) {
+  var el = document.getElementById('vueThisWeek');
+  if (!el) return;
+
+  var items = [];
+
+  // Échéances fiscales < 14 jours
+  try {
+    var deadlines = FiscalDeadlineTracker.getUpcoming(14);
+    deadlines.forEach(function(d) {
+      var urgColor = d.daysUntil <= 3 ? 'var(--red)' : d.daysUntil <= 7 ? 'var(--gold)' : 'var(--green)';
+      items.push({
+        icon: '📅',
+        color: urgColor,
+        label: d.label,
+        detail: 'dans ' + d.daysUntil + ' jour' + (d.daysUntil > 1 ? 's' : '') + (d.estimatedAmount ? ' · ~$' + d.estimatedAmount : ''),
+        action: function() { goCapital('ech'); }
+      });
+    });
+  } catch(e) {}
+
+  // Score santé < 50
+  if (health && health.globalScore < 50) {
+    items.push({
+      icon: '⚠',
+      color: 'var(--gold)',
+      label: 'Sante patrimoniale : ' + health.globalScore + '/100',
+      detail: health.recommendations && health.recommendations[0] ? health.recommendations[0] : 'Plusieurs points a ameliorer',
+      action: function() { goCapital('health'); }
+    });
+  }
+
+  // Snapshot patrimoine recommandé si aucun ce mois
+  try {
+    var latestSnap = CapitalStore.getLatestSnapshot();
+    var thisMonth = new Date().toISOString().slice(0, 7);
+    if (!latestSnap || latestSnap.date.slice(0, 7) !== thisMonth) {
+      items.push({
+        icon: '📸',
+        color: 'var(--blue)',
+        label: 'Snapshot patrimoine recommande',
+        detail: 'Aucun snapshot ce mois — un sera genere automatiquement',
+        action: null
+      });
+    }
+  } catch(e) {}
+
+  // Comptes bancaires sans MAJ > 30 jours
+  try {
+    var now = new Date();
+    var thirtyDaysAgo = new Date(now); thirtyDaysAgo.setDate(now.getDate() - 30);
+    var staleAccounts = CapitalStore.getAllAssets(function(a) {
+      return a.category === 'BANK_ACCOUNT' && a.lastUpdatedAt && a.lastUpdatedAt < thirtyDaysAgo.toISOString();
+    });
+    if (staleAccounts.length > 0) {
+      items.push({
+        icon: '🏦',
+        color: 'var(--gold)',
+        label: staleAccounts.length + ' compte' + (staleAccounts.length > 1 ? 's' : '') + ' bancaire' + (staleAccounts.length > 1 ? 's' : '') + ' a actualiser',
+        detail: 'Derniere MAJ > 30 jours',
+        action: function() { goCapital('bank'); }
+      });
+    }
+  } catch(e) {}
+
+  // Payouts non deposés (si payouts existent mais pas de comptes bancaires)
+  try {
+    if (D.payouts.length > 0 && (!D.bankAccounts || D.bankAccounts.length === 0) && CapitalStore.getAllAssets(function(a) { return a.category === 'BANK_ACCOUNT'; }).length === 0) {
+      items.push({
+        icon: '💰',
+        color: 'var(--gold)',
+        label: 'Payouts non affectes',
+        detail: D.payouts.length + ' payout(s) sans compte bancaire de destination',
+        action: function() { goCapital('bank'); }
+      });
+    }
+  } catch(e) {}
+
+  // Render
+  if (items.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+
+  var h = '<div class="vue-week">';
+  h += '<div class="vue-week-header">Cette semaine</div>';
+  items.forEach(function(item) {
+    h += '<div class="vue-week-item"' + (item.action ? ' onclick="' + (typeof item.action === 'string' ? item.action : '') + '" style="cursor:pointer"' : '') + '>';
+    h += '<span class="vue-week-icon" style="color:' + item.color + '">' + item.icon + '</span>';
+    h += '<div class="vue-week-content">';
+    h += '<div class="vue-week-label">' + item.label + '</div>';
+    h += '<div class="vue-week-detail">' + item.detail + '</div>';
+    h += '</div>';
+    if (item.action) h += '<span class="vue-week-arrow">→</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+
+  // Bind click handlers (since inline onclick with function refs doesn't work)
+  var weekItems = el.querySelectorAll('.vue-week-item');
+  items.forEach(function(item, i) {
+    if (item.action && weekItems[i]) {
+      weekItems[i].style.cursor = 'pointer';
+      weekItems[i].onclick = item.action;
+    }
+  });
 }
 function rAC(){try{var ct={};D.portfolio.forEach(function(p){ct[p.cat]=(ct[p.cat]||0)+(p.current||0)});var j=rJ();j.a.forEach(function(a){if(a.type==='perso'||a.type==='Personnel'||a.type==='personnel'){var bal=a.balance||0;j.t.forEach(function(t){if(t.account===a.name)bal+=parseFloat(t.pl)||0});ct['Trading perso']=(ct['Trading perso']||0)+bal}});var lb=Object.keys(ct),vl=lb.map(function(k){return ct[k]});var cl=['#a78bfa','#5b8def','#00d68f','#f5d060','#ff4757','#d4a017','#6b7ea0','#8b5cf6'];if(cA)cA.destroy();var cvA=document.getElementById('cA');if(!lb.length){var ctx=cvA.getContext('2d');ctx.clearRect(0,0,cvA.width,cvA.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Ajoutez des actifs pour voir l\u2019allocation',cvA.width/2,cvA.height/2);return}var tot=vl.reduce(function(a,b){return a+b},0);cA=new Chart(cvA,{type:'doughnut',data:{labels:lb,datasets:[{data:vl,backgroundColor:cl.slice(0,lb.length),borderWidth:2,borderColor:'#0c1018',hoverBorderColor:'#a78bfa',hoverBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#9bafd4',font:{family:'Inter',size:10},padding:10,usePointStyle:true,pointStyle:'circle'}},tooltip:{callbacks:{label:function(c){var v=c.parsed||0;var pct=tot?((v/tot)*100).toFixed(1):'0';return' '+c.label+' : $'+v.toLocaleString('en-US')+' ('+pct+'%)'}}}}}});}catch(e){console.error('rAC:',e)}}
 function rEC(){try{var mp2=mPnL(),pm={};D.payouts.forEach(function(p){var m=p.date.slice(0,7);pm[m]=(pm[m]||0)+(p.net||0)});var am={};Object.keys(mp2).forEach(function(m){am[m]=true});Object.keys(pm).forEach(function(m){am[m]=true});var s=Object.keys(am).sort(),cu=[],r=0;s.forEach(function(m){r+=(mp2[m]?mp2[m].pnl:0)+(pm[m]||0);cu.push(r)});if(cE)cE.destroy();var cvE=document.getElementById('cE');if(!s.length){var ctx=cvE.getContext('2d');ctx.clearRect(0,0,cvE.width,cvE.height);ctx.fillStyle='#6b7ea0';ctx.font='12px Inter';ctx.textAlign='center';ctx.fillText('Pas encore de donn\u00e9es d\u2019\u00e9volution',cvE.width/2,cvE.height/2);return}cE=new Chart(cvE,{type:'line',data:{labels:s,datasets:[{data:cu,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.1)',fill:true,tension:.4,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#a78bfa',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,scales:{x:{ticks:{color:'#6b7ea0',font:{size:9}},grid:{color:'rgba(29,40,64,.5)'}},y:{beginAtZero:true,ticks:{color:'#6b7ea0',font:{family:'JetBrains Mono',size:9},callback:function(v){return'$'+v.toLocaleString('en-US')}},grid:{color:'rgba(29,40,64,.5)'}}},plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:function(c){var i=c.dataIndex;if(i===0)return'\u25b3 premier mois';var prev=cu[i-1];var diff=cu[i]-prev;var sign=diff>=0?'+':'';var arrow=diff>=0?'\u25b3':'\u25bd';return arrow+' '+sign+'$'+diff.toLocaleString('en-US')}}}}}})}catch(e){console.error('rEC:',e)}}
