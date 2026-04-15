@@ -6166,6 +6166,107 @@ function rPA() {
     }
   } catch(ep) {}
 
+  /* ═══ Phase D: Strategies de remboursement (vue avancee) ═══ */
+  try {
+    if (D.passifs.length >= 2) {
+      var activeDebts = D.passifs.filter(function(p) { return p.remaining > 0 && p.monthly > 0; });
+      if (activeDebts.length >= 2) {
+        var advHtml = '';
+
+        /* Snowball: smallest balance first */
+        var snowball = activeDebts.slice().sort(function(a, b) { return a.remaining - b.remaining; });
+        /* Avalanche: highest rate first */
+        var avalanche = activeDebts.slice().sort(function(a, b) { return (b.rate || 0) - (a.rate || 0); });
+
+        /* Simulate total interest paid for each strategy */
+        function simulateStrategy(ordered) {
+          var debts = ordered.map(function(d) { return { remaining: d.remaining, monthly: d.monthly, rate: (d.rate || 0) / 100 / 12 }; });
+          var totalMonthlyBudget = debts.reduce(function(s, d) { return s + d.monthly; }, 0);
+          var totalInterest = 0;
+          var months = 0;
+          var maxMonths = 600;
+
+          while (months < maxMonths) {
+            var allPaid = debts.every(function(d) { return d.remaining <= 0; });
+            if (allPaid) break;
+            months++;
+            var extraBudget = 0;
+            debts.forEach(function(d) {
+              if (d.remaining <= 0) { extraBudget += d.monthly; return; }
+              var interest = d.remaining * d.rate;
+              totalInterest += interest;
+              d.remaining += interest;
+              var payment = d.monthly + (d === debts.find(function(x) { return x.remaining > 0; }) ? extraBudget : 0);
+              d.remaining = Math.max(0, d.remaining - payment);
+            });
+          }
+          return { totalInterest: Math.round(totalInterest), months: months };
+        }
+
+        var snowRes = simulateStrategy(snowball);
+        var avaRes = simulateStrategy(avalanche);
+        var savings = snowRes.totalInterest - avaRes.totalInterest;
+        var timeDiff = snowRes.months - avaRes.months;
+
+        advHtml += '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Strategies de remboursement</div>';
+
+        /* Two strategy cards side by side */
+        advHtml += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">';
+
+        /* Snowball */
+        var snowBetter = snowRes.totalInterest <= avaRes.totalInterest;
+        advHtml += '<div style="background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;' + (snowBetter ? '' : 'opacity:.7') + '">';
+        advHtml += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span style="font-size:16px">❄</span><span style="font-size:13px;font-weight:700;color:var(--t1)">Boule de neige</span></div>';
+        advHtml += '<div style="font-size:11px;color:var(--t3);line-height:1.5;margin-bottom:10px">Rembourse la <b style="color:var(--t1)">plus petite dette en premier</b>. Motivation rapide.</div>';
+        advHtml += '<div style="font-size:11px;color:var(--t2)">Ordre : ' + snowball.map(function(d) { return d.name; }).join(' → ') + '</div>';
+        advHtml += '<div style="margin-top:8px;display:flex;gap:12px;font-size:12px">';
+        advHtml += '<span>Interets : <b style="font-family:JetBrains Mono,monospace;color:var(--red)">$' + snowRes.totalInterest.toLocaleString('en-US') + '</b></span>';
+        advHtml += '<span>Duree : <b style="font-family:JetBrains Mono,monospace;color:var(--t1)">' + snowRes.months + ' mois</b></span>';
+        advHtml += '</div></div>';
+
+        /* Avalanche */
+        var avaBetter = avaRes.totalInterest <= snowRes.totalInterest;
+        advHtml += '<div style="background:var(--bg2);border:1px solid ' + (avaBetter ? 'rgba(201,162,39,.15)' : 'rgba(255,255,255,.06)') + ';border-radius:10px;padding:14px;' + (avaBetter ? '' : 'opacity:.7') + '">';
+        advHtml += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span style="font-size:16px">🏔</span><span style="font-size:13px;font-weight:700;color:var(--t1)">Avalanche</span>' + (avaBetter ? '<span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;background:rgba(201,162,39,.1);color:var(--gold)">Recommande</span>' : '') + '</div>';
+        advHtml += '<div style="font-size:11px;color:var(--t3);line-height:1.5;margin-bottom:10px">Rembourse le <b style="color:var(--t1)">taux le plus eleve en premier</b>. Economise le plus.</div>';
+        advHtml += '<div style="font-size:11px;color:var(--t2)">Ordre : ' + avalanche.map(function(d) { return d.name + ' (' + (d.rate || 0) + '%)'; }).join(' → ') + '</div>';
+        advHtml += '<div style="margin-top:8px;display:flex;gap:12px;font-size:12px">';
+        advHtml += '<span>Interets : <b style="font-family:JetBrains Mono,monospace;color:var(--red)">$' + avaRes.totalInterest.toLocaleString('en-US') + '</b></span>';
+        advHtml += '<span>Duree : <b style="font-family:JetBrains Mono,monospace;color:var(--t1)">' + avaRes.months + ' mois</b></span>';
+        advHtml += '</div></div>';
+
+        advHtml += '</div>';
+
+        /* Impact summary */
+        if (savings > 0) {
+          advHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.1);border-radius:8px;font-size:12px">';
+          advHtml += '<span style="color:var(--green)">💡</span>';
+          advHtml += '<span style="color:var(--t2)">En appliquant la methode <b style="color:var(--t1)">avalanche</b>, tu economises <b style="color:var(--green)">$' + savings.toLocaleString('en-US') + '</b> d\'interets' + (timeDiff > 0 ? ' et <b style="color:var(--green)">' + timeDiff + ' mois</b>' : '') + '.</span>';
+          advHtml += '</div>';
+        }
+
+        /* Insert via ProgressiveDisclosure after the table */
+        var stratContainer = document.getElementById('psStrategies');
+        if (!stratContainer) {
+          stratContainer = document.createElement('div');
+          stratContainer.id = 'psStrategies';
+          stratContainer.style.marginTop = '16px';
+          var psPanel = document.getElementById('p-pas');
+          if (psPanel) psPanel.appendChild(stratContainer);
+        }
+        if (stratContainer) {
+          stratContainer.innerHTML = ProgressiveDisclosure.section({
+            id: 'passifStrategies',
+            level1Html: '',
+            level2Html: advHtml,
+            expandLabel: 'Strategies de remboursement',
+            collapseLabel: 'Masquer'
+          });
+        }
+      }
+    }
+  } catch(eStrat) { console.error('[Capital] passifStrategies:', eStrat); }
+
   } catch(e) { console.error('[Capital] rPA:', e); }
 }
 /* ─── WEEK TIPS ─── */
