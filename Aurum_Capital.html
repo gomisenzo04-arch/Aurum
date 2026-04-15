@@ -5011,7 +5011,98 @@ function rPO(){try{
   var filteredTotal = sorted.reduce(function(s,p) { return s + (p.net||0); }, 0);
   if (poTot) poTot.textContent = fm(filteredTotal) + (_poFilterSource !== 'all' || _poFilterPeriod !== 'all' ? ' (' + sorted.length + ' filtre' + (sorted.length > 1 ? 's' : '') + ')' : '');
 
+  /* ─── Phase D: Graphique évolution ─── */
+  try { rPOChart(); } catch(eChart) { console.error('[Capital] rPOChart:', eChart); }
+
 }catch(e){console.error('[Capital] rPO:', e)}}
+
+/* ─── Payouts Evolution Chart (Phase D) ─── */
+var _poChart = null;
+function rPOChart() {
+  /* Find or create chart container after the table */
+  var panel = document.getElementById('p-po');
+  if (!panel || !D.payouts.length) return;
+  var chartWrap = document.getElementById('poChartWrap');
+  if (!chartWrap) {
+    chartWrap = document.createElement('div');
+    chartWrap.id = 'poChartWrap';
+    chartWrap.className = 'vue-section';
+    chartWrap.style.marginTop = '16px';
+    panel.appendChild(chartWrap);
+  }
+
+  /* Build monthly data (12 months) */
+  var now = new Date();
+  var months = [];
+  for (var i = 11; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+  }
+
+  var monthlyNet = months.map(function(m) {
+    return D.payouts.filter(function(p) { return (p.date || '').slice(0, 7) === m; }).reduce(function(s, p) { return s + (p.net || 0); }, 0);
+  });
+
+  var avg = monthlyNet.reduce(function(s, v) { return s + v; }, 0) / months.length;
+  var avgLine = months.map(function() { return avg; });
+
+  chartWrap.innerHTML = '<div class="vue-section-header"><span>Evolution des revenus (12 mois)</span></div>' +
+    '<div style="position:relative;height:180px"><canvas id="poEvoCanvas"></canvas></div>';
+
+  requestAnimationFrame(function() {
+    try {
+      if (_poChart) _poChart.destroy();
+      var cv = document.getElementById('poEvoCanvas');
+      if (!cv) return;
+
+      _poChart = new Chart(cv, {
+        type: 'bar',
+        data: {
+          labels: months.map(function(m) { return m.slice(5) + '/' + m.slice(2, 4); }),
+          datasets: [
+            {
+              label: 'Revenus nets',
+              data: monthlyNet,
+              backgroundColor: monthlyNet.map(function(v) { return v >= 0 ? 'rgba(34,197,94,.6)' : 'rgba(239,68,68,.6)'; }),
+              borderRadius: 4
+            },
+            {
+              label: 'Moyenne',
+              data: avgLine,
+              type: 'line',
+              borderColor: '#c9a227',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              borderDash: [6, 3],
+              pointRadius: 0,
+              tension: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { ticks: { color: '#56585e', font: { size: 10, family: 'DM Sans' } }, grid: { display: false } },
+            y: { ticks: { color: '#56585e', font: { size: 9, family: 'JetBrains Mono' }, callback: function(v) { return '$' + v.toLocaleString('en-US'); } }, grid: { color: 'rgba(255,255,255,.03)' } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(c) {
+                  if (c.dataset.label === 'Moyenne') return 'Moyenne : $' + avg.toFixed(0);
+                  return '$' + c.parsed.y.toLocaleString('en-US');
+                }
+              }
+            }
+          }
+        }
+      });
+    } catch(ce) { console.error('[Capital] poChart:', ce); }
+  });
+}
+
 /* ─── ENTITIES ─── */
 /* ═══ ENTITIES — MASTERCLASS ═══ */
 function aEN(){try{
