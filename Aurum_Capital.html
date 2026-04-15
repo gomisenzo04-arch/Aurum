@@ -6267,8 +6267,119 @@ function rPA() {
     }
   } catch(eStrat) { console.error('[Capital] passifStrategies:', eStrat); }
 
+  /* ═══ Phase E: Graphique evolution dette ═══ */
+  try { rPassifChart(); } catch(eChart) { console.error('[Capital] passifChart:', eChart); }
+
   } catch(e) { console.error('[Capital] rPA:', e); }
 }
+
+/* ─── Passifs Evolution Chart (Phase E) ─── */
+var _passifChart = null;
+function rPassifChart() {
+  var activeDebts = D.passifs.filter(function(p) { return p.remaining > 0 && p.monthly > 0; });
+  if (!activeDebts.length) return;
+
+  var panel = document.getElementById('p-pas');
+  if (!panel) return;
+  var chartWrap = document.getElementById('psChartWrap');
+  if (!chartWrap) {
+    chartWrap = document.createElement('div');
+    chartWrap.id = 'psChartWrap';
+    chartWrap.className = 'vue-section';
+    chartWrap.style.marginTop = '16px';
+    panel.appendChild(chartWrap);
+  }
+
+  /* Project remaining balance month by month until zero */
+  var totalRemaining = activeDebts.reduce(function(s, d) { return s + d.remaining; }, 0);
+  var totalMonthly = activeDebts.reduce(function(s, d) { return s + d.monthly; }, 0);
+  if (totalMonthly <= 0) return;
+
+  var months = [];
+  var balances = [];
+  var charges = [];
+  var now = new Date();
+  var rem = totalRemaining;
+  var maxMonths = Math.min(120, Math.ceil(totalRemaining / totalMonthly) + 6);
+
+  for (var i = 0; i <= maxMonths; i++) {
+    var d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+    balances.push(Math.max(0, Math.round(rem)));
+    charges.push(rem > 0 ? Math.round(Math.min(totalMonthly, rem)) : 0);
+    rem = Math.max(0, rem - totalMonthly);
+    if (rem <= 0 && i > 0) break;
+  }
+
+  chartWrap.innerHTML = '<div class="vue-section-header"><span>Projection de remboursement</span></div>' +
+    '<div style="position:relative;height:200px"><canvas id="psEvoCanvas"></canvas></div>';
+
+  requestAnimationFrame(function() {
+    try {
+      if (_passifChart) _passifChart.destroy();
+      var cv = document.getElementById('psEvoCanvas');
+      if (!cv) return;
+
+      _passifChart = new Chart(cv, {
+        data: {
+          labels: months,
+          datasets: [
+            {
+              type: 'line',
+              label: 'Capital restant',
+              data: balances,
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239,68,68,.08)',
+              fill: true,
+              tension: .3,
+              pointRadius: balances.length > 24 ? 0 : 3,
+              pointHoverRadius: 5,
+              borderWidth: 2,
+              yAxisID: 'y'
+            },
+            {
+              type: 'bar',
+              label: 'Charge mensuelle',
+              data: charges,
+              backgroundColor: 'rgba(201,162,39,.4)',
+              borderRadius: 3,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              ticks: { color: '#56585e', font: { size: 9, family: 'DM Sans' }, maxTicksLimit: 8 },
+              grid: { display: false }
+            },
+            y: {
+              position: 'left',
+              ticks: { color: '#ef4444', font: { size: 9, family: 'JetBrains Mono' }, callback: function(v) { return '$' + v.toLocaleString('en-US'); } },
+              grid: { color: 'rgba(255,255,255,.03)' }
+            },
+            y1: {
+              position: 'right',
+              ticks: { color: '#c9a227', font: { size: 9, family: 'JetBrains Mono' }, callback: function(v) { return '$' + v; } },
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: '#8b8d94', font: { size: 10 } } },
+            tooltip: {
+              callbacks: {
+                label: function(c) { return c.dataset.label + ' : $' + c.parsed.y.toLocaleString('en-US'); }
+              }
+            }
+          }
+        }
+      });
+    } catch(ce) { console.error('[Capital] psChart render:', ce); }
+  });
+}
+
 /* ─── WEEK TIPS ─── */
 function gWT(){try{var t=[],nw=cNW(),n=new Date(),d=n.getDay(),cm=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');if(d===5||d===6)t.push('Weekend → <b>backup JSON</b> Journal + Capital.');var c=gFC(),u=c.filter(function(x){return x.d<=14});if(u.length)t.push('⚠ <b>'+u[0].n+'</b> dans '+u[0].d+'j.');if(D.payouts.length===0)t.push('Ajoute ton premier <b>payout</b>.');if(D.portfolio.length===0&&nw>5000)t.push('NW >$5K → ouvre un <b>PEA</b>.');if(!D.expenses.some(function(e){return e.month===cm}))t.push('<b>Dépenses du mois</b> à saisir.');if(cH()<50)t.push('Score santé <50 → onglet <b>Santé</b>.');return t}catch(e){return[]}}
 /* ─── BACKUP ─── */
