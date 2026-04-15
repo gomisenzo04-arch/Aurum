@@ -5609,6 +5609,68 @@ function rBU() {
       h += '</tbody></table></div></div>';
     }
 
+    // ═══ Section Abonnements (Phase C) ═══
+    h += '<div class="vue-section" style="margin-top:16px">';
+    h += '<div class="vue-section-header"><span>Abonnements recurrents</span>';
+    h += '<button style="background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.15);color:var(--gold);font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all 150ms" onclick="tg(\'abF\')">+ Abo</button>';
+    h += '</div>';
+
+    if (D.abonnements.length === 0) {
+      h += '<div style="text-align:center;padding:20px;font-size:12px;color:var(--t3)">Aucun abonnement. Ajoute-en un pour suivre tes depenses recurrentes.</div>';
+    } else {
+      h += '<div style="display:grid;gap:4px">';
+      D.abonnements.forEach(function(a) {
+        h += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;transition:background 150ms" onmouseover="this.style.background=\'rgba(255,255,255,.02)\'" onmouseout="this.style.background=\'none\'">';
+        h += '<span style="font-size:16px">📱</span>';
+        h += '<span style="flex:1;font-size:13px;font-weight:500;color:var(--t1)">' + esc(a.name) + '</span>';
+        h += '<span style="font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;color:var(--red)">-$' + (a.cost || 0).toLocaleString('en-US', {minimumFractionDigits: 2}) + '<span style="font-size:10px;color:var(--t3)">/m</span></span>';
+        h += '<span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;background:rgba(34,197,94,.08);color:var(--green)">Actif</span>';
+        h += '<button style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:4px;min-height:32px;transition:all 150ms" onmouseover="this.style.color=\'var(--red)\';this.style.background=\'rgba(239,68,68,.1)\'" onmouseout="this.style.color=\'var(--t3)\';this.style.background=\'none\'" onclick="dAB(\'' + a.id + '\')">&times;</button>';
+        h += '</div>';
+      });
+      h += '</div>';
+
+      var aboMonthly = D.abonnements.reduce(function(s, a) { return s + (a.cost || 0); }, 0);
+      h += '<div style="display:flex;justify-content:space-between;padding:10px 12px;margin-top:6px;border-top:1px solid rgba(255,255,255,.06);font-size:12px">';
+      h += '<span style="color:var(--t3)">Total</span>';
+      h += '<span><span style="font-family:JetBrains Mono,monospace;font-weight:700;color:var(--red)">-$' + aboMonthly.toFixed(2) + '/mois</span>';
+      h += ' · <span style="color:var(--t3)">$' + (aboMonthly * 12).toFixed(0) + '/an</span></span>';
+      h += '</div>';
+    }
+    h += '</div>';
+
+    // ═══ Detection auto recurrences (Phase C) ═══
+    try {
+      var catMonthCount = {};
+      D.expenses.forEach(function(e) {
+        var key = (e.cat || '') + '|' + (e.amount || 0);
+        if (!catMonthCount[key]) catMonthCount[key] = { cat: e.cat, amount: e.amount, months: {} };
+        catMonthCount[key].months[e.month] = true;
+      });
+      var suggestions = [];
+      Object.keys(catMonthCount).forEach(function(k) {
+        var entry = catMonthCount[k];
+        var monthCount = Object.keys(entry.months).length;
+        if (monthCount >= 3) {
+          var alreadyAbo = D.abonnements.some(function(a) { return a.name === entry.cat && a.cost === entry.amount; });
+          if (!alreadyAbo) {
+            suggestions.push({ cat: entry.cat, amount: entry.amount, count: monthCount });
+          }
+        }
+      });
+      if (suggestions.length > 0) {
+        h += '<div style="margin-top:12px">';
+        suggestions.forEach(function(s) {
+          h += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(201,162,39,.04);border:1px solid rgba(201,162,39,.1);border-radius:8px;margin-bottom:6px;font-size:12px">';
+          h += '<span style="color:var(--gold)">💡</span>';
+          h += '<span style="flex:1;color:var(--t2)"><b style="color:var(--t1)">' + esc(s.cat) + '</b> a $' + s.amount.toFixed(2) + ' apparait ' + s.count + ' mois de suite. Abonnement ?</span>';
+          h += '<button style="background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.2);color:var(--gold);font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;min-height:32px;transition:all 150ms" onclick="D.abonnements.push({id:uid(),name:\'' + esc(s.cat).replace(/'/g, "\\'") + '\',cost:' + s.amount + '});save();rBU();toast(\'Abonnement cree\')">Convertir</button>';
+          h += '</div>';
+        });
+        h += '</div>';
+      }
+    } catch(ed) {}
+
     budV2.innerHTML = h;
 
     // Also update the legacy table (rEX uses exT/exTot)
