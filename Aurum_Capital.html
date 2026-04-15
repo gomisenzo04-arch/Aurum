@@ -5685,6 +5685,135 @@ function rBU() {
     h += '<div style="position:relative;height:220px"><canvas id="budgetDonutCanvas"></canvas></div>';
     h += '</div>';
 
+    // ═══ Vue avancée (Phase E) ═══
+    var advHtml = '';
+    try {
+      var now2 = new Date();
+      var cmKey = now2.getFullYear() + '-' + String(now2.getMonth() + 1).padStart(2, '0');
+      var prevDate = new Date(now2.getFullYear(), now2.getMonth() - 1, 1);
+      var pmKey = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
+
+      var cmExpenses = D.expenses.filter(function(e) { return e.month === cmKey; });
+      var pmExpenses = D.expenses.filter(function(e) { return e.month === pmKey; });
+
+      // ─── Comparaison mois vs precedent ───
+      var cmByCat = {}, pmByCat = {};
+      cmExpenses.forEach(function(e) { cmByCat[e.cat] = (cmByCat[e.cat] || 0) + (e.amount || 0); });
+      pmExpenses.forEach(function(e) { pmByCat[e.cat] = (pmByCat[e.cat] || 0) + (e.amount || 0); });
+      var allCats = {};
+      Object.keys(cmByCat).forEach(function(k) { allCats[k] = true; });
+      Object.keys(pmByCat).forEach(function(k) { allCats[k] = true; });
+      var catKeys = Object.keys(allCats).sort();
+
+      if (catKeys.length > 0 && (cmExpenses.length > 0 || pmExpenses.length > 0)) {
+        advHtml += '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Comparaison ' + cmKey + ' vs ' + pmKey + '</div>';
+        advHtml += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+        advHtml += '<thead><tr>';
+        advHtml += '<th style="text-align:left;padding:6px 10px;color:var(--t3);font-size:10px;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">Categorie</th>';
+        advHtml += '<th style="text-align:right;padding:6px 10px;color:var(--t3);font-size:10px;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">' + pmKey.slice(5) + '</th>';
+        advHtml += '<th style="text-align:right;padding:6px 10px;color:var(--t3);font-size:10px;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">' + cmKey.slice(5) + '</th>';
+        advHtml += '<th style="text-align:right;padding:6px 10px;color:var(--t3);font-size:10px;font-weight:600;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">Variation</th>';
+        advHtml += '</tr></thead><tbody>';
+
+        catKeys.forEach(function(cat) {
+          var prev = pmByCat[cat] || 0;
+          var curr = cmByCat[cat] || 0;
+          var diff = curr - prev;
+          var pct = prev > 0 ? Math.round((diff / prev) * 100) : (curr > 0 ? 100 : 0);
+          var varColor = diff > 0 ? 'var(--red)' : diff < 0 ? 'var(--green)' : 'var(--t3)';
+          var arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '—';
+
+          advHtml += '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">';
+          advHtml += '<td style="padding:6px 10px;color:var(--t1);font-weight:500">' + esc(cat) + '</td>';
+          advHtml += '<td style="padding:6px 10px;text-align:right;font-family:JetBrains Mono,monospace;color:var(--t3)">$' + prev.toFixed(0) + '</td>';
+          advHtml += '<td style="padding:6px 10px;text-align:right;font-family:JetBrains Mono,monospace;color:var(--t1)">$' + curr.toFixed(0) + '</td>';
+          advHtml += '<td style="padding:6px 10px;text-align:right;font-weight:600;color:' + varColor + '">' + arrow + ' ' + (diff >= 0 ? '+' : '') + '$' + diff.toFixed(0) + ' (' + (pct >= 0 ? '+' : '') + pct + '%)</td>';
+          advHtml += '</tr>';
+        });
+        advHtml += '</tbody></table></div>';
+      }
+
+      // ─── Détection anomalies (>2 sigma) ───
+      var anomalies = [];
+      var allMonthKeys = {};
+      D.expenses.forEach(function(e) { if (e.month) allMonthKeys[e.month] = true; });
+      var monthCount = Math.max(1, Object.keys(allMonthKeys).length);
+
+      D.categories.forEach(function(cat) {
+        var catExpenses = D.expenses.filter(function(e) { return e.cat === cat; });
+        if (catExpenses.length < 3) return;
+
+        var monthlyTotals = {};
+        catExpenses.forEach(function(e) { monthlyTotals[e.month] = (monthlyTotals[e.month] || 0) + (e.amount || 0); });
+        var vals = Object.values(monthlyTotals);
+        if (vals.length < 3) return;
+
+        var mean = vals.reduce(function(s, v) { return s + v; }, 0) / vals.length;
+        var variance = vals.reduce(function(s, v) { return s + Math.pow(v - mean, 2); }, 0) / vals.length;
+        var stdDev = Math.sqrt(variance);
+        if (stdDev < 1) return;
+
+        var currentVal = cmByCat[cat] || 0;
+        var zScore = (currentVal - mean) / stdDev;
+
+        if (zScore > 2) {
+          var pctAbove = Math.round(((currentVal - mean) / mean) * 100);
+          anomalies.push({
+            cat: cat,
+            current: currentVal,
+            mean: mean,
+            pctAbove: pctAbove,
+            zScore: zScore.toFixed(1)
+          });
+        }
+      });
+
+      if (anomalies.length > 0) {
+        advHtml += '<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Depenses anormales ce mois</div>';
+        anomalies.forEach(function(a) {
+          advHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.1);border-radius:8px;margin-bottom:6px;font-size:12px">';
+          advHtml += '<span style="color:var(--red);font-weight:700">⚠</span>';
+          advHtml += '<span style="flex:1;color:var(--t2)"><b style="color:var(--t1)">' + esc(a.cat) + '</b> : $' + a.current.toFixed(0) + ' ce mois — <b style="color:var(--red)">' + a.pctAbove + '% au-dessus</b> de ta moyenne ($' + a.mean.toFixed(0) + ')</span>';
+          advHtml += '</div>';
+        });
+      }
+
+      // ─── Suggestions d'optimisation ───
+      var suggestions = [];
+      catKeys.forEach(function(cat) {
+        var curr = cmByCat[cat] || 0;
+        var prev = pmByCat[cat] || 0;
+        if (curr > 0 && prev > 0 && curr > prev * 1.4) {
+          suggestions.push('Tu depenses ' + Math.round(((curr - prev) / prev) * 100) + '% de plus en <b>' + esc(cat) + '</b> ce mois vs le mois dernier');
+        }
+      });
+      var aboTotalMonth = D.abonnements.reduce(function(s, a) { return s + (a.cost || 0); }, 0);
+      var totalMonthCheck = cmExpenses.reduce(function(s, e) { return s + (e.amount || 0); }, 0) + aboTotalMonth;
+      if (totalMonthCheck > 0 && monthlyIncome > 0 && totalMonthCheck > monthlyIncome * 0.7) {
+        suggestions.push('Tes depenses representent plus de 70% de tes revenus estimes. Vise 50% max.');
+      }
+
+      if (suggestions.length > 0) {
+        advHtml += '<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Suggestions</div>';
+        suggestions.forEach(function(s) {
+          advHtml += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(201,162,39,.04);border:1px solid rgba(201,162,39,.1);border-radius:8px;margin-bottom:6px;font-size:12px">';
+          advHtml += '<span style="color:var(--gold)">💡</span>';
+          advHtml += '<span style="flex:1;color:var(--t2)">' + s + '</span>';
+          advHtml += '</div>';
+        });
+      }
+    } catch(eAdv) { console.error('[Capital] budgetAdvanced:', eAdv); }
+
+    if (advHtml) {
+      h += ProgressiveDisclosure.section({
+        id: 'budgetAdvanced',
+        level1Html: '',
+        level2Html: advHtml,
+        expandLabel: 'Vue avancee',
+        collapseLabel: 'Masquer'
+      });
+    }
+
     budV2.innerHTML = h;
 
     // Render donut chart
