@@ -5915,7 +5915,131 @@ function rBudgetDonut() {
 function aPS(){try{var n=esc(document.getElementById('ps-n').value.trim()),r=parseFloat(document.getElementById('ps-r').value)||0,m=parseFloat(document.getElementById('ps-m').value)||0;if(!n||r<=0){toast('Nom et montant requis');return}D.passifs.push({id:uid(),name:n,remaining:r,monthly:m});save();rPA();tg('psF');toast('OK');document.getElementById('ps-n').value='';document.getElementById('ps-r').value='';document.getElementById('ps-m').value=''}catch(e){console.error(e)}}
 function dPS(id){try{if(!confirm('?'))return;D.passifs=D.passifs.filter(function(p){return p.id!==id});save();rPA()}catch(e){console.error(e)}}
 function payPS(id){try{var p=D.passifs.find(function(x){return x.id===id});if(!p)return;if(p.remaining<=0){toast('Déjà soldé');return}p.remaining=Math.max(0,p.remaining-p.monthly);if(p.remaining===0)toast(p.name+' soldé !');else toast(p.name+' : '+fm(p.remaining)+' restant');save();rPA();rD()}catch(e){console.error(e)}}
-function rPA(){try{if(!D.passifs.length){document.getElementById('psT').innerHTML='<tr><td colspan="5"><div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(0,214,143,.06),rgba(0,214,143,.02));border-left:3px solid var(--green);border-radius:10px;padding:20px 24px;text-align:center"><div style="font-size:32px;margin-bottom:10px">🎉</div><div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:6px">Zéro dette ! Continue comme ça</div><div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Aucun passif enregistré. Si tu as un crédit ou une dette, ajoute-la ici pour suivre ton remboursement et calculer ton patrimoine net exact.</div><button class="btn bo bs" onclick="tg(\'psF\')" style="color:var(--t2)">+ Ajouter un passif si besoin</button></div></td></tr>';document.getElementById('psTot').textContent='$0';document.getElementById('psMt').textContent='$0/m';document.getElementById('psKPI').innerHTML=kp('Total dettes','$0','var(--green)')+kp('Charge/mois','$0/m','var(--green)')+kp('Durée moy.','—','var(--green)')+kp('Ratio dette','0%','var(--green)');return}var tr=0,tm=0;document.getElementById('psT').innerHTML=D.passifs.map(function(p){tr+=p.remaining;tm+=p.monthly;var mo=p.monthly>0?Math.ceil(p.remaining/p.monthly):0;var moTxt=mo>0?(mo+' mois'):'—';var moCol=mo>24?'var(--red)':mo>12?'var(--gold)':'var(--green)';return'<tr><td style="font-weight:600;color:var(--t1)">'+p.name+'</td><td class="mn ng">'+fm(p.remaining)+'</td><td class="mn ng">'+fm(p.monthly)+'/m</td><td class="mn" style="color:'+moCol+'">'+moTxt+'</td><td style="white-space:nowrap">'+(p.monthly>0&&p.remaining>0?'<button class="btn bo bs" style="font-size:10px;padding:3px 8px;margin-right:4px" onclick="payPS(\''+p.id+'\')">Payer mensualité</button>':'')+'<button class="btn br bs" onclick="dPS(\''+p.id+'\')">×</button></td></tr>'}).join('');document.getElementById('psTot').textContent=fm(tr);document.getElementById('psMt').textContent=fm(tm)+'/m';var avgMo=D.passifs.length&&tm>0?Math.ceil(tr/tm):0;var nw=cNW();var ratio=nw>0?Math.round(tr/nw*100):0;document.getElementById('psKPI').innerHTML=kp('Total dettes',fm(tr),'var(--red)')+kp('Charge/mois',fm(tm)+'/m','var(--gold)')+kp('Durée moy.',avgMo?avgMo+' mois':'—',avgMo>24?'var(--red)':'var(--green)')+kp('Ratio dette',ratio+'%',ratio>50?'var(--red)':ratio>25?'var(--gold)':'var(--green)')}catch(e){console.error(e)}}
+function rPA() {
+  try {
+    var psKPI = document.getElementById('psKPI');
+    var psT = document.getElementById('psT');
+    var psTot = document.getElementById('psTot');
+    var psMt = document.getElementById('psMt');
+
+    /* ─── EMPTY STATE ─── */
+    if (!D.passifs.length) {
+      psT.innerHTML = '<tr><td colspan="5">' +
+        '<div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(0,214,143,.06),rgba(0,214,143,.02));border-left:3px solid var(--green);border-radius:10px;padding:20px 24px;text-align:center">' +
+          '<div style="font-size:32px;margin-bottom:10px">🎉</div>' +
+          '<div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:6px">Zéro dette ! Continue comme ça</div>' +
+          '<div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">' +
+            'Aucun passif enregistré. Si tu as un crédit ou une dette, ajoute-la ici pour suivre ton remboursement et calculer ton patrimoine net exact.' +
+          '</div>' +
+          '<button class="btn bo bs" onclick="tg(\'psF\')" style="color:var(--t2)">+ Ajouter un passif si besoin</button>' +
+        '</div>' +
+        '</td></tr>';
+      psTot.textContent = '$0';
+      psMt.textContent = '$0/m';
+
+      /* KPIs — empty state (all green, celebratory) */
+      psKPI.innerHTML = '<div class="vue-kpis">' +
+        '<div class="vue-kpi">' +
+          '<div class="vue-kpi-header"><span class="vue-kpi-label">📉 Total dettes</span></div>' +
+          '<div class="vue-kpi-value" style="color:var(--green)">$0</div>' +
+          '<div class="vue-kpi-sub" style="color:var(--green)">Aucune dette</div>' +
+        '</div>' +
+        '<div class="vue-kpi">' +
+          '<div class="vue-kpi-header"><span class="vue-kpi-label">💳 Charge/mois</span></div>' +
+          '<div class="vue-kpi-value" style="color:var(--green)">$0/m</div>' +
+          '<div class="vue-kpi-sub" style="color:var(--green)">Aucune charge</div>' +
+        '</div>' +
+        '<div class="vue-kpi">' +
+          '<div class="vue-kpi-header"><span class="vue-kpi-label">⏱ Durée moy.</span></div>' +
+          '<div class="vue-kpi-value" style="color:var(--green)">—</div>' +
+          '<div class="vue-kpi-sub">Pas de dette active</div>' +
+        '</div>' +
+        '<div class="vue-kpi">' +
+          '<div class="vue-kpi-header"><span class="vue-kpi-label">⚖️ Ratio dette</span></div>' +
+          '<div class="vue-kpi-value" style="color:var(--green)">0%</div>' +
+          '<div class="vue-kpi-sub" style="color:var(--green)">Excellent</div>' +
+        '</div>' +
+      '</div>';
+      return;
+    }
+
+    /* ─── COMPUTE TOTALS ─── */
+    var tr = 0;
+    var tm = 0;
+
+    /* ─── TABLE ROWS ─── */
+    psT.innerHTML = D.passifs.map(function(p) {
+      tr += p.remaining;
+      tm += p.monthly;
+      var mo = p.monthly > 0 ? Math.ceil(p.remaining / p.monthly) : 0;
+      var moTxt = mo > 0 ? (mo + ' mois') : '—';
+      var moCol = mo > 24 ? 'var(--red)' : mo > 12 ? 'var(--gold)' : 'var(--green)';
+      var badge = (mo > 0 && mo < 3) ? ' <span style="display:inline-block;background:var(--green);color:#000;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;vertical-align:middle">Bientôt fini</span>' : '';
+
+      return '<tr>' +
+        '<td style="font-weight:600;color:var(--t1)">' + p.name + '</td>' +
+        '<td style="font-family:JetBrains Mono,monospace;color:var(--red)">' + fm(p.remaining) + '</td>' +
+        '<td style="font-family:JetBrains Mono,monospace;color:var(--gold)">' + fm(p.monthly) + '/m</td>' +
+        '<td style="font-family:JetBrains Mono,monospace;color:' + moCol + '">' + moTxt + badge + '</td>' +
+        '<td style="white-space:nowrap">' +
+          (p.monthly > 0 && p.remaining > 0
+            ? '<button class="btn bo bs" style="font-size:10px;padding:3px 8px;margin-right:4px" onclick="payPS(\'' + p.id + '\')">Payer mensualité</button>'
+            : '') +
+          '<button class="btn br bs" onclick="dPS(\'' + p.id + '\')">×</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    /* ─── FOOTER TOTALS ─── */
+    psTot.textContent = fm(tr);
+    psMt.textContent = fm(tm) + '/m';
+
+    /* ─── KPI CALCULATIONS ─── */
+    var avgMo = (D.passifs.length && tm > 0) ? Math.ceil(tr / tm) : 0;
+    var nw = cNW();
+    var ratio = nw > 0 ? Math.round(tr / nw * 100) : 0;
+
+    /* Duration color */
+    var durCol = avgMo > 24 ? 'var(--red)' : avgMo > 12 ? 'var(--gold)' : 'var(--green)';
+    /* Ratio color: <33% green, 33-50% gold, >50% red */
+    var ratCol = ratio > 50 ? 'var(--red)' : ratio > 33 ? 'var(--gold)' : 'var(--green)';
+    var ratLabel = ratio > 50 ? 'Elevé' : ratio > 33 ? 'Modéré' : 'Sain';
+
+    /* ─── KPI CARDS (vue-kpi) ─── */
+    psKPI.innerHTML = '<div class="vue-kpis">' +
+
+      /* KPI 1: Total dettes */
+      '<div class="vue-kpi" onclick="ValueExplainer.show({title:\'Total dettes\',value:\'' + fm(tr) + '\',formula:\'Somme des montants restants de chaque passif\',sources:[{sign:\'+\',label:\'' + D.passifs.length + ' passifs\',value:' + tr + ',source:\'Capital\'}],lastUpdated:\'Maintenant\',autoTriggers:[\'Passif ajoute\',\'Mensualite payee\']})">' +
+        '<div class="vue-kpi-header"><span class="vue-kpi-label">📉 Total dettes</span>' + ValueExplainer.icon('') + '</div>' +
+        '<div class="vue-kpi-value" style="color:var(--red)">' + fm(tr) + '</div>' +
+        '<div class="vue-kpi-sub">' + D.passifs.length + ' passif' + (D.passifs.length > 1 ? 's' : '') + ' actif' + (D.passifs.length > 1 ? 's' : '') + '</div>' +
+      '</div>' +
+
+      /* KPI 2: Charge/mois */
+      '<div class="vue-kpi">' +
+        '<div class="vue-kpi-header"><span class="vue-kpi-label">💳 Charge/mois</span></div>' +
+        '<div class="vue-kpi-value" style="color:var(--gold)">' + fm(tm) + '/m</div>' +
+        '<div class="vue-kpi-sub">Mensualités cumulées</div>' +
+      '</div>' +
+
+      /* KPI 3: Durée moyenne */
+      '<div class="vue-kpi">' +
+        '<div class="vue-kpi-header"><span class="vue-kpi-label">⏱ Durée moy.</span></div>' +
+        '<div class="vue-kpi-value" style="color:' + durCol + '">' + (avgMo ? avgMo + ' mois' : '—') + '</div>' +
+        '<div class="vue-kpi-sub">' + (avgMo > 24 ? 'Long terme' : avgMo > 12 ? 'Moyen terme' : avgMo > 0 ? 'Court terme' : 'Pas de mensualité') + '</div>' +
+      '</div>' +
+
+      /* KPI 4: Ratio dette */
+      '<div class="vue-kpi">' +
+        '<div class="vue-kpi-header"><span class="vue-kpi-label">⚖️ Ratio dette</span></div>' +
+        '<div class="vue-kpi-value" style="color:' + ratCol + '">' + ratio + '%</div>' +
+        '<div class="vue-kpi-sub" style="color:' + ratCol + '">' + ratLabel + '</div>' +
+      '</div>' +
+
+    '</div>';
+
+  } catch(e) { console.error('[Capital] rPA:', e); }
+}
 /* ─── WEEK TIPS ─── */
 function gWT(){try{var t=[],nw=cNW(),n=new Date(),d=n.getDay(),cm=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');if(d===5||d===6)t.push('Weekend → <b>backup JSON</b> Journal + Capital.');var c=gFC(),u=c.filter(function(x){return x.d<=14});if(u.length)t.push('⚠ <b>'+u[0].n+'</b> dans '+u[0].d+'j.');if(D.payouts.length===0)t.push('Ajoute ton premier <b>payout</b>.');if(D.portfolio.length===0&&nw>5000)t.push('NW >$5K → ouvre un <b>PEA</b>.');if(!D.expenses.some(function(e){return e.month===cm}))t.push('<b>Dépenses du mois</b> à saisir.');if(cH()<50)t.push('Score santé <50 → onglet <b>Santé</b>.');return t}catch(e){return[]}}
 /* ─── BACKUP ─── */
