@@ -705,19 +705,59 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 <div class="sg" id="pfS"></div><div class="tw"><table><thead><tr><th>Firm</th><th>Type</th><th>Taille</th><th>Coût</th><th>Split</th><th>ROI</th><th>Statut</th><th></th></tr></thead><tbody id="pfT"></tbody></table></div></div>
 <div class="pnl" id="p-po"><div class="st">Payouts (retraits) <button class="btn bp bs" onclick="tg('poF')">+ Payout</button></div>
 <div id="poSum" style="margin-bottom:14px"></div>
-<div id="poF" class="crd" style="display:none;margin-bottom:14px">
-<div style="background:rgba(0,214,143,.05);padding:10px 12px;border-radius:8px;margin-bottom:12px;border-left:3px solid var(--green);font-size:11px;color:var(--t2);line-height:1.6">
-<b style="color:var(--t1)">C'est quoi un payout ?</b><br>
-Chaque fois que tu retires de l'argent (d'une prop firm, d'un salaire, etc.), c'est un payout.<br>
-<b>Brut</b> = montant avant frais · <b>Frais</b> = commissions/taxes · <b>Net</b> = ce que tu touches vraiment
+<div id="poF" style="display:none;margin-bottom:14px;background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:18px">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+<div style="font-size:14px;font-weight:700;color:var(--t1);font-family:Bricolage Grotesque,system-ui">Nouveau payout manuel</div>
+<button style="background:none;border:none;color:var(--t3);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all 150ms" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t3)'" onclick="tg('poF')">&times;</button>
 </div>
-<div class="fr">
-<div class="fd"><label>Date du payout</label><input type="date" id="po-d"></div>
-<div class="fd"><label>Source</label><select id="po-s"><option>Prop Firm</option><option>Salaire</option><option>Business</option><option>Autre</option></select></div>
-<div class="fd"><label>Montant brut ($)</label><input type="number" id="po-b" step="0.01" placeholder="1000" min="0"></div>
-<div class="fd"><label>Frais / commissions ($)</label><input type="number" id="po-f" step="0.01" value="0" placeholder="0" min="0"></div>
+<div style="background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.1);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--t2);line-height:1.6">
+Les payouts <b style="color:var(--green)">Prop Firm</b> arrivent automatiquement depuis le Journal. Ici, ajoute tes autres revenus : salaire, business, freelance, etc.
 </div>
-<div style="display:flex;gap:6px"><button class="btn bp bs" onclick="aPO()">Ajouter le payout</button><button class="btn bo bs" onclick="tg('poF')">Annuler</button></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+<div>
+<label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Type</label>
+<select id="po-s" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px">
+<option>Salaire</option><option>Business</option><option>Freelance</option><option>Investissement</option><option>Autre</option>
+</select>
+</div>
+<div>
+<label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Date</label>
+<input type="date" id="po-d" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px;box-sizing:border-box">
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+<div>
+<label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Brut ($)</label>
+<input type="number" id="po-b" step="0.01" placeholder="1000" min="0" oninput="var f=parseFloat(document.getElementById('po-f').value)||0;var n=document.getElementById('po-n');if(n)n.value=(parseFloat(this.value||0)-f).toFixed(2)" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:13px;min-height:44px;box-sizing:border-box">
+</div>
+<div>
+<label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Frais ($)</label>
+<input type="number" id="po-f" step="0.01" value="0" placeholder="0" min="0" oninput="var b=parseFloat(document.getElementById('po-b').value)||0;var n=document.getElementById('po-n');if(n)n.value=(b-parseFloat(this.value||0)).toFixed(2)" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:JetBrains Mono,monospace;font-size:13px;min-height:44px;box-sizing:border-box">
+</div>
+<div>
+<label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Net ($) <span style="font-weight:400;color:var(--t3)">auto</span></label>
+<input type="number" id="po-n" step="0.01" placeholder="auto" readonly style="width:100%;padding:10px;background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.12);border-radius:8px;color:var(--green);font-family:JetBrains Mono,monospace;font-size:13px;font-weight:700;min-height:44px;box-sizing:border-box">
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+<div>
+<label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Compte de reception</label>
+<select id="po-acc" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px">
+<option value="">— Aucun —</option>
+</select>
+<div style="font-size:10px;color:var(--t3);margin-top:3px">Si selectionne, le depot sera auto sur ce compte</div>
+</div>
+<div>
+<label style="font-size:11px;color:var(--t3);font-weight:600;display:block;margin-bottom:4px">Entite</label>
+<select id="po-ent" style="width:100%;padding:10px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--t1);font-family:inherit;font-size:13px;min-height:44px">
+<option value="">Perso</option>
+</select>
+</div>
+</div>
+<div style="display:flex;gap:8px">
+<button style="flex:1;background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.2);color:var(--gold);padding:12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;min-height:44px;transition:all 150ms" onmouseover="this.style.background='rgba(201,162,39,.18)'" onmouseout="this.style.background='rgba(201,162,39,.1)'" onclick="aPO()">Ajouter le payout</button>
+<button style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--t3);padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-height:44px;transition:all 150ms" onclick="tg('poF')">Annuler</button>
+</div>
 </div>
 <div class="tw"><table><thead><tr><th>Date</th><th>Source</th><th>Brut</th><th>Frais</th><th>Net</th><th>Sync</th><th></th></tr></thead><tbody id="poT"></tbody><tfoot><tr><td colspan="5" style="font-weight:700;color:var(--t1)">Total net</td><td class="mn ps" id="poTot">$0</td><td></td></tr></tfoot></table></div></div>
 <div class="pnl" id="p-ent">
@@ -4749,7 +4789,38 @@ function checkPropFirmStatus(){try{
 }catch(e){console.error('checkPropFirmStatus:',e)}}
 
 /* ─── PAYOUTS ─── */
-function aPO(){try{var d=document.getElementById('po-d').value,s=document.getElementById('po-s').value,b=parseFloat(document.getElementById('po-b').value)||0,f=parseFloat(document.getElementById('po-f').value)||0;if(!d||b<=0){toast('Date et montant requis');return}var net=b-f;D.payouts.push({id:uid(),date:d,source:s,brut:b,frais:f,net:net});D.history.unshift({type:'payout',text:s+' : '+fm(net),date:d});save();rPO();tg('poF');toast('Ajouté');document.getElementById('po-b').value='';document.getElementById('po-f').value='0';if(D.bankAccounts.length>0){showBankDepositToast(net,s+' — Payout '+d)}}catch(e){console.error(e)}}
+function aPO(){try{
+  var d=document.getElementById('po-d').value;
+  var s=document.getElementById('po-s').value;
+  var b=parseFloat(document.getElementById('po-b').value)||0;
+  var f=parseFloat(document.getElementById('po-f').value)||0;
+  if(!d||b<=0){toast('Date et montant requis');return}
+  var net=b-f;
+  var accEl=document.getElementById('po-acc');
+  var entEl=document.getElementById('po-ent');
+  var destAccId=accEl?accEl.value:'';
+  var entId=entEl?entEl.value:'';
+
+  D.payouts.push({id:uid(),date:d,source:s,brut:b,frais:f,net:net,destAccount:destAccId,entityId:entId});
+  D.history.unshift({type:'payout',text:s+' : '+fm(net),date:d});
+  save();
+
+  /* Auto-deposit to selected bank account */
+  if(destAccId){
+    try{addBankTransaction(destAccId,net,s+' — Payout '+d,'deposit')}catch(ae){}
+    toast('Payout ajoute + depose sur le compte');
+  } else if(D.bankAccounts.length>0){
+    showBankDepositToast(net,s+' — Payout '+d);
+  } else {
+    toast('Payout ajoute');
+  }
+
+  rPO();tg('poF');
+  /* Reset form */
+  document.getElementById('po-b').value='';
+  document.getElementById('po-f').value='0';
+  var nEl=document.getElementById('po-n');if(nEl)nEl.value='';
+}catch(e){console.error('[Capital] aPO:',e)}}
 function showBankDepositToast(amount,label){try{var el=document.createElement('div');el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--gold);border-radius:var(--radius);padding:14px 18px;z-index:2000;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-width:420px;width:90%';el.innerHTML='<div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">💰 Payout de '+fm(amount)+' ajouté</div><div style="font-size:11px;color:var(--t2)">Déposer sur un compte bancaire ?</div></div><button onclick="this.parentElement.remove();bankDepositFromPayout('+amount+',\''+label.replace(/'/g,"\\'")+'\')" style="background:var(--green);color:#000;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;min-height:44px">Déposer</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:4px">×</button>';document.body.appendChild(el);setTimeout(function(){if(el.parentElement)el.remove()},8000)}catch(e){console.error(e)}}
 function bankDepositFromPayout(amount,label){try{if(!D.bankAccounts.length){toast('Aucun compte bancaire');return}var accId=D.bankAccounts[0].id;if(D.bankAccounts.length>1){var opts=D.bankAccounts.map(function(ba,i){return(i+1)+'. '+ba.name+' ('+ba.bank+')'}).join('\n');var choice=prompt('Sur quel compte ?\n'+opts,1);if(!choice)return;var idx=parseInt(choice)-1;if(idx<0||idx>=D.bankAccounts.length){toast('Choix invalide');return}accId=D.bankAccounts[idx].id}addBankTransaction(accId,amount,label,'deposit');go('bank')}catch(e){console.error(e)}}
 function dPO(id){try{if(!confirm('?'))return;D.payouts=D.payouts.filter(function(p){return p.id!==id});save();rPO()}catch(e){console.error(e)}}
@@ -4876,6 +4947,24 @@ function rPO(){try{
   kh += '</div>';
 
   poSum.innerHTML = kh;
+
+  /* ─── Populate dropdowns in form ─── */
+  setTimeout(function() {
+    try {
+      var accSel = document.getElementById('po-acc');
+      if (accSel) {
+        var accOpts = '<option value="">— Aucun —</option>';
+        D.bankAccounts.forEach(function(ba) { accOpts += '<option value="' + ba.id + '">' + esc(ba.name) + ' (' + esc(ba.bank||'') + ')</option>'; });
+        accSel.innerHTML = accOpts;
+      }
+      var entSel = document.getElementById('po-ent');
+      if (entSel) {
+        var entOpts = '<option value="">Perso</option>';
+        (D.entities || []).forEach(function(e) { if (e.status === 'Active' || e.status === 'En création' || !e.status) entOpts += '<option value="' + e.id + '">' + esc(e.name || e.nom || '') + '</option>'; });
+        entSel.innerHTML = entOpts;
+      }
+    } catch(dp) {}
+  }, 50);
 
   /* ─── Apply filters ─── */
   var filtered = D.payouts.slice();
