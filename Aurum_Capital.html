@@ -5080,9 +5080,20 @@ function rBank() {
     var el = document.getElementById('bankC');
     if (!el) return;
 
-    var totalAll = D.bankAccounts.reduce(function(s, ba) { return s + (ba.balance || 0); }, 0);
-    var totalPerso = D.bankAccounts.filter(function(ba) { return ba.type !== 'entite'; }).reduce(function(s, ba) { return s + (ba.balance || 0); }, 0);
-    var totalEntite = D.bankAccounts.filter(function(ba) { return ba.type === 'entite'; }).reduce(function(s, ba) { return s + (ba.balance || 0); }, 0);
+    /* Filter by entity context */
+    var ctxFilter = EntityContextSelector.getCurrent();
+    var filteredAccounts = D.bankAccounts.filter(function(ba) {
+      if (!ctxFilter || ctxFilter === 'ALL') return true;
+      /* Check if the selected entity is PERSO — match perso type accounts */
+      var selEntity = D.v2Entities.find(function(e) { return e.id === ctxFilter; });
+      if (selEntity && selEntity.kind === 'PERSO') return ba.type !== 'entite';
+      /* Otherwise match by entityId */
+      return ba.entityId === ctxFilter;
+    });
+
+    var totalAll = filteredAccounts.reduce(function(s, ba) { return s + (ba.balance || 0); }, 0);
+    var totalPerso = filteredAccounts.filter(function(ba) { return ba.type !== 'entite'; }).reduce(function(s, ba) { return s + (ba.balance || 0); }, 0);
+    var totalEntite = filteredAccounts.filter(function(ba) { return ba.type === 'entite'; }).reduce(function(s, ba) { return s + (ba.balance || 0); }, 0);
 
     var h = '';
 
@@ -5109,6 +5120,9 @@ function rBank() {
 
     h += '</div>';
 
+    // ═══ Sélecteur de contexte (Phase C) ═══
+    h += '<div id="bankEntitySelector" style="margin-bottom:12px"></div>';
+
     // ═══ Holding suggestion ═══
     if (D.entities && D.entities.length > 0) {
       var hasHolding = D.entities.some(function(e) { return (e.forme === 'Holding' || e.kind === 'HOLDING') && (e.status === 'Active' || e.status === 'En création'); });
@@ -5124,7 +5138,7 @@ function rBank() {
     }
 
     // ═══ Tableau des comptes ═══
-    if (!D.bankAccounts.length) {
+    if (!filteredAccounts.length) {
       h += '<div style="text-align:center;padding:48px 20px;max-width:500px;margin:0 auto">';
       h += '<div style="font-size:36px;margin-bottom:12px">🏦</div>';
       h += '<div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px;font-family:Bricolage Grotesque,system-ui">Ajoute ton premier compte bancaire</div>';
@@ -5140,7 +5154,7 @@ function rBank() {
       });
       h += '</tr></thead><tbody>';
 
-      D.bankAccounts.forEach(function(ba) {
+      filteredAccounts.forEach(function(ba) {
         var entName = '';
         if (ba.type === 'entite' && ba.entityId) {
           var ent = D.entities.find(function(e) { return e.id === ba.entityId; });
@@ -5214,8 +5228,11 @@ function rBank() {
 
     el.innerHTML = h;
 
+    // ═══ Phase C: Render EntityContextSelector ═══
+    try { EntityContextSelector.render('bankEntitySelector'); } catch(ec) {}
+
     // ═══ Phase B: Inline editing on balance cells + snapshots ═══
-    D.bankAccounts.forEach(function(ba) {
+    filteredAccounts.forEach(function(ba) {
       var cell = document.getElementById('bankBal_' + ba.id);
       if (cell) {
         InlineEditableCell.make(cell, {
