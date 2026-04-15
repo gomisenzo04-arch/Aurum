@@ -719,7 +719,7 @@ Chaque fois que tu retires de l'argent (d'une prop firm, d'un salaire, etc.), c'
 </div>
 <div style="display:flex;gap:6px"><button class="btn bp bs" onclick="aPO()">Ajouter le payout</button><button class="btn bo bs" onclick="tg('poF')">Annuler</button></div>
 </div>
-<div class="tw"><table><thead><tr><th>Date</th><th>Source</th><th>Brut</th><th>Frais</th><th>Net</th><th></th></tr></thead><tbody id="poT"></tbody><tfoot><tr><td colspan="4" style="font-weight:700;color:var(--t1)">Total net</td><td class="mn ps" id="poTot">$0</td><td></td></tr></tfoot></table></div></div>
+<div class="tw"><table><thead><tr><th>Date</th><th>Source</th><th>Brut</th><th>Frais</th><th>Net</th><th>Sync</th><th></th></tr></thead><tbody id="poT"></tbody><tfoot><tr><td colspan="5" style="font-weight:700;color:var(--t1)">Total net</td><td class="mn ps" id="poTot">$0</td><td></td></tr></tfoot></table></div></div>
 <div class="pnl" id="p-ent">
 <!-- Consolidated KPIs -->
 <div class="sg" id="enKPI"></div>
@@ -4753,7 +4753,132 @@ function aPO(){try{var d=document.getElementById('po-d').value,s=document.getEle
 function showBankDepositToast(amount,label){try{var el=document.createElement('div');el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--gold);border-radius:var(--radius);padding:14px 18px;z-index:2000;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-width:420px;width:90%';el.innerHTML='<div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">💰 Payout de '+fm(amount)+' ajouté</div><div style="font-size:11px;color:var(--t2)">Déposer sur un compte bancaire ?</div></div><button onclick="this.parentElement.remove();bankDepositFromPayout('+amount+',\''+label.replace(/'/g,"\\'")+'\')" style="background:var(--green);color:#000;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;min-height:44px">Déposer</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:4px">×</button>';document.body.appendChild(el);setTimeout(function(){if(el.parentElement)el.remove()},8000)}catch(e){console.error(e)}}
 function bankDepositFromPayout(amount,label){try{if(!D.bankAccounts.length){toast('Aucun compte bancaire');return}var accId=D.bankAccounts[0].id;if(D.bankAccounts.length>1){var opts=D.bankAccounts.map(function(ba,i){return(i+1)+'. '+ba.name+' ('+ba.bank+')'}).join('\n');var choice=prompt('Sur quel compte ?\n'+opts,1);if(!choice)return;var idx=parseInt(choice)-1;if(idx<0||idx>=D.bankAccounts.length){toast('Choix invalide');return}accId=D.bankAccounts[idx].id}addBankTransaction(accId,amount,label,'deposit');go('bank')}catch(e){console.error(e)}}
 function dPO(id){try{if(!confirm('?'))return;D.payouts=D.payouts.filter(function(p){return p.id!==id});save();rPO()}catch(e){console.error(e)}}
-function rPO(){try{if(!D.payouts.length){document.getElementById('poSum').innerHTML='<div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(0,214,143,.05),rgba(91,141,239,.03));border-left:3px solid var(--green);border-radius:10px;padding:20px 24px;text-align:center"><div style="font-size:32px;margin-bottom:10px">💰</div><div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Ton premier revenu t\'attend</div><div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Un payout, c\'est de l\'argent qui sort d\'un compte de trading vers ton compte bancaire. Prop firm, compte perso, salaire... tout se suit ici.</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;font-size:11px"><div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">💰</div><div style="color:var(--t2)">Prop Firm</div></div><div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">💼</div><div style="color:var(--t2)">Salaire</div></div><div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">🏢</div><div style="color:var(--t2)">Business</div></div><div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">📊</div><div style="color:var(--t2)">Autre</div></div></div><button class="btn bp bs" onclick="tg(\'poF\')">+ Ajouter un payout</button></div>';document.getElementById('poT').innerHTML='';document.getElementById('poTot').textContent='$0';return}var t=0,bySrc={};var ico={'Prop Firm':'💰','Salaire':'💼','Business':'🏢','Autre':'📊'};D.payouts.forEach(function(p){t+=p.net;bySrc[p.source]=(bySrc[p.source]||0)+p.net});var sh='<div style="background:linear-gradient(135deg,rgba(0,214,143,.08),rgba(91,141,239,.05));border-radius:12px;padding:16px;border:1px solid rgba(0,214,143,.15);text-align:center;margin-bottom:4px"><div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Total Payouts</div><div style="font-size:36px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--green)">'+fm(t)+'</div></div>';if(Object.keys(bySrc).length){sh+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;margin-top:8px">';for(var k in bySrc){sh+='<div style="background:var(--bg3);padding:8px;border-radius:6px;text-align:center;font-size:11px"><div style="color:var(--t3)">'+(ico[k]||'📊')+' '+k+'</div><div style="font-weight:700;color:var(--gold);margin-top:2px;font-family:JetBrains Mono,monospace">'+fm(bySrc[k])+'</div></div>'}sh+='</div>'}document.getElementById('poSum').innerHTML=sh;document.getElementById('poT').innerHTML=D.payouts.sort(function(a,b){return b.date.localeCompare(a.date)}).map(function(p){return'<tr><td>'+p.date+'</td><td>'+(ico[p.source]||'')+' '+p.source+'</td><td class="mn">'+fm(p.brut)+'</td><td class="mn ng">'+fm(p.frais)+'</td><td class="mn ps">'+fm(p.net)+'</td><td><button class="btn br bs" onclick="dPO(\''+p.id+'\')">×</button></td></tr>'}).join('');document.getElementById('poTot').textContent=fm(t)}catch(e){console.error(e)}}
+function rPO(){try{
+  var poSum = document.getElementById('poSum');
+  var poT = document.getElementById('poT');
+  var poTot = document.getElementById('poTot');
+  if (!poSum) return;
+
+  /* ─── Empty state ─── */
+  if (!D.payouts.length) {
+    poSum.innerHTML = '<div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(0,214,143,.05),rgba(91,141,239,.03));border-left:3px solid var(--green);border-radius:10px;padding:20px 24px;text-align:center">' +
+      '<div style="font-size:32px;margin-bottom:10px">\ud83d\udcb0</div>' +
+      '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Ton premier revenu t\u2019attend</div>' +
+      '<div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Un payout, c\u2019est de l\u2019argent qui sort d\u2019un compte de trading vers ton compte bancaire. Prop firm, compte perso, salaire\u2026 tout se suit ici.</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;font-size:11px">' +
+        '<div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">\ud83d\udcb0</div><div style="color:var(--t2)">Prop Firm</div></div>' +
+        '<div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">\ud83d\udcbc</div><div style="color:var(--t2)">Salaire</div></div>' +
+        '<div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">\ud83c\udfe2</div><div style="color:var(--t2)">Business</div></div>' +
+        '<div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">\ud83d\udcca</div><div style="color:var(--t2)">Autre</div></div>' +
+      '</div>' +
+      '<button class="btn bp bs" onclick="tg(\'poF\')">+ Ajouter un payout</button>' +
+    '</div>';
+    if (poT) poT.innerHTML = '';
+    if (poTot) poTot.textContent = '$0.00';
+    return;
+  }
+
+  /* ─── Compute KPIs ─── */
+  var totalNet = D.payouts.reduce(function(s, p) { return s + (p.net || 0); }, 0);
+
+  var now = new Date();
+  var cm = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var monthCurrent = D.payouts.filter(function(p) { return (p.date || '').slice(0, 7) === cm; })
+    .reduce(function(s, p) { return s + (p.net || 0); }, 0);
+
+  var distinctMonths = {};
+  D.payouts.forEach(function(p) { if (p.date) distinctMonths[p.date.slice(0, 7)] = true; });
+  var numMonths = Math.max(1, Object.keys(distinctMonths).length);
+  var avgMonth = totalNet / numMonths;
+
+  var twelveMonthsAgo = new Date(now);
+  twelveMonthsAgo.setMonth(now.getMonth() - 12);
+  var twelveMonthsAgoStr = twelveMonthsAgo.toISOString().slice(0, 10);
+  var last12 = D.payouts.filter(function(p) { return p.date && p.date >= twelveMonthsAgoStr; }).length;
+  var nbPayouts = D.payouts.length;
+
+  /* ─── Build ValueExplainer sources for Total Net ─── */
+  var bySrc = {};
+  var ico = {'Prop Firm':'\ud83d\udcb0', 'Salaire':'\ud83d\udcbc', 'Business':'\ud83c\udfe2', 'Autre':'\ud83d\udcca'};
+  D.payouts.forEach(function(p) {
+    var src = p.source || 'Autre';
+    bySrc[src] = (bySrc[src] || 0) + (p.net || 0);
+  });
+  var veSources = [];
+  for (var k in bySrc) {
+    veSources.push({sign: '+', label: (ico[k] || '\ud83d\udcca') + ' ' + k, value: bySrc[k], source: 'Capital'});
+  }
+  var veConfig = {
+    title: 'Total net payouts',
+    value: fm(totalNet),
+    formula: 'Somme de tous les payouts (brut - frais)',
+    sources: veSources,
+    lastUpdated: 'Maintenant',
+    autoTriggers: ['Payout ajoute', 'Payout supprime']
+  };
+  var veStr = JSON.stringify(veConfig).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+  /* ─── Render 4 KPIs ─── */
+  var kh = '<div class="vue-kpis">';
+
+  // KPI 1: Total net
+  kh += '<div class="vue-kpi" onclick="ValueExplainer.show(JSON.parse(this.getAttribute(\'data-ve\')))" data-ve=\'' + JSON.stringify(veConfig).replace(/'/g, '&#39;') + '\'>';
+  kh += '<div class="vue-kpi-header"><span class="vue-kpi-label">Total net</span>' + ValueExplainer.icon('') + '</div>';
+  kh += '<div class="vue-kpi-value" style="color:var(--green)">' + fm(totalNet) + '</div>';
+  kh += '<div class="vue-kpi-sub">' + nbPayouts + ' payouts · ' + numMonths + ' mois</div>';
+  kh += '</div>';
+
+  // KPI 2: Mois courant
+  var mcColor = monthCurrent >= 0 ? 'var(--green)' : 'var(--red)';
+  kh += '<div class="vue-kpi">';
+  kh += '<div class="vue-kpi-header"><span class="vue-kpi-label">Mois courant</span></div>';
+  kh += '<div class="vue-kpi-value" style="color:' + mcColor + '">' + fm(monthCurrent) + '</div>';
+  kh += '<div class="vue-kpi-sub">' + cm + '</div>';
+  kh += '</div>';
+
+  // KPI 3: Moyenne / mois
+  kh += '<div class="vue-kpi">';
+  kh += '<div class="vue-kpi-header"><span class="vue-kpi-label">Moyenne / mois</span></div>';
+  kh += '<div class="vue-kpi-value" style="color:var(--gold)">' + fm(avgMonth) + '</div>';
+  kh += '<div class="vue-kpi-sub">Sur ' + numMonths + ' mois actifs</div>';
+  kh += '</div>';
+
+  // KPI 4: Nb payouts
+  kh += '<div class="vue-kpi">';
+  kh += '<div class="vue-kpi-header"><span class="vue-kpi-label">Nb payouts</span></div>';
+  kh += '<div class="vue-kpi-value" style="color:var(--t1)">' + nbPayouts + '</div>';
+  kh += '<div class="vue-kpi-sub">12 derniers mois : ' + last12 + '</div>';
+  kh += '</div>';
+
+  kh += '</div>';
+  poSum.innerHTML = kh;
+
+  /* ─── Render table rows ─── */
+  var sorted = D.payouts.slice().sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+
+  if (poT) {
+    poT.innerHTML = sorted.map(function(p) {
+      var isAuto = !!p.autoFrom;
+      var syncBadge = isAuto
+        ? '<span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;background:rgba(34,197,94,.08);color:var(--green)">Auto Journal</span>'
+        : '<span style="font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.04);color:var(--t3)">Manuel</span>';
+      var deleteBtn = isAuto ? '' : '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:4px;min-height:32px" onclick="dPO(\'' + p.id + '\')">&times;</button>';
+      return '<tr style="border-bottom:1px solid rgba(255,255,255,.04);transition:background 150ms">' +
+        '<td style="padding:10px 12px;font-size:12px;color:var(--t2);font-family:JetBrains Mono,monospace">' + (p.date || '') + '</td>' +
+        '<td style="padding:10px 12px;font-size:12px;color:var(--t1)">' + (ico[p.source] || '\ud83d\udcca') + ' ' + esc(p.source || '') + '</td>' +
+        '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;color:var(--t1)">' + fm(p.brut || 0) + '</td>' +
+        '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;color:var(--red)">' + fm(p.frais || 0) + '</td>' +
+        '<td style="padding:10px 12px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600;color:var(--green)">' + fm(p.net || 0) + '</td>' +
+        '<td style="padding:10px 12px">' + syncBadge + '</td>' +
+        '<td style="padding:10px 12px;text-align:right">' + deleteBtn + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  /* ─── Render total footer ─── */
+  if (poTot) poTot.textContent = fm(totalNet);
+
+}catch(e){console.error('[Capital] rPO:', e)}}
 /* ─── ENTITIES ─── */
 /* ═══ ENTITIES — MASTERCLASS ═══ */
 function aEN(){try{
