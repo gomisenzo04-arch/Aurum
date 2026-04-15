@@ -5465,6 +5465,8 @@ function aAB(){try{var n=esc(document.getElementById('ab-n').value.trim()),c=par
 function dAB(id){try{D.abonnements=D.abonnements.filter(function(a){return a.id!==id});save();rAL()}catch(e){console.error(e)}}
 function rAL(){try{var t=D.abonnements.reduce(function(s,a){return s+(a.cost||0)},0);document.getElementById('abL').innerHTML=D.abonnements.map(function(a){return'<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px"><span style="flex:1;color:var(--t2)">'+a.name+'</span><span class="mn ng">'+fm(a.cost)+'/m</span><span style="cursor:pointer;color:var(--t3)" onclick="dAB(\''+a.id+'\')">×</span></div>'}).join('')+(t>0?'<div style="font-size:11px;font-weight:700;color:var(--gold);margin-top:6px">Total : '+fm(t)+'/mois</div>':'')}catch(e){console.error(e)}}
 var _budgetCatFilter = 'all';
+var _budgetChartPeriod = 'cm';
+var _budgetDonutChart = null;
 
 function rBU() {
   try {
@@ -5671,13 +5673,115 @@ function rBU() {
       }
     } catch(ed) {}
 
+    // ═══ Graphique répartition (Phase D) ═══
+    h += '<div class="vue-section" style="margin-top:16px">';
+    h += '<div class="vue-chart-header">';
+    h += '<span class="vue-chart-title">Repartition par categorie</span>';
+    h += '<div class="vue-chart-toggles">';
+    [['cm','Ce mois'],['3m','3 mois'],['year','Annee']].forEach(function(t) {
+      h += '<button class="vue-toggle' + (_budgetChartPeriod === t[0] ? ' active' : '') + '" onclick="_budgetChartPeriod=\'' + t[0] + '\';rBU()">' + t[1] + '</button>';
+    });
+    h += '</div></div>';
+    h += '<div style="position:relative;height:220px"><canvas id="budgetDonutCanvas"></canvas></div>';
+    h += '</div>';
+
     budV2.innerHTML = h;
+
+    // Render donut chart
+    requestAnimationFrame(function() { try { rBudgetDonut(); } catch(ec) { console.error('[Capital] budgetDonut:', ec); } });
 
     // Also update the legacy table (rEX uses exT/exTot)
     try { rEX(); } catch(e) {}
 
   } catch(e) { console.error('[Capital] rBU:', e); }
 }
+/* ─── Budget Donut Chart (Phase D) ─── */
+function rBudgetDonut() {
+  try {
+    if (_budgetDonutChart) _budgetDonutChart.destroy();
+    var cv = document.getElementById('budgetDonutCanvas');
+    if (!cv) return;
+
+    var now = new Date();
+    var filtered = D.expenses.slice();
+
+    if (_budgetChartPeriod === 'cm') {
+      var cm = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+      filtered = filtered.filter(function(e) { return e.month === cm; });
+    } else if (_budgetChartPeriod === '3m') {
+      var cutoff3 = new Date(now); cutoff3.setMonth(now.getMonth() - 3);
+      var cut3Str = cutoff3.getFullYear() + '-' + String(cutoff3.getMonth() + 1).padStart(2, '0');
+      filtered = filtered.filter(function(e) { return e.month && e.month >= cut3Str; });
+    } else if (_budgetChartPeriod === 'year') {
+      var yearStr = String(now.getFullYear());
+      filtered = filtered.filter(function(e) { return e.month && e.month.startsWith(yearStr); });
+    }
+
+    // Aggregate by category
+    var byCat = {};
+    filtered.forEach(function(e) {
+      var cat = e.cat || 'Autre';
+      byCat[cat] = (byCat[cat] || 0) + (e.amount || 0);
+    });
+
+    // Add abonnements as "Abonnements" category
+    var aboTotal = D.abonnements.reduce(function(s, a) { return s + (a.cost || 0); }, 0);
+    if (aboTotal > 0) {
+      var months = _budgetChartPeriod === 'cm' ? 1 : _budgetChartPeriod === '3m' ? 3 : 12;
+      byCat['Abonnements'] = (byCat['Abonnements'] || 0) + aboTotal * months;
+    }
+
+    var labels = Object.keys(byCat).filter(function(k) { return byCat[k] > 0; });
+    var values = labels.map(function(k) { return byCat[k]; });
+
+    if (!labels.length) {
+      var ctx2d = cv.getContext('2d');
+      ctx2d.clearRect(0, 0, cv.width, cv.height);
+      ctx2d.fillStyle = '#56585e';
+      ctx2d.font = '12px DM Sans';
+      ctx2d.textAlign = 'center';
+      ctx2d.fillText('Aucune depense', cv.width / 2, cv.height / 2);
+      return;
+    }
+
+    var colors = ['#ef4444', '#c9a227', '#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#06b6d4', '#ec4899', '#6b7280', '#10b981', '#f97316'];
+    var total = values.reduce(function(s, v) { return s + v; }, 0);
+
+    _budgetDonutChart = new Chart(cv, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors.slice(0, labels.length),
+          borderWidth: 2,
+          borderColor: '#09090b'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { color: '#8b8d94', font: { family: 'DM Sans', size: 11 }, padding: 8, usePointStyle: true, pointStyle: 'circle' }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(c) {
+                var v = c.parsed || 0;
+                var pct = total ? ((v / total) * 100).toFixed(1) : '0';
+                return ' ' + c.label + ' : $' + v.toLocaleString('en-US') + ' (' + pct + '%)';
+              }
+            }
+          }
+        }
+      }
+    });
+  } catch(e) { console.error('[Capital] rBudgetDonut:', e); }
+}
+
 /* ─── PASSIFS ─── */
 function aPS(){try{var n=esc(document.getElementById('ps-n').value.trim()),r=parseFloat(document.getElementById('ps-r').value)||0,m=parseFloat(document.getElementById('ps-m').value)||0;if(!n||r<=0){toast('Nom et montant requis');return}D.passifs.push({id:uid(),name:n,remaining:r,monthly:m});save();rPA();tg('psF');toast('OK');document.getElementById('ps-n').value='';document.getElementById('ps-r').value='';document.getElementById('ps-m').value=''}catch(e){console.error(e)}}
 function dPS(id){try{if(!confirm('?'))return;D.passifs=D.passifs.filter(function(p){return p.id!==id});save();rPA()}catch(e){console.error(e)}}
