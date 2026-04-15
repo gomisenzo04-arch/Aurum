@@ -4836,18 +4836,41 @@ function rPO(){try{
 
   /* ─── Empty state ─── */
   if (!D.payouts.length) {
-    poSum.innerHTML = '<div style="max-width:500px;margin:20px auto;background:linear-gradient(135deg,rgba(0,214,143,.05),rgba(91,141,239,.03));border-left:3px solid var(--green);border-radius:10px;padding:20px 24px;text-align:center">' +
-      '<div style="font-size:32px;margin-bottom:10px">\ud83d\udcb0</div>' +
-      '<div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:6px">Ton premier revenu t\u2019attend</div>' +
-      '<div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:14px">Un payout, c\u2019est de l\u2019argent qui sort d\u2019un compte de trading vers ton compte bancaire. Prop firm, compte perso, salaire\u2026 tout se suit ici.</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;font-size:11px">' +
-        '<div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">\ud83d\udcb0</div><div style="color:var(--t2)">Prop Firm</div></div>' +
-        '<div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">\ud83d\udcbc</div><div style="color:var(--t2)">Salaire</div></div>' +
-        '<div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">\ud83c\udfe2</div><div style="color:var(--t2)">Business</div></div>' +
-        '<div style="background:var(--bg3);padding:10px;border-radius:8px"><div style="font-size:16px;margin-bottom:4px">\ud83d\udcca</div><div style="color:var(--t2)">Autre</div></div>' +
-      '</div>' +
-      '<button class="btn bp bs" onclick="tg(\'poF\')">+ Ajouter un payout</button>' +
-    '</div>';
+    var eh = '<div style="text-align:center;padding:48px 20px;max-width:520px;margin:0 auto">';
+    eh += '<div style="font-size:40px;margin-bottom:12px">💰</div>';
+    eh += '<div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px;font-family:Bricolage Grotesque,system-ui">Tes revenus, centralises</div>';
+    eh += '<div style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:24px">Un payout, c\'est de l\'argent qui arrive sur ton compte bancaire. Prop firm, salaire, business, freelance... tout se suit ici. Les payouts prop firm arrivent <b style="color:var(--green)">automatiquement depuis le Journal</b>.</div>';
+
+    /* 4 type buttons */
+    eh += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px">';
+    var types = [
+      { icon: '💰', label: 'Prop Firm', sub: 'Auto depuis Journal', color: 'var(--green)' },
+      { icon: '💼', label: 'Salaire', sub: 'Saisie manuelle', color: 'var(--blue)' },
+      { icon: '🏢', label: 'Business', sub: 'Saisie manuelle', color: 'var(--purple)' },
+      { icon: '📊', label: 'Autre', sub: 'Saisie manuelle', color: 'var(--t3)' }
+    ];
+    types.forEach(function(t) {
+      eh += '<div style="background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px 10px;text-align:center;transition:border-color 150ms;cursor:default">';
+      eh += '<div style="font-size:24px;margin-bottom:6px">' + t.icon + '</div>';
+      eh += '<div style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px">' + t.label + '</div>';
+      eh += '<div style="font-size:9px;color:' + t.color + ';font-weight:600">' + t.sub + '</div>';
+      eh += '</div>';
+    });
+    eh += '</div>';
+
+    /* How it works */
+    eh += '<div style="background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:10px;padding:16px;text-align:left;margin-bottom:20px">';
+    eh += '<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Comment ca marche ?</div>';
+    eh += '<div style="display:grid;gap:6px;font-size:12px;color:var(--t2);line-height:1.6">';
+    eh += '<div style="display:flex;gap:8px;align-items:start"><span style="width:18px;height:18px;border-radius:50%;background:rgba(201,162,39,.1);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--gold);flex-shrink:0">1</span><div>Les payouts <b style="color:var(--green)">Prop Firm</b> arrivent automatiquement quand tu les enregistres dans le Journal</div></div>';
+    eh += '<div style="display:flex;gap:8px;align-items:start"><span style="width:18px;height:18px;border-radius:50%;background:rgba(201,162,39,.1);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--gold);flex-shrink:0">2</span><div>Les autres revenus (salaire, business...) se saisissent ici avec le bouton <b style="color:var(--gold)">+ Payout</b></div></div>';
+    eh += '<div style="display:flex;gap:8px;align-items:start"><span style="width:18px;height:18px;border-radius:50%;background:rgba(201,162,39,.1);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--gold);flex-shrink:0">3</span><div>Chaque payout peut etre depose directement sur un <b>compte bancaire</b> pour suivre ta liquidite</div></div>';
+    eh += '</div></div>';
+
+    eh += '<button style="background:rgba(201,162,39,.1);border:1px solid rgba(201,162,39,.2);color:var(--gold);padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;min-height:48px;transition:all 150ms" onmouseover="this.style.background=\'rgba(201,162,39,.18)\'" onmouseout="this.style.background=\'rgba(201,162,39,.1)\'" onclick="tg(\'poF\')">+ Ajouter ton premier payout</button>';
+    eh += '</div>';
+
+    poSum.innerHTML = eh;
     if (poT) poT.innerHTML = '';
     if (poTot) poTot.textContent = '$0.00';
     return;
