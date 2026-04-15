@@ -5407,7 +5407,149 @@ function rEX(){try{if(!D.expenses.length&&!D.abonnements.length){document.getEle
 function aAB(){try{var n=esc(document.getElementById('ab-n').value.trim()),c=parseFloat(document.getElementById('ab-c').value)||0;if(!n||c<=0){toast('Nom et montant requis');return}D.abonnements.push({id:uid(),name:n,cost:c});save();rAL();tg('abF');toast('OK')}catch(e){console.error(e)}}
 function dAB(id){try{D.abonnements=D.abonnements.filter(function(a){return a.id!==id});save();rAL()}catch(e){console.error(e)}}
 function rAL(){try{var t=D.abonnements.reduce(function(s,a){return s+(a.cost||0)},0);document.getElementById('abL').innerHTML=D.abonnements.map(function(a){return'<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px"><span style="flex:1;color:var(--t2)">'+a.name+'</span><span class="mn ng">'+fm(a.cost)+'/m</span><span style="cursor:pointer;color:var(--t3)" onclick="dAB(\''+a.id+'\')">×</span></div>'}).join('')+(t>0?'<div style="font-size:11px;font-weight:700;color:var(--gold);margin-top:6px">Total : '+fm(t)+'/mois</div>':'')}catch(e){console.error(e)}}
-function rBU(){try{rCL();rCS();rEX();rAL()}catch(e){console.error(e)}}
+var _budgetCatFilter = 'all';
+
+function rBU() {
+  try {
+    // Keep legacy form interactions working
+    try { rCS(); } catch(e) {}
+    try { rAL(); } catch(e) {}
+
+    var panel = document.getElementById('p-bud');
+    if (!panel) return;
+
+    // Find or create the v2 budget container
+    var budV2 = document.getElementById('budV2');
+    if (!budV2) {
+      budV2 = document.createElement('div');
+      budV2.id = 'budV2';
+      // Insert after the title bar (.st)
+      var firstChild = panel.querySelector('.st');
+      if (firstChild && firstChild.nextSibling) {
+        panel.insertBefore(budV2, firstChild.nextSibling);
+      } else {
+        panel.appendChild(budV2);
+      }
+      // Hide old category card and old table wrapper (v2 renders them better)
+      var oldCards = panel.querySelectorAll('.crd');
+      if (oldCards[0]) oldCards[0].style.display = 'none'; // categories card
+      var oldTw = panel.querySelector('.tw');
+      if (oldTw) oldTw.style.display = 'none'; // old expenses table
+    }
+
+    // ── Compute data ──
+    var now = new Date();
+    var cm = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    var monthExpenses = D.expenses.filter(function(e) { return e.month === cm; }).reduce(function(s, e) { return s + (e.amount || 0); }, 0);
+    var aboTotal = D.abonnements.reduce(function(s, a) { return s + (a.cost || 0); }, 0);
+    var totalMonth = monthExpenses + aboTotal;
+
+    // Monthly income estimate (from payouts last 3 months)
+    var threeMonthsAgo = new Date(now);
+    threeMonthsAgo.setMonth(now.getMonth() - 3);
+    var recentPayouts = D.payouts.filter(function(p) { return p.date && p.date >= threeMonthsAgo.toISOString().slice(0, 10); });
+    var monthlyIncome = recentPayouts.length > 0 ? recentPayouts.reduce(function(s, p) { return s + (p.net || 0); }, 0) / 3 : 0;
+    // Add trading P&L
+    try {
+      var mp = mPnL();
+      var mKeys = Object.keys(mp).sort().slice(-3);
+      if (mKeys.length) monthlyIncome += Math.max(0, mKeys.reduce(function(s, k) { return s + mp[k].pnl; }, 0) / mKeys.length);
+    } catch(e) {}
+
+    var savingRate = monthlyIncome > 0 ? Math.round(((monthlyIncome - totalMonth) / monthlyIncome) * 100) : 0;
+    var resteAVivre = Math.max(0, monthlyIncome - totalMonth);
+
+    var h = '';
+
+    // ═══ 4 KPIs ═══
+    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+
+    h += '<div class="vue-kpi">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Depenses mois</span></div>';
+    h += '<div class="vue-kpi-value" style="color:var(--red)">-$' + totalMonth.toLocaleString('en-US', {minimumFractionDigits: 0}) + '</div>';
+    h += '<div class="vue-kpi-sub">' + cm + '</div>';
+    h += '</div>';
+
+    h += '<div class="vue-kpi">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Abos recurrents</span></div>';
+    h += '<div class="vue-kpi-value" style="color:var(--red)">-$' + aboTotal.toLocaleString('en-US', {minimumFractionDigits: 0}) + '<span style="font-size:12px;color:var(--t3)">/m</span></div>';
+    h += '<div class="vue-kpi-sub">' + D.abonnements.length + ' abonnement' + (D.abonnements.length > 1 ? 's' : '') + '</div>';
+    h += '</div>';
+
+    var srColor = savingRate >= 30 ? 'var(--green)' : savingRate >= 10 ? 'var(--gold)' : 'var(--red)';
+    h += '<div class="vue-kpi">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Taux epargne</span></div>';
+    h += '<div class="vue-kpi-value" style="color:' + srColor + '">' + savingRate + '%</div>';
+    h += '<div class="vue-kpi-sub">' + (monthlyIncome > 0 ? 'Sur ~$' + Math.round(monthlyIncome) + '/mois' : 'Revenus non definis') + '</div>';
+    h += '</div>';
+
+    h += '<div class="vue-kpi">';
+    h += '<div class="vue-kpi-header"><span class="vue-kpi-label">Reste a vivre</span></div>';
+    h += '<div class="vue-kpi-value" style="color:' + (resteAVivre > 0 ? 'var(--green)' : 'var(--red)') + '">$' + resteAVivre.toLocaleString('en-US', {minimumFractionDigits: 0}) + '</div>';
+    h += '<div class="vue-kpi-sub">Apres depenses + abos</div>';
+    h += '</div>';
+
+    h += '</div>';
+
+    // ═══ Categories tags (click to filter) ═══
+    h += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px">';
+    h += '<button class="vue-toggle' + (_budgetCatFilter === 'all' ? ' active' : '') + '" onclick="_budgetCatFilter=\'all\';rBU()">Tout</button>';
+    D.categories.forEach(function(c) {
+      h += '<button class="vue-toggle' + (_budgetCatFilter === c ? ' active' : '') + '" onclick="_budgetCatFilter=\'' + c.replace(/'/g, "\\'") + '\';rBU()">' + esc(c) + '</button>';
+    });
+    h += '<button style="background:none;border:1px dashed rgba(255,255,255,.1);color:var(--t3);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all 150ms" onmouseover="this.style.borderColor=\'var(--gold)\';this.style.color=\'var(--gold)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,.1)\';this.style.color=\'var(--t3)\'" onclick="var n=prompt(\'Nom de la categorie\');if(n&&n.trim()){D.categories.push(n.trim());save();rBU()}">+</button>';
+    h += '</div>';
+
+    // ═══ Expenses table grouped by month ═══
+    var expenses = D.expenses.slice();
+    if (_budgetCatFilter !== 'all') {
+      expenses = expenses.filter(function(e) { return e.cat === _budgetCatFilter; });
+    }
+    expenses.sort(function(a, b) { return (b.month || '').localeCompare(a.month || ''); });
+
+    if (!expenses.length && !D.abonnements.length) {
+      h += '<div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:13px">Aucune depense' + (_budgetCatFilter !== 'all' ? ' dans "' + esc(_budgetCatFilter) + '"' : '') + '</div>';
+    } else if (expenses.length) {
+      h += '<div class="vue-section">';
+      h += '<div class="vue-section-header"><span>Depenses' + (_budgetCatFilter !== 'all' ? ' — ' + esc(_budgetCatFilter) : '') + '</span><span style="font-size:11px;color:var(--t2);font-weight:400;text-transform:none;letter-spacing:0">' + expenses.length + ' entree' + (expenses.length > 1 ? 's' : '') + '</span></div>';
+      h += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">';
+      h += '<thead><tr>';
+      ['Mois','Categorie','Montant','Note',''].forEach(function(col) {
+        h += '<th style="text-align:' + (col === 'Montant' ? 'right' : col === '' ? 'right' : 'left') + ';padding:8px 12px;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">' + col + '</th>';
+      });
+      h += '</tr></thead><tbody>';
+
+      var lastMonth = '';
+      expenses.forEach(function(e) {
+        var showMonth = e.month !== lastMonth;
+        lastMonth = e.month;
+        h += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);transition:background 150ms" onmouseover="this.style.background=\'rgba(255,255,255,.02)\'" onmouseout="this.style.background=\'none\'">';
+        h += '<td style="padding:10px 12px;font-size:12px;' + (showMonth ? 'color:var(--t1);font-weight:600' : 'color:var(--t3)') + '">' + (showMonth ? e.month : '') + '</td>';
+        h += '<td style="padding:10px 12px"><span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.04);color:var(--t2)">' + esc(e.cat || '') + '</span></td>';
+        h += '<td style="padding:10px 12px;text-align:right;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;color:var(--red)">-' + fm(e.amount || 0) + '</td>';
+        h += '<td style="padding:10px 12px;font-size:12px;color:var(--t3)">' + esc(e.note || '\u2014') + '</td>';
+        h += '<td style="padding:10px 12px;text-align:right"><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:4px;min-height:32px;transition:background 150ms" onmouseover="this.style.background=\'rgba(239,68,68,.1)\'" onmouseout="this.style.background=\'none\'" onclick="dEX(\'' + e.id + '\')">&times;</button></td>';
+        h += '</tr>';
+      });
+
+      // Total row
+      var expTotal = expenses.reduce(function(s, e) { return s + (e.amount || 0); }, 0);
+      h += '<tr style="border-top:2px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)">';
+      h += '<td colspan="2" style="padding:10px 12px;font-weight:700;color:var(--t1)">Total</td>';
+      h += '<td style="padding:10px 12px;text-align:right;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:800;color:var(--red)">-' + fm(expTotal) + '</td>';
+      h += '<td colspan="2"></td>';
+      h += '</tr>';
+
+      h += '</tbody></table></div></div>';
+    }
+
+    budV2.innerHTML = h;
+
+    // Also update the legacy table (rEX uses exT/exTot)
+    try { rEX(); } catch(e) {}
+
+  } catch(e) { console.error('[Capital] rBU:', e); }
+}
 /* ─── PASSIFS ─── */
 function aPS(){try{var n=esc(document.getElementById('ps-n').value.trim()),r=parseFloat(document.getElementById('ps-r').value)||0,m=parseFloat(document.getElementById('ps-m').value)||0;if(!n||r<=0){toast('Nom et montant requis');return}D.passifs.push({id:uid(),name:n,remaining:r,monthly:m});save();rPA();tg('psF');toast('OK');document.getElementById('ps-n').value='';document.getElementById('ps-r').value='';document.getElementById('ps-m').value=''}catch(e){console.error(e)}}
 function dPS(id){try{if(!confirm('?'))return;D.passifs=D.passifs.filter(function(p){return p.id!==id});save();rPA()}catch(e){console.error(e)}}
