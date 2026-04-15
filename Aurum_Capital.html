@@ -5193,6 +5193,63 @@ function rBank() {
       });
 
       h += '</tbody></table></div></div>';
+
+      // ═══ Vue avancée (Phase D) ═══
+      var advLevel1 = '';
+      var advLevel2 = '';
+
+      filteredAccounts.forEach(function(ba) {
+        var currency = ba.currency || 'USD';
+        var iban = ba.iban || '';
+        var notes = ba.notes || '';
+        var snaps = ba.snapshots || [];
+
+        advLevel2 += '<div style="background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:8px;padding:14px;margin-bottom:8px">';
+        advLevel2 += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+        advLevel2 += '<span style="font-size:13px;font-weight:600;color:var(--t1)">' + esc(ba.name) + '</span>';
+        advLevel2 += '<span style="font-size:11px;color:var(--t3)">' + esc(ba.bank || '') + '</span>';
+        advLevel2 += '</div>';
+
+        advLevel2 += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;font-size:12px;margin-bottom:8px">';
+        // Currency
+        advLevel2 += '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--t3)">Devise</span>';
+        advLevel2 += '<select onchange="var ba=D.bankAccounts.find(function(x){return x.id===\'' + ba.id + '\'});if(ba){ba.currency=this.value;save()}" style="background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:4px;color:var(--t1);font-size:12px;padding:4px 8px;font-family:inherit">';
+        ['USD','EUR','GBP','CHF','CAD','AUD'].forEach(function(c) {
+          advLevel2 += '<option value="' + c + '"' + (currency === c ? ' selected' : '') + '>' + c + '</option>';
+        });
+        advLevel2 += '</select></div>';
+        // IBAN
+        advLevel2 += '<div style="display:flex;align-items:center;gap:6px"><span style="color:var(--t3)">IBAN</span>';
+        advLevel2 += '<input value="' + esc(iban) + '" placeholder="FR76..." onchange="var ba=D.bankAccounts.find(function(x){return x.id===\'' + ba.id + '\'});if(ba){ba.iban=this.value;save()}" style="background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:4px;color:var(--t1);font-size:11px;padding:4px 8px;font-family:JetBrains Mono,monospace;width:180px;box-sizing:border-box"></div>';
+        advLevel2 += '</div>';
+
+        // Notes
+        advLevel2 += '<div style="margin-bottom:8px"><span style="font-size:11px;color:var(--t3);display:block;margin-bottom:3px">Notes</span>';
+        advLevel2 += '<textarea onchange="var ba=D.bankAccounts.find(function(x){return x.id===\'' + ba.id + '\'});if(ba){ba.notes=this.value;save()}" style="width:100%;min-height:40px;padding:6px 8px;background:var(--bg3);border:1px solid rgba(255,255,255,.08);border-radius:6px;color:var(--t1);font-size:12px;font-family:inherit;resize:vertical;box-sizing:border-box">' + esc(notes) + '</textarea></div>';
+
+        // Snapshot history
+        if (snaps.length > 0) {
+          advLevel2 += '<div><span style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Historique (' + snaps.length + ' snapshots)</span>';
+          advLevel2 += '<div style="display:flex;gap:4px;flex-wrap:wrap">';
+          snaps.slice(-10).reverse().forEach(function(s) {
+            var snapDate = (s.date || '').slice(0, 10);
+            advLevel2 += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.03);color:var(--t3);font-family:JetBrains Mono,monospace">' + snapDate + ' $' + (s.value || 0).toLocaleString('en-US') + '</span>';
+          });
+          advLevel2 += '</div></div>';
+        } else {
+          advLevel2 += '<div style="font-size:11px;color:var(--t3)">Aucun snapshot — modifie le solde pour en creer un</div>';
+        }
+
+        advLevel2 += '</div>';
+      });
+
+      h += ProgressiveDisclosure.section({
+        id: 'bankAdvanced',
+        level1Html: '',
+        level2Html: advLevel2,
+        expandLabel: 'Vue avancee',
+        collapseLabel: 'Masquer'
+      });
     }
 
     // ═══ Formulaire d'ajout ═══
