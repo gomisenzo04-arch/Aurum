@@ -4753,6 +4753,10 @@ function aPO(){try{var d=document.getElementById('po-d').value,s=document.getEle
 function showBankDepositToast(amount,label){try{var el=document.createElement('div');el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--gold);border-radius:var(--radius);padding:14px 18px;z-index:2000;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-width:420px;width:90%';el.innerHTML='<div style="flex:1"><div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">💰 Payout de '+fm(amount)+' ajouté</div><div style="font-size:11px;color:var(--t2)">Déposer sur un compte bancaire ?</div></div><button onclick="this.parentElement.remove();bankDepositFromPayout('+amount+',\''+label.replace(/'/g,"\\'")+'\')" style="background:var(--green);color:#000;border:none;padding:8px 14px;border-radius:6px;font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;min-height:44px">Déposer</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:4px">×</button>';document.body.appendChild(el);setTimeout(function(){if(el.parentElement)el.remove()},8000)}catch(e){console.error(e)}}
 function bankDepositFromPayout(amount,label){try{if(!D.bankAccounts.length){toast('Aucun compte bancaire');return}var accId=D.bankAccounts[0].id;if(D.bankAccounts.length>1){var opts=D.bankAccounts.map(function(ba,i){return(i+1)+'. '+ba.name+' ('+ba.bank+')'}).join('\n');var choice=prompt('Sur quel compte ?\n'+opts,1);if(!choice)return;var idx=parseInt(choice)-1;if(idx<0||idx>=D.bankAccounts.length){toast('Choix invalide');return}accId=D.bankAccounts[idx].id}addBankTransaction(accId,amount,label,'deposit');go('bank')}catch(e){console.error(e)}}
 function dPO(id){try{if(!confirm('?'))return;D.payouts=D.payouts.filter(function(p){return p.id!==id});save();rPO()}catch(e){console.error(e)}}
+/* ─── Payout filters (Phase B) ─── */
+var _poFilterSource = 'all';
+var _poFilterPeriod = 'all';
+
 function rPO(){try{
   var poSum = document.getElementById('poSum');
   var poT = document.getElementById('poT');
@@ -4851,10 +4855,49 @@ function rPO(){try{
   kh += '</div>';
 
   kh += '</div>';
+
+  /* ─── Filter bar (Phase B) ─── */
+  kh += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+
+  /* Source filter */
+  kh += '<div class="vue-chart-toggles">';
+  [['all','Tout'],['Prop Firm','Prop Firm'],['Salaire','Salaire'],['Business','Business'],['Autre','Autre']].forEach(function(f) {
+    kh += '<button class="vue-toggle' + (_poFilterSource === f[0] ? ' active' : '') + '" onclick="_poFilterSource=\'' + f[0] + '\';rPO()">' + f[1] + '</button>';
+  });
+  kh += '</div>';
+
+  /* Period filter */
+  kh += '<div class="vue-chart-toggles" style="margin-left:auto">';
+  [['all','Tout'],['12m','12 mois'],['6m','6 mois'],['3m','3 mois'],['cm','Ce mois']].forEach(function(f) {
+    kh += '<button class="vue-toggle' + (_poFilterPeriod === f[0] ? ' active' : '') + '" onclick="_poFilterPeriod=\'' + f[0] + '\';rPO()">' + f[1] + '</button>';
+  });
+  kh += '</div>';
+
+  kh += '</div>';
+
   poSum.innerHTML = kh;
 
+  /* ─── Apply filters ─── */
+  var filtered = D.payouts.slice();
+
+  /* Source filter */
+  if (_poFilterSource !== 'all') {
+    filtered = filtered.filter(function(p) { return p.source === _poFilterSource; });
+  }
+
+  /* Period filter */
+  if (_poFilterPeriod !== 'all') {
+    var cutoff = new Date();
+    if (_poFilterPeriod === '12m') cutoff.setMonth(cutoff.getMonth() - 12);
+    else if (_poFilterPeriod === '6m') cutoff.setMonth(cutoff.getMonth() - 6);
+    else if (_poFilterPeriod === '3m') cutoff.setMonth(cutoff.getMonth() - 3);
+    else if (_poFilterPeriod === 'cm') { cutoff = new Date(cutoff.getFullYear(), cutoff.getMonth(), 1); }
+    var cutStr = cutoff.toISOString().slice(0, 10);
+    filtered = filtered.filter(function(p) { return p.date && p.date >= cutStr; });
+  }
+
   /* ─── Render table rows ─── */
-  var sorted = D.payouts.slice().sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+  var sorted = filtered.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
 
   if (poT) {
     poT.innerHTML = sorted.map(function(p) {
@@ -4876,7 +4919,8 @@ function rPO(){try{
   }
 
   /* ─── Render total footer ─── */
-  if (poTot) poTot.textContent = fm(totalNet);
+  var filteredTotal = sorted.reduce(function(s,p) { return s + (p.net||0); }, 0);
+  if (poTot) poTot.textContent = fm(filteredTotal) + (_poFilterSource !== 'all' || _poFilterPeriod !== 'all' ? ' (' + sorted.length + ' filtre' + (sorted.length > 1 ? 's' : '') + ')' : '');
 
 }catch(e){console.error('[Capital] rPO:', e)}}
 /* ─── ENTITIES ─── */
