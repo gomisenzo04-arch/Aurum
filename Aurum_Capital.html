@@ -5987,7 +5987,52 @@ function aPS(){try{
   ['ps-n','ps-i','ps-r','ps-m','ps-rate','ps-start','ps-end'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
 }catch(e){console.error('[Capital] aPS:',e)}}
 function dPS(id){try{if(!confirm('?'))return;D.passifs=D.passifs.filter(function(p){return p.id!==id});save();rPA()}catch(e){console.error(e)}}
-function payPS(id){try{var p=D.passifs.find(function(x){return x.id===id});if(!p)return;if(p.remaining<=0){toast('Déjà soldé');return}p.remaining=Math.max(0,p.remaining-p.monthly);if(p.remaining===0)toast(p.name+' soldé !');else toast(p.name+' : '+fm(p.remaining)+' restant');save();rPA();rD()}catch(e){console.error(e)}}
+function payPS(id){try{
+  var p=D.passifs.find(function(x){return x.id===id});
+  if(!p)return;
+  if(p.remaining<=0){toast('Deja solde');return}
+  var amount=Math.min(p.monthly,p.remaining);
+  p.remaining=Math.max(0,p.remaining-amount);
+
+  /* Synergie 6: auto-créer une dépense dans Budget */
+  var now=new Date();
+  var cm=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  /* Ensure category exists */
+  if(D.categories.indexOf('Remboursement dette')<0){D.categories.push('Remboursement dette')}
+  D.expenses.push({
+    id:uid(),
+    month:cm,
+    cat:'Remboursement dette',
+    amount:amount,
+    note:p.name+' — mensualite',
+    entityId:p.entityId||'',
+    recurring:true,
+    _passifId:id
+  });
+
+  /* Also create v2 Flow */
+  try {
+    D.v2Flows.push(CapitalModel.createFlow({
+      kind:'EXPENSE',
+      source:'RECURRING',
+      grossAmount:amount,
+      netAmount:amount,
+      occurredAt:now.toISOString(),
+      label:'Remboursement ' + p.name,
+      notes:'Mensualite automatique'
+    }));
+  } catch(ef){}
+
+  if(p.remaining===0){
+    toast(p.name+' solde !');
+    D.history.unshift({type:'passif',text:'Dette eliminee : '+p.name,date:now.toISOString().slice(0,10)});
+  } else {
+    toast(p.name+' : '+fm(p.remaining)+' restant');
+  }
+  save();rPA();
+  try{rBU()}catch(eb){}
+  try{rDashV2()}catch(ed){}
+}catch(e){console.error('[Capital] payPS:',e)}}
 function rPA() {
   try {
     var psKPI = document.getElementById('psKPI');
