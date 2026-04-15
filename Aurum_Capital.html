@@ -5166,7 +5166,7 @@ function rBank() {
         h += '<td style="padding:10px 12px;font-size:12px;color:var(--t2)">' + esc(ba.bank || '') + '</td>';
         h += '<td style="padding:10px 12px"><span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;background:' + badgeColor + '18;color:' + badgeColor + '">' + badgeLabel + '</span></td>';
         h += '<td style="padding:10px 12px;font-size:12px;color:var(--purple)">' + esc(entName) + '</td>';
-        h += '<td style="padding:10px 12px;text-align:right;font-size:16px;font-weight:700;font-family:JetBrains Mono,monospace;color:' + balColor + '">$' + (ba.balance || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>';
+        h += '<td id="bankBal_' + ba.id + '" style="padding:10px 12px;text-align:right;font-size:16px;font-weight:700;font-family:JetBrains Mono,monospace;color:' + balColor + '">$' + (ba.balance || 0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>';
         h += '<td style="padding:10px 12px;font-size:11px;color:var(--t3)">' + majText + '</td>';
         h += '<td style="padding:10px 12px;text-align:right">';
         h += '<div style="display:flex;gap:4px;justify-content:flex-end">';
@@ -5213,6 +5213,49 @@ function rBank() {
     h += '</div>';
 
     el.innerHTML = h;
+
+    // ═══ Phase B: Inline editing on balance cells + snapshots ═══
+    D.bankAccounts.forEach(function(ba) {
+      var cell = document.getElementById('bankBal_' + ba.id);
+      if (cell) {
+        InlineEditableCell.make(cell, {
+          type: 'number',
+          prefix: '$',
+          step: '0.01',
+          onSave: function(newVal) {
+            var oldVal = ba.balance || 0;
+            // Create snapshot before update
+            if (!ba.snapshots) ba.snapshots = [];
+            ba.snapshots.push({ date: new Date().toISOString(), value: oldVal, source: 'MANUAL' });
+            if (ba.snapshots.length > 60) ba.snapshots = ba.snapshots.slice(-60);
+            // Update balance
+            ba.balance = newVal;
+            // Also update last transaction record
+            if (!ba.transactions) ba.transactions = [];
+            var diff = newVal - oldVal;
+            ba.transactions.push({
+              id: 'tx_' + Date.now().toString(36),
+              date: new Date().toISOString().slice(0, 10),
+              amount: diff,
+              label: 'Ajustement manuel',
+              type: diff >= 0 ? 'deposit' : 'withdrawal'
+            });
+            save();
+            // Also sync to v2Asset if exists
+            try {
+              var v2Asset = D.v2Assets.find(function(a) { return a.id === ba.id || (a.bankName && a.label === ba.name); });
+              if (v2Asset) {
+                CapitalStore.updateAssetValue(v2Asset.id, newVal, 'MANUAL');
+              }
+            } catch(se) {}
+            // Toast already shown by InlineEditableCell
+            // Re-render KPIs without full re-render (avoid losing edit state)
+            setTimeout(function() { rBank(); }, 100);
+          }
+        });
+      }
+    });
+
   } catch(e) { console.error('[Capital] rBank:', e); }
 }
 
